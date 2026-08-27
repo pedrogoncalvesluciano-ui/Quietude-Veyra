@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VEYRA — A Quietude</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main id="app">
+        <section id="menuScreen" class="screen active">
+            <div class="menu-panel">
+                <p class="eyebrow">UMA HISTÓRIA SOBRE MEMÓRIA</p>
+                <h1>VEYRA</h1>
+                <h2>A QUIETUDE</h2>
+                <p class="intro">
+                    A Quietude está apagando o mundo. Pessoas esquecem quem são,
+                    lugares esquecem que existiram. Sua jornada começa na Vila do Crepúsculo.
+                </p>
+                <button id="newGameBtn" class="primary-btn">NOVO JOGO</button>
+                <button id="continueBtn" class="secondary-btn">CONTINUAR</button>
+                <p id="continueHint" class="hint"></p>
+            </div>
+        </section>
+
+        <section id="characterScreen" class="screen">
+            <div class="character-panel">
+                <p class="eyebrow">VILA DO CREPÚSCULO</p>
+                <h2>Escolha seu personagem</h2>
+
+                <div id="characterCards" class="character-grid"></div>
+
+                <div class="name-area">
+                    <label for="playerName">Nome do personagem</label>
+                    <input id="playerName" type="text" maxlength="16" placeholder="Digite seu nome">
+                    <p id="nameError" class="error"></p>
+                </div>
+
+                <button id="startGameBtn" class="primary-btn">ENTRAR EM VEYRA</button>
+                <button id="backMenuBtn" class="text-btn">Voltar</button>
+            </div>
+        </section>
+
+        <section id="gameScreen" class="screen game-screen">
+            <canvas id="gameCanvas"></canvas>
+
+            <div id="hud" class="hud">
+                <div class="hud-card">
+                    <div class="player-title">
+                        <span id="hudClass">Aventureiro</span>
+                        <strong id="hudName">Viajante</strong>
+                    </div>
+
+                    <div class="bar-row">
+                        <span>HP</span>
+                        <div class="bar hp"><div id="hpBar" class="fill"></div></div>
+                        <span id="hpText">100/100</span>
+                    </div>
+
+                    <div class="bar-row">
+                        <span>ENERGIA</span>
+                        <div class="bar energy"><div id="energyBar" class="fill"></div></div>
+                        <span id="energyText">100/100</span>
+                    </div>
+                </div>
+
+                <div class="hud-right">
+                    <div class="mini-card">
+                        <span>NÍVEL</span>
+                        <strong id="levelText">1</strong>
+                    </div>
+                    <div class="mini-card">
+                        <span>XP</span>
+                        <strong id="xpText">0 / 100</strong>
+                    </div>
+                    <button id="saveBtn" class="hud-btn">SALVAR</button>
+                    <button id="menuBtn" class="hud-btn">MENU</button>
+                </div>
+            </div>
+
+            <div id="locationLabel">VILA DO CREPÚSCULO</div>
+            <div id="controlsHint">
+                <span>W A S D</span> para mover
+                <span>ESC</span> menu
+            </div>
+            <div id="saveMessage" class="toast"></div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

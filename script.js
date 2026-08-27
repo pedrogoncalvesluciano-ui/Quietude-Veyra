@@ -1,51 +1,51 @@
 (() => {
 "use strict";
-
 const SAVE_KEY = "veyra_save_v14_stable";
-
-const $ = id => document.getElementById(id);
-
-const must = id => {
-const element = $(id);
-
+const $ = (id) =>
+document.getElementById(id);
+const must = (id) => {
+const element =
+$(id);
 if (!element) {
 throw new Error(
 `Elemento obrigatório não encontrado: #${id}`
 );
 }
-
 return element;
 };
-
-const canvas = must("gameCanvas");
-const ctx = canvas.getContext("2d");
-
-const miniCanvas = must("miniCanvas");
-const miniCtx = miniCanvas.getContext("2d");
-
-const mapCanvas = must("worldMapCanvas");
-const mapCtx = mapCanvas.getContext("2d");
-
+const canvas =
+must("gameCanvas");
+const ctx =
+canvas.getContext("2d");
+const miniCanvas =
+must("miniCanvas");
+const miniCtx =
+miniCanvas.getContext("2d");
+const mapCanvas =
+must("worldMapCanvas");
+const mapCtx =
+mapCanvas.getContext("2d");
 const screens = {
-menu: must("menuScreen"),
-how: must("howScreen"),
-credits: must("creditsScreen"),
-character: must("characterScreen"),
-game: must("gameScreen")
+menu:
+must("menuScreen"),
+how:
+must("howScreen"),
+credits:
+must("creditsScreen"),
+character:
+must("characterScreen"),
+game:
+must("gameScreen")
 };
 
-/* =====================================================
-PERSONAGENS
-====================================================== */
-
 const CHARACTERS = [
-
 {
 id: "kaelion",
 name: "KAELION",
 className: "Mago",
 icon: "🧙",
-role: "Magia • Longo alcance",
+role:
+"Magia • Longo alcance",
 description:
 "Grande poder mágico, controle à distância e menor resistência física.",
 story:
@@ -56,18 +56,23 @@ energy: 115,
 speed: 178,
 damage: 25,
 defense: 5,
-color: "#e49345",
-bg: "rgba(228,147,69,.16)",
-glow: "rgba(228,147,69,.28)",
-skill: "Raio de Memória"
+color:
+"#e49345",
+bg:
+"rgba(228,147,69,.16)",
+glow:
+"rgba(228,147,69,.28)",
+skill:
+"Raio de Memória"
 },
-
 {
 id: "theron",
 name: "THERON",
-className: "Cavaleiro",
+className:
+"Cavaleiro",
 icon: "🛡️",
-role: "Espada • Defesa",
+role:
+"Espada • Defesa",
 description:
 "Muita defesa, boa vida e combate corpo a corpo.",
 story:
@@ -78,18 +83,23 @@ energy: 120,
 speed: 145,
 damage: 30,
 defense: 21,
-color: "#bfc5ce",
-bg: "rgba(191,197,206,.14)",
-glow: "rgba(191,197,206,.23)",
-skill: "Golpe do Guardião"
+color:
+"#bfc5ce",
+bg:
+"rgba(191,197,206,.14)",
+glow:
+"rgba(191,197,206,.23)",
+skill:
+"Golpe do Guardião"
 },
-
 {
 id: "grumgar",
 name: "GRUMGAR",
-className: "Troll",
+className:
+"Troll",
 icon: "👹",
-role: "Força • Vida",
+role:
+"Força • Vida",
 description:
 "Enorme vida e dano físico, porém pouca velocidade.",
 story:
@@ -100,18 +110,23 @@ energy: 95,
 speed: 112,
 damage: 39,
 defense: 18,
-color: "#718f51",
-bg: "rgba(113,143,81,.16)",
-glow: "rgba(113,143,81,.24)",
-skill: "Esmagamento"
+color:
+"#718f51",
+bg:
+"rgba(113,143,81,.16)",
+glow:
+"rgba(113,143,81,.24)",
+skill:
+"Esmagamento"
 },
-
 {
 id: "lirael",
 name: "LIRAEL",
-className: "Fada",
+className:
+"Fada",
 icon: "🧚",
-role: "Velocidade • Cura",
+role:
+"Velocidade • Cura",
 description:
 "Muito rápida, mágica e capaz de restaurar vida.",
 story:
@@ -122,18 +137,23 @@ energy: 135,
 speed: 210,
 damage: 20,
 defense: 7,
-color: "#dd8bd0",
-bg: "rgba(221,139,208,.16)",
-glow: "rgba(221,139,208,.25)",
-skill: "Luz Vital"
+color:
+"#dd8bd0",
+bg:
+"rgba(221,139,208,.16)",
+glow:
+"rgba(221,139,208,.25)",
+skill:
+"Luz Vital"
 },
-
 {
 id: "zephyr",
 name: "ZEPHYR",
-className: "Transmorfo",
+className:
+"Transmorfo",
 icon: "🦊",
-role: "Adaptação • Equilíbrio",
+role:
+"Adaptação • Equilíbrio",
 description:
 "Atributos equilibrados e habilidade de adaptação temporária.",
 story:
@@ -144,17 +164,16 @@ energy: 112,
 speed: 170,
 damage: 26,
 defense: 13,
-color: "#8f6bd8",
-bg: "rgba(143,107,216,.16)",
-glow: "rgba(143,107,216,.25)",
-skill: "Forma Adaptativa"
+color:
+"#8f6bd8",
+bg:
+"rgba(143,107,216,.16)",
+glow:
+"rgba(143,107,216,.25)",
+skill:
+"Forma Adaptativa"
 }
-
 ];
-
-/* =====================================================
-ITENS
-====================================================== */
 
 const ITEMS = {
 
@@ -175,8 +194,8 @@ value: 6
 },
 
 ferro: {
-name: "Ferro",
-icon: "⛓️",
+name: "Minério de Ferro",
+icon: "⛏️",
 category: "materials",
 weight: 2,
 value: 14
@@ -212,6 +231,51 @@ icon: "✦",
 category: "special",
 weight: 1,
 value: 100
+},
+
+couro: {
+name: "Couro",
+icon: "🟫",
+category: "materials",
+weight: 1,
+value: 18
+},
+
+fragmentoMemoria: {
+name: "Fragmento de Memória",
+icon: "🔹",
+category: "special",
+weight: 1,
+value: 55
+},
+
+flautaMemoria: {
+name: "Flauta da Memória",
+icon: "🎶",
+category: "special",
+weight: 1,
+value: 0,
+unique: true
+},
+
+pao: {
+name: "Pão Rústico",
+icon: "🥖",
+category: "food",
+weight: 1,
+value: 12,
+hunger: 34,
+heal: 4
+},
+
+carneCaca: {
+name: "Carne de Caça",
+icon: "🍖",
+category: "food",
+weight: 1,
+value: 24,
+hunger: 48,
+heal: 8
 },
 
 pocao: {
@@ -260,14 +324,11 @@ value: 50
 
 };
 
-/* =====================================================
-REGIÕES
-====================================================== */
-
 const REGIONS = {
 
 village: {
-name: "VILA DO CREPÚSCULO",
+name:
+"VILA DO CREPÚSCULO",
 width: 3200,
 height: 2200,
 visual: "village"
@@ -295,28 +356,32 @@ visual: "mountains"
 },
 
 iron: {
-name: "CAVERNA DE FERRO",
+name:
+"CAVERNA DE FERRO",
 width: 2900,
 height: 1900,
 visual: "iron"
 },
 
 ruby: {
-name: "CAVERNA DE RUBI",
+name:
+"CAVERNA DE RUBI",
 width: 3100,
 height: 2100,
 visual: "ruby"
 },
 
 shadow: {
-name: "CAVERNA SOMBRIA",
+name:
+"CAVERNA SOMBRIA",
 width: 3000,
 height: 2000,
 visual: "shadow"
 },
 
 fairy: {
-name: "REINO DAS FADAS",
+name:
+"REINO DAS FADAS",
 width: 3200,
 height: 2200,
 visual: "fairy"
@@ -337,7 +402,8 @@ visual: "hell"
 },
 
 final: {
-name: "CÂMARA FINAL",
+name:
+"CÂMARA FINAL",
 width: 2200,
 height: 1500,
 visual: "final"
@@ -345,70 +411,102 @@ visual: "final"
 
 };
 
-/* =====================================================
-ESTADO
-====================================================== */
-
 const state = {
 
-selectedCharacter: CHARACTERS[0],
+selectedCharacter:
+CHARACTERS[0],
 
-player: null,
+player:
+null,
 
-running: false,
+running:
+false,
 
-paused: false,
+paused:
+false,
 
-time: 0,
+time:
+0,
 
-lastTime: 0,
+lastTime:
+0,
 
-keys: new Set(),
+keys:
+new Set(),
 
-area: "village",
+area:
+"village",
 
 camera: {
 x: 0,
 y: 0
 },
 
-world: createEmptyWorld(
+world:
+createEmptyWorld(
 REGIONS.village
 ),
 
-houseMode: false,
+houseMode:
+false,
 
-currentHouse: null,
+currentHouse:
+null,
 
-houseReturn: null,
+houseReturn:
+null,
 
-dialogue: null,
+dialogue:
+null,
 
-travel: null,
+travel:
+null,
 
-battle: null,
+battle:
+null,
 
-questNPC: null,
+questNPC:
+null,
 
-shopNPC: null,
+shopNPC:
+null,
 
-shopMode: "buy",
+shopMode:
+"buy",
 
-inventoryCategory: "all",
+inventoryCategory:
+"all",
 
-toastTimer: null,
+toastTimer:
+null,
 
-portalCooldown: 0,
+portalCooldown:
+0,
 
-warnedNeedAt: 0,
+warnedNeedAt:
+0,
 
-finalChoiceShown: false
+finalChoiceShown:
+false,
+
+pointer: {
+x: 0,
+y: 0,
+worldX: 0,
+worldY: 0,
+down: false
+},
+
+holdAction:
+null,
+
+hordeNextAt:
+0,
+
+screenFadeTimer:
+null
 
 };
-
-/* =====================================================
-MUNDO
-====================================================== */
 
 function createEmptyWorld(region) {
 
@@ -426,6 +524,16 @@ trees: [],
 
 resources: [],
 
+foods: [],
+
+secrets: [],
+
+decorations: [],
+
+trials: [],
+
+hazards: [],
+
 npcs: [],
 
 enemies: [],
@@ -441,10 +549,6 @@ effects: []
 };
 
 }
-
-/* =====================================================
-UTILITÁRIOS
-====================================================== */
 
 function clamp(
 value,
@@ -489,10 +593,7 @@ max + 1
 
 }
 
-function distance(
-a,
-b
-) {
+function distance(a, b) {
 
 return Math.hypot(
 a.x - b.x,
@@ -518,7 +619,8 @@ return (
 CHARACTERS.find(
 character =>
 character.id ===
-state.player?.characterId
+state.player
+?.characterId
 ) ||
 CHARACTERS[0]
 );
@@ -531,13 +633,68 @@ Object
 .values(screens)
 .forEach(
 screen =>
-screen.classList.remove(
+screen.classList
+.remove(
 "active"
 )
 );
 
-screens[name].classList.add(
+screens[name]
+.classList
+.add(
 "active"
+);
+
+}
+
+function fadeToScreen(
+name,
+afterSwitch = null
+) {
+
+const fade =
+must("uiFade");
+
+clearTimeout(
+state.screenFadeTimer
+);
+
+fade.classList.add(
+"active"
+);
+
+state.screenFadeTimer =
+setTimeout(
+() => {
+
+showScreen(
+name
+);
+
+if (
+typeof afterSwitch ===
+"function"
+) {
+
+afterSwitch();
+
+}
+
+requestAnimationFrame(
+() => {
+
+requestAnimationFrame(
+() =>
+fade.classList.remove(
+"active"
+)
+);
+
+}
+);
+
+},
+320
 );
 
 }
@@ -545,7 +702,9 @@ screens[name].classList.add(
 function showToast(message) {
 
 const toast =
-must("saveMessage");
+must(
+"saveMessage"
+);
 
 toast.textContent =
 message;
@@ -571,10 +730,6 @@ toast.classList.remove(
 );
 
 }
-
-/* =====================================================
-CANVAS
-====================================================== */
 
 function resizeCanvas() {
 
@@ -611,17 +766,47 @@ ratio,
 
 }
 
-/* =====================================================
-SELEÇÃO
-====================================================== */
-
 function createCharacterCards() {
 
 const container =
-must("characterCards");
+must(
+"characterCards"
+);
 
 container.innerHTML =
 "";
+
+const maximums = {
+
+hp: 180,
+
+magic: 145,
+
+energy: 135,
+
+damage: 39,
+
+defense: 21,
+
+speed: 210
+
+};
+
+const labels = {
+
+hp: "Vida",
+
+magic: "Magia",
+
+energy: "Energia",
+
+damage: "Dano",
+
+defense: "Defesa",
+
+speed: "Velocidade"
+
+};
 
 CHARACTERS.forEach(
 (
@@ -660,6 +845,60 @@ card.style.setProperty(
 character.glow
 );
 
+const stats =
+[
+"hp",
+"magic",
+"energy",
+"damage",
+"defense",
+"speed"
+]
+.map(
+key => {
+
+const percent =
+clamp(
+(
+character[key] /
+maximums[key]
+) *
+100,
+8,
+100
+);
+
+return `
+
+<div class="char-stat">
+
+<span>
+${labels[key]}
+</span>
+
+<div class="char-stat-track">
+
+<div
+class="char-stat-fill"
+style="width:${percent}%"
+></div>
+
+</div>
+
+<b>
+${character[key]}
+</b>
+
+</div>
+
+`;
+
+}
+)
+.join(
+""
+);
+
 card.innerHTML = `
 
 <div class="char-art">
@@ -670,40 +909,24 @@ ${character.icon}
 ${character.name}
 </h3>
 
-<p class="role">
-${character.className}
-—
-${character.role}
+<p class="char-classline">
+${character.className} — ${character.role}
 </p>
 
 <p>
 ${character.description}
 </p>
 
-<p>
+<div class="char-stats">
+${stats}
+</div>
+
+<p class="char-story">
 ${character.story}
 </p>
 
-<p>
-❤️ ${character.hp}
-•
-✨ ${character.magic}
-•
-⚡ ${character.energy}
-</p>
-
-<p>
-⚔ ${character.damage}
-•
-🛡 ${character.defense}
-•
-🏃 ${character.speed}
-</p>
-
-<p>
-<strong>
-${character.skill}
-</strong>
+<p class="char-skill">
+✦ ${character.skill}
 </p>
 
 `;
@@ -744,10 +967,14 @@ card
 
 function startNewGame() {
 
-must("playerName").value =
+must(
+"playerName"
+).value =
 "";
 
-must("nameError").textContent =
+must(
+"nameError"
+).textContent =
 "";
 
 state.selectedCharacter =
@@ -771,21 +998,22 @@ index === 0
 }
 );
 
-showScreen(
-"character"
-);
+fadeToScreen(
+"character",
+() => {
 
 setTimeout(
 () =>
-must("playerName").focus(),
-100
+must(
+"playerName"
+).focus(),
+80
 );
 
 }
+);
 
-/* =====================================================
-JOGADOR
-====================================================== */
+}
 
 function createPlayer(
 name,
@@ -796,51 +1024,74 @@ state.player = {
 
 name,
 
-characterId: character.id,
+characterId:
+character.id,
 
-className: character.className,
+className:
+character.className,
 
-icon: character.icon,
+icon:
+character.icon,
 
-color: character.color,
+color:
+character.color,
 
-x: 380,
+x:
+380,
 
-y: 260,
+y:
+260,
 
-radius: 18,
+radius:
+18,
 
-hp: character.hp,
+hp:
+character.hp,
 
-maxHp: character.hp,
+maxHp:
+character.hp,
 
-magic: character.magic,
+magic:
+character.magic,
 
-maxMagic: character.magic,
+maxMagic:
+character.magic,
 
-energy: character.energy,
+energy:
+character.energy,
 
-maxEnergy: character.energy,
+maxEnergy:
+character.energy,
 
-speed: character.speed,
+speed:
+character.speed,
 
-damage: character.damage,
+damage:
+character.damage,
 
-defense: character.defense,
+defense:
+character.defense,
 
-level: 1,
+level:
+1,
 
-xp: 0,
+xp:
+0,
 
-xpToNext: 100,
+xpToNext:
+100,
 
-money: 35,
+money:
+35,
 
-hunger: 100,
+hunger:
+100,
 
-fatigue: 100,
+fatigue:
+100,
 
-memory: 0,
+memory:
+0,
 
 inventory: {
 
@@ -858,6 +1109,16 @@ cristal: 0,
 
 essencia: 0,
 
+couro: 0,
+
+fragmentoMemoria: 0,
+
+flautaMemoria: 0,
+
+pao: 2,
+
+carneCaca: 0,
+
 pocao: 2,
 
 elixir: 1,
@@ -872,11 +1133,14 @@ machado: 1
 
 equipment: {
 
-weapon: null,
+weapon:
+null,
 
-armor: null,
+armor:
+null,
 
-tool: "machado"
+tool:
+"machado"
 
 },
 
@@ -884,63 +1148,126 @@ quest: {
 
 wood: {
 
-state: "none",
+state:
+"none",
 
-need: 10,
+need:
+10,
 
-rewardXP: 100,
+rewardXP:
+100,
 
-rewardMoney: 80
+rewardMoney:
+80
 
 },
 
 coal: {
 
-state: "none",
+state:
+"none",
 
-need: 8,
+need:
+8,
 
-rewardXP: 130,
+rewardXP:
+130,
 
-rewardMoney: 110
+rewardMoney:
+110
 
 }
 
 },
 
-defeatedBosses: [],
+defeatedBosses:
+[],
 
-discoveredBosses: [],
+discoveredBosses:
+[],
 
-unlockedAreas: [
+unlockedAreas:
+[
 "village"
 ],
 
-collected: {},
+collected:
+{},
 
-hellTypesDefeated: {},
+hellTypesDefeated:
+{},
 
-checkpoint: {
+secretsFound:
+[],
 
-area: "village",
+skyTrial: {
 
-x: 480,
+started:
+false,
 
-y: 610
+wave:
+0,
+
+activeWave:
+0,
+
+complete:
+false
 
 },
 
-dead: false,
+flutePlayed:
+false,
 
-invincible: 0,
+checkpoint: {
 
-attackCooldown: 0,
+area:
+"village",
 
-adaptiveBuff: false,
+x:
+480,
 
-finalChoice: null,
+y:
+610
 
-finalDefeated: false
+},
+
+skillCooldowns: {
+
+q: 0,
+
+r: 0,
+
+f: 0
+
+},
+
+damageReduction:
+0,
+
+shieldTimer:
+0,
+
+stunTimer:
+0,
+
+dead:
+false,
+
+invincible:
+0,
+
+attackCooldown:
+0,
+
+adaptiveBuff:
+false,
+
+finalChoice:
+null,
+
+finalDefeated:
+false
 
 };
 
@@ -949,17 +1276,22 @@ finalDefeated: false
 function startGame() {
 
 const input =
-must("playerName");
+must(
+"playerName"
+);
 
 const name =
-input.value.trim();
+input.value
+.trim();
 
 if (
 name.length <
 2
 ) {
 
-must("nameError").textContent =
+must(
+"nameError"
+).textContent =
 "Digite um nome com pelo menos 2 caracteres.";
 
 input.focus();
@@ -991,13 +1323,17 @@ false;
 buildWorld();
 
 const home =
-state.world.buildings.find(
+state.world
+.buildings
+.find(
 building =>
 building.id ===
 "home"
 );
 
-if (home) {
+if (
+home
+) {
 
 state.currentHouse =
 home;
@@ -1040,19 +1376,25 @@ state.time =
 state.lastTime =
 performance.now();
 
-must("transitionMessage").textContent =
+must(
+"transitionMessage"
+).textContent =
 "VEYRA";
 
-must("transitionScreen")
-.classList.remove(
+must(
+"transitionScreen"
+).classList
+.remove(
 "hidden"
 );
 
 setTimeout(
 () => {
 
-must("transitionScreen")
-.classList.add(
+must(
+"transitionScreen"
+).classList
+.add(
 "hidden"
 );
 
@@ -1073,15 +1415,13 @@ gameLoop
 
 }
 
-/* =====================================================
-WORLD HELPERS
-====================================================== */
-
 function resetWorld() {
 
 state.world =
 createEmptyWorld(
-REGIONS[state.area]
+REGIONS[
+state.area
+]
 );
 
 }
@@ -1095,12 +1435,18 @@ type,
 extra = {}
 ) {
 
-state.world.obstacles.push({
+state.world
+.obstacles
+.push({
 
 x,
+
 y,
+
 w,
+
 h,
+
 type,
 
 ...extra
@@ -1123,17 +1469,26 @@ color
 const building = {
 
 id,
+
 x,
+
 y,
+
 w,
+
 h,
+
 name,
+
 roof,
+
 color
 
 };
 
-state.world.buildings.push(
+state.world
+.buildings
+.push(
 building
 );
 
@@ -1144,7 +1499,10 @@ w + 48,
 h + 95,
 "building",
 {
-buildingId: id
+
+buildingId:
+id
+
 }
 );
 
@@ -1166,7 +1524,8 @@ x,
 
 y,
 
-alive: true,
+alive:
+true,
 
 amount:
 randomInt(
@@ -1174,11 +1533,14 @@ randomInt(
 5
 ),
 
-respawn: 0
+respawn:
+0
 
 };
 
-state.world.trees.push(
+state.world
+.trees
+.push(
 tree
 );
 
@@ -1189,7 +1551,10 @@ y - 38,
 76,
 "tree",
 {
-treeId: id
+
+treeId:
+id
+
 }
 );
 
@@ -1203,9 +1568,12 @@ y,
 type
 ) {
 
-state.world.resources.push({
+state.world
+.resources
+.push({
 
-id: uid(
+id:
+uid(
 "resource"
 ),
 
@@ -1215,7 +1583,8 @@ y,
 
 type,
 
-alive: true,
+alive:
+true,
 
 amount:
 randomInt(
@@ -1223,7 +1592,203 @@ randomInt(
 3
 ),
 
-respawn: 0
+respawn:
+0
+
+});
+
+}
+
+function addFood(
+x,
+y,
+type = "carrot",
+extra = {}
+) {
+
+state.world.foods.push({
+
+id:
+uid(
+"food"
+),
+
+x,
+
+y,
+
+type,
+
+alive:
+true,
+
+respawn:
+0,
+
+...extra
+
+});
+
+}
+
+function addSecret(
+x,
+y,
+title,
+message,
+icon = "✦"
+) {
+
+const stableId =
+
+"secret_" +
+state.area +
+"_" +
+
+title
+
+.normalize(
+"NFD"
+)
+
+.replace(
+/[\u0300-\u036f]/g,
+""
+)
+
+.toLowerCase()
+
+.replace(
+/[^a-z0-9]+/g,
+"_"
+)
+
+.replace(
+/^_|_$/g,
+""
+);
+
+state.world.secrets.push({
+
+id:
+stableId,
+
+x,
+
+y,
+
+title,
+
+message,
+
+icon,
+
+found:
+Boolean(
+state.player
+?.secretsFound
+?.includes(
+stableId
+)
+)
+
+});
+
+}
+
+function addDecoration(
+type,
+x,
+y,
+extra = {}
+) {
+
+state.world.decorations.push({
+
+id:
+uid(
+"decor"
+),
+
+type,
+
+x,
+
+y,
+
+...extra
+
+});
+
+}
+
+function addTrial(
+x,
+y,
+id,
+title,
+extra = {}
+) {
+
+state.world.trials.push({
+
+id,
+
+x,
+
+y,
+
+radius:
+38,
+
+title,
+
+...extra
+
+});
+
+}
+
+function addHazard(
+x,
+y,
+radius,
+delay,
+damage,
+extra = {}
+) {
+
+state.world.hazards.push({
+
+id:
+uid(
+"hazard"
+),
+
+x,
+
+y,
+
+radius,
+
+delay,
+
+maxDelay:
+delay,
+
+damage,
+
+life:
+delay +
+0.26,
+
+triggered:
+false,
+
+color:
+"rgba(220,52,45,.22)",
+
+...extra
 
 });
 
@@ -1239,9 +1804,12 @@ lines,
 extra = {}
 ) {
 
-state.world.npcs.push({
+state.world
+.npcs
+.push({
 
-id: uid(
+id:
+uid(
 "npc"
 ),
 
@@ -1249,7 +1817,8 @@ x,
 
 y,
 
-radius: 17,
+radius:
+17,
 
 name,
 
@@ -1267,27 +1836,171 @@ lines,
 
 function addEnemy(enemy) {
 
-state.world.enemies.push({
+if (
+enemy.type ===
+"progression" &&
+state.player
+?.defeatedBosses
+?.includes(
+enemy.id
+)
+) {
 
-state: "idle",
+return null;
 
-aggressive: false,
+}
 
-accepted: false,
+const regionOrder = [
 
-attackTimer: 0,
+"village",
 
-hitFlash: 0,
+"forest",
 
-dead: false,
+"grove",
 
-respawnTimer: 0,
+"mountains",
 
-phase: 1,
+"iron",
 
-...enemy
+"ruby",
 
-});
+"shadow",
+
+"fairy",
+
+"sky",
+
+"hell",
+
+"final"
+
+];
+
+const regionIndex =
+Math.max(
+0,
+regionOrder.indexOf(
+state.area
+)
+);
+
+const level =
+state.player
+?.level ||
+1;
+
+const regionScale =
+1 +
+regionIndex *
+0.035;
+
+const levelScale =
+1 +
+Math.max(
+0,
+level - 1
+) *
+0.018;
+
+const baseHp =
+enemy.maxHp ||
+enemy.hp ||
+50;
+
+const scaledHp =
+Math.round(
+baseHp *
+regionScale *
+levelScale
+);
+
+const scaledDamage =
+Math.max(
+1,
+Math.round(
+
+(
+enemy.damage ||
+5
+) *
+
+(
+1 +
+regionIndex *
+0.025 +
+Math.max(
+0,
+level - 1
+) *
+0.009
+)
+
+)
+);
+
+const created = {
+
+state:
+"idle",
+
+aggressive:
+false,
+
+accepted:
+false,
+
+attackTimer:
+0,
+
+specialTimer:
+random(
+1.8,
+3.8
+),
+
+hitFlash:
+0,
+
+stunTimer:
+0,
+
+dead:
+false,
+
+respawnTimer:
+0,
+
+phase:
+1,
+
+level:
+Math.max(
+1,
+level +
+Math.floor(
+regionIndex /
+2
+)
+),
+
+...enemy,
+
+hp:
+scaledHp,
+
+maxHp:
+scaledHp,
+
+damage:
+scaledDamage
+
+};
+
+state.world.enemies.push(
+created
+);
+
+return created;
 
 }
 
@@ -1298,12 +2011,14 @@ w,
 h,
 target,
 requirement,
-title
+title,
+extra = {}
 ) {
 
 state.world.portals.push({
 
-id: uid(
+id:
+uid(
 "portal"
 ),
 
@@ -1319,7 +2034,9 @@ target,
 
 requirement,
 
-title
+title,
+
+...extra
 
 });
 
@@ -1340,7 +2057,8 @@ edge,
 
 addObstacle(
 0,
-state.world.height - edge,
+state.world.height -
+edge,
 state.world.width,
 edge,
 "wall"
@@ -1355,7 +2073,8 @@ state.world.height,
 );
 
 addObstacle(
-state.world.width - edge,
+state.world.width -
+edge,
 0,
 edge,
 state.world.height,
@@ -1363,10 +2082,6 @@ state.world.height,
 );
 
 }
-
-/* =====================================================
-MUNDO
-====================================================== */
 
 function buildWorld() {
 
@@ -1376,27 +2091,38 @@ addWorldBounds();
 
 const builders = {
 
-village: buildVillage,
+village:
+buildVillage,
 
-forest: buildForest,
+forest:
+buildForest,
 
-grove: buildGrove,
+grove:
+buildGrove,
 
-mountains: buildMountains,
+mountains:
+buildMountains,
 
-iron: buildIron,
+iron:
+buildIron,
 
-ruby: buildRuby,
+ruby:
+buildRuby,
 
-shadow: buildShadow,
+shadow:
+buildShadow,
 
-fairy: buildFairy,
+fairy:
+buildFairy,
 
-sky: buildSky,
+sky:
+buildSky,
 
-hell: buildHell,
+hell:
+buildHell,
 
-final: buildFinal
+final:
+buildFinal
 
 };
 
@@ -1404,14 +2130,14 @@ builders[
 state.area
 ]();
 
-must("locationLabel").textContent =
-REGIONS[state.area].name;
+must(
+"locationLabel"
+).textContent =
+REGIONS[
+state.area
+].name;
 
 }
-
-/* =====================================================
-VILA
-====================================================== */
 
 function buildVillage() {
 
@@ -1589,7 +2315,8 @@ addNPC(
 "Se encontrar cristais ou minérios raros, eu pago bem."
 ],
 {
-merchant: true
+merchant:
+true
 }
 );
 
@@ -1606,7 +2333,8 @@ addNPC(
 "Cortar madeira consome magia. Não se esgote por causa de uma árvore."
 ],
 {
-questId: "wood"
+questId:
+"wood"
 }
 );
 
@@ -1623,155 +2351,222 @@ addNPC(
 "Equipamento é investimento. Sobreviver costuma sair mais barato que morrer."
 ],
 {
-questId: "coal"
+questId:
+"coal"
 }
 );
 
 addEnemy({
 
-id: "village_slime",
+id:
+"village_slime",
 
-x: 1260,
+x:
+1260,
 
-y: 760,
+y:
+760,
 
-name: "LIMO DA QUIETUDE",
+name:
+"LIMO DA QUIETUDE",
 
-icon: "🟢",
+icon:
+"🟢",
 
-type: "normal",
+type:
+"normal",
 
-hp: 58,
+hp:
+58,
 
-maxHp: 58,
+maxHp:
+58,
 
-damage: 8,
+damage:
+8,
 
-speed: 56,
+speed:
+56,
 
-vision: 190,
+vision:
+190,
 
-attackRange: 55,
+attackRange:
+55,
 
-radius: 18,
+radius:
+18,
 
-color: "#6c9862",
+color:
+"#6c9862",
 
-drop: "carvao",
+drop:
+"carvao",
 
-dropAmount: 1
-
-});
-
-addEnemy({
-
-id: "village_wolf",
-
-x: 2190,
-
-y: 1450,
-
-name: "LOBO ESQUECIDO",
-
-icon: "🐺",
-
-type: "normal",
-
-hp: 82,
-
-maxHp: 82,
-
-damage: 12,
-
-speed: 92,
-
-vision: 260,
-
-attackRange: 65,
-
-radius: 21,
-
-color: "#686d78",
-
-drop: "carvao",
-
-dropAmount: 1
+dropAmount:
+1
 
 });
 
 addEnemy({
 
-id: "village_resource_boss",
+id:
+"village_wolf",
 
-x: 2350,
+x:
+2190,
 
-y: 1780,
+y:
+1450,
 
-name: "CERVO ANCESTRAL",
+name:
+"LOBO ESQUECIDO",
 
-icon: "🦌",
+icon:
+"🐺",
 
-type: "resourceBoss",
+type:
+"normal",
 
-hp: 430,
+hp:
+82,
 
-maxHp: 430,
+maxHp:
+82,
 
-damage: 18,
+damage:
+12,
 
-speed: 64,
+speed:
+92,
 
-vision: 270,
+vision:
+260,
 
-attackRange: 75,
+attackRange:
+65,
 
-radius: 30,
+radius:
+21,
 
-color: "#788762",
+color:
+"#686d78",
 
-drop: "ouro",
+drop:
+"carvao",
 
-dropAmount: 2,
-
-respawnTime: 60
+dropAmount:
+1
 
 });
 
 addEnemy({
 
-id: "forest_guardian",
+id:
+"village_resource_boss",
 
-x: 2850,
+x:
+2350,
 
-y: 1090,
+y:
+1780,
 
-name: "GUARDIÃO DA ESTRADA",
+name:
+"CERVO ANCESTRAL",
 
-icon: "👺",
+icon:
+"🦌",
 
-type: "progression",
+type:
+"resourceBoss",
 
-hp: 280,
+hp:
+430,
 
-maxHp: 280,
+maxHp:
+430,
 
-damage: 20,
+damage:
+18,
 
-speed: 56,
+speed:
+64,
 
-vision: 280,
+vision:
+270,
 
-attackRange: 75,
+attackRange:
+75,
 
-radius: 29,
+radius:
+30,
 
-color: "#945149",
+color:
+"#788762",
 
-drop: "cristal",
+drop:
+"ouro",
 
-dropAmount: 2,
+dropAmount:
+2,
 
-unlock: "forest"
+respawnTime:
+60
+
+});
+
+addEnemy({
+
+id:
+"forest_guardian",
+
+x:
+2850,
+
+y:
+1090,
+
+name:
+"GUARDIÃO DA ESTRADA",
+
+icon:
+"👺",
+
+type:
+"progression",
+
+hp:
+280,
+
+maxHp:
+280,
+
+damage:
+20,
+
+speed:
+56,
+
+vision:
+280,
+
+attackRange:
+75,
+
+radius:
+29,
+
+color:
+"#945149",
+
+drop:
+"cristal",
+
+dropAmount:
+2,
+
+unlock:
+"forest"
 
 });
 
@@ -1788,103 +2583,284 @@ hasDefeatedBoss(
 "FLORESTA"
 );
 
+[
+[760,1260],
+[840,1315],
+[920,1265],
+[1820,1210],
+[1900,1250],
+[2000,1220]
+]
+.forEach(
+(
+[x,y],
+index
+) => {
+
+addDecoration(
+index % 2
+? "flowerPot"
+: "barrel",
+x,
+y
+);
+
 }
+);
 
-/* =====================================================
-FLORESTA
-====================================================== */
+addFood(
+1340,
+1450,
+"carrot",
+{
+respawnMin: 95,
+respawnMax: 145
+}
+);
 
-function buildForest() {
-
-for (
-let i = 0;
-i < 42;
-i++
-) {
-
-addTree(
-randomInt(
-130,
-3240
-),
-randomInt(
-130,
-2250
-),
-`forest_tree_${i}`
+addFood(
+1425,
+1510,
+"carrot",
+{
+respawnMin: 95,
+respawnMax: 145
+}
 );
 
 }
 
+function buildForest() {
+
+const pathY =
+x =>
+1220 +
+Math.sin(
+x /
+320
+) *
+150;
+
 for (
-let i = 0;
-i < 9;
-i++
+let x = 120;
+x < 3320;
+x += 70
 ) {
 
-addEnemy({
+const y =
+pathY(
+x
+);
 
-id: `forest_enemy_${i}`,
-
-x: randomInt(
-450,
-2900
+addDecoration(
+"pathStone",
+x,
+y +
+random(
+-35,
+35
+),
+{
+size:
+random(
+18,
+31
 ),
 
-y: randomInt(
-300,
-2050
+angle:
+random(
+-0.6,
+0.6
+)
+}
+);
+
+if (
+Math.floor(
+x /
+70
+) %
+4 ===
+0
+) {
+
+addDecoration(
+"mushroom",
+x +
+random(
+-70,
+70
 ),
-
-name:
-i % 2
-? "LOBO FLORESTAL"
-: "JAVALI SOMBRIO",
-
-icon:
-i % 2
-? "🐺"
-: "🐗",
-
-type: "normal",
-
-hp:
-100 +
-i * 2,
-
-maxHp:
-100 +
-i * 2,
-
-damage: 14,
-
-speed: 95,
-
-vision: 260,
-
-attackRange: 65,
-
-radius: 22,
-
-color:
-i % 2
-? "#66716c"
-: "#685844",
-
-drop:
-i % 3
-? "carvao"
-: "ferro",
-
-dropAmount: 1
-
-});
+y +
+random(
+115,
+180
+),
+{
+glow:
+Math.random() <
+0.22
+}
+);
 
 }
 
+}
+
+let planted =
+0;
+
+let tries =
+0;
+
+while (
+planted <
+72 &&
+tries <
+800
+) {
+
+tries++;
+
+const x =
+randomInt(
+135,
+3260
+);
+
+const y =
+randomInt(
+130,
+2260
+);
+
+if (
+Math.abs(
+y -
+pathY(
+x
+)
+) <
+170
+) {
+
+continue;
+
+}
+
+addTree(
+x,
+y,
+`forest_tree_${planted}`
+);
+
+planted++;
+
+}
+
+[
+[430,680],
+[760,1850],
+[1120,520],
+[1510,1930],
+[1900,620],
+[2240,1840],
+[2560,720],
+[2860,1650],
+[3070,530],
+[1680,430],
+[980,1540],
+[2380,1350]
+]
+.forEach(
+(
+[x,y],
+index
+) => {
+
+addDecoration(
+index % 3 ===
+0
+? "fallenLog"
+: "bush",
+x,
+y
+);
+
+}
+);
+
+[
+[620,1120],
+[1040,1335],
+[1460,1030],
+[2050,1350],
+[2470,1020],
+[2920,1260]
+]
+.forEach(
+([x,y]) => {
+
+addFood(
+x,
+y,
+"carrot",
+{
+respawnMin: 95,
+respawnMax: 150
+}
+);
+
+}
+);
+
+[
+[650,480,"carvao"],
+[1230,1880,"carvao"],
+[1750,540,"ferro"],
+[2170,1830,"carvao"],
+[2710,510,"ferro"],
+[3030,1830,"carvao"],
+[1540,1690,"ferro"],
+[2350,440,"carvao"]
+]
+.forEach(
+(
+[
+x,
+y,
+type
+]
+) => {
+
+addResource(
+x,
+y,
+type
+);
+
+}
+);
+
+addSecret(
+420,
+2020,
+"O Boneco que Lembra",
+"Você encontrou um espantalho antigo com o seu nome escrito antes mesmo de você chegar à floresta.",
+"🧸"
+);
+
+addSecret(
+2820,
+360,
+"Círculo das Raposas",
+"Pedras formam um círculo perfeito. No centro há marcas de pequenas patas que desaparecem no nada.",
+"🦊"
+);
+
 addNPC(
 720,
-850,
+860,
 "NARA",
 "Guardião da Floresta",
 "#7ea56b",
@@ -1892,89 +2868,235 @@ addNPC(
 "A floresta percebe quem passa por ela.",
 "Há árvores que se movem quando ninguém está olhando.",
 "A Quietude não mata todas as coisas. Algumas continuam andando sem lembrar por quê.",
-"O caminho adiante só se abre para quem prova que consegue sobreviver aqui."
+"Siga as pedras. Elas foram colocadas antes de os moradores esquecerem o caminho."
 ]
 );
 
+for (
+let i = 0;
+i < 10;
+i++
+) {
+
+const boar =
+i % 2 ===
+0;
+
 addEnemy({
 
-id: "forest_resource_boss",
+id:
+`forest_enemy_${i}`,
 
-x: 2450,
+x:
+randomInt(
+520,
+2820
+),
 
-y: 1750,
+y:
+randomInt(
+310,
+2060
+),
 
-name: "ALCE ANCIÃO",
+name:
+boar
+? "JAVALI DA MATA"
+: "LOBO FLORESTAL",
 
-icon: "🦌",
+icon:
+boar
+? "🐗"
+: "🐺",
 
-type: "resourceBoss",
+type:
+"normal",
 
-hp: 540,
+hp:
+boar
+? 116
+: 102,
 
-maxHp: 540,
+maxHp:
+boar
+? 116
+: 102,
 
-damage: 22,
+damage:
+boar
+? 16
+: 14,
 
-speed: 55,
+speed:
+boar
+? 80
+: 98,
 
-vision: 310,
+vision:
+275,
 
-attackRange: 78,
+attackRange:
+66,
 
-radius: 32,
+radius:
+boar
+? 24
+: 22,
 
-color: "#71865d",
+color:
+boar
+? "#715b43"
+: "#67726e",
 
-drop: "ouro",
+drop:
+boar
+? "carneCaca"
+: "couro",
 
-dropAmount: 2,
+dropAmount:
+1,
 
-respawnTime: 60
+dropChance:
+boar
+? 0.8
+: 0.65,
+
+special:
+i >= 6
+? "dash"
+: null
+
+});
+
+}
+
+addEnemy({
+
+id:
+"forest_resource_boss",
+
+x:
+2460,
+
+y:
+1760,
+
+name:
+"CERVO DA LUA VERDE",
+
+icon:
+"🦌",
+
+type:
+"resourceBoss",
+
+hp:
+560,
+
+maxHp:
+560,
+
+damage:
+23,
+
+speed:
+64,
+
+vision:
+320,
+
+attackRange:
+78,
+
+radius:
+33,
+
+color:
+"#789066",
+
+drop:
+"carneCaca",
+
+dropAmount:
+3,
+
+dropChance:
+1,
+
+respawnTime:
+70,
+
+special:
+"natureBurst"
 
 });
 
 addEnemy({
 
-id: "grove_guardian",
+id:
+"grove_guardian",
 
-x: 2980,
+x:
+2990,
 
-y: 1150,
+y:
+pathY(
+2990
+),
 
-name: "GUARDIÃO DA FLORESTA",
+name:
+"GUARDIÃO DA FLORESTA",
 
-icon: "🌳",
+icon:
+"🌳",
 
-type: "progression",
+type:
+"progression",
 
-hp: 420,
+hp:
+470,
 
-maxHp: 420,
+maxHp:
+470,
 
-damage: 24,
+damage:
+26,
 
-speed: 60,
+speed:
+60,
 
-vision: 310,
+vision:
+335,
 
-attackRange: 82,
+attackRange:
+88,
 
-radius: 31,
+radius:
+36,
 
-color: "#4d754b",
+color:
+"#416d43",
 
-drop: "ferro",
+drop:
+"fragmentoMemoria",
 
-dropAmount: 2,
+dropAmount:
+2,
 
-unlock: "grove"
+unlock:
+"grove",
+
+special:
+"rootCircle"
 
 });
 
 addPortal(
 3260,
-1030,
+pathY(
+3260
+) -
+105,
 70,
 220,
 "grove",
@@ -1987,85 +3109,155 @@ hasDefeatedBoss(
 
 }
 
-/* =====================================================
-BOSQUE
-====================================================== */
-
 function buildGrove() {
 
+const pathY =
+x =>
+1120 +
+Math.sin(
+x /
+270
+) *
+95;
+
 for (
-let i = 0;
-i < 34;
-i++
+let x = 130;
+x < 3100;
+x += 62
 ) {
 
+addDecoration(
+"pathStone",
+x,
+pathY(
+x
+) +
+random(
+-24,
+24
+),
+{
+size:
+random(
+16,
+27
+)
+}
+);
+
+}
+
+let count =
+0;
+
+let guard =
+0;
+
+while (
+count <
+58 &&
+guard++ <
+700
+) {
+
+const x =
+randomInt(
+130,
+3050
+);
+
+const y =
+randomInt(
+130,
+2160
+);
+
+if (
+Math.abs(
+y -
+pathY(
+x
+)
+) <
+145
+) {
+
+continue;
+
+}
+
 addTree(
-randomInt(
-130,
-3040
-),
-randomInt(
-130,
-2150
-),
-`grove_tree_${i}`
+x,
+y,
+`grove_tree_${count++}`
 );
 
 }
 
 for (
 let i = 0;
-i < 8;
+i < 28;
 i++
 ) {
 
-addEnemy({
-
-id: `grove_enemy_${i}`,
-
-x: randomInt(
-400,
-2700
+addDecoration(
+i % 4 ===
+0
+? "ancientRoot"
+: "flower",
+randomInt(
+190,
+3000
 ),
-
-y: randomInt(
-300,
-1950
+randomInt(
+180,
+2100
 ),
-
-name: "FERA DO BOSQUE",
-
-icon: "🦌",
-
-type: "normal",
-
-hp: 135,
-
-maxHp: 135,
-
-damage: 17,
-
-speed: 86,
-
-vision: 260,
-
-attackRange: 65,
-
-radius: 23,
-
-color: "#60745e",
-
-drop: "ferro",
-
-dropAmount: 1
-
-});
+{
+phase:
+random(
+0,
+Math.PI *
+2
+)
+}
+);
 
 }
 
+[
+[520,920],
+[880,1360],
+[1380,980],
+[2010,1260]
+]
+.forEach(
+([x,y]) => {
+
+addFood(
+x,
+y,
+"carrot",
+{
+respawnMin: 110,
+respawnMax: 160
+}
+);
+
+}
+);
+
+addSecret(
+650,
+1900,
+"Estátua Sem Rosto",
+"A estátua perdeu o rosto, mas alguém continua deixando flores frescas aos seus pés.",
+"🗿"
+);
+
 addNPC(
-1350,
-800,
+1340,
+780,
 "LYRA",
 "Druida",
 "#829f6f",
@@ -2073,51 +3265,165 @@ addNPC(
 "Este bosque guarda memórias nas raízes.",
 "Quando uma árvore cai, às vezes outra nasce carregando lembranças que não são dela.",
 "As montanhas ficam além deste lugar.",
-"Não confunda silêncio com paz."
+"O Guardião do Bosque não odeia viajantes. Ele só esqueceu a diferença entre ameaça e visita."
 ]
 );
 
+for (
+let i = 0;
+i < 9;
+i++
+) {
+
+const deer =
+i % 3 ===
+0;
+
 addEnemy({
 
-id: "mountain_guardian",
+id:
+`grove_enemy_${i}`,
 
-x: 2760,
+x:
+randomInt(
+430,
+2700
+),
 
-y: 1110,
+y:
+randomInt(
+290,
+1960
+),
 
-name: "GUARDIÃO DO BOSQUE",
+name:
+deer
+? "CERVO DO BOSQUE"
+: "FERA DO BOSQUE",
 
-icon: "🌲",
+icon:
+deer
+? "🦌"
+: "🐗",
 
-type: "progression",
+type:
+"normal",
 
-hp: 510,
+hp:
+deer
+? 142
+: 150,
 
-maxHp: 510,
+maxHp:
+deer
+? 142
+: 150,
 
-damage: 28,
+damage:
+deer
+? 16
+: 19,
 
-speed: 58,
+speed:
+deer
+? 92
+: 84,
 
-vision: 320,
+vision:
+285,
 
-attackRange: 84,
+attackRange:
+68,
 
-radius: 32,
+radius:
+24,
 
-color: "#557251",
+color:
+deer
+? "#8d7959"
+: "#60745e",
 
-drop: "ouro",
+drop:
+deer
+? "carneCaca"
+: "couro",
 
-dropAmount: 2,
+dropAmount:
+1,
 
-unlock: "mountains"
+dropChance:
+0.75,
+
+special:
+i >= 6
+? "dash"
+: null
+
+});
+
+}
+
+addEnemy({
+
+id:
+"mountain_guardian",
+
+x:
+2760,
+
+y:
+1120,
+
+name:
+"GUARDIÃO DO BOSQUE",
+
+icon:
+"🌲",
+
+type:
+"progression",
+
+hp:
+560,
+
+maxHp:
+560,
+
+damage:
+30,
+
+speed:
+59,
+
+vision:
+345,
+
+attackRange:
+90,
+
+radius:
+37,
+
+color:
+"#4f744f",
+
+drop:
+"fragmentoMemoria",
+
+dropAmount:
+2,
+
+unlock:
+"mountains",
+
+special:
+"leafStorm"
 
 });
 
 addPortal(
 3060,
-1000,
+1010,
 70,
 220,
 "mountains",
@@ -2130,175 +3436,356 @@ hasDefeatedBoss(
 
 }
 
-/* =====================================================
-MONTANHAS
-====================================================== */
-
 function buildMountains() {
 
 for (
 let i = 0;
-i < 24;
+i < 46;
 i++
 ) {
 
+const type =
+
+i % 7 ===
+0
+? "iceRock"
+
+: i % 4 ===
+0
+? "oreRock"
+
+: "snowrock";
+
 addObstacle(
 randomInt(
-180,
-3200
+160,
+3260
 ),
 randomInt(
-160,
+150,
 2100
 ),
-70,
-52,
-"snowrock"
+randomInt(
+50,
+105
+),
+randomInt(
+38,
+76
+),
+type
 );
 
 }
 
 for (
 let i = 0;
-i < 8;
+i < 34;
 i++
 ) {
 
-addEnemy({
+addDecoration(
 
-id: `mountain_enemy_${i}`,
+i % 5 ===
+0
+? "snowDrift"
+: "windMark",
 
-x: randomInt(
-450,
-2950
+randomInt(
+150,
+3300
 ),
 
-y: randomInt(
-300,
-1950
+randomInt(
+140,
+2140
 ),
 
-name: "BESTA DAS MONTANHAS",
+{
+phase:
+random(
+0,
+Math.PI *
+2
+)
+}
 
-icon: "🐐",
-
-type: "normal",
-
-hp: 160,
-
-maxHp: 160,
-
-damage: 20,
-
-speed: 72,
-
-vision: 265,
-
-attackRange: 68,
-
-radius: 24,
-
-color: "#c7ccca",
-
-drop: "ferro",
-
-dropAmount: 1
-
-});
+);
 
 }
 
+[
+[450,430,"ferro"],
+[720,1710,"ferro"],
+[1050,650,"ouro"],
+[1450,1780,"ferro"],
+[1860,530,"ferro"],
+[2250,1740,"ouro"],
+[2700,610,"ferro"],
+[3060,1640,"ferro"],
+[1600,1110,"ouro"]
+]
+.forEach(
+(
+[
+x,
+y,
+type
+]
+) => {
+
+addResource(
+x,
+y,
+type
+);
+
+}
+);
+
+addSecret(
+3050,
+370,
+"Espada Congelada",
+"Uma espada sem dono está presa no gelo. O nome no cabo foi raspado muitas vezes.",
+"🗡️"
+);
+
 addNPC(
 760,
-900,
+930,
 "KAEL",
 "Montanhista",
 "#d2d6d2",
 [
 "O vento daqui apaga pegadas em minutos.",
-"Há uma passagem antiga na montanha.",
 "Minérios abaixo da neve ainda reagem à magia.",
-"Não fique parado por muito tempo. Algumas coisas confundem viajantes com pedras."
+"As bestas da montanha servem de alimento, mas caçá-las é arriscado.",
+"A Sentinela lança pedras antes de avançar. Quando o chão ficar vermelho, saia do círculo."
 ]
 );
 
+for (
+let i = 0;
+i < 10;
+i++
+) {
+
+const deer =
+i % 3 ===
+0;
+
 addEnemy({
 
-id: "iron_guardian",
+id:
+`mountain_enemy_${i}`,
 
-x: 3000,
+x:
+randomInt(
+460,
+2950
+),
 
-y: 1100,
+y:
+randomInt(
+280,
+1940
+),
 
-name: "SENTINELA DAS MONTANHAS",
+name:
+deer
+? "CERVO DA NEVE"
+: "BESTA DAS MONTANHAS",
 
-icon: "🗿",
+icon:
+deer
+? "🦌"
+: "🐐",
 
-type: "progression",
+type:
+"normal",
 
-hp: 620,
+hp:
+deer
+? 168
+: 190,
 
-maxHp: 620,
+maxHp:
+deer
+? 168
+: 190,
 
-damage: 31,
+damage:
+deer
+? 20
+: 24,
 
-speed: 54,
+speed:
+deer
+? 86
+: 74,
 
-vision: 340,
+vision:
+300,
 
-attackRange: 86,
+attackRange:
+deer
+? 70
+: 85,
 
-radius: 34,
+radius:
+25,
 
-color: "#72797e",
+color:
+deer
+? "#d7d4c9"
+: "#bec5c7",
 
-drop: "ferro",
+drop:
+deer
+? "carneCaca"
+: "couro",
 
-dropAmount: 3,
+dropAmount:
+1,
 
-unlock: "iron"
+dropChance:
+0.8,
+
+special:
+deer
+? "dash"
+: "rockThrow"
+
+});
+
+}
+
+addEnemy({
+
+id:
+"iron_guardian",
+
+x:
+3000,
+
+y:
+1110,
+
+name:
+"SENTINELA DAS MONTANHAS",
+
+icon:
+"🗿",
+
+type:
+"progression",
+
+hp:
+700,
+
+maxHp:
+700,
+
+damage:
+35,
+
+speed:
+55,
+
+vision:
+365,
+
+attackRange:
+96,
+
+radius:
+39,
+
+color:
+"#697176",
+
+drop:
+"fragmentoMemoria",
+
+dropAmount:
+3,
+
+unlock:
+"iron",
+
+special:
+"rockStorm"
 
 });
 
 addPortal(
 3300,
-1010,
+1000,
 70,
-220,
+230,
 "iron",
 () =>
 hasDefeatedBoss(
 "iron_guardian"
 ),
-"PASSAGEM DA MONTANHA"
+"CAVERNA DE FERRO"
 );
 
 }
-
-/* =====================================================
-FERRO
-====================================================== */
 
 function buildIron() {
 
 for (
 let i = 0;
-i < 24;
+i < 34;
 i++
 ) {
 
 addObstacle(
 randomInt(
-160,
-2680
+150,
+2700
 ),
 randomInt(
-160,
+150,
 1700
 ),
-65,
-48,
-"ironrock"
+randomInt(
+50,
+90
+),
+randomInt(
+38,
+65
+),
+i % 5 ===
+0
+? "oreRock"
+: "ironrock"
+);
+
+}
+
+for (
+let i = 0;
+i < 30;
+i++
+) {
+
+addResource(
+randomInt(
+210,
+2630
+),
+randomInt(
+190,
+1650
+),
+i % 7 ===
+0
+? "ouro"
+: "ferro"
 );
 
 }
@@ -2309,65 +3796,121 @@ i < 22;
 i++
 ) {
 
-addResource(
+addDecoration(
+
+i % 4 ===
+0
+? "mineLantern"
+
+: i % 3 ===
+0
+? "rail"
+
+: "stalagmite",
+
 randomInt(
-220,
-2600
+190,
+2700
 ),
+
 randomInt(
-200,
-1650
+170,
+1700
 ),
-"ferro"
+
+{
+phase:
+random(
+0,
+Math.PI *
+2
+)
+}
+
 );
 
 }
 
+addSecret(
+520,
+1540,
+"Capacete Abandonado",
+"Há um capacete coberto de poeira. Dentro dele, uma anotação diz apenas: 'não siga a voz da parede'.",
+"⛑️"
+);
+
 for (
 let i = 0;
-i < 7;
+i < 9;
 i++
 ) {
 
 addEnemy({
 
-id: `iron_enemy_${i}`,
+id:
+`iron_enemy_${i}`,
 
-x: randomInt(
-400,
+x:
+randomInt(
+420,
 2300
 ),
 
-y: randomInt(
-260,
-1550
+y:
+randomInt(
+250,
+1540
 ),
 
-name: "MINERADOR ESQUECIDO",
+name:
+"MINEIRO CORROMPIDO",
 
-icon: "⛏️",
+icon:
+"⛏️",
 
-type: "normal",
+type:
+"normal",
 
-hp: 180,
+hp:
+205,
 
-maxHp: 180,
+maxHp:
+205,
 
-damage: 22,
+damage:
+25,
 
-speed: 63,
+speed:
+65,
 
-vision: 250,
+vision:
+275,
 
-attackRange: 70,
+attackRange:
+76,
 
-radius: 24,
+radius:
+25,
 
-color: "#60686a",
+color:
+"#626a6d",
 
-drop: "ferro",
+drop:
+i % 4 ===
+0
+? "ouro"
+: "ferro",
 
-dropAmount: 2
+dropAmount:
+1,
+
+dropChance:
+0.62,
+
+special:
+i >= 5
+? "oreBurst"
+: null
 
 });
 
@@ -2375,39 +3918,59 @@ dropAmount: 2
 
 addEnemy({
 
-id: "ruby_guardian",
+id:
+"ruby_guardian",
 
-x: 2450,
+x:
+2450,
 
-y: 950,
+y:
+950,
 
-name: "GUARDIÃO DE FERRO",
+name:
+"GUARDIÃO DE FERRO",
 
-icon: "⚙️",
+icon:
+"⚙️",
 
-type: "progression",
+type:
+"progression",
 
-hp: 720,
+hp:
+800,
 
-maxHp: 720,
+maxHp:
+800,
 
-damage: 35,
+damage:
+39,
 
-speed: 55,
+speed:
+56,
 
-vision: 350,
+vision:
+375,
 
-attackRange: 88,
+attackRange:
+100,
 
-radius: 35,
+radius:
+40,
 
-color: "#71787c",
+color:
+"#70787d",
 
-drop: "ouro",
+drop:
+"fragmentoMemoria",
 
-dropAmount: 3,
+dropAmount:
+3,
 
-unlock: "ruby"
+unlock:
+"ruby",
+
+special:
+"oreBurst"
 
 });
 
@@ -2421,104 +3984,180 @@ addPortal(
 hasDefeatedBoss(
 "ruby_guardian"
 ),
-"PASSAGEM VERMELHA"
+"CAVERNA DE RUBI"
 );
 
 }
-
-/* =====================================================
-RUBI
-====================================================== */
 
 function buildRuby() {
 
 for (
 let i = 0;
-i < 25;
+i < 36;
 i++
 ) {
 
 addObstacle(
 randomInt(
-180,
-2860
+170,
+2880
 ),
 randomInt(
-180,
+170,
 1900
 ),
-68,
+randomInt(
 48,
-"rubyrock"
+92
+),
+randomInt(
+38,
+70
+),
+i % 4 ===
+0
+? "rubyPillar"
+: "rubyrock"
 );
 
 }
 
 for (
 let i = 0;
-i < 28;
+i < 34;
 i++
 ) {
 
 addResource(
 randomInt(
-230,
+220,
 2860
 ),
 randomInt(
 190,
-1880
+1870
 ),
-"rubi"
+i % 8 ===
+0
+? "ouro"
+: "rubi"
 );
 
 }
 
 for (
 let i = 0;
-i < 8;
+i < 32;
+i++
+) {
+
+addDecoration(
+
+i % 3 ===
+0
+? "crystalPillar"
+: "crystalShard",
+
+randomInt(
+180,
+2920
+),
+
+randomInt(
+170,
+1920
+),
+
+{
+phase:
+random(
+0,
+Math.PI *
+2
+)
+}
+
+);
+
+}
+
+addSecret(
+2700,
+420,
+"Coração Rubi",
+"Um cristal pulsa como um coração. Quando você se aproxima, ele repete uma lembrança que você ainda não viveu.",
+"❤️"
+);
+
+for (
+let i = 0;
+i < 10;
 i++
 ) {
 
 addEnemy({
 
-id: `ruby_enemy_${i}`,
+id:
+`ruby_enemy_${i}`,
 
-x: randomInt(
+x:
+randomInt(
 400,
 2600
 ),
 
-y: randomInt(
+y:
+randomInt(
 260,
-1800
+1780
 ),
 
-name: "CRIATURA RUBI",
+name:
+"CRIATURA RUBI",
 
-icon: "♦",
+icon:
+"♦",
 
-type: "normal",
+type:
+"normal",
 
-hp: 220,
+hp:
+242,
 
-maxHp: 220,
+maxHp:
+242,
 
-damage: 26,
+damage:
+29,
 
-speed: 71,
+speed:
+73,
 
-vision: 270,
+vision:
+292,
 
-attackRange: 72,
+attackRange:
+82,
 
-radius: 25,
+radius:
+26,
 
-color: "#a04551",
+color:
+"#a34554",
 
-drop: "rubi",
+drop:
+"rubi",
 
-dropAmount: 1
+dropAmount:
+1,
+
+dropChance:
+0.7,
+
+special:
+i >= 4
+? "crystalShot"
+: null
 
 });
 
@@ -2526,39 +4165,59 @@ dropAmount: 1
 
 addEnemy({
 
-id: "shadow_guardian",
+id:
+"shadow_guardian",
 
-x: 2620,
+x:
+2620,
 
-y: 1010,
+y:
+1010,
 
-name: "GUARDIÃO RUBI",
+name:
+"GUARDIÃO RUBI",
 
-icon: "🔴",
+icon:
+"🔴",
 
-type: "progression",
+type:
+"progression",
 
-hp: 830,
+hp:
+920,
 
-maxHp: 830,
+maxHp:
+920,
 
-damage: 39,
+damage:
+44,
 
-speed: 59,
+speed:
+60,
 
-vision: 355,
+vision:
+390,
 
-attackRange: 92,
+attackRange:
+104,
 
-radius: 36,
+radius:
+41,
 
-color: "#a53e51",
+color:
+"#a33b4f",
 
-drop: "rubi",
+drop:
+"fragmentoMemoria",
 
-dropAmount: 3,
+dropAmount:
+3,
 
-unlock: "shadow"
+unlock:
+"shadow",
+
+special:
+"crystalRain"
 
 });
 
@@ -2572,14 +4231,10 @@ addPortal(
 hasDefeatedBoss(
 "shadow_guardian"
 ),
-"CORREDOR ESCURO"
+"CAVERNA SOMBRIA"
 );
 
 }
-
-/* =====================================================
-SOMBRA
-====================================================== */
 
 function buildShadow() {
 
@@ -2613,43 +4268,59 @@ i++
 
 addEnemy({
 
-id: `shadow_enemy_${i}`,
+id:
+`shadow_enemy_${i}`,
 
-x: randomInt(
+x:
+randomInt(
 420,
 2500
 ),
 
-y: randomInt(
+y:
+randomInt(
 260,
 1700
 ),
 
-name: "SOMBRA ESQUECIDA",
+name:
+"SOMBRA ESQUECIDA",
 
-icon: "👤",
+icon:
+"👤",
 
-type: "normal",
+type:
+"normal",
 
-hp: 265,
+hp:
+265,
 
-maxHp: 265,
+maxHp:
+265,
 
-damage: 30,
+damage:
+30,
 
-speed: 79,
+speed:
+79,
 
-vision: 290,
+vision:
+290,
 
-attackRange: 72,
+attackRange:
+72,
 
-radius: 25,
+radius:
+25,
 
-color: "#49425f",
+color:
+"#49425f",
 
-drop: "essencia",
+drop:
+"essencia",
 
-dropAmount: 1
+dropAmount:
+1
 
 });
 
@@ -2657,39 +4328,56 @@ dropAmount: 1
 
 addEnemy({
 
-id: "fairy_guardian",
+id:
+"fairy_guardian",
 
-x: 2500,
+x:
+2500,
 
-y: 980,
+y:
+980,
 
-name: "GUARDIÃO SOMBRIO",
+name:
+"GUARDIÃO SOMBRIO",
 
-icon: "🌑",
+icon:
+"🌑",
 
-type: "progression",
+type:
+"progression",
 
-hp: 930,
+hp:
+930,
 
-maxHp: 930,
+maxHp:
+930,
 
-damage: 42,
+damage:
+42,
 
-speed: 63,
+speed:
+63,
 
-vision: 360,
+vision:
+360,
 
-attackRange: 94,
+attackRange:
+94,
 
-radius: 36,
+radius:
+36,
 
-color: "#42364f",
+color:
+"#42364f",
 
-drop: "essencia",
+drop:
+"essencia",
 
-dropAmount: 3,
+dropAmount:
+3,
 
-unlock: "fairy"
+unlock:
+"fairy"
 
 });
 
@@ -2707,10 +4395,6 @@ hasDefeatedBoss(
 );
 
 }
-
-/* =====================================================
-FADAS
-====================================================== */
 
 function buildFairy() {
 
@@ -2740,9 +4424,12 @@ i < 22;
 i++
 ) {
 
-state.world.effects.push({
+state.world
+.effects
+.push({
 
-type: "flower",
+type:
+"flower",
 
 x:
 randomInt(
@@ -2759,7 +4446,8 @@ randomInt(
 phase:
 random(
 0,
-Math.PI * 2
+Math.PI *
+2
 )
 
 });
@@ -2774,43 +4462,59 @@ i++
 
 addEnemy({
 
-id: `fairy_enemy_${i}`,
+id:
+`fairy_enemy_${i}`,
 
-x: randomInt(
+x:
+randomInt(
 450,
 2700
 ),
 
-y: randomInt(
+y:
+randomInt(
 270,
 1800
 ),
 
-name: "ESPÍRITO FEÉRICO",
+name:
+"ESPÍRITO FEÉRICO",
 
-icon: "🦋",
+icon:
+"🦋",
 
-type: "normal",
+type:
+"normal",
 
-hp: 285,
+hp:
+285,
 
-maxHp: 285,
+maxHp:
+285,
 
-damage: 32,
+damage:
+32,
 
-speed: 93,
+speed:
+93,
 
-vision: 300,
+vision:
+300,
 
-attackRange: 74,
+attackRange:
+74,
 
-radius: 24,
+radius:
+24,
 
-color: "#b887be",
+color:
+"#b887be",
 
-drop: "cristal",
+drop:
+"cristal",
 
-dropAmount: 1
+dropAmount:
+1
 
 });
 
@@ -2832,39 +4536,56 @@ addNPC(
 
 addEnemy({
 
-id: "sky_guardian",
+id:
+"sky_guardian",
 
-x: 2700,
+x:
+2700,
 
-y: 1050,
+y:
+1050,
 
-name: "GUARDIÃ DOS FIOS",
+name:
+"GUARDIÃ DOS FIOS",
 
-icon: "🧚",
+icon:
+"🧚",
 
-type: "progression",
+type:
+"progression",
 
-hp: 1080,
+hp:
+1080,
 
-maxHp: 1080,
+maxHp:
+1080,
 
-damage: 44,
+damage:
+44,
 
-speed: 70,
+speed:
+70,
 
-vision: 380,
+vision:
+380,
 
-attackRange: 96,
+attackRange:
+96,
 
-radius: 37,
+radius:
+37,
 
-color: "#cb8dd0",
+color:
+"#cb8dd0",
 
-drop: "essencia",
+drop:
+"essencia",
 
-dropAmount: 4,
+dropAmount:
+4,
 
-unlock: "sky"
+unlock:
+"sky"
 
 });
 
@@ -2883,173 +4604,297 @@ hasDefeatedBoss(
 
 }
 
-/* =====================================================
-CÉU
-====================================================== */
-
 function buildSky() {
 
 for (
 let i = 0;
-i < 20;
+i < 30;
+i++
+) {
+
+addDecoration(
+
+i % 5 ===
+0
+? "celestialPillar"
+: "cloud",
+
+randomInt(
+160,
+3220
+),
+
+randomInt(
+140,
+2050
+),
+
+{
+phase:
+random(
+0,
+Math.PI *
+2
+)
+}
+
+);
+
+}
+
+for (
+let i = 0;
+i < 18;
 i++
 ) {
 
 addResource(
 randomInt(
-200,
-3200
+220,
+3080
 ),
 randomInt(
 180,
-1950
+1940
 ),
 "cristal"
 );
 
 }
 
+addNPC(
+1050,
+830,
+"AERIS",
+"Guardião Celeste",
+"#c7d4df",
+[
+"O Céu é preparação, não o fim.",
+"Cinco hordas guardam o caminho para aquele que protege a passagem.",
+"Vença todas. Depois enfrente o Guardião do Caminho.",
+"A Flauta da Memória não abre uma porta. Ela faz o mundo lembrar que uma escada existia."
+]
+);
+
 for (
 let i = 0;
-i < 8;
+i < 6;
 i++
 ) {
 
 addEnemy({
 
-id: `sky_enemy_${i}`,
+id:
+`sky_patrol_${i}`,
 
-x: randomInt(
-500,
-2950
-),
+x:
+450 +
+i *
+410,
 
-y: randomInt(
-260,
-1800
-),
+y:
+i % 2
+? 520
+: 1730,
 
-name: "SERAFIM CAÍDO",
+name:
+"SERAFIM ERRANTE",
 
-icon: "🪽",
+icon:
+"🪽",
 
-type: "normal",
+type:
+"normal",
 
-hp: 340,
+hp:
+335,
 
-maxHp: 340,
+maxHp:
+335,
 
-damage: 36,
+damage:
+36,
 
-speed: 101,
+speed:
+98,
 
-vision: 325,
+vision:
+325,
 
-attackRange: 76,
+attackRange:
+82,
 
-radius: 27,
+radius:
+27,
 
-color: "#cbd7df",
+color:
+"#d3dde3",
 
-drop: "cristal",
+drop:
+"cristal",
 
-dropAmount: 2
+dropAmount:
+1,
+
+dropChance:
+0.62,
+
+special:
+i >= 3
+? "crystalShot"
+: null
 
 });
 
 }
 
-addNPC(
-1200,
-850,
-"AERIS",
-"Guardião Celeste",
-"#c7d4df",
-[
-"Até aqui existem coisas que estão sendo esquecidas.",
-"O céu não fica acima de tudo. Algumas coisas ainda estão além dele.",
-"A Quietude deixa marcas até onde não há chão.",
-"Se continuar, faça isso porque escolheu lembrar — não porque alguém mandou."
-]
+addTrial(
+1710,
+1100,
+"sky_hordes",
+"ALTAR DAS CINCO HORDAS"
 );
 
-addEnemy({
+if (
+!state.player
+.skyTrial
+?.complete
+) {
 
-id: "hell_guardian",
+addDecoration(
+"trialAltar",
+1710,
+1100
+);
 
-x: 2890,
+}
 
-y: 1100,
+if (
+state.player
+.skyTrial
+?.complete &&
+!hasDefeatedBoss(
+"path_guardian"
+)
+) {
 
-name: "SERAFIM DA QUIETUDE",
+spawnPathGuardian();
 
-icon: "☀️",
-
-type: "progression",
-
-hp: 1250,
-
-maxHp: 1250,
-
-damage: 50,
-
-speed: 71,
-
-vision: 400,
-
-attackRange: 102,
-
-radius: 40,
-
-color: "#d1b377",
-
-drop: "essencia",
-
-dropAmount: 4,
-
-unlock: "hell"
-
-});
+}
 
 addPortal(
-3220,
-990,
-70,
-230,
+3260,
+960,
+72,
+250,
 "hell",
 () =>
+
 hasDefeatedBoss(
-"hell_guardian"
+"path_guardian"
+) &&
+
+Boolean(
+state.player.flutePlayed
 ),
-"PASSAGEM DESCONHECIDA"
-);
+
+"ESCADA DO INFERNO",
+
+{
+
+stairs:
+true,
+
+visible:
+() =>
+Boolean(
+state.player.flutePlayed
+)
 
 }
 
-/* =====================================================
-INFERNO
-====================================================== */
+);
+
+addSecret(
+420,
+350,
+"Banco nas Nuvens",
+"Alguém deixou um banco olhando para o vazio. No encosto está gravado: 'eu esperaria você de novo'.",
+"☁️"
+);
+
+}
 
 function buildHell() {
 
 for (
 let i = 0;
-i < 26;
+i < 38;
 i++
 ) {
 
 addObstacle(
 randomInt(
-180,
+170,
 3380
 ),
 randomInt(
-170,
+160,
 2150
 ),
-70,
-50,
-"basalt"
+randomInt(
+55,
+105
+),
+randomInt(
+40,
+80
+),
+i % 5 ===
+0
+? "obsidian"
+: "basalt"
+);
+
+}
+
+for (
+let i = 0;
+i < 34;
+i++
+) {
+
+addDecoration(
+
+i % 4 ===
+0
+? "lavaPool"
+
+: i % 3 ===
+0
+? "hellSmoke"
+
+: "emberVent",
+
+randomInt(
+160,
+3400
+),
+
+randomInt(
+150,
+2200
+),
+
+{
+phase:
+random(
+0,
+Math.PI *
+2
+)
+}
+
 );
 
 }
@@ -3060,35 +4905,40 @@ const types = [
 "DEMÔNIO DE CINZA",
 "🔥",
 "#8c4d3f",
-"essencia"
+"essencia",
+"fireCircle"
 ],
 
 [
 "CÃO DE LAVA",
 "🐕",
 "#984b31",
-"ouro"
+"couro",
+"dash"
 ],
 
 [
 "ESPECTRO CARMESIM",
 "👻",
 "#724056",
-"essencia"
+"essencia",
+"shadowBurst"
 ],
 
 [
 "GÁRGULA QUEBRADA",
 "🗿",
 "#70554a",
-"ouro"
+"ouro",
+"rockThrow"
 ],
 
 [
 "PARASITA DO VAZIO",
 "🕷️",
 "#4b3551",
-"essencia"
+"essencia",
+"voidCircle"
 ]
 
 ];
@@ -3099,14 +4949,15 @@ types.forEach(
 name,
 icon,
 color,
-drop
+drop,
+special
 ],
 typeIndex
 ) => {
 
 for (
 let i = 0;
-i < 2;
+i < 3;
 i++
 ) {
 
@@ -3117,51 +4968,66 @@ id:
 
 x:
 randomInt(
-450,
-3000
+430,
+3020
 ),
 
 y:
 randomInt(
-280,
-2050
+270,
+2060
 ),
 
 name,
 
 icon,
 
-type: "hell",
+type:
+"hell",
 
-hellType: typeIndex,
+hellType:
+typeIndex,
 
 hp:
-380 +
-typeIndex * 35,
+410 +
+typeIndex *
+42,
 
 maxHp:
-380 +
-typeIndex * 35,
+410 +
+typeIndex *
+42,
 
 damage:
-36 +
-typeIndex * 3,
+39 +
+typeIndex *
+4,
 
 speed:
-80 +
-typeIndex * 4,
+82 +
+typeIndex *
+4,
 
-vision: 340,
+vision:
+360,
 
-attackRange: 78,
+attackRange:
+84,
 
-radius: 27,
+radius:
+28,
 
 color,
 
 drop,
 
-dropAmount: 1
+dropAmount:
+1,
+
+dropChance:
+0.72,
+
+special
 
 });
 
@@ -3172,39 +5038,59 @@ dropAmount: 1
 
 addEnemy({
 
-id: "final_gate_guardian",
+id:
+"final_gate_guardian",
 
-x: 3050,
+x:
+3060,
 
-y: 1120,
+y:
+1120,
 
-name: "SENHOR DA QUIETUDE",
+name:
+"GUARDIÃO SUPREMO DO INFERNO",
 
-icon: "👿",
+icon:
+"👿",
 
-type: "progression",
+type:
+"progression",
 
-hp: 1550,
+hp:
+1750,
 
-maxHp: 1550,
+maxHp:
+1750,
 
-damage: 56,
+damage:
+62,
 
-speed: 76,
+speed:
+76,
 
-vision: 430,
+vision:
+455,
 
-attackRange: 108,
+attackRange:
+115,
 
-radius: 41,
+radius:
+44,
 
-color: "#a64139",
+color:
+"#a64139",
 
-drop: "essencia",
+drop:
+"fragmentoMemoria",
 
-dropAmount: 6,
+dropAmount:
+6,
 
-unlock: "final"
+unlock:
+"final",
+
+special:
+"infernalStorm"
 
 });
 
@@ -3214,9 +5100,7 @@ addPortal(
 70,
 230,
 "final",
-() => {
-
-return (
+() =>
 
 hasDefeatedBoss(
 "final_gate_guardian"
@@ -3225,55 +5109,65 @@ hasDefeatedBoss(
 Object.keys(
 state.player
 .hellTypesDefeated
-).length >= 5
+).length >=
+5,
 
-);
-
-},
-"PORTA SELADA"
+"CÂMARA FINAL"
 );
 
 }
-
-/* =====================================================
-FINAL
-====================================================== */
 
 function buildFinal() {
 
 addEnemy({
 
-id: "other_self",
+id:
+"other_self",
 
-x: 1550,
+x:
+1550,
 
-y: 750,
+y:
+750,
 
-name: "O OUTRO EU",
+name:
+"O OUTRO EU",
 
-icon: "☯",
+icon:
+"☯",
 
-type: "final",
+type:
+"final",
 
-hp: 2200,
+hp:
+2200,
 
-maxHp: 2200,
+maxHp:
+2200,
 
-damage: 62,
+damage:
+62,
 
-speed: 86,
+speed:
+86,
 
-vision: 650,
+vision:
+650,
 
-attackRange: 112,
+attackRange:
+112,
 
-radius: 42,
+radius:
+42,
 
-color: "#b7aaa0",
+color:
+"#b7aaa0",
 
-drop: "essencia",
+drop:
+"essencia",
 
-dropAmount: 10
+dropAmount:
+10
 
 });
 
@@ -3284,14 +5178,12 @@ function hasDefeatedBoss(id) {
 return Boolean(
 state.player
 ?.defeatedBosses
-?.includes(id)
+?.includes(
+id
+)
 );
 
 }
-
-/* =====================================================
-COLISÃO
-====================================================== */
 
 function circleRectCollision(
 cx,
@@ -3304,26 +5196,33 @@ const closestX =
 clamp(
 cx,
 rect.x,
-rect.x + rect.w
+rect.x +
+rect.w
 );
 
 const closestY =
 clamp(
 cy,
 rect.y,
-rect.y + rect.h
+rect.y +
+rect.h
 );
 
 const dx =
-cx - closestX;
+cx -
+closestX;
 
 const dy =
-cy - closestY;
+cy -
+closestY;
 
 return (
-dx * dx +
-dy * dy <
-radius * radius
+dx *
+dx +
+dy *
+dy <
+radius *
+radius
 );
 
 }
@@ -3343,18 +5242,24 @@ getHouseRoom();
 
 const insideRoom = (
 
-x - radius >=
-room.x + 18 &&
+x -
+radius >=
+room.x +
+18 &&
 
-y - radius >=
-room.y + 18 &&
+y -
+radius >=
+room.y +
+18 &&
 
-x + radius <=
+x +
+radius <=
 room.x +
 room.w -
 18 &&
 
-y + radius <=
+y +
+radius <=
 room.y +
 room.h -
 18
@@ -3399,15 +5304,21 @@ return true;
 
 if (
 
-x - radius < 72 ||
+x -
+radius <
+72 ||
 
-y - radius < 72 ||
+y -
+radius <
+72 ||
 
-x + radius >
+x +
+radius >
 state.world.width -
 72 ||
 
-y + radius >
+y +
+radius >
 state.world.height -
 72
 
@@ -3427,14 +5338,17 @@ obstacle.treeId
 ) {
 
 const tree =
-state.world.trees.find(
+state.world
+.trees
+.find(
 item =>
 item.id ===
 obstacle.treeId
 );
 
 if (
-!tree?.alive
+!tree
+?.alive
 ) {
 
 continue;
@@ -3466,8 +5380,10 @@ state.world.npcs
 if (
 
 Math.hypot(
-x - npc.x,
-y - npc.y
+x -
+npc.x,
+y -
+npc.y
 ) <
 
 radius +
@@ -3493,15 +5409,21 @@ radius
 
 if (
 
-x - radius < 72 ||
+x -
+radius <
+72 ||
 
-y - radius < 72 ||
+y -
+radius <
+72 ||
 
-x + radius >
+x +
+radius >
 state.world.width -
 72 ||
 
-y + radius >
+y +
+radius >
 state.world.height -
 72
 
@@ -3521,14 +5443,17 @@ obstacle.treeId
 ) {
 
 const tree =
-state.world.trees.find(
+state.world
+.trees
+.find(
 item =>
 item.id ===
 obstacle.treeId
 );
 
 if (
-!tree?.alive
+!tree
+?.alive
 ) {
 
 continue;
@@ -3556,10 +5481,6 @@ return true;
 
 }
 
-/* =====================================================
-CASAS
-====================================================== */
-
 function getHouseRoom() {
 
 const building =
@@ -3567,7 +5488,10 @@ state.currentHouse;
 
 const w =
 clamp(
-(building?.w || 430) +
+(
+building?.w ||
+430
+) +
 150,
 560,
 760
@@ -3575,7 +5499,10 @@ clamp(
 
 const h =
 clamp(
-(building?.h || 270) +
+(
+building?.h ||
+270
+) +
 150,
 420,
 560
@@ -3584,12 +5511,16 @@ clamp(
 return {
 
 x:
-state.world.width / 2 -
-w / 2,
+state.world.width /
+2 -
+w /
+2,
 
 y:
-state.world.height / 2 -
-h / 2,
+state.world.height /
+2 -
+h /
+2,
 
 w,
 
@@ -3605,71 +5536,95 @@ const themes = {
 
 home: {
 
-wall: "#4b342b",
+wall:
+"#4b342b",
 
-floor: "#9a7452",
+floor:
+"#9a7452",
 
-trim: "#d8b87a",
+trim:
+"#d8b87a",
 
-accent: "#efb05b"
+accent:
+"#efb05b"
 
 },
 
 elianHome: {
 
-wall: "#3f3831",
+wall:
+"#3f3831",
 
-floor: "#856a50",
+floor:
+"#856a50",
 
-trim: "#cab07e",
+trim:
+"#cab07e",
 
-accent: "#6d8790"
+accent:
+"#6d8790"
 
 },
 
 forge: {
 
-wall: "#292b2f",
+wall:
+"#292b2f",
 
-floor: "#55504a",
+floor:
+"#55504a",
 
-trim: "#a39789",
+trim:
+"#a39789",
 
-accent: "#ff8149"
+accent:
+"#ff8149"
 
 },
 
 shop: {
 
-wall: "#3e2e28",
+wall:
+"#3e2e28",
 
-floor: "#8c6847",
+floor:
+"#8c6847",
 
-trim: "#e0bc75",
+trim:
+"#e0bc75",
 
-accent: "#e8c56f"
+accent:
+"#e8c56f"
 
 },
 
 woodshop: {
 
-wall: "#453225",
+wall:
+"#453225",
 
-floor: "#a0784f",
+floor:
+"#a0784f",
 
-trim: "#d9b276",
+trim:
+"#d9b276",
 
-accent: "#d89c55"
+accent:
+"#d89c55"
 
 }
 
 };
 
 return (
+
 themes[
-state.currentHouse?.id
+state.currentHouse
+?.id
 ] ||
+
 themes.home
+
 );
 
 }
@@ -3692,63 +5647,86 @@ const configs = {
 
 elianHome: {
 
-name: "ELIAN",
+name:
+"ELIAN",
 
-role: "Morador",
+role:
+"Morador",
 
-color: "#d4b27c",
+color:
+"#d4b27c",
 
-dx: .73,
+dx:
+0.73,
 
-dy: .38
+dy:
+0.38
 
 },
 
 forge: {
 
-name: "BORIN",
+name:
+"BORIN",
 
-role: "Ferreiro",
+role:
+"Ferreiro",
 
-color: "#8e8d89",
+color:
+"#8e8d89",
 
-questId: "coal",
+questId:
+"coal",
 
-dx: .73,
+dx:
+0.73,
 
-dy: .47
+dy:
+0.47
 
 },
 
 shop: {
 
-name: "DORAN",
+name:
+"DORAN",
 
-role: "Comerciante",
+role:
+"Comerciante",
 
-color: "#c58a54",
+color:
+"#c58a54",
 
-merchant: true,
+merchant:
+true,
 
-dx: .72,
+dx:
+0.72,
 
-dy: .34
+dy:
+0.34
 
 },
 
 woodshop: {
 
-name: "BRAN",
+name:
+"BRAN",
 
-role: "Carpinteiro",
+role:
+"Carpinteiro",
 
-color: "#8d7053",
+color:
+"#8d7053",
 
-questId: "wood",
+questId:
+"wood",
 
-dx: .73,
+dx:
+0.73,
 
-dy: .43
+dy:
+0.43
 
 }
 
@@ -3768,7 +5746,9 @@ return [];
 }
 
 const original =
-state.world.npcs.find(
+state.world
+.npcs
+.find(
 npc =>
 npc.name ===
 config.name
@@ -3798,7 +5778,8 @@ room.y +
 room.h *
 config.dy,
 
-radius: 17,
+radius:
+17,
 
 lines:
 original?.lines ||
@@ -3806,7 +5787,8 @@ original?.lines ||
 "Bem-vindo."
 ],
 
-interior: true
+interior:
+true
 
 }
 
@@ -3821,7 +5803,8 @@ getHouseRoom();
 
 state.player.x =
 room.x +
-room.w / 2;
+room.w /
+2;
 
 state.player.y =
 room.y +
@@ -3833,10 +5816,6 @@ state.keys.clear();
 updateCamera();
 
 }
-
-/* =====================================================
-MOVIMENTO
-====================================================== */
 
 function updateMovement(dt) {
 
@@ -3856,8 +5835,12 @@ let dy =
 0;
 
 if (
-state.keys.has("w") ||
-state.keys.has("arrowup")
+state.keys.has(
+"w"
+) ||
+state.keys.has(
+"arrowup"
+)
 ) {
 
 dy--;
@@ -3865,8 +5848,12 @@ dy--;
 }
 
 if (
-state.keys.has("s") ||
-state.keys.has("arrowdown")
+state.keys.has(
+"s"
+) ||
+state.keys.has(
+"arrowdown"
+)
 ) {
 
 dy++;
@@ -3874,8 +5861,12 @@ dy++;
 }
 
 if (
-state.keys.has("a") ||
-state.keys.has("arrowleft")
+state.keys.has(
+"a"
+) ||
+state.keys.has(
+"arrowleft"
+)
 ) {
 
 dx--;
@@ -3883,8 +5874,12 @@ dx--;
 }
 
 if (
-state.keys.has("d") ||
-state.keys.has("arrowright")
+state.keys.has(
+"d"
+) ||
+state.keys.has(
+"arrowright"
+)
 ) {
 
 dx++;
@@ -3920,19 +5915,23 @@ state.houseMode
 
 if (
 !state.houseMode &&
-state.player.hunger <= 20
+state.player.hunger <=
+20
 ) {
 
-speed *= .72;
+speed *=
+0.72;
 
 }
 
 if (
 !state.houseMode &&
-state.player.fatigue <= 20
+state.player.fatigue <=
+20
 ) {
 
-speed *= .72;
+speed *=
+0.72;
 
 }
 
@@ -3978,10 +5977,6 @@ nextY;
 
 }
 
-/* =====================================================
-SOBREVIVÊNCIA
-====================================================== */
-
 function updateSurvival(dt) {
 
 if (
@@ -3999,7 +5994,8 @@ state.player;
 player.hunger =
 clamp(
 player.hunger -
-.25 * dt,
+0.12 *
+dt,
 0,
 100
 );
@@ -4007,41 +6003,81 @@ player.hunger -
 player.fatigue =
 clamp(
 player.fatigue -
-.2 * dt,
+0.09 *
+dt,
 0,
 100
 );
 
 player.magic =
 clamp(
+
 player.magic +
-1.7 * dt,
+
+(
+player.hunger >
+10
+? 1.55
+: 0.7
+) *
+dt,
+
 0,
+
 player.maxMagic
+
 );
 
 player.energy =
 clamp(
+
 player.energy +
-3 * dt,
+
+(
+player.fatigue >
+10
+? 2.7
+: 1.1
+) *
+dt,
+
 0,
+
 player.maxEnergy
+
 );
 
 if (
-player.hunger <= 0 ||
-player.fatigue <= 0
+player.hunger <=
+0 ||
+player.fatigue <=
+0
 ) {
 
 player.hp =
 clamp(
 player.hp -
-.12 * dt,
+0.045 *
+dt,
 1,
 player.maxHp
 );
 
 }
+
+document.body
+.classList
+.toggle(
+
+"low-needs",
+
+player.hunger <=
+16 ||
+
+player.fatigue <=
+16
+
+);
 
 const now =
 performance.now();
@@ -4053,11 +6089,12 @@ state.warnedNeedAt >
 ) {
 
 if (
-player.hunger < 18
+player.hunger <
+18
 ) {
 
 showToast(
-"Você está ficando com fome."
+"Você está com fome. Procure cenouras, cace ou compre comida."
 );
 
 state.warnedNeedAt =
@@ -4066,11 +6103,12 @@ now;
 }
 
 else if (
-player.fatigue < 18
+player.fatigue <
+18
 ) {
 
 showToast(
-"Você está cansado."
+"Você está exausto. Durma na cama da sua casa."
 );
 
 state.warnedNeedAt =
@@ -4081,10 +6119,6 @@ now;
 }
 
 }
-
-/* =====================================================
-INIMIGOS
-====================================================== */
 
 function updateEnemies(dt) {
 
@@ -4115,7 +6149,8 @@ enemy.respawnTimer -=
 dt;
 
 if (
-enemy.respawnTimer <= 0
+enemy.respawnTimer <=
+0
 ) {
 
 enemy.dead =
@@ -4152,10 +6187,30 @@ enemy.attackTimer -
 dt
 );
 
+enemy.specialTimer =
+Math.max(
+0,
+(
+enemy.specialTimer ||
+0
+) -
+dt
+);
+
 enemy.hitFlash =
 Math.max(
 0,
 enemy.hitFlash -
+dt
+);
+
+enemy.stunTimer =
+Math.max(
+0,
+(
+enemy.stunTimer ||
+0
+) -
 dt
 );
 
@@ -4168,11 +6223,13 @@ state.player
 if (
 enemy.type ===
 "final" &&
-!state.player.finalChoice
+!state.player
+.finalChoice
 ) {
 
 if (
-d < 130 &&
+d <
+130 &&
 !state.finalChoiceShown
 ) {
 
@@ -4196,7 +6253,8 @@ continue;
 
 if (
 !enemy.aggressive &&
-d <= enemy.vision
+d <=
+enemy.vision
 ) {
 
 enemy.aggressive =
@@ -4239,9 +6297,34 @@ false;
 enemy.state =
 "idle";
 
+enemy.hp =
+Math.min(
+enemy.maxHp,
+enemy.hp +
+enemy.maxHp *
+0.18
+);
+
 continue;
 
 }
+
+if (
+enemy.stunTimer >
+0
+) {
+
+continue;
+
+}
+
+updateEnemyPhase(
+enemy
+);
+
+updateEnemySpecial(
+enemy
+);
 
 if (
 d >
@@ -4249,9 +6332,16 @@ enemy.attackRange
 ) {
 
 const length =
-d || 1;
+d ||
+1;
+
+const slow =
+enemy.telegraphing
+? 0.28
+: 1;
 
 const vx =
+
 (
 (
 state.player.x -
@@ -4259,10 +6349,15 @@ enemy.x
 ) /
 length
 ) *
+
 enemy.speed *
+
+slow *
+
 dt;
 
 const vy =
+
 (
 (
 state.player.y -
@@ -4270,12 +6365,17 @@ enemy.y
 ) /
 length
 ) *
+
 enemy.speed *
+
+slow *
+
 dt;
 
 if (
 canEnemyMoveTo(
-enemy.x + vx,
+enemy.x +
+vx,
 enemy.y,
 enemy.radius
 )
@@ -4289,7 +6389,8 @@ vx;
 if (
 canEnemyMoveTo(
 enemy.x,
-enemy.y + vy,
+enemy.y +
+vy,
 enemy.radius
 )
 ) {
@@ -4302,7 +6403,9 @@ vy;
 }
 
 else if (
-enemy.attackTimer <= 0
+enemy.attackTimer <=
+0 &&
+!enemy.telegraphing
 ) {
 
 damagePlayer(
@@ -4310,7 +6413,12 @@ enemy.damage
 );
 
 enemy.attackTimer =
-1.15;
+Math.max(
+0.68,
+1.2 -
+enemy.phase *
+0.08
+);
 
 }
 
@@ -4330,6 +6438,619 @@ dt
 
 }
 
+function updateEnemyPhase(enemy) {
+
+if (
+enemy.type !==
+"progression" &&
+enemy.type !==
+"resourceBoss" &&
+enemy.type !==
+"final"
+) {
+
+enemy.phase =
+1;
+
+return;
+
+}
+
+const ratio =
+enemy.hp /
+enemy.maxHp;
+
+const newPhase =
+
+ratio >
+0.72
+? 1
+
+: ratio >
+0.42
+? 2
+
+: 3;
+
+if (
+newPhase !==
+enemy.phase
+) {
+
+enemy.phase =
+newPhase;
+
+enemy.specialTimer =
+Math.min(
+enemy.specialTimer ||
+1,
+0.8
+);
+
+showToast(
+`${enemy.name}: fase ${newPhase}.`
+);
+
+}
+
+}
+
+function updateEnemySpecial(enemy) {
+
+if (
+!enemy.special ||
+enemy.specialTimer >
+0 ||
+enemy.telegraphing
+) {
+
+return;
+
+}
+
+const phase =
+Math.max(
+1,
+enemy.phase ||
+1
+);
+
+const px =
+state.player.x;
+
+const py =
+state.player.y;
+
+enemy.telegraphing =
+true;
+
+const release =
+delay => {
+
+setTimeout(
+() => {
+
+if (
+enemy &&
+!enemy.dead
+) {
+
+enemy.telegraphing =
+false;
+
+}
+
+},
+delay *
+1000 +
+160
+);
+
+};
+
+if (
+
+enemy.special ===
+"rockThrow" ||
+
+enemy.special ===
+"crystalShot"
+
+) {
+
+addHazard(
+px,
+py,
+
+enemy.special ===
+"rockThrow"
+? 56
+: 48,
+
+0.82,
+
+Math.round(
+enemy.damage *
+0.95
+),
+
+{
+sourceId:
+enemy.id,
+
+kind:
+enemy.special
+}
+);
+
+release(
+0.82
+);
+
+enemy.specialTimer =
+random(
+3.1,
+4.6
+);
+
+return;
+
+}
+
+if (
+enemy.special ===
+"dash"
+) {
+
+addHazard(
+px,
+py,
+68,
+0.62,
+Math.round(
+enemy.damage *
+1.15
+),
+{
+sourceId:
+enemy.id,
+kind:
+"dash"
+}
+);
+
+const d =
+distance(
+enemy,
+state.player
+) ||
+1;
+
+const step =
+Math.min(
+180,
+d - 25
+);
+
+const nx =
+
+enemy.x +
+
+(
+(
+px -
+enemy.x
+) /
+d
+) *
+step;
+
+const ny =
+
+enemy.y +
+
+(
+(
+py -
+enemy.y
+) /
+d
+) *
+step;
+
+setTimeout(
+() => {
+
+if (
+!enemy.dead &&
+canEnemyMoveTo(
+nx,
+ny,
+enemy.radius
+)
+) {
+
+enemy.x =
+nx;
+
+enemy.y =
+ny;
+
+}
+
+},
+540
+);
+
+release(
+0.62
+);
+
+enemy.specialTimer =
+random(
+3.4,
+4.8
+);
+
+return;
+
+}
+
+const configs = {
+
+natureBurst: {
+
+radius:
+105,
+
+delay:
+1,
+
+mult:
+1.05,
+
+count:
+1
+
+},
+
+rootCircle: {
+
+radius:
+78,
+
+delay:
+1.05,
+
+mult:
+1.10,
+
+count:
+2 +
+phase
+
+},
+
+leafStorm: {
+
+radius:
+66,
+
+delay:
+0.9,
+
+mult:
+1.05,
+
+count:
+2 +
+phase
+
+},
+
+rockStorm: {
+
+radius:
+72,
+
+delay:
+0.92,
+
+mult:
+1.15,
+
+count:
+2 +
+phase *
+2
+
+},
+
+oreBurst: {
+
+radius:
+70,
+
+delay:
+0.88,
+
+mult:
+1.10,
+
+count:
+2 +
+phase
+
+},
+
+crystalRain: {
+
+radius:
+64,
+
+delay:
+0.76,
+
+mult:
+1.14,
+
+count:
+3 +
+phase *
+2
+
+},
+
+fireCircle: {
+
+radius:
+75,
+
+delay:
+0.8,
+
+mult:
+1.12,
+
+count:
+2 +
+phase
+
+},
+
+shadowBurst: {
+
+radius:
+82,
+
+delay:
+0.86,
+
+mult:
+1.15,
+
+count:
+2 +
+phase
+
+},
+
+voidCircle: {
+
+radius:
+92,
+
+delay:
+1,
+
+mult:
+1.18,
+
+count:
+2 +
+phase
+
+},
+
+infernalStorm: {
+
+radius:
+78,
+
+delay:
+0.68,
+
+mult:
+1.22,
+
+count:
+4 +
+phase *
+2
+
+}
+
+};
+
+const config =
+configs[
+enemy.special
+];
+
+if (
+config
+) {
+
+for (
+let i = 0;
+i < config.count;
+i++
+) {
+
+const angle =
+random(
+0,
+Math.PI *
+2
+);
+
+const spread =
+
+i ===
+0
+? 0
+
+: random(
+50,
+190 +
+phase *
+25
+);
+
+addHazard(
+
+px +
+Math.cos(
+angle
+) *
+spread,
+
+py +
+Math.sin(
+angle
+) *
+spread,
+
+config.radius,
+
+config.delay +
+i *
+0.055,
+
+Math.round(
+enemy.damage *
+config.mult
+),
+
+{
+sourceId:
+enemy.id,
+
+kind:
+enemy.special
+}
+
+);
+
+}
+
+release(
+config.delay
+);
+
+enemy.specialTimer =
+Math.max(
+1.8,
+
+random(
+3.8,
+5.2
+) -
+
+phase *
+0.45
+);
+
+return;
+
+}
+
+enemy.telegraphing =
+false;
+
+enemy.specialTimer =
+3;
+
+}
+
+function updateHazards(dt) {
+
+for (
+const hazard of
+state.world.hazards
+) {
+
+hazard.delay -=
+dt;
+
+hazard.life -=
+dt;
+
+if (
+!hazard.triggered &&
+hazard.delay <=
+0
+) {
+
+hazard.triggered =
+true;
+
+if (
+
+Math.hypot(
+
+state.player.x -
+hazard.x,
+
+state.player.y -
+hazard.y
+
+) <=
+
+hazard.radius +
+state.player.radius
+
+) {
+
+damagePlayer(
+hazard.damage
+);
+
+}
+
+spawnParticles(
+
+hazard.x,
+
+hazard.y,
+
+hazard.kind
+?.includes(
+"crystal"
+)
+
+? "#ff6d8c"
+
+: "#e85c45",
+
+16
+
+);
+
+}
+
+}
+
+state.world.hazards =
+state.world.hazards
+.filter(
+hazard =>
+hazard.life >
+0
+);
+
+}
+
 function updateFinalBoss(
 enemy,
 dt
@@ -4340,13 +7061,24 @@ enemy.hp /
 enemy.maxHp;
 
 const newPhase =
-ratio > .75
+
+ratio >
+0.8
 ? 1
-: ratio > .5
+
+: ratio >
+0.6
 ? 2
-: ratio > .25
+
+: ratio >
+0.4
 ? 3
-: 4;
+
+: ratio >
+0.2
+? 4
+
+: 5;
 
 if (
 newPhase !==
@@ -4362,56 +7094,118 @@ showToast(
 
 }
 
-if (
-Math.random() <
-dt *
-.18 *
-newPhase
-) {
+enemy.finalSpecialTimer =
+Math.max(
 
-state.world.effects.push({
+0,
 
-type: "dangerOrb",
+(
+enemy.finalSpecialTimer ||
+2.2
+) -
+dt
 
-x:
-enemy.x +
-random(
--50,
-50
-),
-
-y:
-enemy.y +
-random(
--50,
-50
-),
-
-life: 1.5
-
-});
+);
 
 if (
-newPhase === 4 &&
-distance(
-enemy,
-state.player
-) < 260
+enemy.finalSpecialTimer <=
+0
 ) {
 
-damagePlayer(
-10
+const count =
+2 +
+newPhase *
+2;
+
+const delay =
+Math.max(
+0.52,
+1.02 -
+newPhase *
+0.08
+);
+
+for (
+let i = 0;
+i < count;
+i++
+) {
+
+const angle =
+random(
+0,
+Math.PI *
+2
+);
+
+const spread =
+
+i ===
+0
+? 0
+
+: random(
+55,
+245
+);
+
+addHazard(
+
+state.player.x +
+Math.cos(
+angle
+) *
+spread,
+
+state.player.y +
+Math.sin(
+angle
+) *
+spread,
+
+68 +
+newPhase *
+4,
+
+delay +
+i *
+0.035,
+
+Math.round(
+
+enemy.damage *
+
+(
+0.68 +
+newPhase *
+0.07
+)
+
+),
+
+{
+sourceId:
+enemy.id,
+
+kind:
+"quietudeFinal"
+}
+
+);
+
+}
+
+enemy.finalSpecialTimer =
+Math.max(
+1.6,
+4.1 -
+newPhase *
+0.42
 );
 
 }
 
 }
-
-}
-
-/* =====================================================
-DANO
-====================================================== */
 
 function damagePlayer(amount) {
 
@@ -4420,7 +7214,8 @@ state.player;
 
 if (
 !player ||
-player.invincible > 0 ||
+player.invincible >
+0 ||
 player.dead
 ) {
 
@@ -4429,15 +7224,17 @@ return;
 }
 
 const armorDefense =
+
 ITEMS[
-player.equipment.armor
+player.equipment
+.armor
 ]?.defense ||
 0;
 
-const finalDamage =
+const rawDamage =
 Math.max(
+
 1,
-Math.round(
 
 amount -
 
@@ -4445,9 +7242,34 @@ amount -
 player.defense +
 armorDefense
 ) *
-.35
+0.35
+
+);
+
+const reduction =
+clamp(
+player.damageReduction ||
+0,
+0,
+0.72
+);
+
+const finalDamage =
+Math.max(
+
+1,
+
+Math.round(
+
+rawDamage *
+
+(
+1 -
+reduction
+)
 
 )
+
 );
 
 player.hp =
@@ -4458,14 +7280,37 @@ finalDamage
 );
 
 player.invincible =
-.65;
+0.55;
 
-showToast(
-`Você sofreu ${finalDamage} de dano.`
-);
+state.world.effects.push({
+
+type:
+"damageNumber",
+
+x:
+player.x,
+
+y:
+player.y -
+26,
+
+text:
+`-${finalDamage}`,
+
+life:
+0.72,
+
+maxLife:
+0.72,
+
+color:
+"#ff8178"
+
+});
 
 if (
-player.hp <= 0
+player.hp <=
+0
 ) {
 
 playerDeath();
@@ -4482,8 +7327,10 @@ true;
 state.paused =
 true;
 
-must("deathPanel")
-.classList.remove(
+must(
+"deathPanel"
+).classList
+.remove(
 "hidden"
 );
 
@@ -4492,22 +7339,29 @@ must("deathPanel")
 function respawnPlayer() {
 
 const checkpoint =
-state.player.checkpoint ||
+state.player
+.checkpoint ||
 {
 
-area: "village",
+area:
+"village",
 
-x: 480,
+x:
+480,
 
-y: 610
+y:
+610
 
 };
 
 state.area =
+
 REGIONS[
 checkpoint.area
 ]
+
 ? checkpoint.area
+
 : "village";
 
 state.houseMode =
@@ -4529,35 +7383,55 @@ checkpoint.y;
 
 state.player.hp =
 Math.max(
+
 1,
+
 Math.floor(
-state.player.maxHp *
-.7
+
+state.player
+.maxHp *
+0.7
+
 )
+
 );
 
 state.player.magic =
 Math.max(
+
 1,
+
 Math.floor(
-state.player.maxMagic *
-.7
+
+state.player
+.maxMagic *
+0.7
+
 )
+
 );
 
 state.player.energy =
 Math.max(
+
 1,
+
 Math.floor(
-state.player.maxEnergy *
-.7
+
+state.player
+.maxEnergy *
+0.7
+
 )
+
 );
 
 state.player.money =
 Math.floor(
+
 state.player.money *
-.9
+0.9
+
 );
 
 state.player.dead =
@@ -4569,8 +7443,10 @@ state.player.invincible =
 state.paused =
 false;
 
-must("deathPanel")
-.classList.add(
+must(
+"deathPanel"
+).classList
+.add(
 "hidden"
 );
 
@@ -4579,16 +7455,11 @@ showToast(
 );
 
 }
-
-/* =====================================================
-COMBATE
-====================================================== */
-
-function findNearestEnemy(range) {
-
+  function findNearestEnemy(
+range
+) {
 let best =
 null;
-
 let bestDistance =
 Infinity;
 
@@ -4600,9 +7471,7 @@ state.world.enemies
 if (
 enemy.dead
 ) {
-
 continue;
-
 }
 
 const d =
@@ -4627,10 +7496,217 @@ d;
 }
 
 return best;
+}
+
+function findEnemyToward(
+point,
+range,
+cone = .72
+) {
+
+if (
+!point
+) {
+return findNearestEnemy(
+range
+);
+}
+
+const player =
+state.player;
+
+const ax =
+point.x -
+player.x;
+
+const ay =
+point.y -
+player.y;
+
+const al =
+Math.hypot(
+ax,
+ay
+) || 1;
+
+const aimX =
+ax / al;
+
+const aimY =
+ay / al;
+
+let best =
+null;
+
+let score =
+Infinity;
+
+for (
+const enemy of
+state.world.enemies
+) {
+
+if (
+enemy.dead
+) {
+continue;
+}
+
+const dx =
+enemy.x -
+player.x;
+
+const dy =
+enemy.y -
+player.y;
+
+const d =
+Math.hypot(
+dx,
+dy
+);
+
+if (
+d >
+range
+) {
+continue;
+}
+
+const dot =
+
+(
+dx /
+(
+d || 1
+)
+) *
+aimX +
+
+(
+dy /
+(
+d || 1
+)
+) *
+aimY;
+
+if (
+dot <
+cone
+) {
+continue;
+}
+
+const currentScore =
+d -
+dot *
+45;
+
+if (
+currentScore <
+score
+) {
+
+score =
+currentScore;
+
+best =
+enemy;
 
 }
 
-function performAttack() {
+}
+
+return best;
+}
+
+function createAttackEffect(
+point,
+range,
+color,
+ranged = false
+) {
+
+const player =
+state.player;
+
+const dx =
+
+(
+point?.x ??
+player.x + 1
+) -
+player.x;
+
+const dy =
+
+(
+point?.y ??
+player.y
+) -
+player.y;
+
+const length =
+Math.hypot(
+dx,
+dy
+) || 1;
+
+state.world.effects.push({
+
+type:
+ranged
+? "playerBolt"
+: "playerSlash",
+
+x:
+player.x,
+
+y:
+player.y,
+
+tx:
+player.x +
+(
+dx /
+length
+) *
+Math.min(
+range,
+155
+),
+
+ty:
+player.y +
+(
+dy /
+length
+) *
+Math.min(
+range,
+155
+),
+
+life:
+ranged
+? .38
+: .18,
+
+maxLife:
+ranged
+? .38
+: .18,
+
+color
+
+});
+
+}
+
+function performAttack(
+point = null
+) {
 
 const player =
 state.player;
@@ -4641,23 +7717,22 @@ state.paused ||
 state.dialogue ||
 state.travel ||
 state.battle ||
-player.dead
+player.dead ||
+state.houseMode
 ) {
-
 return;
-
 }
 
 if (
-player.attackCooldown > 0
+player.attackCooldown >
+0
 ) {
-
 return;
-
 }
 
 if (
-player.energy < 8
+player.energy <
+4
 ) {
 
 showToast(
@@ -4668,53 +7743,80 @@ return;
 
 }
 
-player.energy -=
-8;
-
-player.attackCooldown =
-.45;
-
-player.hunger =
-Math.max(
-0,
-player.hunger -
-.6
-);
-
-player.fatigue =
-Math.max(
-0,
-player.fatigue -
-.9
-);
-
 const character =
 currentCharacter();
 
-const attackRange =
+const ranged =
 
 character.id ===
 "kaelion" ||
 
 character.id ===
-"lirael"
+"lirael";
 
-? 250
-: 125;
+const attackRange =
+ranged
+? 300
+: 142;
+
+const worldPoint =
+point || {
+
+x:
+state.pointer.worldX,
+
+y:
+state.pointer.worldY
+
+};
 
 const target =
-findNearestEnemy(
-attackRange
+findEnemyToward(
+
+worldPoint,
+
+attackRange,
+
+ranged
+? .58
+: .48
+
+);
+
+player.energy =
+Math.max(
+0,
+player.energy - 4
+);
+
+player.attackCooldown =
+ranged
+? .34
+: .30;
+
+player.hunger =
+Math.max(
+0,
+player.hunger - .08
+);
+
+player.fatigue =
+Math.max(
+0,
+player.fatigue - .12
+);
+
+createAttackEffect(
+worldPoint,
+attackRange,
+character.color,
+ranged
 );
 
 if (
 !target
 ) {
-
-useClassAbility();
-
 return;
-
 }
 
 if (
@@ -4732,147 +7834,1219 @@ return;
 }
 
 let damage =
+
 player.damage +
 
 (
 ITEMS[
 player.equipment.weapon
-]?.damage ||
-0
+]?.damage || 0
 );
 
 if (
 character.id ===
 "grumgar"
 ) {
-
-damage +=
-10;
-
-}
-
-if (
-character.id ===
-"kaelion"
-) {
-
-damage +=
-5;
-
+damage += 8;
 }
 
 if (
 character.id ===
 "theron"
 ) {
+damage += 4;
+}
 
-damage +=
-5;
-
+if (
+ranged &&
+distance(
+target,
+player
+) >
+220
+) {
+damage *= .92;
 }
 
 attackEnemy(
 target,
+Math.round(
 damage
+)
 );
 
 }
 
 function useClassAbility() {
 
+useSkill(
+"q"
+);
+
+}
+
+const CLASS_SKILLS = {
+
+kaelion: {
+
+q: {
+name:
+"Bola de Memória",
+level: 1,
+cooldown: 2,
+costMagic: 15
+},
+
+r: {
+name:
+"Nova Arcana",
+level: 5,
+cooldown: 6,
+costMagic: 30
+},
+
+f: {
+name:
+"Tempestade da Quietude",
+level: 10,
+cooldown: 12,
+costMagic: 55
+}
+
+},
+
+theron: {
+
+q: {
+name:
+"Golpe Pesado",
+level: 1,
+cooldown: 3,
+costEnergy: 10
+},
+
+r: {
+name:
+"Postura do Guardião",
+level: 5,
+cooldown: 9,
+costEnergy: 18
+},
+
+f: {
+name:
+"Juramento de Aço",
+level: 10,
+cooldown: 15,
+costEnergy: 30
+}
+
+},
+
+grumgar: {
+
+q: {
+name:
+"Esmagamento",
+level: 1,
+cooldown: 4,
+costEnergy: 12
+},
+
+r: {
+name:
+"Rugido Ancestral",
+level: 5,
+cooldown: 8,
+costEnergy: 20
+},
+
+f: {
+name:
+"Terremoto",
+level: 10,
+cooldown: 14,
+costEnergy: 34
+}
+
+},
+
+lirael: {
+
+q: {
+name:
+"Flecha Feérica",
+level: 1,
+cooldown: 1.5,
+costMagic: 12
+},
+
+r: {
+name:
+"Luz Vital",
+level: 5,
+cooldown: 7,
+costMagic: 28
+},
+
+f: {
+name:
+"Chuva de Estrelas",
+level: 10,
+cooldown: 11,
+costMagic: 48
+}
+
+},
+
+zephyr: {
+
+q: {
+name:
+"Forma Adaptativa",
+level: 1,
+cooldown: 7,
+costMagic: 12
+},
+
+r: {
+name:
+"Investida Quimérica",
+level: 5,
+cooldown: 6,
+costEnergy: 18
+},
+
+f: {
+name:
+"Forma Perfeita",
+level: 10,
+cooldown: 15,
+costMagic: 42
+}
+
+}
+
+};
+
+function getCharacterSkills() {
+
+return (
+CLASS_SKILLS[
+state.player?.characterId
+] ||
+CLASS_SKILLS.kaelion
+);
+
+}
+
+function updateSkillCooldowns(
+dt
+) {
+
+if (
+!state.player
+) {
+return;
+}
+
+for (
+const key of
+[
+"q",
+"r",
+"f"
+]
+) {
+
+state.player
+.skillCooldowns[key] =
+Math.max(
+
+0,
+
+(
+state.player
+.skillCooldowns[key] ||
+0
+) -
+dt
+
+);
+
+}
+
+state.player.shieldTimer =
+Math.max(
+
+0,
+
+(
+state.player.shieldTimer ||
+0
+) -
+dt
+
+);
+
+if (
+state.player.shieldTimer <=
+0
+) {
+
+state.player.damageReduction =
+0;
+
+}
+
+}
+
+function useSkill(
+key
+) {
+
 const player =
 state.player;
+
+if (
+!player ||
+state.paused ||
+state.houseMode ||
+player.dead
+) {
+return;
+}
 
 const character =
 currentCharacter();
 
+const skills =
+getCharacterSkills();
+
+const skill =
+skills[key];
+
 if (
+!skill
+) {
+return;
+}
+
+if (
+player.level <
+skill.level
+) {
+
+showToast(
+`${skill.name} é desbloqueada no nível ${skill.level}.`
+);
+
+return;
+
+}
+
+if (
+(
+player.skillCooldowns[key] ||
+0
+) >
+0
+) {
+return;
+}
+
+if (
+skill.costMagic &&
+player.magic <
+skill.costMagic
+) {
+
+showToast(
+"Magia insuficiente."
+);
+
+return;
+
+}
+
+if (
+skill.costEnergy &&
+player.energy <
+skill.costEnergy
+) {
+
+showToast(
+"Energia insuficiente."
+);
+
+return;
+
+}
+
+player.magic =
+Math.max(
+
+0,
+
+player.magic -
+(
+skill.costMagic ||
+0
+)
+
+);
+
+player.energy =
+Math.max(
+
+0,
+
+player.energy -
+(
+skill.costEnergy ||
+0
+)
+
+);
+
+player.skillCooldowns[key] =
+skill.cooldown;
+
+const point = {
+
+x:
+state.pointer.worldX ||
+player.x + 1,
+
+y:
+state.pointer.worldY ||
+player.y
+
+};
+
+const weaponBonus =
+
+ITEMS[
+player.equipment.weapon
+]?.damage || 0;
+
+const base =
+player.damage +
+weaponBonus;
+
+/* =============================
+KAELION
+============================= */
+
+if (
+character.id ===
+"kaelion"
+) {
+
+if (
+key ===
+"q"
+) {
+
+const target =
+findEnemyToward(
+point,
+390,
+.48
+);
+
+createAttackEffect(
+point,
+390,
+"#f1a354",
+true
+);
+
+if (
+target
+) {
+
+if (
+target.type ===
+"progression" &&
+!target.accepted
+) {
+
+openBattle(
+target
+);
+
+}
+
+else {
+
+attackEnemy(
+
+target,
+
+Math.round(
+
+base *
+1.45 +
+18
+
+)
+
+);
+
+}
+
+}
+
+}
+
+else if (
+key ===
+"r"
+) {
+
+damageEnemiesInRadius(
+
+player.x,
+player.y,
+175,
+
+Math.round(
+
+base *
+1.35 +
+22
+
+),
+
+{
+stun:
+1.1,
+
+color:
+"#f0a053"
+}
+
+);
+
+}
+
+else {
+
+for (
+let i = 0;
+i < 7;
+i++
+) {
+
+const angle =
+
+(
+Math.PI *
+2 *
+i
+) /
+7;
+
+const x =
+
+player.x +
+
+Math.cos(
+angle
+) *
+
+random(
+70,
+210
+);
+
+const y =
+
+player.y +
+
+Math.sin(
+angle
+) *
+
+random(
+70,
+210
+);
+
+state.world.effects.push({
+
+type:
+"memoryStrike",
+
+x,
+
+y,
+
+life:
+.7,
+
+maxLife:
+.7,
+
+color:
+"#f4a35d"
+
+});
+
+damageEnemiesInRadius(
+
+x,
+y,
+78,
+
+Math.round(
+
+base *
+1.15 +
+24
+
+)
+
+);
+
+}
+
+}
+
+}
+
+/* =============================
+THERON
+============================= */
+
+else if (
+character.id ===
+"theron"
+) {
+
+if (
+key ===
+"q"
+) {
+
+const target =
+findEnemyToward(
+point,
+165,
+.32
+);
+
+if (
+target
+) {
+
+if (
+target.type ===
+"progression" &&
+!target.accepted
+) {
+
+openBattle(
+target
+);
+
+}
+
+else {
+
+attackEnemy(
+
+target,
+
+Math.round(
+
+base *
+1.65 +
+18
+
+)
+
+);
+
+target.stunTimer =
+Math.max(
+
+target.stunTimer ||
+0,
+
+.55
+
+);
+
+}
+
+}
+
+createAttackEffect(
+point,
+165,
+"#d5dce2",
+false
+);
+
+}
+
+else if (
+key ===
+"r"
+) {
+
+player.damageReduction =
+.45;
+
+player.shieldTimer =
+5.2;
+
+spawnParticles(
+player.x,
+player.y,
+"#ced8e2",
+22
+);
+
+}
+
+else {
+
+player.damageReduction =
+.58;
+
+player.shieldTimer =
+7;
+
+damageEnemiesInRadius(
+
+player.x,
+player.y,
+145,
+
+Math.round(
+
+base *
+1.35 +
+25
+
+),
+
+{
+stun:
+.8,
+
+color:
+"#f2d48a"
+}
+
+);
+
+}
+
+}
+
+/* =============================
+GRUMGAR
+============================= */
+
+else if (
+character.id ===
+"grumgar"
+) {
+
+if (
+key ===
+"q"
+) {
+
+damageEnemiesInRadius(
+
+player.x,
+player.y,
+132,
+
+Math.round(
+
+base *
+1.7 +
+24
+
+),
+
+{
+stun:
+.45,
+
+color:
+"#92a45f"
+}
+
+);
+
+}
+
+else if (
+key ===
+"r"
+) {
+
+damageEnemiesInRadius(
+
+player.x,
+player.y,
+230,
+
+Math.round(
+
+base *
+.75 +
+12
+
+),
+
+{
+stun:
+2,
+
+color:
+"#7f9454"
+}
+
+);
+
+}
+
+else {
+
+for (
+let i = 0;
+i < 5;
+i++
+) {
+
+state.world.effects.push({
+
+type:
+"shockRing",
+
+x:
+player.x,
+
+y:
+player.y,
+
+radius:
+60 +
+i *
+42,
+
+life:
+.65 +
+i *
+.08,
+
+maxLife:
+.65 +
+i *
+.08,
+
+color:
+"#9f8b61"
+
+});
+
+}
+
+damageEnemiesInRadius(
+
+player.x,
+player.y,
+295,
+
+Math.round(
+
+base *
+1.55 +
+38
+
+),
+
+{
+stun:
+1.25,
+
+color:
+"#9f8b61"
+}
+
+);
+
+}
+
+}
+
+/* =============================
+LIRAEL
+============================= */
+
+else if (
 character.id ===
 "lirael"
 ) {
 
 if (
-player.magic < 14
+key ===
+"q"
 ) {
 
-showToast(
-"Magia insuficiente."
+const target =
+findEnemyToward(
+point,
+430,
+.4
 );
 
-return;
+createAttackEffect(
+point,
+430,
+"#f6a2df",
+true
+);
+
+if (
+target
+) {
+
+if (
+target.type ===
+"progression" &&
+!target.accepted
+) {
+
+openBattle(
+target
+);
 
 }
 
-player.magic -=
-14;
+else {
+
+attackEnemy(
+
+target,
+
+Math.round(
+
+base *
+1.28 +
+18
+
+)
+
+);
+
+}
+
+}
+
+}
+
+else if (
+key ===
+"r"
+) {
 
 player.hp =
 Math.min(
+
 player.maxHp,
+
 player.hp +
-45
+
+Math.round(
+
+player.maxHp *
+.36
+
+)
+
+);
+
+player.energy =
+Math.min(
+
+player.maxEnergy,
+
+player.energy +
+25
+
 );
 
 spawnParticles(
 player.x,
 player.y,
-character.color,
-16
+"#ffb7e8",
+28
 );
-
-showToast(
-"Lirael usou Luz Vital."
-);
-
-return;
 
 }
 
-if (
+else {
+
+for (
+let i = 0;
+i < 8;
+i++
+) {
+
+const x =
+player.x +
+random(
+-220,
+220
+);
+
+const y =
+player.y +
+random(
+-220,
+220
+);
+
+state.world.effects.push({
+
+type:
+"memoryStrike",
+
+x,
+
+y,
+
+life:
+.75,
+
+maxLife:
+.75,
+
+color:
+"#ffb6e6"
+
+});
+
+damageEnemiesInRadius(
+
+x,
+y,
+65,
+
+Math.round(
+base +
+22
+)
+
+);
+
+}
+
+}
+
+}
+
+/* =============================
+ZEPHYR
+============================= */
+
+else if (
 character.id ===
 "zephyr"
 ) {
 
 if (
-player.magic < 12
+key ===
+"q"
 ) {
 
-showToast(
-"Magia insuficiente."
+activateAdaptiveForm(
+6.5,
+24,
+6
 );
-
-return;
 
 }
 
-player.magic -=
-12;
+else if (
+key ===
+"r"
+) {
+
+const dx =
+point.x -
+player.x;
+
+const dy =
+point.y -
+player.y;
+
+const d =
+Math.hypot(
+dx,
+dy
+) || 1;
+
+const nx =
+
+player.x +
+
+(
+dx /
+d
+) *
+150;
+
+const ny =
+
+player.y +
+
+(
+dy /
+d
+) *
+150;
 
 if (
-!player.adaptiveBuff
+canPlayerMoveTo(
+nx,
+ny,
+player.radius
+)
 ) {
+
+player.x =
+nx;
+
+player.y =
+ny;
+
+}
+
+damageEnemiesInRadius(
+
+player.x,
+player.y,
+95,
+
+Math.round(
+
+base *
+1.45 +
+18
+
+),
+
+{
+color:
+"#a384e8"
+}
+
+);
+
+}
+
+else {
+
+activateAdaptiveForm(
+10,
+42,
+12
+);
+
+player.damageReduction =
+.28;
+
+player.shieldTimer =
+10;
+
+player.hp =
+Math.min(
+
+player.maxHp,
+
+player.hp +
+28
+
+);
+
+}
+
+}
+
+player.hunger =
+Math.max(
+0,
+player.hunger -
+.35
+);
+
+player.fatigue =
+Math.max(
+0,
+player.fatigue -
+.55
+);
+
+showToast(
+skill.name
+);
+
+}
+
+function activateAdaptiveForm(
+duration,
+speedBonus,
+damageBonus
+) {
+
+const player =
+state.player;
+
+if (
+player.adaptiveBuff
+) {
+return;
+}
 
 player.adaptiveBuff =
 true;
 
 player.speed +=
-22;
+speedBonus;
 
 player.damage +=
-5;
+damageBonus;
+
+spawnParticles(
+player.x,
+player.y,
+"#9f7ae8",
+24
+);
 
 setTimeout(
 () => {
 
 if (
-state.player?.adaptiveBuff
+state.player
+?.adaptiveBuff
 ) {
 
 state.player.speed -=
-22;
+speedBonus;
 
 state.player.damage -=
-5;
+damageBonus;
 
 state.player.adaptiveBuff =
 false;
@@ -4880,51 +9054,103 @@ false;
 }
 
 },
-6500
+duration *
+1000
 );
 
 }
 
-spawnParticles(
-player.x,
-player.y,
-character.color,
-16
-);
+function damageEnemiesInRadius(
+x,
+y,
+radius,
+damage,
+options = {}
+) {
 
-showToast(
-"Zephyr usou Forma Adaptativa."
-);
+for (
+const enemy of
+state.world.enemies
+) {
 
-return;
-
+if (
+enemy.dead
+) {
+continue;
 }
 
 if (
-player.magic < 10
+
+Math.hypot(
+
+enemy.x -
+x,
+
+enemy.y -
+y
+
+) <=
+
+radius +
+enemy.radius
+
 ) {
 
-showToast(
-"Magia insuficiente."
+if (
+enemy.type ===
+"progression" &&
+!enemy.accepted
+) {
+continue;
+}
+
+attackEnemy(
+enemy,
+damage
 );
 
-return;
+if (
+options.stun
+) {
+
+enemy.stunTimer =
+Math.max(
+
+enemy.stunTimer ||
+0,
+
+options.stun
+
+);
 
 }
 
-player.magic -=
-10;
+}
 
-spawnParticles(
-player.x,
-player.y,
-character.color,
-14
-);
+}
 
-showToast(
-`${character.skill}.`
-);
+state.world.effects.push({
+
+type:
+"skillRing",
+
+x,
+
+y,
+
+radius,
+
+life:
+.48,
+
+maxLife:
+.48,
+
+color:
+options.color ||
+"#fff2b0"
+
+});
 
 }
 
@@ -4937,9 +9163,7 @@ if (
 !enemy ||
 enemy.dead
 ) {
-
 return;
-
 }
 
 enemy.accepted =
@@ -4951,25 +9175,93 @@ true;
 enemy.state =
 "chasing";
 
+const finalDamage =
+Math.max(
+1,
+Math.round(
+damage
+)
+);
+
 enemy.hp =
 Math.max(
 0,
 enemy.hp -
-damage
+finalDamage
 );
 
 enemy.hitFlash =
 .18;
 
 spawnParticles(
+
 enemy.x,
+
 enemy.y,
-"#ffffff",
-8
+
+finalDamage >=
+70
+
+? "#ff8c70"
+
+: "#ffffff",
+
+finalDamage >=
+70
+
+? 12
+
+: 8
+
 );
 
+state.world.effects.push({
+
+type:
+"damageNumber",
+
+x:
+enemy.x,
+
+y:
+enemy.y -
+enemy.radius -
+12,
+
+text:
+`-${finalDamage}`,
+
+life:
+.72,
+
+maxLife:
+.72,
+
+color:
+
+finalDamage >=
+100
+? "#cf7bff"
+
+: finalDamage >=
+70
+? "#ff715e"
+
+: finalDamage >=
+45
+? "#ffad56"
+
+: finalDamage >=
+28
+? "#ffe16d"
+
+: "#ffffff"
+
+});
+
 if (
-enemy.hp <= 0
+enemy.hp <=
+0
 ) {
 
 defeatEnemy(
@@ -4980,14 +9272,14 @@ enemy
 
 }
 
-function defeatEnemy(enemy) {
+function defeatEnemy(
+enemy
+) {
 
 if (
 enemy.dead
 ) {
-
 return;
-
 }
 
 enemy.dead =
@@ -5014,6 +9306,11 @@ enemy.type ===
 "final"
 ? 600
 
+: enemy.horde
+? 42 +
+enemy.horde *
+6
+
 : 30;
 
 const money =
@@ -5026,6 +9323,10 @@ enemy.type ===
 "resourceBoss"
 ? 45
 
+: enemy.type ===
+"final"
+? 250
+
 : 12;
 
 state.player.xp +=
@@ -5034,32 +9335,74 @@ xp;
 state.player.money +=
 money;
 
-if (
+const shouldDrop =
+
 enemy.drop &&
-ITEMS[enemy.drop]
+
+ITEMS[
+enemy.drop
+] &&
+
+Math.random() <=
+(
+enemy.dropChance ??
+1
+);
+
+if (
+shouldDrop
 ) {
+
+const amount =
+enemy.dropAmount ||
+1;
 
 addItem(
 enemy.drop,
-enemy.dropAmount ||
-1
+amount
 );
 
 state.world.drops.push({
 
-x: enemy.x,
+x:
+enemy.x,
 
-y: enemy.y,
+y:
+enemy.y,
 
-type: enemy.drop,
+type:
+enemy.drop,
 
-amount:
-enemy.dropAmount ||
-1,
+amount,
 
-life: 18
+life:
+18
 
 });
+
+}
+
+if (
+enemy.id ===
+"path_guardian"
+) {
+
+if (
+!state.player
+.inventory
+.flautaMemoria
+) {
+
+addItem(
+"flautaMemoria",
+1
+);
+
+}
+
+showToast(
+"Você recebeu a Flauta da Memória. Use-a no Céu para revelar a escada."
+);
 
 }
 
@@ -5081,11 +9424,13 @@ enemy.hellType !==
 undefined
 ) {
 
-state.player.hellTypesDefeated[
+state.player
+.hellTypesDefeated[
 String(
 enemy.hellType
 )
-] = true;
+] =
+true;
 
 }
 
@@ -5095,24 +9440,32 @@ enemy.type ===
 ) {
 
 if (
-!state.player.defeatedBosses.includes(
+!state.player
+.defeatedBosses
+.includes(
 enemy.id
 )
 ) {
 
-state.player.defeatedBosses.push(
+state.player
+.defeatedBosses
+.push(
 enemy.id
 );
 
 }
 
 if (
-!state.player.discoveredBosses.includes(
+!state.player
+.discoveredBosses
+.includes(
 enemy.id
 )
 ) {
 
-state.player.discoveredBosses.push(
+state.player
+.discoveredBosses
+.push(
 enemy.id
 );
 
@@ -5120,16 +9473,24 @@ enemy.id
 
 if (
 enemy.unlock &&
-!state.player.unlockedAreas.includes(
+!state.player
+.unlockedAreas
+.includes(
 enemy.unlock
 )
 ) {
 
-state.player.unlockedAreas.push(
+state.player
+.unlockedAreas
+.push(
 enemy.unlock
 );
 
 }
+
+showToast(
+`Boss adicionado ao seu Livro: ${enemy.name}.`
+);
 
 }
 
@@ -5153,15 +9514,7 @@ saveGame(
 false
 );
 
-showToast(
-`${enemy.name} derrotado! +${xp} XP`
-);
-
 }
-
-/* =====================================================
-NÍVEL
-====================================================== */
 
 function checkLevelUp() {
 
@@ -5209,6 +9562,37 @@ player.memory +
 8
 );
 
+spawnParticles(
+player.x,
+player.y,
+"#ffe38f",
+24
+);
+
+if (
+player.level ===
+5
+) {
+
+showToast(
+`Nível ${player.level}! Sua habilidade R foi desbloqueada.`
+);
+
+}
+
+else if (
+player.level ===
+10
+) {
+
+showToast(
+`Nível ${player.level}! Sua habilidade F foi desbloqueada.`
+);
+
+}
+
+else {
+
 showToast(
 `Você chegou ao nível ${player.level}!`
 );
@@ -5217,9 +9601,7 @@ showToast(
 
 }
 
-/* =====================================================
-ITENS
-====================================================== */
+}
 
 function addItem(
 id,
@@ -5230,25 +9612,24 @@ if (
 !ITEMS[id] ||
 !state.player
 ) {
-
 return false;
-
 }
 
 const safeAmount =
 Math.max(
+
 0,
+
 Math.floor(
 amount
 )
+
 );
 
 if (
 !safeAmount
 ) {
-
 return false;
-
 }
 
 if (
@@ -5275,31 +9656,32 @@ amount
 
 const safeAmount =
 Math.max(
+
 0,
+
 Math.floor(
 amount
 )
+
 );
 
 if (
 !safeAmount
 ) {
-
 return false;
-
 }
 
 const current =
-state.player?.inventory?.[id] ||
+state.player
+?.inventory
+?.[id] ||
 0;
 
 if (
 current <
 safeAmount
 ) {
-
 return false;
-
 }
 
 state.player.inventory[id] =
@@ -5310,18 +9692,14 @@ return true;
 
 }
 
-/* =====================================================
-COLETA
-====================================================== */
-
-function harvestTree(tree) {
+function harvestTree(
+tree
+) {
 
 if (
 !tree?.alive
 ) {
-
 return;
-
 }
 
 const cost =
@@ -5384,11 +9762,15 @@ count +
 
 state.player.xp +=
 Math.max(
+
 2,
+
 7 -
 Math.floor(
-count / 4
+count /
+4
 )
+
 );
 
 spawnParticles(
@@ -5406,27 +9788,32 @@ showToast(
 
 }
 
-function collectResource(resource) {
+function collectResource(
+resource
+) {
 
 if (
 !resource?.alive
 ) {
-
 return;
-
 }
 
 const costs = {
 
-carvao: 7,
+carvao:
+7,
 
-ferro: 13,
+ferro:
+13,
 
-ouro: 24,
+ouro:
+24,
 
-rubi: 35,
+rubi:
+35,
 
-cristal: 18
+cristal:
+18
 
 };
 
@@ -5493,11 +9880,15 @@ count +
 
 state.player.xp +=
 Math.max(
+
 2,
+
 8 -
 Math.floor(
-count / 4
+count /
+4
 )
+
 );
 
 state.player.memory =
@@ -5515,7 +9906,9 @@ showToast(
 
 }
 
-function updateResources(dt) {
+function updateResources(
+dt
+) {
 
 for (
 const tree of
@@ -5525,16 +9918,15 @@ state.world.trees
 if (
 tree.alive
 ) {
-
 continue;
-
 }
 
 tree.respawn -=
 dt;
 
 if (
-tree.respawn <= 0
+tree.respawn <=
+0
 ) {
 
 respawnTree(
@@ -5553,16 +9945,15 @@ state.world.resources
 if (
 resource.alive
 ) {
-
 continue;
-
 }
 
 resource.respawn -=
 dt;
 
 if (
-resource.respawn <= 0
+resource.respawn <=
+0
 ) {
 
 resource.alive =
@@ -5572,24 +9963,50 @@ true;
 
 }
 
-state.world.drops.forEach(
-drop => {
+for (
+const food of
+state.world.foods
+) {
 
-drop.life -=
+if (
+food.alive
+) {
+continue;
+}
+
+food.respawn -=
 dt;
 
+if (
+food.respawn <=
+0
+) {
+
+food.alive =
+true;
+
 }
+
+}
+
+state.world.drops.forEach(
+drop =>
+drop.life -=
+dt
 );
 
 state.world.drops =
 state.world.drops.filter(
 drop =>
-drop.life > 0
+drop.life >
+0
 );
 
 }
 
-function respawnTree(tree) {
+function respawnTree(
+tree
+) {
 
 let tries =
 0;
@@ -5619,10 +10036,10 @@ state.world.height -
 tries++;
 
 }
-
 while (
 
-tries < 60 &&
+tries <
+60 &&
 
 !canPlayerMoveTo(
 x,
@@ -5668,32 +10085,968 @@ y - 38;
 
 }
 
-/* =====================================================
-INTERAÇÃO
-====================================================== */
+function beginHoldInteraction(
+interaction
+) {
+
+if (
+!interaction ||
+![
+"tree",
+"resource"
+].includes(
+interaction.type
+)
+) {
+
+return false;
+
+}
+
+const duration =
+
+interaction.type ===
+"tree"
+
+? 2.15
+
+: (
+interaction.object.type ===
+"rubi"
+
+? 2.8
+
+: 1.75
+);
+
+state.holdAction = {
+
+type:
+interaction.type,
+
+object:
+interaction.object,
+
+elapsed:
+0,
+
+duration
+
+};
+
+must(
+"holdProgressTitle"
+).textContent =
+
+interaction.type ===
+"tree"
+
+? "Cortando madeira..."
+
+: `Coletando ${ITEMS[interaction.object.type]?.name || "recurso"}...`;
+
+must(
+"holdProgressFill"
+).style.width =
+"0%";
+
+must(
+"holdProgress"
+).classList.remove(
+"hidden"
+);
+
+return true;
+
+}
+
+function cancelHoldInteraction() {
+
+state.holdAction =
+null;
+
+must(
+"holdProgress"
+).classList.add(
+"hidden"
+);
+
+must(
+"holdProgressFill"
+).style.width =
+"0%";
+
+}
+
+function updateHoldInteraction(
+dt
+) {
+
+const hold =
+state.holdAction;
+
+if (
+!hold
+) {
+return;
+}
+
+if (
+!state.keys.has(
+"e"
+) ||
+state.paused ||
+!hold.object?.alive
+) {
+
+cancelHoldInteraction();
+
+return;
+
+}
+
+const maxDistance =
+
+hold.type ===
+"tree"
+
+? 78
+
+: 76;
+
+if (
+distance(
+state.player,
+hold.object
+) >
+maxDistance
+) {
+
+cancelHoldInteraction();
+
+return;
+
+}
+
+hold.elapsed +=
+dt;
+
+const percent =
+clamp(
+
+(
+hold.elapsed /
+hold.duration
+) *
+100,
+
+0,
+100
+
+);
+
+must(
+"holdProgressFill"
+).style.width =
+`${percent}%`;
+
+if (
+hold.elapsed >=
+hold.duration
+) {
+
+const interaction = {
+
+type:
+hold.type,
+
+object:
+hold.object
+
+};
+
+cancelHoldInteraction();
+
+if (
+interaction.type ===
+"tree"
+) {
+
+harvestTree(
+interaction.object
+);
+
+}
+
+else {
+
+collectResource(
+interaction.object
+);
+
+}
+
+}
+
+}
+
+function eatWorldFood(
+food
+) {
+
+if (
+!food ||
+!food.alive
+) {
+return;
+}
+
+food.alive =
+false;
+
+food.respawn =
+random(
+
+food.respawnMin ||
+85,
+
+food.respawnMax ||
+140
+
+);
+
+if (
+food.type ===
+"carrot"
+) {
+
+state.player.hunger =
+Math.min(
+100,
+state.player.hunger +
+24
+);
+
+state.player.hp =
+Math.min(
+
+state.player.maxHp,
+
+state.player.hp +
+3
+
+);
+
+showToast(
+"Você comeu uma cenoura. +24 fome."
+);
+
+}
+
+spawnParticles(
+food.x,
+food.y,
+"#f3a34e",
+10
+);
+
+}
+
+function sleepAtHome() {
+
+if (
+!state.houseMode ||
+state.currentHouse?.id !==
+"home"
+) {
+return;
+}
+
+state.paused =
+true;
+
+must(
+"transitionMessage"
+).textContent =
+"VOCÊ DESCANSA...";
+
+must(
+"transitionScreen"
+).classList.remove(
+"hidden"
+);
+
+setTimeout(
+() => {
+
+state.player.fatigue =
+100;
+
+state.player.energy =
+state.player.maxEnergy;
+
+state.player.magic =
+state.player.maxMagic;
+
+state.player.hp =
+Math.min(
+
+state.player.maxHp,
+
+state.player.hp +
+
+Math.round(
+
+state.player.maxHp *
+.28
+
+)
+
+);
+
+state.player.hunger =
+Math.max(
+0,
+state.player.hunger -
+14
+);
+
+must(
+"transitionScreen"
+).classList.add(
+"hidden"
+);
+
+state.paused =
+false;
+
+showToast(
+"Você dormiu. Cansaço recuperado; dormir abriu o apetite."
+);
+
+},
+950
+);
+
+}
+
+function discoverSecret(
+secret
+) {
+
+if (
+!secret ||
+secret.found ||
+state.player.secretsFound.includes(
+secret.id
+)
+) {
+return;
+}
+
+secret.found =
+true;
+
+state.player.secretsFound.push(
+secret.id
+);
+
+state.player.memory =
+Math.min(
+100,
+state.player.memory +
+3
+);
+
+state.player.xp +=
+22;
+
+checkLevelUp();
+
+showToast(
+`${secret.title}: ${secret.message}`
+);
+
+saveGame(
+false
+);
+
+}
+
+function startSkyTrial() {
+
+const trial =
+state.player.skyTrial;
+
+if (
+state.area !==
+"sky"
+) {
+return;
+}
+
+if (
+trial.complete
+) {
+
+showToast(
+"As cinco hordas já foram vencidas."
+);
+
+return;
+
+}
+
+const livingHorde =
+state.world.enemies.some(
+enemy =>
+enemy.horde &&
+!enemy.dead
+);
+
+if (
+livingHorde ||
+trial.activeWave
+) {
+
+showToast(
+"Derrote a horda atual primeiro."
+);
+
+return;
+
+}
+
+if (
+!trial.started
+) {
+
+trial.started =
+true;
+
+trial.wave =
+0;
+
+}
+
+spawnSkyWave(
+trial.wave + 1
+);
+
+}
+
+function spawnSkyWave(
+wave
+) {
+
+const trial =
+state.player.skyTrial;
+
+if (
+wave <
+1 ||
+wave >
+5
+) {
+return;
+}
+
+trial.activeWave =
+wave;
+
+const amount =
+3 +
+wave *
+2;
+
+const centerX =
+1710;
+
+const centerY =
+1100;
+
+for (
+let i = 0;
+i < amount;
+i++
+) {
+
+const angle =
+
+(
+Math.PI *
+2 *
+i
+) /
+amount;
+
+const radius =
+270 +
+random(
+-35,
+55
+);
+
+addEnemy({
+
+id:
+`sky_horde_${wave}_${Date.now()}_${i}`,
+
+x:
+centerX +
+Math.cos(
+angle
+) *
+radius,
+
+y:
+centerY +
+Math.sin(
+angle
+) *
+radius,
+
+name:
+
+wave >=
+4
+
+? "SENTINELA CELESTE"
+
+: "SERAFIM DA HORDA",
+
+icon:
+
+wave >=
+4
+
+? "⚔️"
+
+: "🪽",
+
+type:
+"normal",
+
+horde:
+wave,
+
+hp:
+150 +
+wave *
+72,
+
+maxHp:
+150 +
+wave *
+72,
+
+damage:
+16 +
+wave *
+6,
+
+speed:
+78 +
+wave *
+5,
+
+vision:
+650,
+
+attackRange:
+76,
+
+radius:
+25 +
+Math.floor(
+wave /
+3
+),
+
+color:
+
+wave >=
+4
+
+? "#e5c77e"
+
+: "#cbd7df",
+
+drop:
+
+wave ===
+5
+
+? "cristal"
+
+: null,
+
+dropAmount:
+1,
+
+special:
+
+wave >=
+5
+
+? "crystalRain"
+
+: wave >=
+3
+
+? "crystalShot"
+
+: null
+
+});
+
+}
+
+showToast(
+`HORDA ${wave}/5 — sobreviva.`
+);
+
+}
+
+function updateSkyTrial() {
+
+if (
+state.area !==
+"sky" ||
+!state.player
+?.skyTrial
+?.started ||
+state.player
+.skyTrial
+.complete
+) {
+return;
+}
+
+const trial =
+state.player.skyTrial;
+
+if (
+trial.activeWave >
+0
+) {
+
+const living =
+state.world.enemies.some(
+enemy =>
+enemy.horde ===
+trial.activeWave &&
+!enemy.dead
+);
+
+if (
+living
+) {
+return;
+}
+
+trial.wave =
+Math.max(
+trial.wave,
+trial.activeWave
+);
+
+trial.activeWave =
+0;
+
+saveGame(
+false
+);
+
+if (
+trial.wave >=
+5
+) {
+
+trial.complete =
+true;
+
+showToast(
+"As cinco hordas foram vencidas. O Guardião do Caminho surgiu!"
+);
+
+spawnPathGuardian();
+
+saveGame(
+false
+);
+
+return;
+
+}
+
+}
+
+const now =
+performance.now();
+
+if (
+state.hordeNextAt &&
+now <
+state.hordeNextAt
+) {
+return;
+}
+
+state.hordeNextAt =
+now +
+1800;
+
+setTimeout(
+() => {
+
+if (
+state.area ===
+"sky" &&
+state.player.skyTrial.started &&
+!state.player.skyTrial.complete &&
+state.player.skyTrial.activeWave ===
+0
+) {
+
+spawnSkyWave(
+state.player.skyTrial.wave +
+1
+);
+
+}
+
+},
+1700
+);
+
+}
+
+function spawnPathGuardian() {
+
+if (
+
+state.world.enemies.some(
+enemy =>
+enemy.id ===
+"path_guardian" &&
+!enemy.dead
+) ||
+
+hasDefeatedBoss(
+"path_guardian"
+)
+
+) {
+return;
+}
+
+addEnemy({
+
+id:
+"path_guardian",
+
+x:
+2860,
+
+y:
+1100,
+
+name:
+"GUARDIÃO DO CAMINHO",
+
+icon:
+"🪽",
+
+type:
+"progression",
+
+hp:
+1420,
+
+maxHp:
+1420,
+
+damage:
+54,
+
+speed:
+72,
+
+vision:
+430,
+
+attackRange:
+108,
+
+radius:
+43,
+
+color:
+"#d8bd76",
+
+drop:
+"flautaMemoria",
+
+dropAmount:
+1,
+
+dropChance:
+1,
+
+special:
+"crystalRain"
+
+});
+
+}
+
+function useMemoryFlute() {
+
+if (
+state.area !==
+"sky"
+) {
+
+showToast(
+"A Flauta da Memória só responde no Céu."
+);
+
+return;
+
+}
+
+if (
+!state.player.inventory.flautaMemoria
+) {
+return;
+}
+
+if (
+state.player.flutePlayed
+) {
+
+showToast(
+"A Escada do Inferno já foi revelada."
+);
+
+return;
+
+}
+
+state.player.flutePlayed =
+true;
+
+state.paused =
+true;
+
+must(
+"transitionMessage"
+).textContent =
+"A MELODIA FAZ O CÉU LEMBRAR DA ESCADA...";
+
+must(
+"transitionScreen"
+).classList.remove(
+"hidden"
+);
+
+setTimeout(
+() => {
+
+must(
+"transitionScreen"
+).classList.add(
+"hidden"
+);
+
+state.paused =
+false;
+
+showToast(
+"A Escada do Inferno apareceu no extremo leste do Céu."
+);
+
+saveGame(
+false
+);
+
+},
+1200
+);
+
+}
 
 function getInteraction() {
 
 if (
 !state.player
 ) {
-
 return null;
-
 }
 
 if (
 state.houseMode
 ) {
 
-let nearest =
+let best =
 null;
 
-let best =
+let bestDistance =
 Infinity;
 
-getInteriorNPCs().forEach(
-npc => {
+const room =
+getHouseRoom();
+
+if (
+state.currentHouse?.id ===
+"home"
+) {
+
+const bed = {
+
+x:
+room.x +
+123,
+
+y:
+room.y +
+102
+
+};
+
+const d =
+distance(
+state.player,
+bed
+);
+
+if (
+d <=
+92
+) {
+
+best = {
+
+type:
+"sleep",
+
+object:
+bed
+
+};
+
+bestDistance =
+d;
+
+}
+
+}
+
+for (
+const npc of
+getInteriorNPCs()
+) {
 
 const d =
 distance(
@@ -5702,43 +11055,42 @@ npc
 );
 
 if (
-d <= 78 &&
-d < best
+d <=
+78 &&
+d <
+bestDistance
 ) {
 
-nearest =
-npc;
+best = {
 
-best =
+type:
+"npc",
+
+object:
+npc
+
+};
+
+bestDistance =
 d;
 
 }
 
 }
-);
 
-if (
-nearest
-) {
+return (
 
-return {
+best ||
 
-type: "npc",
-
-object: nearest
-
-};
-
-}
-
-return {
-
-type: "exitHouse",
+{
+type:
+"exitHouse",
 
 object:
 state.currentHouse
+}
 
-};
+);
 
 }
 
@@ -5761,8 +11113,10 @@ object
 );
 
 if (
-d <= limit &&
-d < bestDistance
+d <=
+limit &&
+d <
+bestDistance
 ) {
 
 best = {
@@ -5785,7 +11139,7 @@ npc =>
 test(
 "npc",
 npc,
-70
+72
 )
 );
 
@@ -5799,7 +11153,7 @@ tree =>
 test(
 "tree",
 tree,
-72
+78
 )
 );
 
@@ -5813,7 +11167,52 @@ resource =>
 test(
 "resource",
 resource,
-72
+76
+)
+);
+
+state.world.foods
+.filter(
+food =>
+food.alive
+)
+.forEach(
+food =>
+test(
+"food",
+food,
+70
+)
+);
+
+state.world.secrets
+.filter(
+secret =>
+
+!secret.found &&
+
+!state.player
+.secretsFound
+.includes(
+secret.id
+)
+
+)
+.forEach(
+secret =>
+test(
+"secret",
+secret,
+76
+)
+);
+
+state.world.trials.forEach(
+trial =>
+test(
+"trial",
+trial,
+92
 )
 );
 
@@ -5828,12 +11227,14 @@ test(
 
 enemy.type ===
 "progression"
+
 ? "boss"
+
 : "enemy",
 
 enemy,
 
-110
+115
 
 )
 );
@@ -5847,7 +11248,8 @@ const door = {
 
 x:
 building.x +
-building.w / 2,
+building.w /
+2,
 
 y:
 building.y +
@@ -5863,15 +11265,19 @@ door
 );
 
 if (
-d <= 90 &&
-d < bestDistance
+d <=
+90 &&
+d <
+bestDistance
 ) {
 
 best = {
 
-type: "house",
+type:
+"house",
 
-object: building
+object:
+building
 
 };
 
@@ -5889,11 +11295,10 @@ return best;
 function playerAction() {
 
 if (
-!state.player
+!state.player ||
+state.paused
 ) {
-
 return;
-
 }
 
 if (
@@ -5906,25 +11311,13 @@ return;
 
 }
 
-if (
-state.paused
-) {
-
-return;
-
-}
-
 const interaction =
 getInteraction();
 
 if (
 !interaction
 ) {
-
-performAttack();
-
 return;
-
 }
 
 if (
@@ -5966,10 +11359,25 @@ return;
 
 if (
 interaction.type ===
-"tree"
+"tree" ||
+interaction.type ===
+"resource"
 ) {
 
-harvestTree(
+beginHoldInteraction(
+interaction
+);
+
+return;
+
+}
+
+if (
+interaction.type ===
+"food"
+) {
+
+eatWorldFood(
 interaction.object
 );
 
@@ -5979,12 +11387,41 @@ return;
 
 if (
 interaction.type ===
-"resource"
+"secret"
 ) {
 
-collectResource(
+discoverSecret(
 interaction.object
 );
+
+return;
+
+}
+
+if (
+interaction.type ===
+"trial"
+) {
+
+if (
+interaction.object.id ===
+"sky_hordes"
+) {
+
+startSkyTrial();
+
+}
+
+return;
+
+}
+
+if (
+interaction.type ===
+"sleep"
+) {
+
+sleepAtHome();
 
 return;
 
@@ -6005,30 +11442,11 @@ interaction.object
 
 }
 
-else {
-
-performAttack();
-
-}
-
 return;
 
 }
 
-if (
-interaction.type ===
-"enemy"
-) {
-
-performAttack();
-
 }
-
-}
-
-/* =====================================================
-CASAS
-====================================================== */
 
 function handleZ() {
 
@@ -6045,9 +11463,7 @@ return;
 if (
 state.paused
 ) {
-
 return;
-
 }
 
 if (
@@ -6093,7 +11509,8 @@ const door = {
 
 x:
 building.x +
-building.w / 2,
+building.w /
+2,
 
 y:
 building.y +
@@ -6109,8 +11526,10 @@ door
 );
 
 if (
-d < 90 &&
-d < best
+d <
+90 &&
+d <
+best
 ) {
 
 best =
@@ -6135,11 +11554,29 @@ return;
 
 }
 
+state.paused =
+true;
+
+must(
+"transitionMessage"
+).textContent =
+closest.name;
+
+must(
+"transitionScreen"
+).classList.remove(
+"hidden"
+);
+
+setTimeout(
+() => {
+
 state.houseReturn = {
 
 x:
 closest.x +
-closest.w / 2,
+closest.w /
+2,
 
 y:
 closest.y +
@@ -6156,8 +11593,21 @@ true;
 
 placePlayerInsideHouse();
 
+must(
+"transitionScreen"
+).classList.add(
+"hidden"
+);
+
+state.paused =
+false;
+
 showToast(
 `Você entrou em ${closest.name}.`
+);
+
+},
+360
 );
 
 }
@@ -6167,20 +11617,37 @@ function exitHouse() {
 if (
 !state.houseMode
 ) {
-
 return;
-
 }
 
 const returnPoint =
+
 state.houseReturn ||
+
 {
+x:
+480,
 
-x: 480,
-
-y: 610
-
+y:
+610
 };
+
+state.paused =
+true;
+
+must(
+"transitionMessage"
+).textContent =
+"VILA DO CREPÚSCULO";
+
+must(
+"transitionScreen"
+).classList.remove(
+"hidden"
+);
+
+setTimeout(
+() => {
 
 state.houseMode =
 false;
@@ -6199,17 +11666,26 @@ null;
 
 state.keys.clear();
 
-showToast(
-"Você saiu da construção."
+must(
+"transitionScreen"
+).classList.add(
+"hidden"
+);
+
+state.paused =
+false;
+
+updateCamera();
+
+},
+340
 );
 
 }
 
-/* =====================================================
-DIÁLOGOS
-====================================================== */
-
-function startDialogue(npc) {
+function startDialogue(
+npc
+) {
 
 state.dialogue = {
 
@@ -6218,18 +11694,23 @@ npc,
 lines:
 npc.lines.slice(),
 
-index: 0,
+index:
+0,
 
-typing: false,
+typing:
+false,
 
-charIndex: 0,
+charIndex:
+0,
 
-timer: null
+timer:
+null
 
 };
 
-must("dialogueBox")
-.classList.remove(
+must(
+"dialogueBox"
+).classList.remove(
 "hidden"
 );
 
@@ -6245,9 +11726,7 @@ state.dialogue;
 if (
 !dialogue
 ) {
-
 return;
-
 }
 
 clearInterval(
@@ -6265,10 +11744,14 @@ dialogue.charIndex =
 dialogue.typing =
 true;
 
-must("dialogueSpeaker").textContent =
+must(
+"dialogueSpeaker"
+).textContent =
 dialogue.npc.name;
 
-must("dialogueText").textContent =
+must(
+"dialogueText"
+).textContent =
 "";
 
 dialogue.timer =
@@ -6277,7 +11760,9 @@ setInterval(
 
 dialogue.charIndex++;
 
-must("dialogueText").textContent =
+must(
+"dialogueText"
+).textContent =
 line.slice(
 0,
 dialogue.charIndex
@@ -6311,9 +11796,7 @@ state.dialogue;
 if (
 !dialogue
 ) {
-
 return;
-
 }
 
 if (
@@ -6324,7 +11807,9 @@ clearInterval(
 dialogue.timer
 );
 
-must("dialogueText").textContent =
+must(
+"dialogueText"
+).textContent =
 dialogue.lines[
 dialogue.index
 ];
@@ -6368,18 +11853,17 @@ state.dialogue.timer
 state.dialogue =
 null;
 
-must("dialogueBox")
-.classList.add(
+must(
+"dialogueBox"
+).classList.add(
 "hidden"
 );
 
 }
 
-/* =====================================================
-MISSÕES
-====================================================== */
-
-function openQuest(npc) {
+function openQuest(
+npc
+) {
 
 state.questNPC =
 npc;
@@ -6392,9 +11876,7 @@ npc.questId
 if (
 !quest
 ) {
-
 return;
-
 }
 
 const isWood =
@@ -6410,40 +11892,60 @@ const current =
 state.player.inventory[item] ||
 0;
 
-must("questTitle").textContent =
+must(
+"questTitle"
+).textContent =
+
 isWood
+
 ? "Madeira para a Vila"
+
 : "Carvão para a Forja";
 
-must("questText").textContent =
+must(
+"questText"
+).textContent =
+
 isWood
+
 ? "Bran precisa de 10 madeiras para reforçar construções da vila."
+
 : "Borin precisa de 8 carvões para manter a forja funcionando.";
 
-must("questStatus").textContent =
+must(
+"questStatus"
+).textContent =
 `Progresso: ${Math.min(
 current,
 quest.need
 )} / ${quest.need}`;
 
 const button =
-must("questActionBtn");
+must(
+"questActionBtn"
+);
 
 button.disabled =
 quest.state ===
 "completed";
 
 button.textContent =
+
 quest.state ===
 "none"
+
 ? "ACEITAR"
+
 : quest.state ===
 "accepted"
+
 ? "ENTREGAR"
+
 : "CONCLUÍDA";
 
-must("questPanel")
-.classList.remove(
+must(
+"questPanel"
+).classList.remove(
 "hidden"
 );
 
@@ -6457,9 +11959,7 @@ state.questNPC;
 if (
 !npc
 ) {
-
 return;
-
 }
 
 const quest =
@@ -6468,9 +11968,12 @@ npc.questId
 ];
 
 const item =
+
 npc.questId ===
 "wood"
+
 ? "madeira"
+
 : "carvao";
 
 if (
@@ -6524,9 +12027,7 @@ item,
 quest.need
 )
 ) {
-
 return;
-
 }
 
 quest.state =
@@ -6556,11 +12057,9 @@ npc
 
 }
 
-/* =====================================================
-BATALHAS DE PROGRESSÃO
-====================================================== */
-
-function openBattle(enemy) {
+function openBattle(
+enemy
+) {
 
 state.battle =
 enemy;
@@ -6568,17 +12067,47 @@ enemy;
 state.paused =
 true;
 
-must("battleIcon").textContent =
+if (
+enemy.type ===
+"progression" &&
+!state.player
+.discoveredBosses
+.includes(
+enemy.id
+)
+) {
+
+state.player
+.discoveredBosses
+.push(
+enemy.id
+);
+
+}
+
+must(
+"battleIcon"
+).textContent =
 enemy.icon;
 
-must("battleTitle").textContent =
+must(
+"battleTitle"
+).textContent =
 enemy.name;
 
-must("battleText").textContent =
-"Esta criatura guarda o caminho. Ela só ficará agressiva se você aceitar o desafio.";
+must(
+"battleText"
+).textContent =
 
-must("battlePanel")
-.classList.remove(
+enemy.special
+
+? "Este Guardião possui ataques especiais. Observe os círculos vermelhos no chão e saia da área antes do impacto."
+
+: "Esta criatura guarda o caminho. Ela só ficará agressiva se você aceitar o desafio.";
+
+must(
+"battlePanel"
+).classList.remove(
 "hidden"
 );
 
@@ -6589,9 +12118,7 @@ function acceptBattle() {
 if (
 !state.battle
 ) {
-
 return;
-
 }
 
 state.battle.accepted =
@@ -6609,8 +12136,9 @@ null;
 state.paused =
 false;
 
-must("battlePanel")
-.classList.add(
+must(
+"battlePanel"
+).classList.add(
 "hidden"
 );
 
@@ -6628,16 +12156,13 @@ null;
 state.paused =
 false;
 
-must("battlePanel")
-.classList.add(
+must(
+"battlePanel"
+).classList.add(
 "hidden"
 );
 
 }
-
-/* =====================================================
-PORTAIS
-====================================================== */
 
 function checkPortals() {
 
@@ -6645,17 +12170,24 @@ if (
 !state.player ||
 state.paused ||
 state.houseMode ||
-state.portalCooldown > 0
+state.portalCooldown >
+0
 ) {
-
 return;
-
 }
 
 for (
 const portal of
 state.world.portals
 ) {
+
+if (
+typeof portal.visible ===
+"function" &&
+!portal.visible()
+) {
+continue;
+}
 
 const inside =
 
@@ -6676,9 +12208,7 @@ portal.h;
 if (
 !inside
 ) {
-
 continue;
-
 }
 
 const unlocked =
@@ -6694,9 +12224,24 @@ if (
 !unlocked
 ) {
 
+if (
+portal.stairs &&
+!state.player.flutePlayed
+) {
+
+showToast(
+"O Céu ainda não se lembra desta passagem."
+);
+
+}
+
+else {
+
 showToast(
 "Este caminho ainda está bloqueado."
 );
+
+}
 
 state.player.x =
 Math.max(
@@ -6722,14 +12267,14 @@ return;
 
 }
 
-function openTravel(portal) {
+function openTravel(
+portal
+) {
 
 if (
 state.travel
 ) {
-
 return;
-
 }
 
 state.travel =
@@ -6738,11 +12283,14 @@ portal;
 state.paused =
 true;
 
-must("travelText").textContent =
+must(
+"travelText"
+).textContent =
 `Você encontrou um caminho para ${portal.title}. Deseja continuar?`;
 
-must("travelPanel")
-.classList.remove(
+must(
+"travelPanel"
+).classList.remove(
 "hidden"
 );
 
@@ -6753,9 +12301,7 @@ function confirmTravel() {
 if (
 !state.travel
 ) {
-
 return;
-
 }
 
 const target =
@@ -6764,8 +12310,9 @@ state.travel.target;
 state.travel =
 null;
 
-must("travelPanel")
-.classList.add(
+must(
+"travelPanel"
+).classList.add(
 "hidden"
 );
 
@@ -6786,31 +12333,35 @@ false;
 state.portalCooldown =
 1.2;
 
-must("travelPanel")
-.classList.add(
+must(
+"travelPanel"
+).classList.add(
 "hidden"
 );
 
 }
 
-function transitionTo(target) {
+function transitionTo(
+target
+) {
 
 if (
 !REGIONS[target]
 ) {
-
 return;
-
 }
 
 state.paused =
 true;
 
-must("transitionMessage").textContent =
+must(
+"transitionMessage"
+).textContent =
 REGIONS[target].name;
 
-must("transitionScreen")
-.classList.remove(
+must(
+"transitionScreen"
+).classList.remove(
 "hidden"
 );
 
@@ -6843,7 +12394,8 @@ state.world.height /
 
 state.player.checkpoint = {
 
-area: target,
+area:
+target,
 
 x:
 state.player.x,
@@ -6860,12 +12412,16 @@ state.player.energy =
 state.player.maxEnergy;
 
 if (
-!state.player.unlockedAreas.includes(
+!state.player
+.unlockedAreas
+.includes(
 target
 )
 ) {
 
-state.player.unlockedAreas.push(
+state.player
+.unlockedAreas
+.push(
 target
 );
 
@@ -6877,8 +12433,9 @@ state.portalCooldown =
 state.paused =
 false;
 
-must("transitionScreen")
-.classList.add(
+must(
+"transitionScreen"
+).classList.add(
 "hidden"
 );
 
@@ -6896,19 +12453,36 @@ showToast(
 
 }
 
-/* =====================================================
-INVENTÁRIO
-====================================================== */
+function openInventory() {
+
+if (
+!state.player
+) {
+return;
+}
+
+updateInventory();
+
+must(
+"inventoryPanel"
+).classList.remove(
+"hidden"
+);
+
+}
 
 function updateInventory() {
 
 const grid =
-must("inventoryGrid");
+must(
+"inventoryGrid"
+);
 
 grid.innerHTML =
 "";
 
-Object.entries(
+Object
+.entries(
 state.player.inventory
 )
 .forEach(
@@ -6920,11 +12494,10 @@ amount
 ) => {
 
 if (
-amount <= 0
+amount <=
+0
 ) {
-
 return;
-
 }
 
 const item =
@@ -6933,9 +12506,7 @@ ITEMS[id];
 if (
 !item
 ) {
-
 return;
-
 }
 
 if (
@@ -6944,9 +12515,7 @@ state.inventoryCategory !==
 item.category !==
 state.inventoryCategory
 ) {
-
 return;
-
 }
 
 const slot =
@@ -7024,7 +12593,8 @@ empty
 let weight =
 0;
 
-Object.entries(
+Object
+.entries(
 state.player.inventory
 )
 .forEach(
@@ -7046,27 +12616,87 @@ amount;
 }
 );
 
-must("weightText").textContent =
+must(
+"weightText"
+).textContent =
 `${weight}/100`;
 
 updateEquipment();
 
 }
 
-function useItem(id) {
+function useItem(
+id
+) {
 
 const item =
 ITEMS[id];
 
 if (
-!item
+!item ||
+!state.player
 ) {
+return;
+}
+
+if (
+id ===
+"flautaMemoria"
+) {
+
+useMemoryFlute();
 
 return;
 
 }
 
 if (
+item.category ===
+"food"
+) {
+
+if (
+!removeItem(
+id,
+1
+)
+) {
+return;
+}
+
+state.player.hunger =
+Math.min(
+
+100,
+
+state.player.hunger +
+(
+item.hunger ||
+0
+)
+
+);
+
+state.player.hp =
+Math.min(
+
+state.player.maxHp,
+
+state.player.hp +
+(
+item.heal ||
+0
+)
+
+);
+
+showToast(
+`${item.name} consumido.`
+);
+
+}
+
+else if (
 item.heal
 ) {
 
@@ -7076,16 +12706,17 @@ id,
 1
 )
 ) {
-
 return;
-
 }
 
 state.player.hp =
 Math.min(
+
 state.player.maxHp,
+
 state.player.hp +
 item.heal
+
 );
 
 showToast(
@@ -7104,16 +12735,17 @@ id,
 1
 )
 ) {
-
 return;
-
 }
 
 state.player.energy =
 Math.min(
+
 state.player.maxEnergy,
+
 state.player.energy +
 item.energy
+
 );
 
 showToast(
@@ -7157,24 +12789,35 @@ updateHUD();
 function updateEquipment() {
 
 const grid =
-must("equipmentGrid");
+must(
+"equipmentGrid"
+);
 
 const weapon =
+
 ITEMS[
-state.player.equipment.weapon
+state.player
+.equipment.weapon
 ]?.name ||
+
 "Nenhuma";
 
 const armor =
+
 ITEMS[
-state.player.equipment.armor
+state.player
+.equipment.armor
 ]?.name ||
+
 "Nenhuma";
 
 const tool =
+
 ITEMS[
-state.player.equipment.tool
+state.player
+.equipment.tool
 ]?.name ||
+
 "Nenhuma";
 
 grid.innerHTML = `
@@ -7189,6 +12832,7 @@ ${weapon}
 
 ${
 state.player.equipment.weapon
+
 ? `
 
 <button
@@ -7199,6 +12843,7 @@ Desequipar
 </button>
 
 `
+
 : ""
 }
 
@@ -7214,6 +12859,7 @@ ${armor}
 
 ${
 state.player.equipment.armor
+
 ? `
 
 <button
@@ -7224,6 +12870,7 @@ Desequipar
 </button>
 
 `
+
 : ""
 }
 
@@ -7267,9 +12914,23 @@ updateInventory();
 
 }
 
-/* =====================================================
-MAPA
-====================================================== */
+function openMap() {
+
+if (
+!state.player
+) {
+return;
+}
+
+drawLargeMap();
+
+must(
+"mapPanel"
+).classList.remove(
+"hidden"
+);
+
+}
 
 function drawLargeMap() {
 
@@ -7286,7 +12947,47 @@ width,
 height
 );
 
+const colors = {
+
+village:
+"#33483a",
+
+forest:
+"#263f2c",
+
+grove:
+"#213a2a",
+
+mountains:
+"#6f777a",
+
+iron:
+"#252a2d",
+
+ruby:
+"#3d2028",
+
+shadow:
+"#171b29",
+
+fairy:
+"#4b3a5d",
+
+sky:
+"#7197b5",
+
+hell:
+"#391b1c",
+
+final:
+"#17161b"
+
+};
+
 mapCtx.fillStyle =
+colors[
+state.area
+] ||
 "#18231a";
 
 mapCtx.fillRect(
@@ -7304,6 +13005,39 @@ const sy =
 height /
 state.world.height;
 
+mapCtx.globalAlpha =
+.35;
+
+state.world.decorations
+.filter(
+item =>
+item.type ===
+"pathStone"
+)
+.forEach(
+item => {
+
+mapCtx.fillStyle =
+"#c0ad82";
+
+mapCtx.beginPath();
+
+mapCtx.arc(
+item.x * sx,
+item.y * sy,
+2.2,
+0,
+Math.PI * 2
+);
+
+mapCtx.fill();
+
+}
+);
+
+mapCtx.globalAlpha =
+1;
+
 mapCtx.fillStyle =
 "#87664b";
 
@@ -7311,10 +13045,54 @@ state.world.buildings.forEach(
 building => {
 
 mapCtx.fillRect(
-building.x * sx,
-building.y * sy,
-building.w * sx,
-building.h * sy
+
+building.x *
+sx,
+
+building.y *
+sy,
+
+Math.max(
+4,
+building.w *
+sx
+),
+
+Math.max(
+4,
+building.h *
+sy
+)
+
+);
+
+}
+);
+
+mapCtx.fillStyle =
+"#456947";
+
+state.world.trees
+.filter(
+tree =>
+tree.alive
+)
+.forEach(
+tree => {
+
+mapCtx.fillRect(
+
+tree.x *
+sx -
+1,
+
+tree.y *
+sy -
+1,
+
+3,
+3
+
 );
 
 }
@@ -7327,10 +13105,18 @@ state.world.npcs.forEach(
 npc => {
 
 mapCtx.fillRect(
-npc.x * sx - 3,
-npc.y * sy - 3,
+
+npc.x *
+sx -
+3,
+
+npc.y *
+sy -
+3,
+
 6,
 6
+
 );
 
 }
@@ -7342,38 +13128,56 @@ enemy => {
 if (
 enemy.dead
 ) {
-
 return;
-
 }
 
-mapCtx.fillStyle =
+const isBoss =
 
 enemy.type ===
 "progression" ||
 
 enemy.type ===
-"final"
+"final";
+
+if (
+isBoss &&
+!state.player.discoveredBosses.includes(
+enemy.id
+) &&
+!state.player.defeatedBosses.includes(
+enemy.id
+)
+) {
+return;
+}
+
+mapCtx.fillStyle =
+
+isBoss
 
 ? "#ef554d"
+
 : "#d38764";
 
 mapCtx.beginPath();
 
 mapCtx.arc(
-enemy.x * sx,
-enemy.y * sy,
 
-enemy.type ===
-"progression" ||
-enemy.type ===
-"final"
+enemy.x *
+sx,
 
+enemy.y *
+sy,
+
+isBoss
 ? 7
-: 4,
+: 3.5,
 
 0,
-Math.PI * 2
+
+Math.PI *
+2
+
 );
 
 mapCtx.fill();
@@ -7381,23 +13185,45 @@ mapCtx.fill();
 }
 );
 
-mapCtx.fillStyle =
-"#65a9df";
-
 state.world.portals.forEach(
 portal => {
 
+if (
+typeof portal.visible ===
+"function" &&
+!portal.visible()
+) {
+return;
+}
+
+mapCtx.fillStyle =
+
+portal.stairs
+
+? "#f0d28a"
+
+: "#65a9df";
+
 mapCtx.fillRect(
-portal.x * sx,
-portal.y * sy,
+
+portal.x *
+sx,
+
+portal.y *
+sy,
+
 Math.max(
 4,
-portal.w * sx
+portal.w *
+sx
 ),
+
 Math.max(
 4,
-portal.h * sy
+portal.h *
+sy
 )
+
 );
 
 }
@@ -7409,14 +13235,48 @@ mapCtx.fillStyle =
 mapCtx.beginPath();
 
 mapCtx.arc(
-state.player.x * sx,
-state.player.y * sy,
+
+state.player.x *
+sx,
+
+state.player.y *
+sy,
+
 7,
+
 0,
-Math.PI * 2
+
+Math.PI *
+2
+
 );
 
 mapCtx.fill();
+
+mapCtx.fillStyle =
+"rgba(8,12,15,.68)";
+
+mapCtx.fillRect(
+14,
+14,
+260,
+38
+);
+
+mapCtx.fillStyle =
+"#f5ddb0";
+
+mapCtx.font =
+"bold 17px Georgia";
+
+mapCtx.textAlign =
+"left";
+
+mapCtx.fillText(
+REGIONS[state.area].name,
+27,
+39
+);
 
 }
 
@@ -7425,9 +13285,7 @@ function drawMinimap() {
 if (
 !state.player
 ) {
-
 return;
-
 }
 
 miniCtx.clearRect(
@@ -7437,7 +13295,47 @@ miniCanvas.width,
 miniCanvas.height
 );
 
+const colors = {
+
+village:
+"#263c2b",
+
+forest:
+"#1f3828",
+
+grove:
+"#1c3326",
+
+mountains:
+"#666e72",
+
+iron:
+"#20272a",
+
+ruby:
+"#3c2027",
+
+shadow:
+"#151a29",
+
+fairy:
+"#493a5b",
+
+sky:
+"#7399b8",
+
+hell:
+"#371a1b",
+
+final:
+"#17161b"
+
+};
+
 miniCtx.fillStyle =
+colors[
+state.area
+] ||
 "#19241b";
 
 miniCtx.fillRect(
@@ -7462,10 +13360,19 @@ state.world.buildings.forEach(
 building => {
 
 miniCtx.fillRect(
-building.x * sx,
-building.y * sy,
-building.w * sx,
-building.h * sy
+
+building.x *
+sx,
+
+building.y *
+sy,
+
+building.w *
+sx,
+
+building.h *
+sy
+
 );
 
 }
@@ -7478,10 +13385,18 @@ state.world.npcs.forEach(
 npc => {
 
 miniCtx.fillRect(
-npc.x * sx - 2,
-npc.y * sy - 2,
+
+npc.x *
+sx -
+2,
+
+npc.y *
+sy -
+2,
+
 4,
 4
+
 );
 
 }
@@ -7493,38 +13408,53 @@ enemy => {
 if (
 enemy.dead
 ) {
-
 return;
-
 }
 
-miniCtx.fillStyle =
+const isBoss =
 
 enemy.type ===
 "progression" ||
 
 enemy.type ===
-"final"
+"final";
+
+if (
+isBoss &&
+!state.player.discoveredBosses.includes(
+enemy.id
+)
+) {
+return;
+}
+
+miniCtx.fillStyle =
+
+isBoss
 
 ? "#ef554d"
+
 : "#d38764";
 
 miniCtx.beginPath();
 
 miniCtx.arc(
-enemy.x * sx,
-enemy.y * sy,
 
-enemy.type ===
-"progression" ||
-enemy.type ===
-"final"
+enemy.x *
+sx,
 
+enemy.y *
+sy,
+
+isBoss
 ? 4
-: 2.5,
+: 2.3,
 
 0,
-Math.PI * 2
+
+Math.PI *
+2
+
 );
 
 miniCtx.fill();
@@ -7532,23 +13462,45 @@ miniCtx.fill();
 }
 );
 
-miniCtx.fillStyle =
-"#65a9df";
-
 state.world.portals.forEach(
 portal => {
 
+if (
+typeof portal.visible ===
+"function" &&
+!portal.visible()
+) {
+return;
+}
+
+miniCtx.fillStyle =
+
+portal.stairs
+
+? "#f0d28a"
+
+: "#65a9df";
+
 miniCtx.fillRect(
-portal.x * sx,
-portal.y * sy,
+
+portal.x *
+sx,
+
+portal.y *
+sy,
+
 Math.max(
 2,
-portal.w * sx
+portal.w *
+sx
 ),
+
 Math.max(
 2,
-portal.h * sy
+portal.h *
+sy
 )
+
 );
 
 }
@@ -7560,116 +13512,256 @@ miniCtx.fillStyle =
 miniCtx.beginPath();
 
 miniCtx.arc(
-state.player.x * sx,
-state.player.y * sy,
+
+state.player.x *
+sx,
+
+state.player.y *
+sy,
+
 4,
+
 0,
-Math.PI * 2
+
+Math.PI *
+2
+
 );
 
 miniCtx.fill();
 
 }
 
-/* =====================================================
-LIVRO
-====================================================== */
+function openBook() {
+
+if (
+!state.player
+) {
+return;
+}
+
+renderBook();
+
+must(
+"bookPanel"
+).classList.remove(
+"hidden"
+);
+
+}
 
 const BOSS_REGISTRY = [
 
-[
+{
+id:
 "forest_guardian",
+
+name:
 "GUARDIÃO DA ESTRADA",
-"👺"
-],
 
-[
+icon:
+"👺",
+
+description:
+"Antigo protetor da estrada da Vila do Crepúsculo. A Quietude apagou de sua memória quem deveria atravessar e quem deveria ser impedido.",
+
+quote:
+"Ele continuou guardando a passagem depois de esquecer o motivo."
+},
+
+{
+id:
 "grove_guardian",
+
+name:
 "GUARDIÃO DA FLORESTA",
-"🌳"
-],
 
-[
+icon:
+"🌳",
+
+description:
+"Uma árvore ancestral que sentia cada passo na mata. Suas raízes foram contaminadas por lembranças quebradas e agora atacam tudo que se aproxima.",
+
+quote:
+"As raízes lembram o que as folhas esqueceram."
+},
+
+{
+id:
 "mountain_guardian",
+
+name:
 "GUARDIÃO DO BOSQUE",
-"🌲"
-],
 
-[
+icon:
+"🌲",
+
+description:
+"Último espírito que separava o Bosque das Montanhas. Seu corpo cresceu ao redor de memórias de viajantes perdidos.",
+
+quote:
+"Cada galho carrega um nome que já não possui dono."
+},
+
+{
+id:
 "iron_guardian",
+
+name:
 "SENTINELA DAS MONTANHAS",
-"🗿"
-],
 
-[
+icon:
+"🗿",
+
+description:
+"Uma sentinela de pedra moldada por um povo desaparecido. Atira rochas contra intrusos e ainda obedece a uma ordem cujo autor ninguém recorda.",
+
+quote:
+"A pedra não esqueceu a ordem. Esqueceu apenas quem a deu."
+},
+
+{
+id:
 "ruby_guardian",
+
+name:
 "GUARDIÃO DE FERRO",
-"⚙️"
-],
 
-[
+icon:
+"⚙️",
+
+description:
+"Máquina de mineração que aprendeu a defender os túneis quando os mineiros desapareceram. O metal em seu corpo vibra com magia antiga.",
+
+quote:
+"Quando o último martelo silenciou, ele continuou trabalhando."
+},
+
+{
+id:
 "shadow_guardian",
+
+name:
 "GUARDIÃO RUBI",
-"🔴"
-],
 
-[
+icon:
+"🔴",
+
+description:
+"Uma criatura formada ao redor de um núcleo de rubi vivo. Seus cristais armazenam lembranças como reflexos vermelhos.",
+
+quote:
+"O cristal repete tudo — até aquilo que nunca aconteceu."
+},
+
+{
+id:
 "fairy_guardian",
+
+name:
 "GUARDIÃO SOMBRIO",
-"🌑"
-],
 
-[
+icon:
+"🌑",
+
+description:
+"Sombra condensada de exploradores esquecidos. Não possui uma única identidade; fala com vozes de pessoas que não existem mais.",
+
+quote:
+"Nenhuma sombra nasce sem algo para bloquear a luz."
+},
+
+{
+id:
 "sky_guardian",
+
+name:
 "GUARDIÃ DOS FIOS",
-"🧚"
-],
 
-[
-"hell_guardian",
-"SERAFIM DA QUIETUDE",
-"☀️"
-],
+icon:
+"🧚",
 
-[
+description:
+"Uma antiga fada que costurava memórias entre flores e pessoas. Ao se corromper, passou a cortar os fios que antes protegia.",
+
+quote:
+"Ela aprendeu tarde demais que lembrar também pode doer."
+},
+
+{
+id:
+"path_guardian",
+
+name:
+"GUARDIÃO DO CAMINHO",
+
+icon:
+"🪽",
+
+description:
+"O último vigilante antes do Inferno. Somente aparece depois das Cinco Hordas e carrega a Flauta da Memória.",
+
+quote:
+"A passagem não estava escondida. O mundo havia esquecido que ela existia."
+},
+
+{
+id:
 "final_gate_guardian",
-"SENHOR DA QUIETUDE",
-"👿"
-],
 
-[
+name:
+"GUARDIÃO SUPREMO DO INFERNO",
+
+icon:
+"👿",
+
+description:
+"Uma entidade moldada pela pressão de milhares de memórias destruídas. Protege a Câmara Final e domina ataques infernais em área.",
+
+quote:
+"Atrás dele, até o medo parece lembrar do seu nome."
+},
+
+{
+id:
 "other_self",
+
+name:
 "O OUTRO EU",
-"☯"
-]
+
+icon:
+"☯",
+
+description:
+"Uma versão do protagonista de outro universo. Preservou memória demais e concluiu que a única forma de acabar com o sofrimento é apagar tudo.",
+
+quote:
+"Se nada for lembrado, nada poderá sofrer."
+}
 
 ];
 
 function renderBook() {
 
 const book =
-must("bossBook");
+must(
+"bossBook"
+);
 
 book.innerHTML =
 "";
 
 BOSS_REGISTRY.forEach(
-(
-[
-id,
-name,
-icon
-]
-) => {
+boss => {
 
 const defeated =
 
 state.player.defeatedBosses.includes(
-id
+boss.id
 ) ||
 
 (
-id ===
+boss.id ===
 "other_self" &&
 state.player.finalDefeated
 );
@@ -7679,7 +13771,7 @@ const discovered =
 defeated ||
 
 state.player.discoveredBosses.includes(
-id
+boss.id
 );
 
 const entry =
@@ -7697,24 +13789,23 @@ discovered
 ? `
 
 <div class="symbol">
-${icon}
+${boss.icon}
 </div>
 
 <strong>
-${name}
+${boss.name}
 </strong>
 
 <p>
-${
-defeated
-? "Derrotado."
-: "Registro descoberto."
-}
+${defeated ? "✓ DERROTADO" : "REGISTRO DESCOBERTO"}
 </p>
 
-<p>
-“Uma memória registrada
-não desaparece tão facilmente.”
+<p class="boss-lore">
+${boss.description}
+</p>
+
+<p class="boss-quote">
+“${boss.quote}”
 </p>
 
 `
@@ -7730,8 +13821,7 @@ DESCONHECIDO
 </strong>
 
 <p>
-Explore Veyra para descobrir
-este registro.
+Encontre este Guardião para revelar seu registro.
 </p>
 
 `;
@@ -7743,13 +13833,75 @@ entry
 }
 );
 
+const requiredBeforeHell = [
+
+"forest_guardian",
+
+"grove_guardian",
+
+"mountain_guardian",
+
+"iron_guardian",
+
+"ruby_guardian",
+
+"shadow_guardian",
+
+"fairy_guardian",
+
+"sky_guardian",
+
+"path_guardian"
+
+];
+
+if (
+
+requiredBeforeHell.every(
+id =>
+state.player.defeatedBosses.includes(
+id
+)
+)
+
+) {
+
+const clue =
+document.createElement(
+"div"
+);
+
+clue.className =
+"boss-entry";
+
+clue.innerHTML = `
+
+<div class="symbol">
+🎶
+</div>
+
+<strong>
+MEMÓRIA COMPLETA
+</strong>
+
+<p class="boss-lore">
+A Flauta da Memória deve ser tocada no Céu.
+Sua melodia faz o mundo lembrar da Escada do Inferno.
+</p>
+
+`;
+
+book.appendChild(
+clue
+);
+
 }
 
-/* =====================================================
-LOJA
-====================================================== */
+}
 
-function openShop(npc) {
+function openShop(
+npc
+) {
 
 state.shopNPC =
 npc;
@@ -7773,13 +13925,16 @@ tab.dataset.shop ===
 }
 );
 
-must("shopTitle").textContent =
+must(
+"shopTitle"
+).textContent =
 `LOJA DE ${npc.name}`;
 
 renderShop();
 
-must("shopPanel")
-.classList.remove(
+must(
+"shopPanel"
+).classList.remove(
 "hidden"
 );
 
@@ -7788,7 +13943,9 @@ must("shopPanel")
 function renderShop() {
 
 const grid =
-must("shopGrid");
+must(
+"shopGrid"
+);
 
 grid.innerHTML =
 "";
@@ -7799,6 +13956,8 @@ state.shopMode ===
 ) {
 
 [
+"pao",
+"carneCaca",
 "pocao",
 "elixir",
 "espadaFerro",
@@ -7812,8 +13971,11 @@ ITEMS[id];
 
 const row =
 createShopRow(
+
 item,
+
 `Comprar por ${item.value}`,
+
 () => {
 
 if (
@@ -7846,6 +14008,7 @@ renderShop();
 updateHUD();
 
 }
+
 );
 
 grid.appendChild(
@@ -7871,12 +14034,12 @@ amount
 ) => {
 
 if (
-amount <= 0 ||
-!ITEMS[id]
+amount <=
+0 ||
+!ITEMS[id] ||
+ITEMS[id].unique
 ) {
-
 return;
-
 }
 
 const item =
@@ -7884,17 +14047,23 @@ ITEMS[id];
 
 const price =
 Math.max(
+
 1,
+
 Math.floor(
 item.value *
 .7
 )
+
 );
 
 const row =
 createShopRow(
+
 item,
+
 `Vender por ${price} • x${amount}`,
+
 () => {
 
 if (
@@ -7903,9 +14072,7 @@ id,
 1
 )
 ) {
-
 return;
-
 }
 
 state.player.money +=
@@ -7920,6 +14087,7 @@ renderShop();
 updateHUD();
 
 }
+
 );
 
 grid.appendChild(
@@ -8012,10 +14180,6 @@ return row;
 
 }
 
-/* =====================================================
-FINAL
-====================================================== */
-
 function openFinalChoice() {
 
 state.finalChoiceShown =
@@ -8032,8 +14196,11 @@ window.confirm(
 );
 
 state.player.finalChoice =
+
 choice
+
 ? "join"
+
 : "fight";
 
 state.paused =
@@ -8079,7 +14246,9 @@ showToast(
 
 }
 
-function showEnding(message) {
+function showEnding(
+message
+) {
 
 state.running =
 false;
@@ -8091,19 +14260,23 @@ saveGame(
 false
 );
 
-must("transitionMessage").textContent =
+must(
+"transitionMessage"
+).textContent =
 message;
 
-must("transitionScreen")
-.classList.remove(
+must(
+"transitionScreen"
+).classList.remove(
 "hidden"
 );
 
 setTimeout(
 () => {
 
-must("transitionScreen")
-.classList.add(
+must(
+"transitionScreen"
+).classList.add(
 "hidden"
 );
 
@@ -8119,11 +14292,9 @@ updateContinueButton();
 
 }
 
-/* =====================================================
-PARTÍCULAS
-====================================================== */
-
-function updateVisualEffects(dt) {
+function updateVisualEffects(
+dt
+) {
 
 state.world.particles =
 state.world.particles.filter(
@@ -8157,8 +14328,9 @@ state.world.effects.filter(
 effect => {
 
 if (
-effect.type ===
-"dangerOrb"
+Number.isFinite(
+effect.life
+)
 ) {
 
 effect.life -=
@@ -8234,19 +14406,12 @@ color
 }
 
 }
-
-/* =====================================================
-CÂMERA
-====================================================== */
-
-function updateCamera() {
+  function updateCamera() {
 
 if (
 !state.player
 ) {
-
 return;
-
 }
 
 const viewW =
@@ -8334,10 +14499,6 @@ viewH
 
 }
 
-/* =====================================================
-HUD
-====================================================== */
-
 function updateHUD() {
 
 const player =
@@ -8346,44 +14507,64 @@ state.player;
 if (
 !player
 ) {
-
 return;
-
 }
 
-must("hudAvatar").textContent =
+must(
+"hudAvatar"
+).textContent =
 player.icon;
 
-must("hudClass").textContent =
+must(
+"hudClass"
+).textContent =
 player.className;
 
-must("hudName").textContent =
+must(
+"hudName"
+).textContent =
 player.name;
 
-must("moneyText").textContent =
+must(
+"moneyText"
+).textContent =
 player.money;
 
-must("levelText").textContent =
+must(
+"levelText"
+).textContent =
 player.level;
 
-must("xpText").textContent =
+must(
+"xpText"
+).textContent =
 `${player.xp} / ${player.xpToNext}`;
 
-must("hpText").textContent =
+must(
+"hpText"
+).textContent =
 `${Math.ceil(player.hp)}/${player.maxHp}`;
 
-must("magicText").textContent =
+must(
+"magicText"
+).textContent =
 `${Math.ceil(player.magic)}/${Math.ceil(player.maxMagic)}`;
 
-must("energyText").textContent =
+must(
+"energyText"
+).textContent =
 `${Math.ceil(player.energy)}/${player.maxEnergy}`;
 
-must("hungerText").textContent =
+must(
+"hungerText"
+).textContent =
 Math.ceil(
 player.hunger
 );
 
-must("fatigueText").textContent =
+must(
+"fatigueText"
+).textContent =
 Math.ceil(
 player.fatigue
 );
@@ -8410,6 +14591,113 @@ updateInteractionHint();
 
 }
 
+function updateSkillHUD() {
+
+if (
+!state.player
+) {
+return;
+}
+
+const skills =
+getCharacterSkills();
+
+[
+[
+"q",
+"skillQName",
+"skillQCooldown"
+],
+[
+"r",
+"skillRName",
+"skillRCooldown"
+],
+[
+"f",
+"skillFName",
+"skillFCooldown"
+]
+]
+.forEach(
+(
+[
+key,
+nameId,
+cooldownId
+]
+) => {
+
+const skill =
+skills[key];
+
+const slot =
+document.querySelector(
+`[data-skill-slot="${key}"]`
+);
+
+const cooldown =
+state.player.skillCooldowns[key] ||
+0;
+
+must(
+nameId
+).textContent =
+skill.name;
+
+const locked =
+state.player.level <
+skill.level;
+
+slot?.classList.toggle(
+"locked",
+locked
+);
+
+slot?.classList.toggle(
+"cooldown",
+!locked &&
+cooldown >
+0
+);
+
+if (
+locked
+) {
+
+must(
+cooldownId
+).textContent =
+`NÍVEL ${skill.level}`;
+
+}
+
+else if (
+cooldown >
+0
+) {
+
+must(
+cooldownId
+).textContent =
+`${cooldown.toFixed(1)}s`;
+
+}
+
+else {
+
+must(
+cooldownId
+).textContent =
+"PRONTA";
+
+}
+
+}
+);
+
+}
+
 function setBar(
 id,
 value,
@@ -8418,21 +14706,28 @@ max
 
 const percentage =
 
-max > 0
+max >
+0
 
 ? clamp(
+
 (
 value /
 max
 ) *
 100,
+
 0,
+
 100
+
 )
 
 : 0;
 
-must(id).style.width =
+must(
+id
+).style.width =
 `${percentage}%`;
 
 }
@@ -8440,14 +14735,24 @@ must(id).style.width =
 function updateInteractionHint() {
 
 const hint =
-must("interactionHint");
+must(
+"interactionHint"
+);
 
 if (
+
 !state.player ||
+
 state.paused ||
+
 state.dialogue ||
+
 state.travel ||
-state.battle
+
+state.battle ||
+
+state.holdAction
+
 ) {
 
 hint.classList.add(
@@ -8482,10 +14787,14 @@ interaction.type ===
 "house"
 ) {
 
-must("interactionKey").textContent =
+must(
+"interactionKey"
+).textContent =
 "Z";
 
-must("interactionText").textContent =
+must(
+"interactionText"
+).textContent =
 "Entrar";
 
 return;
@@ -8497,17 +14806,23 @@ interaction.type ===
 "exitHouse"
 ) {
 
-must("interactionKey").textContent =
+must(
+"interactionKey"
+).textContent =
 "Z";
 
-must("interactionText").textContent =
+must(
+"interactionText"
+).textContent =
 "Sair";
 
 return;
 
 }
 
-must("interactionKey").textContent =
+must(
+"interactionKey"
+).textContent =
 "E";
 
 const labels = {
@@ -8525,69 +14840,93 @@ interaction.object.merchant
 : "Conversar",
 
 tree:
-"Cortar árvore",
+"Segure para cortar",
 
 resource:
-`Coletar ${
-ITEMS[
-interaction.object.type
-]?.name ||
-"recurso"
-}`,
+`Segure para coletar ${ITEMS[interaction.object.type]?.name || "recurso"}`,
+
+food:
+
+interaction.object.type ===
+"carrot"
+
+? "Comer cenoura"
+
+: "Comer",
+
+secret:
+"Investigar",
+
+trial:
+"Iniciar próxima horda",
+
+sleep:
+"Dormir",
 
 boss:
 
 interaction.object.accepted
 
-? "Atacar"
+? "Boss em combate"
 
 : "Aceitar batalha",
 
 enemy:
-"Atacar"
+"Inimigo — ataque com clique"
 
 };
 
-must("interactionText").textContent =
+must(
+"interactionText"
+).textContent =
+
 labels[
 interaction.type
 ] ||
+
 "Interagir";
 
 }
-
-/* =====================================================
-UPDATE
-====================================================== */
 
 function update(dt) {
 
 if (
 !state.player
 ) {
-
 return;
-
 }
 
 state.portalCooldown =
 Math.max(
+
 0,
+
 state.portalCooldown -
 dt
+
 );
 
 state.player.invincible =
 Math.max(
+
 0,
+
 state.player.invincible -
 dt
+
 );
 
 state.player.attackCooldown =
 Math.max(
+
 0,
+
 state.player.attackCooldown -
+dt
+
+);
+
+updateSkillCooldowns(
 dt
 );
 
@@ -8607,6 +14946,16 @@ updateResources(
 dt
 );
 
+updateHazards(
+dt
+);
+
+updateHoldInteraction(
+dt
+);
+
+updateSkyTrial();
+
 updateVisualEffects(
 dt
 );
@@ -8617,9 +14966,37 @@ updateCamera();
 
 updateHUD();
 
+updateSkillHUD();
+
 if (
-!must("mapPanel")
-.classList.contains(
+
+state.pointer.down &&
+
+state.player.attackCooldown <=
+0 &&
+
+screens.game.classList.contains(
+"active"
+)
+
+) {
+
+performAttack({
+
+x:
+state.pointer.worldX,
+
+y:
+state.pointer.worldY
+
+});
+
+}
+
+if (
+!must(
+"mapPanel"
+).classList.contains(
 "hidden"
 )
 ) {
@@ -8630,14 +15007,14 @@ drawLargeMap();
 
 }
 
-function gameLoop(timestamp) {
+function gameLoop(
+timestamp
+) {
 
 if (
 !state.running
 ) {
-
 return;
-
 }
 
 const dt =
@@ -8649,7 +15026,7 @@ state.lastTime
 ) /
 1000,
 
-.05
+0.05
 
 );
 
@@ -8670,10 +15047,6 @@ gameLoop
 );
 
 }
-
-/* =====================================================
-DESENHO
-====================================================== */
 
 function draw() {
 
@@ -8711,17 +15084,25 @@ drawPaths();
 
 drawAmbientDetails();
 
+drawDecorations();
+
 drawBuildings();
 
 drawTrees();
 
 drawResources();
 
+drawFoods();
+
+drawSecrets();
+
 drawObstacles();
 
 drawPortals();
 
 drawDrops();
+
+drawHazards();
 
 drawEffects();
 
@@ -8752,34 +15133,47 @@ state.area
 
 const colors = {
 
-village: "#536b4b",
+village:
+"#536b4b",
 
-forest: "#3e6141",
+forest:
+"#3e6141",
 
-grove: "#34583a",
+grove:
+"#34583a",
 
-mountains: "#92999b",
+mountains:
+"#92999b",
 
-iron: "#292e31",
+iron:
+"#292e31",
 
-ruby: "#48252b",
+ruby:
+"#48252b",
 
-shadow: "#171d2e",
+shadow:
+"#171d2e",
 
-fairy: "#56436b",
+fairy:
+"#56436b",
 
-sky: "#92b0c7",
+sky:
+"#92b0c7",
 
-hell: "#45201f",
+hell:
+"#45201f",
 
-final: "#18171b"
+final:
+"#18171b"
 
 };
 
 ctx.fillStyle =
+
 colors[
 visual
 ] ||
+
 "#536b4b";
 
 ctx.fillRect(
@@ -8794,24 +15188,33 @@ const tile =
 
 for (
 let y = 70;
-y < state.world.height - 70;
-y += tile
+y <
+state.world.height -
+70;
+y +=
+tile
 ) {
 
 for (
 let x = 70;
-x < state.world.width - 70;
-x += tile
+x <
+state.world.width -
+70;
+x +=
+tile
 ) {
 
 ctx.fillStyle =
 
 (
 (
-x / tile +
-y / tile
+x /
+tile +
+y /
+tile
 ) %
-2 === 0
+2 ===
+0
 )
 
 ? "rgba(255,255,255,.014)"
@@ -8844,9 +15247,10 @@ ctx.ellipse(
 1080,
 420,
 340,
--.1,
+-0.1,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -8858,24 +15262,21 @@ ctx.fill();
 function drawPaths() {
 
 if (
-state.area !==
+state.area ===
 "village"
 ) {
-
-return;
-
-}
 
 ctx.fillStyle =
 "#b79a68";
 
 ctx.globalAlpha =
-.7;
+0.7;
 
 ctx.fillRect(
 70,
 1080,
-state.world.width - 140,
+state.world.width -
+140,
 120
 );
 
@@ -8883,7 +15284,8 @@ ctx.fillRect(
 1540,
 70,
 120,
-state.world.height - 140
+state.world.height -
+140
 );
 
 ctx.fillRect(
@@ -8903,6 +15305,122 @@ ctx.fillRect(
 ctx.globalAlpha =
 1;
 
+return;
+
+}
+
+if (
+
+state.area ===
+"forest" ||
+
+state.area ===
+"grove"
+
+) {
+
+const baseY =
+
+state.area ===
+"forest"
+
+? 1220
+
+: 1120;
+
+const divisor =
+
+state.area ===
+"forest"
+
+? 320
+
+: 270;
+
+const amplitude =
+
+state.area ===
+"forest"
+
+? 150
+
+: 95;
+
+ctx.lineCap =
+"round";
+
+ctx.lineJoin =
+"round";
+
+ctx.strokeStyle =
+
+state.area ===
+"forest"
+
+? "rgba(112,102,75,.44)"
+
+: "rgba(124,113,81,.40)";
+
+ctx.lineWidth =
+120;
+
+ctx.beginPath();
+
+for (
+let x = 90;
+x <=
+state.world.width -
+90;
+x +=
+35
+) {
+
+const y =
+
+baseY +
+
+Math.sin(
+x /
+divisor
+) *
+
+amplitude;
+
+if (
+x ===
+90
+) {
+
+ctx.moveTo(
+x,
+y
+);
+
+}
+
+else {
+
+ctx.lineTo(
+x,
+y
+);
+
+}
+
+}
+
+ctx.stroke();
+
+ctx.strokeStyle =
+"rgba(205,188,145,.16)";
+
+ctx.lineWidth =
+2;
+
+ctx.stroke();
+
+}
+
 }
 
 function drawAmbientDetails() {
@@ -8917,7 +15435,8 @@ if (
 "village",
 "forest",
 "grove"
-].includes(
+]
+.includes(
 visual
 )
 ) {
@@ -8930,20 +15449,28 @@ ctx.lineWidth =
 
 for (
 let y = 100;
-y < state.world.height - 100;
-y += 75
+y <
+state.world.height -
+100;
+y +=
+75
 ) {
 
 for (
 let x = 100;
-x < state.world.width - 100;
-x += 75
+x <
+state.world.width -
+100;
+x +=
+75
 ) {
 
 if (
 (
-x * 7 +
-y * 3
+x *
+7 +
+y *
+3
 ) %
 13 <
 5
@@ -8953,22 +15480,28 @@ ctx.beginPath();
 
 ctx.moveTo(
 x,
-y + 5
+y +
+5
 );
 
 ctx.lineTo(
-x - 4,
-y - 4
+x -
+4,
+y -
+4
 );
 
 ctx.moveTo(
 x,
-y + 5
+y +
+5
 );
 
 ctx.lineTo(
-x + 5,
-y - 5
+x +
+5,
+y -
+5
 );
 
 ctx.stroke();
@@ -8976,6 +15509,281 @@ ctx.stroke();
 }
 
 }
+
+}
+
+if (
+
+visual ===
+"forest" ||
+
+visual ===
+"grove"
+
+) {
+
+ctx.fillStyle =
+"rgba(205,235,180,.13)";
+
+for (
+let i = 0;
+i <
+38;
+i++
+) {
+
+const x =
+
+(
+i *
+293 +
+state.time *
+13
+) %
+
+state.world.width;
+
+const y =
+
+(
+i *
+177 +
+
+Math.sin(
+state.time +
+i
+) *
+18
+) %
+
+state.world.height;
+
+ctx.beginPath();
+
+ctx.arc(
+x,
+y,
+2 +
+(
+i %
+3
+),
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+}
+
+}
+
+}
+
+if (
+visual ===
+"mountains"
+) {
+
+ctx.strokeStyle =
+"rgba(255,255,255,.28)";
+
+ctx.lineWidth =
+2;
+
+for (
+let i = 0;
+i <
+28;
+i++
+) {
+
+const x =
+
+(
+i *
+191 +
+state.time *
+65
+) %
+
+state.world.width;
+
+const y =
+
+(
+i *
+127 +
+state.time *
+16
+) %
+
+state.world.height;
+
+ctx.beginPath();
+
+ctx.moveTo(
+x,
+y
+);
+
+ctx.lineTo(
+x +
+48,
+y -
+9
+);
+
+ctx.stroke();
+
+}
+
+}
+
+if (
+
+visual ===
+"iron" ||
+
+visual ===
+"ruby" ||
+
+visual ===
+"shadow"
+
+) {
+
+const color =
+
+visual ===
+"ruby"
+
+? "rgba(255,65,85,.18)"
+
+: visual ===
+"iron"
+
+? "rgba(190,200,210,.10)"
+
+: "rgba(90,100,180,.10)";
+
+ctx.fillStyle =
+color;
+
+for (
+let i = 0;
+i <
+24;
+i++
+) {
+
+const x =
+(
+i *
+347
+) %
+state.world.width;
+
+const y =
+(
+i *
+229
+) %
+state.world.height;
+
+const pulse =
+
+3 +
+
+Math.sin(
+state.time *
+2 +
+i
+) *
+2;
+
+ctx.beginPath();
+
+ctx.arc(
+x,
+y,
+5 +
+pulse,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+}
+
+}
+
+if (
+visual ===
+"sky"
+) {
+
+ctx.fillStyle =
+"rgba(255,255,255,.28)";
+
+for (
+let i = 0;
+i <
+34;
+i++
+) {
+
+const x =
+
+(
+i *
+311 +
+state.time *
+(
+8 +
+i %
+4
+)
+) %
+
+state.world.width;
+
+const y =
+
+(
+i *
+171
+) %
+
+state.world.height;
+
+ctx.beginPath();
+
+ctx.ellipse(
+x,
+y,
+42 +
+(
+i %
+4
+) *
+14,
+17 +
+(
+i %
+3
+) *
+6,
+0,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
 
 }
 
@@ -8991,19 +15799,22 @@ ctx.fillStyle =
 
 for (
 let i = 0;
-i < 24;
+i <
+32;
 i++
 ) {
 
 const x =
 (
-i * 421
+i *
+421
 ) %
 state.world.width;
 
 const y =
 (
-i * 257
+i *
+257
 ) %
 state.world.height;
 
@@ -9014,10 +15825,12 @@ x,
 y,
 8 +
 (
-i % 5
+i %
+5
 ),
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -9028,9 +15841,974 @@ ctx.fill();
 
 }
 
-/* =====================================================
-CONSTRUÇÕES
-====================================================== */
+function drawDecorations() {
+
+for (
+const decoration of
+state.world.decorations
+) {
+
+const {
+type,
+x,
+y
+} =
+decoration;
+
+if (
+type ===
+"pathStone"
+) {
+
+const size =
+decoration.size ||
+22;
+
+ctx.save();
+
+ctx.translate(
+x,
+y
+);
+
+ctx.rotate(
+decoration.angle ||
+0
+);
+
+ctx.fillStyle =
+"rgba(137,137,126,.78)";
+
+ctx.beginPath();
+
+ctx.ellipse(
+0,
+0,
+size,
+size *
+0.55,
+0,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+ctx.restore();
+
+}
+
+else if (
+type ===
+"mushroom"
+) {
+
+ctx.fillStyle =
+
+decoration.glow
+
+? "rgba(143,220,255,.8)"
+
+: "#d5c9a5";
+
+ctx.fillRect(
+x -
+2,
+y,
+4,
+7
+);
+
+ctx.fillStyle =
+
+decoration.glow
+
+? "#7bdcff"
+
+: "#b5665e";
+
+ctx.beginPath();
+
+ctx.arc(
+x,
+y -
+2,
+6,
+Math.PI,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+}
+
+else if (
+type ===
+"bush"
+) {
+
+ctx.fillStyle =
+"#365d3c";
+
+for (
+let i = 0;
+i <
+3;
+i++
+) {
+
+ctx.beginPath();
+
+ctx.arc(
+x -
+13 +
+i *
+13,
+y,
+14,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+}
+
+}
+
+else if (
+type ===
+"fallenLog"
+) {
+
+ctx.strokeStyle =
+"#6f4b31";
+
+ctx.lineWidth =
+14;
+
+ctx.beginPath();
+
+ctx.moveTo(
+x -
+28,
+y +
+5
+);
+
+ctx.lineTo(
+x +
+30,
+y -
+8
+);
+
+ctx.stroke();
+
+}
+
+else if (
+
+type ===
+"flower" ||
+
+type ===
+"flowerPot"
+
+) {
+
+ctx.fillStyle =
+
+type ===
+"flowerPot"
+
+? "#9b6847"
+
+: "#f09ac9";
+
+ctx.beginPath();
+
+ctx.arc(
+x,
+y,
+type ===
+"flowerPot"
+
+? 7
+
+: 4,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+}
+
+else if (
+type ===
+"ancientRoot"
+) {
+
+ctx.strokeStyle =
+"#6d5036";
+
+ctx.lineWidth =
+7;
+
+ctx.beginPath();
+
+ctx.moveTo(
+x -
+35,
+y
+);
+
+ctx.quadraticCurveTo(
+x,
+y -
+28,
+x +
+36,
+y +
+4
+);
+
+ctx.stroke();
+
+}
+
+else if (
+type ===
+"snowDrift"
+) {
+
+ctx.fillStyle =
+"rgba(245,248,250,.48)";
+
+ctx.beginPath();
+
+ctx.ellipse(
+x,
+y,
+48,
+16,
+-0.12,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+}
+
+else if (
+type ===
+"windMark"
+) {
+
+ctx.strokeStyle =
+"rgba(255,255,255,.22)";
+
+ctx.lineWidth =
+2;
+
+ctx.beginPath();
+
+ctx.moveTo(
+x -
+28,
+y
+);
+
+ctx.lineTo(
+x +
+30,
+y -
+6
+);
+
+ctx.stroke();
+
+}
+
+else if (
+type ===
+"mineLantern"
+) {
+
+const glow =
+
+0.45 +
+
+Math.sin(
+state.time *
+4 +
+x
+) *
+0.12;
+
+ctx.fillStyle =
+`rgba(255,187,94,${glow})`;
+
+ctx.beginPath();
+
+ctx.arc(
+x,
+y,
+9,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+ctx.strokeStyle =
+"#574535";
+
+ctx.strokeRect(
+x -
+7,
+y -
+11,
+14,
+22
+);
+
+}
+
+else if (
+type ===
+"rail"
+) {
+
+ctx.strokeStyle =
+"#4b4d4d";
+
+ctx.lineWidth =
+4;
+
+ctx.beginPath();
+
+ctx.moveTo(
+x -
+42,
+y -
+8
+);
+
+ctx.lineTo(
+x +
+42,
+y -
+8
+);
+
+ctx.moveTo(
+x -
+42,
+y +
+8
+);
+
+ctx.lineTo(
+x +
+42,
+y +
+8
+);
+
+ctx.stroke();
+
+}
+
+else if (
+type ===
+"stalagmite"
+) {
+
+ctx.fillStyle =
+"#4e5557";
+
+ctx.beginPath();
+
+ctx.moveTo(
+x -
+10,
+y +
+14
+);
+
+ctx.lineTo(
+x,
+y -
+26
+);
+
+ctx.lineTo(
+x +
+12,
+y +
+14
+);
+
+ctx.closePath();
+
+ctx.fill();
+
+}
+
+else if (
+
+type ===
+"crystalPillar" ||
+
+type ===
+"crystalShard"
+
+) {
+
+const big =
+type ===
+"crystalPillar";
+
+const h =
+big
+? 46
+: 24;
+
+const w =
+big
+? 17
+: 9;
+
+ctx.fillStyle =
+`rgba(224,55,84,${
+0.62 +
+Math.sin(
+state.time *
+3 +
+decoration.phase
+) *
+0.18
+})`;
+
+ctx.beginPath();
+
+ctx.moveTo(
+x,
+y -
+h
+);
+
+ctx.lineTo(
+x +
+w,
+y
+);
+
+ctx.lineTo(
+x,
+y +
+7
+);
+
+ctx.lineTo(
+x -
+w,
+y
+);
+
+ctx.closePath();
+
+ctx.fill();
+
+}
+
+else if (
+type ===
+"celestialPillar"
+) {
+
+ctx.fillStyle =
+"rgba(245,238,211,.78)";
+
+ctx.fillRect(
+x -
+14,
+y -
+42,
+28,
+84
+);
+
+ctx.fillStyle =
+"#d4b762";
+
+ctx.fillRect(
+x -
+20,
+y -
+48,
+40,
+8
+);
+
+ctx.fillRect(
+x -
+20,
+y +
+40,
+40,
+8
+);
+
+}
+
+else if (
+type ===
+"cloud"
+) {
+
+ctx.fillStyle =
+"rgba(255,255,255,.35)";
+
+for (
+let i = 0;
+i <
+3;
+i++
+) {
+
+ctx.beginPath();
+
+ctx.arc(
+x -
+18 +
+i *
+18,
+y,
+18 +
+i *
+3,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+}
+
+}
+
+else if (
+type ===
+"trialAltar"
+) {
+
+ctx.fillStyle =
+"#e2d294";
+
+ctx.beginPath();
+
+ctx.arc(
+x,
+y,
+36,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+ctx.fillStyle =
+"#658cb7";
+
+ctx.beginPath();
+
+ctx.arc(
+x,
+y,
+19,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+}
+
+else if (
+type ===
+"lavaPool"
+) {
+
+ctx.fillStyle =
+`rgba(241,76,25,${
+0.38 +
+Math.sin(
+state.time *
+2 +
+decoration.phase
+) *
+0.08
+})`;
+
+ctx.beginPath();
+
+ctx.ellipse(
+x,
+y,
+55,
+30,
+-0.2,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+}
+
+else if (
+type ===
+"emberVent"
+) {
+
+ctx.fillStyle =
+"rgba(255,132,56,.55)";
+
+for (
+let i = 0;
+i <
+4;
+i++
+) {
+
+ctx.beginPath();
+
+ctx.arc(
+
+x +
+Math.sin(
+state.time *
+3 +
+i
+) *
+10,
+
+y -
+(
+(
+state.time *
+30 +
+i *
+13
+) %
+30
+),
+
+2 +
+i %
+2,
+
+0,
+
+Math.PI *
+2
+
+);
+
+ctx.fill();
+
+}
+
+}
+
+else if (
+type ===
+"hellSmoke"
+) {
+
+ctx.fillStyle =
+"rgba(30,24,28,.28)";
+
+for (
+let i = 0;
+i <
+3;
+i++
+) {
+
+ctx.beginPath();
+
+ctx.arc(
+
+x +
+Math.sin(
+state.time +
+i
+) *
+12,
+
+y -
+i *
+13,
+
+13 +
+i *
+4,
+
+0,
+
+Math.PI *
+2
+
+);
+
+ctx.fill();
+
+}
+
+}
+
+else if (
+type ===
+"barrel"
+) {
+
+ctx.fillStyle =
+"#765033";
+
+ctx.fillRect(
+x -
+10,
+y -
+14,
+20,
+28
+);
+
+ctx.strokeStyle =
+"#342820";
+
+ctx.strokeRect(
+x -
+10,
+y -
+14,
+20,
+28
+);
+
+}
+
+}
+
+}
+
+function drawFoods() {
+
+for (
+const food of
+state.world.foods
+) {
+
+if (
+!food.alive
+) {
+continue;
+}
+
+ctx.font =
+"23px Arial";
+
+ctx.textAlign =
+"center";
+
+ctx.fillText(
+
+food.type ===
+"carrot"
+
+? "🥕"
+
+: "🍖",
+
+food.x,
+
+food.y +
+8
+
+);
+
+}
+
+}
+
+function drawSecrets() {
+
+for (
+const secret of
+state.world.secrets
+) {
+
+if (
+
+secret.found ||
+
+state.player.secretsFound.includes(
+secret.id
+)
+
+) {
+continue;
+}
+
+const pulse =
+
+0.55 +
+
+Math.sin(
+state.time *
+3 +
+secret.x
+) *
+0.2;
+
+ctx.globalAlpha =
+pulse;
+
+ctx.font =
+"25px Arial";
+
+ctx.textAlign =
+"center";
+
+ctx.fillText(
+secret.icon,
+secret.x,
+secret.y
+);
+
+ctx.globalAlpha =
+1;
+
+}
+
+}
+
+function drawHazards() {
+
+for (
+const hazard of
+state.world.hazards
+) {
+
+const warning =
+!hazard.triggered;
+
+ctx.fillStyle =
+
+warning
+
+? "rgba(225,43,36,.16)"
+
+: "rgba(255,107,49,.36)";
+
+ctx.strokeStyle =
+
+warning
+
+? "rgba(255,64,52,.88)"
+
+: "rgba(255,196,91,.95)";
+
+ctx.lineWidth =
+
+warning
+
+? 3
+
+: 5;
+
+ctx.beginPath();
+
+ctx.arc(
+hazard.x,
+hazard.y,
+hazard.radius,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+ctx.stroke();
+
+if (
+warning
+) {
+
+const progress =
+clamp(
+
+1 -
+hazard.delay /
+hazard.maxDelay,
+
+0,
+
+1
+
+);
+
+ctx.strokeStyle =
+"#fff0b8";
+
+ctx.lineWidth =
+3;
+
+ctx.beginPath();
+
+ctx.arc(
+
+hazard.x,
+
+hazard.y,
+
+hazard.radius -
+7,
+
+-Math.PI /
+2,
+
+-Math.PI /
+2 +
+Math.PI *
+2 *
+progress
+
+);
+
+ctx.stroke();
+
+}
+
+}
+
+}
 
 function drawBuildings() {
 
@@ -9041,8 +16819,10 @@ ctx.fillStyle =
 "rgba(0,0,0,.27)";
 
 ctx.fillRect(
-building.x + 13,
-building.y + 16,
+building.x +
+13,
+building.y +
+16,
 building.w,
 building.h
 );
@@ -9064,10 +16844,14 @@ ctx.lineWidth =
 4;
 
 ctx.strokeRect(
-building.x + 3,
-building.y + 3,
-building.w - 6,
-building.h - 6
+building.x +
+3,
+building.y +
+3,
+building.w -
+6,
+building.h -
+6
 );
 
 ctx.fillStyle =
@@ -9076,13 +16860,15 @@ building.roof;
 ctx.beginPath();
 
 ctx.moveTo(
-building.x - 24,
+building.x -
+24,
 building.y
 );
 
 ctx.lineTo(
 building.x +
-building.w / 2,
+building.w /
+2,
 building.y -
 95
 );
@@ -9103,7 +16889,8 @@ ctx.fillStyle =
 
 ctx.fillRect(
 building.x +
-building.w / 2 -
+building.w /
+2 -
 25,
 building.y +
 building.h -
@@ -9116,8 +16903,10 @@ ctx.fillStyle =
 "#dbc77d";
 
 ctx.fillRect(
-building.x + 35,
-building.y + 60,
+building.x +
+35,
+building.y +
+60,
 50,
 42
 );
@@ -9126,7 +16915,8 @@ ctx.fillRect(
 building.x +
 building.w -
 85,
-building.y + 60,
+building.y +
+60,
 50,
 42
 );
@@ -9143,7 +16933,8 @@ ctx.fillStyle =
 ctx.fillText(
 building.name,
 building.x +
-building.w / 2,
+building.w /
+2,
 building.y +
 building.h +
 27
@@ -9153,10 +16944,6 @@ building.h +
 );
 
 }
-
-/* =====================================================
-INTERIORES
-====================================================== */
 
 function drawHouseInterior() {
 
@@ -9187,10 +16974,14 @@ ctx.fillStyle =
 theme.wall;
 
 ctx.fillRect(
-room.x - 24,
-room.y - 24,
-room.w + 48,
-room.h + 48
+room.x -
+24,
+room.y -
+24,
+room.w +
+48,
+room.h +
+48
 );
 
 ctx.fillStyle =
@@ -9211,10 +17002,13 @@ ctx.lineWidth =
 
 for (
 let y =
-room.y + 28;
+room.y +
+28;
 y <
-room.y + room.h;
-y += 28
+room.y +
+room.h;
+y +=
+28
 ) {
 
 ctx.beginPath();
@@ -9225,7 +17019,8 @@ y
 );
 
 ctx.lineTo(
-room.x + room.w,
+room.x +
+room.w,
 y
 );
 
@@ -9246,8 +17041,6 @@ room.w,
 room.h
 );
 
-/* CASA DO JOGADOR */
-
 if (
 id ===
 "home"
@@ -9257,8 +17050,10 @@ ctx.fillStyle =
 "#4b3026";
 
 ctx.fillRect(
-room.x + 48,
-room.y + 55,
+room.x +
+48,
+room.y +
+55,
 150,
 92
 );
@@ -9267,8 +17062,10 @@ ctx.fillStyle =
 "#d9c8a4";
 
 ctx.fillRect(
-room.x + 58,
-room.y + 64,
+room.x +
+58,
+room.y +
+64,
 130,
 70
 );
@@ -9278,10 +17075,12 @@ ctx.fillStyle =
 
 ctx.fillRect(
 room.x +
-room.w / 2 -
+room.w /
+2 -
 100,
 room.y +
-room.h / 2 -
+room.h /
+2 -
 55,
 200,
 110
@@ -9292,10 +17091,12 @@ ctx.fillStyle =
 
 ctx.fillRect(
 room.x +
-room.w / 2 -
+room.w /
+2 -
 65,
 room.y +
-room.h / 2 -
+room.h /
+2 -
 24,
 130,
 48
@@ -9308,7 +17109,8 @@ ctx.fillRect(
 room.x +
 room.w -
 140,
-room.y + 45,
+room.y +
+45,
 88,
 105
 );
@@ -9326,14 +17128,13 @@ room.y +
 112,
 20,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
 
 }
-
-/* CASA DE ELIAN */
 
 else if (
 id ===
@@ -9344,8 +17145,10 @@ ctx.fillStyle =
 "#49372f";
 
 ctx.fillRect(
-room.x + 45,
-room.y + 55,
+room.x +
+45,
+room.y +
+55,
 130,
 82
 );
@@ -9354,8 +17157,10 @@ ctx.fillStyle =
 "#b9aa91";
 
 ctx.fillRect(
-room.x + 55,
-room.y + 65,
+room.x +
+55,
+room.y +
+65,
 110,
 62
 );
@@ -9367,7 +17172,8 @@ ctx.fillRect(
 room.x +
 room.w -
 160,
-room.y + 45,
+room.y +
+45,
 112,
 155
 );
@@ -9377,7 +17183,8 @@ ctx.fillStyle =
 
 for (
 let i = 0;
-i < 4;
+i <
+4;
 i++
 ) {
 
@@ -9387,7 +17194,8 @@ room.w -
 150,
 room.y +
 64 +
-i * 34,
+i *
+34,
 92,
 5
 );
@@ -9399,10 +17207,12 @@ ctx.fillStyle =
 
 ctx.fillRect(
 room.x +
-room.w / 2 -
+room.w /
+2 -
 85,
 room.y +
-room.h / 2 -
+room.h /
+2 -
 35,
 170,
 70
@@ -9413,18 +17223,18 @@ ctx.fillStyle =
 
 ctx.fillRect(
 room.x +
-room.w / 2 -
+room.w /
+2 -
 34,
 room.y +
-room.h / 2 -
+room.h /
+2 -
 18,
 68,
 34
 );
 
 }
-
-/* FORJA */
 
 else if (
 id ===
@@ -9435,8 +17245,10 @@ ctx.fillStyle =
 "#2f2f31";
 
 ctx.fillRect(
-room.x + 48,
-room.y + 50,
+room.x +
+48,
+room.y +
+50,
 150,
 145
 );
@@ -9447,11 +17259,14 @@ ctx.fillStyle =
 ctx.beginPath();
 
 ctx.arc(
-room.x + 123,
-room.y + 135,
+room.x +
+123,
+room.y +
+135,
 38,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -9462,11 +17277,14 @@ ctx.fillStyle =
 ctx.beginPath();
 
 ctx.arc(
-room.x + 123,
-room.y + 135,
+room.x +
+123,
+room.y +
+135,
 19,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -9476,10 +17294,12 @@ ctx.fillStyle =
 
 ctx.fillRect(
 room.x +
-room.w / 2 -
+room.w /
+2 -
 55,
 room.y +
-room.h / 2 -
+room.h /
+2 -
 16,
 110,
 32
@@ -9487,18 +17307,18 @@ room.h / 2 -
 
 ctx.fillRect(
 room.x +
-room.w / 2 -
+room.w /
+2 -
 18,
 room.y +
-room.h / 2 +
+room.h /
+2 +
 16,
 36,
 58
 );
 
 }
-
-/* LOJA */
 
 else if (
 id ===
@@ -9509,8 +17329,10 @@ ctx.fillStyle =
 "#4c3225";
 
 ctx.fillRect(
-room.x + 42,
-room.y + 42,
+room.x +
+42,
+room.y +
+42,
 150,
 155
 );
@@ -9519,7 +17341,8 @@ ctx.fillRect(
 room.x +
 room.w -
 192,
-room.y + 42,
+room.y +
+42,
 150,
 155
 );
@@ -9529,15 +17352,18 @@ ctx.fillStyle =
 
 for (
 let i = 0;
-i < 4;
+i <
+4;
 i++
 ) {
 
 ctx.fillRect(
-room.x + 52,
+room.x +
+52,
 room.y +
 62 +
-i * 34,
+i *
+34,
 130,
 5
 );
@@ -9548,7 +17374,8 @@ room.w -
 182,
 room.y +
 62 +
-i * 34,
+i *
+34,
 130,
 5
 );
@@ -9560,10 +17387,13 @@ ctx.fillStyle =
 
 ctx.fillRect(
 room.x +
-room.w * .47,
+room.w *
+0.47,
 room.y +
-room.h * .48,
-room.w * .45,
+room.h *
+0.48,
+room.w *
+0.45,
 62
 );
 
@@ -9575,10 +17405,13 @@ ctx.lineWidth =
 
 ctx.strokeRect(
 room.x +
-room.w * .47,
+room.w *
+0.47,
 room.y +
-room.h * .48,
-room.w * .45,
+room.h *
+0.48,
+room.w *
+0.45,
 62
 );
 
@@ -9593,7 +17426,8 @@ ctx.textAlign =
 "💙",
 "⚔️",
 "🥋"
-].forEach(
+]
+.forEach(
 (
 icon,
 index
@@ -9604,13 +17438,15 @@ icon,
 room.x +
 75 +
 (
-index % 2
+index %
+2
 ) *
 72,
 room.y +
 90 +
 Math.floor(
-index / 2
+index /
+2
 ) *
 70
 );
@@ -9620,8 +17456,6 @@ index / 2
 
 }
 
-/* CARPINTARIA */
-
 else if (
 id ===
 "woodshop"
@@ -9629,20 +17463,27 @@ id ===
 
 for (
 let i = 0;
-i < 4;
+i <
+4;
 i++
 ) {
 
 ctx.fillStyle =
-i % 2
+
+i %
+2
+
 ? "#6d472b"
+
 : "#7c5130";
 
 ctx.fillRect(
-room.x + 50,
+room.x +
+50,
 room.y +
 55 +
-i * 34,
+i *
+34,
 165,
 24
 );
@@ -9654,10 +17495,12 @@ ctx.fillStyle =
 
 ctx.fillRect(
 room.x +
-room.w / 2 -
+room.w /
+2 -
 100,
 room.y +
-room.h / 2 -
+room.h /
+2 -
 35,
 200,
 70
@@ -9672,9 +17515,11 @@ ctx.textAlign =
 ctx.fillText(
 "🪓",
 room.x +
-room.w / 2,
+room.w /
+2,
 room.y +
-room.h / 2 +
+room.h /
+2 +
 14
 );
 
@@ -9683,7 +17528,8 @@ ctx.fillStyle =
 
 for (
 let i = 0;
-i < 5;
+i <
+5;
 i++
 ) {
 
@@ -9693,7 +17539,8 @@ room.w -
 185,
 room.y +
 65 +
-i * 28,
+i *
+28,
 135,
 16
 );
@@ -9707,7 +17554,8 @@ ctx.fillStyle =
 
 ctx.fillRect(
 room.x +
-room.w / 2 -
+room.w /
+2 -
 34,
 room.y +
 room.h -
@@ -9729,7 +17577,8 @@ ctx.fillText(
 building?.name ||
 "INTERIOR",
 room.x +
-room.w / 2,
+room.w /
+2,
 room.y -
 42
 );
@@ -9740,7 +17589,8 @@ ctx.font =
 ctx.fillText(
 "[Z] SAIR",
 room.x +
-room.w / 2,
+room.w /
+2,
 room.y +
 room.h +
 35
@@ -9752,7 +17602,8 @@ drawInteriorNPCs();
 
 function drawInteriorNPCs() {
 
-getInteriorNPCs().forEach(
+getInteriorNPCs()
+.forEach(
 npc => {
 
 ctx.fillStyle =
@@ -9762,12 +17613,14 @@ ctx.beginPath();
 
 ctx.ellipse(
 npc.x,
-npc.y + 20,
+npc.y +
+20,
 19,
 7,
 0,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -9783,7 +17636,8 @@ npc.x,
 npc.y,
 17,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -9795,10 +17649,12 @@ ctx.beginPath();
 
 ctx.arc(
 npc.x,
-npc.y - 8,
+npc.y -
+8,
 9,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -9815,7 +17671,8 @@ ctx.fillStyle =
 ctx.fillText(
 npc.name,
 npc.x,
-npc.y - 31
+npc.y -
+31
 );
 
 ctx.font =
@@ -9827,17 +17684,14 @@ ctx.fillStyle =
 ctx.fillText(
 npc.role,
 npc.x,
-npc.y + 37
+npc.y +
+37
 );
 
 }
 );
 
 }
-
-/* =====================================================
-ÁRVORES
-====================================================== */
 
 function drawTrees() {
 
@@ -9847,9 +17701,7 @@ tree => {
 if (
 !tree.alive
 ) {
-
 return;
-
 }
 
 const sway =
@@ -9867,12 +17719,14 @@ ctx.beginPath();
 
 ctx.ellipse(
 tree.x,
-tree.y + 28,
+tree.y +
+28,
 34,
 11,
 0,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -9881,7 +17735,8 @@ ctx.fillStyle =
 "#684a30";
 
 ctx.fillRect(
-tree.x - 9,
+tree.x -
+9,
 tree.y,
 18,
 42
@@ -9893,11 +17748,14 @@ ctx.fillStyle =
 ctx.beginPath();
 
 ctx.arc(
-tree.x + sway,
-tree.y - 14,
+tree.x +
+sway,
+tree.y -
+14,
 34,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -9908,19 +17766,27 @@ ctx.fillStyle =
 ctx.beginPath();
 
 ctx.arc(
-tree.x - 14 + sway,
-tree.y - 27,
+tree.x -
+14 +
+sway,
+tree.y -
+27,
 24,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.arc(
-tree.x + 14 + sway,
-tree.y - 27,
+tree.x +
+14 +
+sway,
+tree.y -
+27,
 25,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -9943,10 +17809,12 @@ ctx.beginPath();
 
 ctx.arc(
 tree.x,
-tree.y - 10,
+tree.y -
+10,
 40,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.stroke();
@@ -9958,25 +17826,7 @@ ctx.stroke();
 
 }
 
-/* =====================================================
-RECURSOS
-====================================================== */
-
 function drawResources() {
-
-const icons = {
-
-ferro: "⛓️",
-
-rubi: "♦",
-
-cristal: "💎",
-
-ouro: "🪙",
-
-carvao: "⬛"
-
-};
 
 state.world.resources.forEach(
 resource => {
@@ -9984,10 +17834,106 @@ resource => {
 if (
 !resource.alive
 ) {
+return;
+}
+
+if (
+resource.type ===
+"ferro"
+) {
+
+ctx.fillStyle =
+"#596267";
+
+ctx.beginPath();
+
+ctx.moveTo(
+resource.x -
+13,
+resource.y +
+8
+);
+
+ctx.lineTo(
+resource.x -
+7,
+resource.y -
+10
+);
+
+ctx.lineTo(
+resource.x +
+5,
+resource.y -
+14
+);
+
+ctx.lineTo(
+resource.x +
+14,
+resource.y +
+4
+);
+
+ctx.lineTo(
+resource.x +
+5,
+resource.y +
+13
+);
+
+ctx.closePath();
+
+ctx.fill();
+
+ctx.fillStyle =
+"#aebbc1";
+
+ctx.beginPath();
+
+ctx.arc(
+resource.x -
+3,
+resource.y -
+3,
+4,
+0,
+Math.PI *
+2
+);
+
+ctx.arc(
+resource.x +
+6,
+resource.y +
+4,
+3,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
 
 return;
 
 }
+
+const icons = {
+
+rubi:
+"♦",
+
+cristal:
+"💎",
+
+ouro:
+"🪙",
+
+carvao:
+"⬛"
+
+};
 
 ctx.font =
 "20px Arial";
@@ -9996,22 +17942,24 @@ ctx.textAlign =
 "center";
 
 ctx.fillText(
+
 icons[
 resource.type
 ] ||
+
 "✦",
+
 resource.x,
-resource.y + 7
+
+resource.y +
+7
+
 );
 
 }
 );
 
 }
-
-/* =====================================================
-OBSTÁCULOS
-====================================================== */
 
 function drawObstacles() {
 
@@ -10019,14 +17967,15 @@ state.world.obstacles.forEach(
 obstacle => {
 
 if (
+
 obstacle.type ===
 "building" ||
+
 obstacle.type ===
 "tree"
+
 ) {
-
 return;
-
 }
 
 if (
@@ -10060,14 +18009,19 @@ ctx.beginPath();
 
 ctx.ellipse(
 obstacle.x +
-obstacle.w / 2,
+obstacle.w /
+2,
 obstacle.y +
-obstacle.h / 2,
-obstacle.w / 2,
-obstacle.h / 2,
+obstacle.h /
+2,
+obstacle.w /
+2,
+obstacle.h /
+2,
 0,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -10079,16 +18033,21 @@ ctx.beginPath();
 
 ctx.ellipse(
 obstacle.x +
-obstacle.w / 2,
+obstacle.w /
+2,
 obstacle.y +
-obstacle.h / 2,
-obstacle.w / 2 -
+obstacle.h /
+2,
+obstacle.w /
+2 -
 22,
-obstacle.h / 2 -
+obstacle.h /
+2 -
 22,
 0,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -10099,50 +18058,126 @@ return;
 
 const colors = {
 
-rock: "#737771",
+rock:
+"#737771",
 
-snowrock: "#bec5c7",
+snowrock:
+"#bec5c7",
 
-ironrock: "#666c6f",
+iceRock:
+"#a9cad9",
 
-rubyrock: "#73384b",
+oreRock:
+"#59636a",
 
-darkrock: "#34364e",
+ironrock:
+"#666c6f",
 
-basalt: "#443437"
+rubyrock:
+"#73384b",
+
+rubyPillar:
+"#8e2d48",
+
+darkrock:
+"#34364e",
+
+basalt:
+"#443437",
+
+obsidian:
+"#241f29"
 
 };
 
 ctx.fillStyle =
+
 colors[
 obstacle.type
 ] ||
+
 "#737771";
 
 ctx.beginPath();
 
 ctx.ellipse(
 obstacle.x +
-obstacle.w / 2,
+obstacle.w /
+2,
 obstacle.y +
-obstacle.h / 2,
-obstacle.w / 2,
-obstacle.h / 2,
--.12,
+obstacle.h /
+2,
+obstacle.w /
+2,
+obstacle.h /
+2,
+-0.12,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
 
+if (
+
+obstacle.type ===
+"oreRock" ||
+
+obstacle.type ===
+"rubyPillar"
+
+) {
+
+ctx.strokeStyle =
+
+obstacle.type ===
+"rubyPillar"
+
+? "#e15271"
+
+: "#c5d1d4";
+
+ctx.lineWidth =
+3;
+
+ctx.beginPath();
+
+ctx.moveTo(
+obstacle.x +
+obstacle.w *
+0.25,
+obstacle.y +
+obstacle.h *
+0.7
+);
+
+ctx.lineTo(
+obstacle.x +
+obstacle.w *
+0.5,
+obstacle.y +
+obstacle.h *
+0.3
+);
+
+ctx.lineTo(
+obstacle.x +
+obstacle.w *
+0.72,
+obstacle.y +
+obstacle.h *
+0.58
+);
+
+ctx.stroke();
+
+}
+
 }
 );
 
 }
-
-/* =====================================================
-NPCs
-====================================================== */
 
 function drawNPCs() {
 
@@ -10156,12 +18191,14 @@ ctx.beginPath();
 
 ctx.ellipse(
 npc.x,
-npc.y + 19,
+npc.y +
+19,
 18,
 7,
 0,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -10176,7 +18213,8 @@ npc.x,
 npc.y,
 17,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -10188,10 +18226,12 @@ ctx.beginPath();
 
 ctx.arc(
 npc.x,
-npc.y - 8,
+npc.y -
+8,
 9,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -10208,7 +18248,8 @@ ctx.fillStyle =
 ctx.fillText(
 npc.name,
 npc.x,
-npc.y - 30
+npc.y -
+30
 );
 
 ctx.font =
@@ -10220,17 +18261,14 @@ ctx.fillStyle =
 ctx.fillText(
 npc.role,
 npc.x,
-npc.y + 36
+npc.y +
+36
 );
 
 }
 );
 
 }
-
-/* =====================================================
-INIMIGOS
-====================================================== */
 
 function drawEnemies() {
 
@@ -10240,9 +18278,7 @@ enemy => {
 if (
 enemy.dead
 ) {
-
 return;
-
 }
 
 if (
@@ -10250,7 +18286,7 @@ enemy.aggressive
 ) {
 
 ctx.strokeStyle =
-"rgba(220,60,55,.11)";
+"rgba(220,60,55,.09)";
 
 ctx.lineWidth =
 2;
@@ -10260,9 +18296,13 @@ ctx.beginPath();
 ctx.arc(
 enemy.x,
 enemy.y,
+Math.min(
 enemy.vision,
+230
+),
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.stroke();
@@ -10281,26 +18321,356 @@ enemy.radius,
 enemy.radius *
 1.1,
 enemy.radius *
-.42,
+0.42,
 0,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
 
+drawEnemyBody(
+enemy
+);
+
+ctx.font =
+
+enemy.type ===
+"progression" ||
+
+enemy.type ===
+"final"
+
+? "bold 11px Arial"
+
+: "10px Arial";
+
+ctx.textAlign =
+"center";
+
 ctx.fillStyle =
-enemy.hitFlash > 0
-? "#fff"
+
+enemy.type ===
+"progression" ||
+
+enemy.type ===
+"final"
+
+? "#ffcc8a"
+
+: "#ede2c2";
+
+ctx.fillText(
+`${enemy.name}  Nv.${enemy.level || 1}`,
+enemy.x,
+enemy.y +
+enemy.radius +
+18
+);
+
+const barWidth =
+enemy.radius *
+2.6;
+
+ctx.fillStyle =
+"#211f1d";
+
+ctx.fillRect(
+enemy.x -
+barWidth /
+2,
+enemy.y -
+enemy.radius -
+14,
+barWidth,
+6
+);
+
+ctx.fillStyle =
+
+enemy.type ===
+"progression"
+
+? "#d05049"
+
+: "#b84e48";
+
+ctx.fillRect(
+enemy.x -
+barWidth /
+2,
+enemy.y -
+enemy.radius -
+14,
+barWidth *
+clamp(
+enemy.hp /
+enemy.maxHp,
+0,
+1
+),
+6
+);
+
+}
+);
+
+}
+
+function drawEnemyBody(
+enemy
+) {
+
+const flash =
+
+enemy.hitFlash >
+0
+
+? "#ffffff"
+
 : enemy.color;
+
+const isTree =
+
+enemy.id ===
+"grove_guardian" ||
+
+enemy.id ===
+"mountain_guardian";
+
+if (
+isTree
+) {
+
+ctx.fillStyle =
+
+enemy.hitFlash >
+0
+
+? "#fff"
+
+: "#6e4c31";
+
+ctx.fillRect(
+enemy.x -
+10,
+enemy.y -
+5,
+20,
+enemy.radius +
+26
+);
+
+ctx.fillStyle =
+flash;
+
+for (
+let i = 0;
+i <
+5;
+i++
+) {
+
+const angle =
+
+-Math.PI /
+2 +
+
+i *
+(
+Math.PI *
+2 /
+5
+);
+
+ctx.beginPath();
+
+ctx.arc(
+
+enemy.x +
+Math.cos(
+angle
+) *
+22,
+
+enemy.y -
+12 +
+Math.sin(
+angle
+) *
+18,
+
+enemy.radius *
+0.62,
+
+0,
+
+Math.PI *
+2
+
+);
+
+ctx.fill();
+
+}
+
+ctx.fillStyle =
+"#ffc76d";
+
+ctx.beginPath();
+
+ctx.arc(
+enemy.x -
+7,
+enemy.y -
+10,
+3,
+0,
+Math.PI *
+2
+);
+
+ctx.arc(
+enemy.x +
+7,
+enemy.y -
+10,
+3,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+return;
+
+}
+
+const isStone =
+
+enemy.id ===
+"iron_guardian" ||
+
+enemy.id ===
+"ruby_guardian" ||
+
+enemy.name.includes(
+"MINEIRO"
+);
+
+if (
+isStone
+) {
+
+ctx.fillStyle =
+flash;
+
+ctx.beginPath();
+
+ctx.moveTo(
+enemy.x,
+enemy.y -
+enemy.radius
+);
+
+ctx.lineTo(
+enemy.x +
+enemy.radius *
+0.9,
+enemy.y -
+4
+);
+
+ctx.lineTo(
+enemy.x +
+enemy.radius *
+0.65,
+enemy.y +
+enemy.radius
+);
+
+ctx.lineTo(
+enemy.x -
+enemy.radius *
+0.65,
+enemy.y +
+enemy.radius
+);
+
+ctx.lineTo(
+enemy.x -
+enemy.radius *
+0.9,
+enemy.y -
+4
+);
+
+ctx.closePath();
+
+ctx.fill();
+
+if (
+enemy.name.includes(
+"MINEIRO"
+)
+) {
+
+ctx.font =
+"22px Arial";
+
+ctx.textAlign =
+"center";
+
+ctx.fillText(
+"⛏️",
+enemy.x,
+enemy.y +
+7
+);
+
+}
+
+else {
+
+ctx.fillStyle =
+
+enemy.id ===
+"ruby_guardian"
+
+? "#ff7a8d"
+
+: "#cfb577";
+
+ctx.fillRect(
+enemy.x -
+4,
+enemy.y -
+5,
+8,
+10
+);
+
+}
+
+return;
+
+}
+
+ctx.fillStyle =
+flash;
 
 ctx.beginPath();
 
 if (
+
 enemy.type ===
 "progression" ||
+
 enemy.type ===
 "final"
+
 ) {
 
 ctx.moveTo(
@@ -10338,7 +18708,8 @@ enemy.x,
 enemy.y,
 enemy.radius,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 }
@@ -10354,6 +18725,7 @@ enemy.type ===
 "final"
 
 ? "#e0ae63"
+
 : "#d0bd78";
 
 ctx.lineWidth =
@@ -10365,6 +18737,7 @@ enemy.type ===
 "final"
 
 ? 3
+
 : 1.5;
 
 ctx.stroke();
@@ -10377,7 +18750,8 @@ enemy.type ===
 enemy.type ===
 "final"
 
-? "24px Arial"
+? "25px Arial"
+
 : "19px Arial";
 
 ctx.textAlign =
@@ -10386,80 +18760,27 @@ ctx.textAlign =
 ctx.fillText(
 enemy.icon,
 enemy.x,
-enemy.y + 7
-);
-
-ctx.font =
-"bold 11px Arial";
-
-ctx.fillStyle =
-
-enemy.type ===
-"progression" ||
-
-enemy.type ===
-"final"
-
-? "#ffcc8a"
-: "#ede2c2";
-
-ctx.fillText(
-enemy.name,
-enemy.x,
 enemy.y +
-enemy.radius +
-17
-);
-
-const barWidth =
-enemy.radius *
-2.5;
-
-ctx.fillStyle =
-"#211f1d";
-
-ctx.fillRect(
-enemy.x -
-barWidth / 2,
-enemy.y -
-enemy.radius -
-13,
-barWidth,
-5
-);
-
-ctx.fillStyle =
-"#b84e48";
-
-ctx.fillRect(
-enemy.x -
-barWidth / 2,
-enemy.y -
-enemy.radius -
-13,
-barWidth *
-clamp(
-enemy.hp /
-enemy.maxHp,
-0,
-1
-),
-5
+7
 );
 
 }
-);
-
-}
-
-/* =====================================================
-PORTAIS
-====================================================== */
 
 function drawPortals() {
 
 state.world.portals.forEach(
 portal => {
+
+if (
+
+typeof portal.visible ===
+"function" &&
+
+!portal.visible()
+
+) {
+return;
+}
 
 const unlocked =
 
@@ -10470,9 +18791,75 @@ typeof portal.requirement ===
 
 : true;
 
+if (
+portal.stairs
+) {
+
 ctx.fillStyle =
+
 unlocked
+
+? "rgba(235,218,166,.80)"
+
+: "rgba(90,90,90,.35)";
+
+for (
+let i = 0;
+i <
+8;
+i++
+) {
+
+ctx.fillRect(
+
+portal.x -
+i *
+7,
+
+portal.y +
+portal.h -
+25 -
+i *
+22,
+
+portal.w +
+i *
+14,
+
+13
+
+);
+
+}
+
+ctx.fillStyle =
+"#fff0bd";
+
+ctx.font =
+"bold 13px Georgia";
+
+ctx.textAlign =
+"center";
+
+ctx.fillText(
+"ESCADA DO INFERNO",
+portal.x +
+portal.w /
+2,
+portal.y -
+18
+);
+
+return;
+
+}
+
+ctx.fillStyle =
+
+unlocked
+
 ? "rgba(76,150,198,.20)"
+
 : "rgba(80,80,80,.15)";
 
 ctx.fillRect(
@@ -10483,8 +18870,11 @@ portal.h
 );
 
 ctx.strokeStyle =
+
 unlocked
+
 ? "#8fbcd0"
+
 : "#686963";
 
 ctx.lineWidth =
@@ -10504,63 +18894,59 @@ ctx.font =
 "bold 12px Georgia";
 
 ctx.fillStyle =
+
 unlocked
+
 ? "#e3d19f"
+
 : "#94948b";
 
 ctx.fillText(
+
 unlocked
+
 ? "CONTINUAR"
+
 : "BLOQUEADO",
+
 portal.x +
-portal.w / 2,
+portal.w /
+2,
+
 portal.y -
 10
+
 );
 
 }
 );
 
 }
-
-/* =====================================================
-DROPS / EFEITOS
-====================================================== */
 
 function drawDrops() {
-
-const icons = {
-
-madeira: "🪵",
-
-carvao: "⬛",
-
-ferro: "⛓️",
-
-ouro: "🪙",
-
-rubi: "♦",
-
-cristal: "💎",
-
-essencia: "✦"
-
-};
 
 state.world.drops.forEach(
 drop => {
 
+const item =
+ITEMS[
+drop.type
+];
+
+if (
+!item
+) {
+return;
+}
+
 ctx.font =
-"19px Arial";
+"20px Arial";
 
 ctx.textAlign =
 "center";
 
 ctx.fillText(
-icons[
-drop.type
-] ||
-"✦",
+item.icon,
 drop.x,
 drop.y
 );
@@ -10575,13 +18961,29 @@ function drawEffects() {
 state.world.effects.forEach(
 effect => {
 
+const alpha =
+
+Number.isFinite(
+effect.maxLife
+)
+
+? clamp(
+effect.life /
+effect.maxLife,
+0,
+1
+)
+
+: 1;
+
 if (
 effect.type ===
 "flower"
 ) {
 
-const alpha =
-.4 +
+ctx.fillStyle =
+`rgba(236,187,255,${
+0.4 +
 (
 Math.sin(
 state.time *
@@ -10590,10 +18992,8 @@ effect.phase
 ) +
 1
 ) *
-.16;
-
-ctx.fillStyle =
-`rgba(236,187,255,${alpha})`;
+0.16
+})`;
 
 ctx.beginPath();
 
@@ -10602,10 +19002,167 @@ effect.x,
 effect.y,
 4,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
+
+}
+
+else if (
+effect.type ===
+"damageNumber"
+) {
+
+ctx.globalAlpha =
+alpha;
+
+ctx.fillStyle =
+effect.color;
+
+ctx.font =
+"bold 16px Arial";
+
+ctx.textAlign =
+"center";
+
+ctx.fillText(
+effect.text,
+effect.x,
+effect.y -
+(
+1 -
+alpha
+) *
+30
+);
+
+ctx.globalAlpha =
+1;
+
+}
+
+else if (
+
+effect.type ===
+"playerSlash" ||
+
+effect.type ===
+"playerBolt"
+
+) {
+
+ctx.globalAlpha =
+alpha;
+
+ctx.strokeStyle =
+effect.color;
+
+ctx.lineWidth =
+
+effect.type ===
+"playerBolt"
+
+? 5
+
+: 7;
+
+ctx.beginPath();
+
+ctx.moveTo(
+effect.x,
+effect.y
+);
+
+ctx.lineTo(
+effect.tx,
+effect.ty
+);
+
+ctx.stroke();
+
+ctx.globalAlpha =
+1;
+
+}
+
+else if (
+
+effect.type ===
+"skillRing" ||
+
+effect.type ===
+"shockRing"
+
+) {
+
+ctx.globalAlpha =
+alpha;
+
+ctx.strokeStyle =
+effect.color;
+
+ctx.lineWidth =
+5;
+
+ctx.beginPath();
+
+ctx.arc(
+effect.x,
+effect.y,
+effect.radius *
+(
+1 +
+(
+1 -
+alpha
+) *
+0.12
+),
+0,
+Math.PI *
+2
+);
+
+ctx.stroke();
+
+ctx.globalAlpha =
+1;
+
+}
+
+else if (
+effect.type ===
+"memoryStrike"
+) {
+
+ctx.globalAlpha =
+alpha;
+
+ctx.fillStyle =
+effect.color;
+
+ctx.beginPath();
+
+ctx.arc(
+effect.x,
+effect.y,
+18 +
+(
+1 -
+alpha
+) *
+22,
+0,
+Math.PI *
+2
+);
+
+ctx.fill();
+
+ctx.globalAlpha =
+1;
 
 }
 
@@ -10624,7 +19181,8 @@ effect.x,
 effect.y,
 7,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -10636,10 +19194,6 @@ ctx.fill();
 
 }
 
-/* =====================================================
-JOGADOR
-====================================================== */
-
 function drawPlayer() {
 
 const player =
@@ -10648,9 +19202,7 @@ state.player;
 if (
 !player
 ) {
-
 return;
-
 }
 
 if (
@@ -10662,12 +19214,11 @@ Math.floor(
 player.invincible *
 10
 ) %
-2 === 0
+2 ===
+0
 
 ) {
-
 return;
-
 }
 
 ctx.fillStyle =
@@ -10677,12 +19228,14 @@ ctx.beginPath();
 
 ctx.ellipse(
 player.x,
-player.y + 20,
+player.y +
+20,
 21,
 8,
 0,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -10697,7 +19250,8 @@ player.x,
 player.y,
 player.radius,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -10709,10 +19263,12 @@ ctx.beginPath();
 
 ctx.arc(
 player.x,
-player.y - 12,
+player.y -
+12,
 10,
 0,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -10724,10 +19280,12 @@ ctx.beginPath();
 
 ctx.arc(
 player.x,
-player.y - 16,
+player.y -
+16,
 10,
 Math.PI,
-Math.PI * 2
+Math.PI *
+2
 );
 
 ctx.fill();
@@ -10744,7 +19302,8 @@ ctx.fillStyle =
 ctx.fillText(
 player.name,
 player.x,
-player.y - 40
+player.y -
+40
 );
 
 }
@@ -10807,7 +19366,7 @@ particle => {
 ctx.globalAlpha =
 clamp(
 particle.life /
-.8,
+0.8,
 0,
 1
 );
@@ -10830,10 +19389,6 @@ ctx.globalAlpha =
 
 }
 
-/* =====================================================
-SALVAMENTO
-====================================================== */
-
 function saveGame(
 showMessage = true
 ) {
@@ -10841,16 +19396,15 @@ showMessage = true
 if (
 !state.player
 ) {
-
 return;
-
 }
 
 try {
 
 const save = {
 
-version: 14,
+version:
+15,
 
 area:
 state.area,
@@ -10869,7 +19423,8 @@ houseReturn:
 state.houseReturn,
 
 savedAt:
-new Date().toISOString()
+new Date()
+.toISOString()
 
 };
 
@@ -10929,9 +19484,7 @@ SAVE_KEY
 if (
 !raw
 ) {
-
 return false;
-
 }
 
 const save =
@@ -10942,9 +19495,7 @@ raw
 if (
 !save?.player
 ) {
-
 return false;
-
 }
 
 const character =
@@ -10957,19 +19508,20 @@ save.player.characterId
 if (
 !character
 ) {
-
 return false;
-
 }
 
 state.player =
 save.player;
 
 state.area =
+
 REGIONS[
 save.area
 ]
+
 ? save.area
+
 : "village";
 
 repairLoadedPlayer(
@@ -11030,12 +19582,15 @@ state.currentHouse =
 savedHouse;
 
 state.houseReturn =
+
 save.houseReturn ||
+
 {
 
 x:
 savedHouse.x +
-savedHouse.w / 2,
+savedHouse.w /
+2,
 
 y:
 savedHouse.y +
@@ -11132,7 +19687,9 @@ return false;
 
 }
 
-function repairLoadedPlayer(character) {
+function repairLoadedPlayer(
+character
+) {
 
 const player =
 state.player;
@@ -11157,7 +19714,8 @@ player.inventory[id] =
 Number.isFinite(
 value
 ) &&
-value >= 0
+value >=
+0
 
 ? Math.floor(
 value
@@ -11169,14 +19727,19 @@ value
 );
 
 player.equipment =
+
 player.equipment ||
+
 {
 
-weapon: null,
+weapon:
+null,
 
-armor: null,
+armor:
+null,
 
-tool: "machado"
+tool:
+"machado"
 
 };
 
@@ -11185,30 +19748,42 @@ player.quest ||
 {};
 
 player.quest.wood =
+
 player.quest.wood ||
+
 {
 
-state: "none",
+state:
+"none",
 
-need: 10,
+need:
+10,
 
-rewardXP: 100,
+rewardXP:
+100,
 
-rewardMoney: 80
+rewardMoney:
+80
 
 };
 
 player.quest.coal =
+
 player.quest.coal ||
+
 {
 
-state: "none",
+state:
+"none",
 
-need: 8,
+need:
+8,
 
-rewardXP: 130,
+rewardXP:
+130,
 
-rewardMoney: 110
+rewardMoney:
+110
 
 };
 
@@ -11244,6 +19819,16 @@ player.unlockedAreas
 "village"
 ];
 
+player.secretsFound =
+
+Array.isArray(
+player.secretsFound
+)
+
+? player.secretsFound
+
+: [];
+
 player.collected =
 player.collected ||
 {};
@@ -11252,15 +19837,88 @@ player.hellTypesDefeated =
 player.hellTypesDefeated ||
 {};
 
-player.checkpoint =
-player.checkpoint ||
+player.skyTrial =
+
+player.skyTrial ||
+
 {
 
-area: "village",
+started:
+false,
 
-x: 480,
+wave:
+0,
 
-y: 610
+activeWave:
+0,
+
+complete:
+false
+
+};
+
+player.skyTrial.activeWave =
+0;
+
+player.flutePlayed =
+Boolean(
+player.flutePlayed
+);
+
+player.skillCooldowns =
+
+player.skillCooldowns ||
+
+{
+
+q:
+0,
+
+r:
+0,
+
+f:
+0
+
+};
+
+for (
+const key of
+[
+"q",
+"r",
+"f"
+]
+) {
+
+player.skillCooldowns[key] =
+0;
+
+}
+
+player.damageReduction =
+0;
+
+player.shieldTimer =
+0;
+
+player.stunTimer =
+0;
+
+player.checkpoint =
+
+player.checkpoint ||
+
+{
+
+area:
+"village",
+
+x:
+480,
+
+y:
+610
 
 };
 
@@ -11385,6 +20043,16 @@ player.xpToNext
 )
 );
 
+player.memory =
+clamp(
+Number(
+player.memory
+) ||
+0,
+0,
+100
+);
+
 player.radius =
 18;
 
@@ -11427,19 +20095,22 @@ function updateContinueButton() {
 const available =
 hasSave();
 
-must("continueBtn").disabled =
+must(
+"continueBtn"
+).disabled =
 !available;
 
-must("continueHint").textContent =
+must(
+"continueHint"
+).textContent =
+
 available
+
 ? "Existe um jogo salvo neste navegador."
+
 : "Nenhum jogo salvo encontrado.";
 
 }
-
-/* =====================================================
-PAINÉIS
-====================================================== */
 
 function closeAllPanels() {
 
@@ -11491,15 +20162,23 @@ false;
 state.paused =
 false;
 
+state.pointer.down =
+false;
+
 state.keys.clear();
+
+cancelHoldInteraction();
 
 closeAllPanels();
 
-showScreen(
-"menu"
-);
+fadeToScreen(
+"menu",
+() => {
 
 updateContinueButton();
+
+}
+);
 
 }
 
@@ -11569,8 +20248,9 @@ id !==
 exceptionId
 ) {
 
-must(id)
-.classList.add(
+must(
+id
+).classList.add(
 "hidden"
 );
 
@@ -11581,11 +20261,9 @@ must(id)
 
 }
 
-/* =====================================================
-TECLADO
-====================================================== */
-
-function handleKeyDown(event) {
+function handleKeyDown(
+event
+) {
 
 const key =
 event.key.toLowerCase();
@@ -11596,6 +20274,7 @@ const movementKeys = [
 "a",
 "s",
 "d",
+
 "arrowup",
 "arrowdown",
 "arrowleft",
@@ -11620,35 +20299,46 @@ return;
 }
 
 if (
-event.repeat
-) {
-
-return;
-
-}
-
-if (
-event.key ===
-"Enter" &&
-state.dialogue
-) {
-
-event.preventDefault();
-
-advanceDialogue();
-
-return;
-
-}
-
-if (
 key ===
 "e"
 ) {
 
 event.preventDefault();
 
+state.keys.add(
+"e"
+);
+
+if (
+!event.repeat
+) {
+
 playerAction();
+
+}
+
+return;
+
+}
+
+if (
+event.repeat
+) {
+return;
+}
+
+if (
+
+event.key ===
+"Enter" &&
+
+state.dialogue
+
+) {
+
+event.preventDefault();
+
+advanceDialogue();
 
 return;
 
@@ -11668,11 +20358,41 @@ return;
 }
 
 if (
-key ===
-"i" &&
+
+[
+"q",
+"r",
+"f"
+]
+.includes(
+key
+) &&
+
 screens.game.classList.contains(
 "active"
 )
+
+) {
+
+event.preventDefault();
+
+useSkill(
+key
+);
+
+return;
+
+}
+
+if (
+
+key ===
+"i" &&
+
+screens.game.classList.contains(
+"active"
+)
+
 ) {
 
 event.preventDefault();
@@ -11687,11 +20407,14 @@ return;
 }
 
 if (
+
 key ===
 "m" &&
+
 screens.game.classList.contains(
 "active"
 )
+
 ) {
 
 event.preventDefault();
@@ -11706,11 +20429,14 @@ return;
 }
 
 if (
+
 key ===
 "l" &&
+
 screens.game.classList.contains(
 "active"
 )
+
 ) {
 
 event.preventDefault();
@@ -11751,6 +20477,57 @@ event.preventDefault();
 useItem(
 "elixir"
 );
+
+return;
+
+}
+
+if (
+key ===
+"3" &&
+state.player
+) {
+
+event.preventDefault();
+
+if (
+state.player.inventory.carneCaca >
+0
+) {
+
+useItem(
+"carneCaca"
+);
+
+}
+
+else {
+
+useItem(
+"pao"
+);
+
+}
+
+return;
+
+}
+
+if (
+
+key ===
+"4" &&
+
+state.player
+?.inventory
+?.flautaMemoria >
+0
+
+) {
+
+event.preventDefault();
+
+useMemoryFlute();
 
 return;
 
@@ -11803,7 +20580,9 @@ const openPanel =
 
 .map(
 id =>
-must(id)
+must(
+id
+)
 )
 
 .find(
@@ -11839,16 +20618,14 @@ returnToMenu();
 
 }
 
-/* =====================================================
-BOTÕES
-====================================================== */
-
 function bindClick(
 id,
 handler
 ) {
 
-must(id).addEventListener(
+must(
+id
+).addEventListener(
 "click",
 handler
 );
@@ -11866,6 +20643,18 @@ bindClick(
 "continueBtn",
 () => {
 
+const fade =
+must(
+"uiFade"
+);
+
+fade.classList.add(
+"active"
+);
+
+setTimeout(
+() => {
+
 if (
 !loadGame()
 ) {
@@ -11874,13 +20663,24 @@ updateContinueButton();
 
 }
 
+requestAnimationFrame(
+() =>
+fade.classList.remove(
+"active"
+)
+);
+
+},
+280
+);
+
 }
 );
 
 bindClick(
 "howToBtn",
 () =>
-showScreen(
+fadeToScreen(
 "how"
 )
 );
@@ -11888,7 +20688,7 @@ showScreen(
 bindClick(
 "creditsBtn",
 () =>
-showScreen(
+fadeToScreen(
 "credits"
 )
 );
@@ -11896,7 +20696,7 @@ showScreen(
 bindClick(
 "closeHowBtn",
 () =>
-showScreen(
+fadeToScreen(
 "menu"
 )
 );
@@ -11904,7 +20704,7 @@ showScreen(
 bindClick(
 "closeCreditsBtn",
 () =>
-showScreen(
+fadeToScreen(
 "menu"
 )
 );
@@ -11912,7 +20712,7 @@ showScreen(
 bindClick(
 "backMenuBtn",
 () =>
-showScreen(
+fadeToScreen(
 "menu"
 )
 );
@@ -11992,8 +20792,9 @@ bindClick(
 executeQuestAction
 );
 
-must("playerName")
-.addEventListener(
+must(
+"playerName"
+).addEventListener(
 "keydown",
 event => {
 
@@ -12024,11 +20825,14 @@ const target =
 button.dataset.close;
 
 if (
-$(target)
+$(
+target
+)
 ) {
 
-$(target)
-.classList.add(
+$(
+target
+).classList.add(
 "hidden"
 );
 
@@ -12121,16 +20925,153 @@ handleKeyDown
 
 window.addEventListener(
 "keyup",
-event =>
+event => {
+
+const key =
+event.key.toLowerCase();
+
 state.keys.delete(
-event.key.toLowerCase()
-)
+key
+);
+
+if (
+key ===
+"e"
+) {
+
+cancelHoldInteraction();
+
+}
+
+}
 );
 
 window.addEventListener(
 "blur",
-() =>
-state.keys.clear()
+() => {
+
+state.keys.clear();
+
+state.pointer.down =
+false;
+
+cancelHoldInteraction();
+
+}
+);
+
+window.addEventListener(
+"mouseup",
+event => {
+
+if (
+event.button ===
+0
+) {
+
+state.pointer.down =
+false;
+
+}
+
+}
+);
+
+canvas.addEventListener(
+"pointermove",
+event => {
+
+const rect =
+canvas.getBoundingClientRect();
+
+state.pointer.x =
+event.clientX -
+rect.left;
+
+state.pointer.y =
+event.clientY -
+rect.top;
+
+state.pointer.worldX =
+state.pointer.x +
+state.camera.x;
+
+state.pointer.worldY =
+state.pointer.y +
+state.camera.y;
+
+}
+);
+
+canvas.addEventListener(
+"pointerdown",
+event => {
+
+if (
+event.button !==
+0
+) {
+return;
+}
+
+event.preventDefault();
+
+const rect =
+canvas.getBoundingClientRect();
+
+state.pointer.x =
+event.clientX -
+rect.left;
+
+state.pointer.y =
+event.clientY -
+rect.top;
+
+state.pointer.worldX =
+state.pointer.x +
+state.camera.x;
+
+state.pointer.worldY =
+state.pointer.y +
+state.camera.y;
+
+state.pointer.down =
+true;
+
+performAttack({
+
+x:
+state.pointer.worldX,
+
+y:
+state.pointer.worldY
+
+});
+
+}
+);
+
+canvas.addEventListener(
+"pointerup",
+event => {
+
+if (
+event.button ===
+0
+) {
+
+state.pointer.down =
+false;
+
+}
+
+}
+);
+
+canvas.addEventListener(
+"contextmenu",
+event =>
+event.preventDefault()
 );
 
 window.addEventListener(
@@ -12139,10 +21080,6 @@ resizeCanvas
 );
 
 }
-
-/* =====================================================
-INICIALIZAÇÃO
-====================================================== */
 
 function initialize() {
 

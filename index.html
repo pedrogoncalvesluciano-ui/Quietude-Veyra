@@ -9,9 +9,12 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>
-        VEYRA — A Quietude
-    </title>
+    <meta
+        name="theme-color"
+        content="#10131a"
+    >
+
+    <title>VEYRA — A Quietude</title>
 
     <link
         rel="stylesheet"
@@ -32,25 +35,47 @@
         class="screen active"
     >
 
+        <div class="menu-background-symbol symbol-one">
+            ✦
+        </div>
+
+        <div class="menu-background-symbol symbol-two">
+            ◇
+        </div>
+
+        <div class="menu-background-symbol symbol-three">
+            ✧
+        </div>
+
+
         <div class="menu-panel">
 
             <p class="eyebrow">
                 UMA HISTÓRIA SOBRE MEMÓRIA
             </p>
 
+
             <h1>
                 VEYRA
             </h1>
+
 
             <h2>
                 A QUIETUDE
             </h2>
 
+
+            <div class="menu-divider">
+                <span></span>
+                <b>✦</b>
+                <span></span>
+            </div>
+
+
             <p class="intro">
                 A Quietude está apagando o mundo.
                 Pessoas esquecem quem são,
                 lugares esquecem que existiram.
-
                 Sua jornada começa na Vila do Crepúsculo.
             </p>
 
@@ -59,7 +84,7 @@
 
                 <button
                     id="newGameBtn"
-                    class="primary-btn"
+                    class="primary-btn main-menu-button"
                     type="button"
                 >
                     NOVO JOGO
@@ -68,7 +93,7 @@
 
                 <button
                     id="continueBtn"
-                    class="secondary-btn"
+                    class="secondary-btn main-menu-button"
                     type="button"
                 >
                     CONTINUAR
@@ -87,9 +112,11 @@
                     COMO JOGAR
                 </button>
 
+
                 <span class="menu-dot">
                     •
                 </span>
+
 
                 <button
                     id="creditsBtn"
@@ -106,6 +133,29 @@
                 id="continueHint"
                 class="hint"
             ></p>
+
+
+            <div class="menu-footer">
+                <span>
+                    MEMÓRIA
+                </span>
+
+                <span>
+                    •
+                </span>
+
+                <span>
+                    MAGIA
+                </span>
+
+                <span>
+                    •
+                </span>
+
+                <span>
+                    SOBREVIVÊNCIA
+                </span>
+            </div>
 
         </div>
 
@@ -138,6 +188,7 @@
                 GUIA DO AVENTUREIRO
             </p>
 
+
             <h2>
                 COMO JOGAR
             </h2>
@@ -152,7 +203,7 @@
                     </strong>
 
                     <span>
-                        Movimentar o personagem.
+                        Movimentar o personagem pelo mundo.
                     </span>
 
                 </div>
@@ -161,12 +212,13 @@
                 <div class="help-card">
 
                     <strong>
-                        CLIQUE ESQUERDO
+                        MOUSE ESQUERDO
                     </strong>
 
                     <span>
                         Atacar na direção do mouse.
-                        Segurar o botão continua atacando.
+                        Você pode manter o botão pressionado
+                        para continuar atacando.
                     </span>
 
                 </div>
@@ -179,10 +231,22 @@
                     </strong>
 
                     <span>
-                        Conversar, comer, investigar
-                        e interagir.
-                        Para árvores e minérios,
-                        mantenha E pressionado.
+                        Conversar, pegar drops, comer,
+                        investigar e interagir.
+                    </span>
+
+                </div>
+
+
+                <div class="help-card">
+
+                    <strong>
+                        SEGURAR E
+                    </strong>
+
+                    <span>
+                        Cortar árvores e minerar recursos.
+                        Soltar o botão cancela a coleta.
                     </span>
 
                 </div>
@@ -195,8 +259,8 @@
                     </strong>
 
                     <span>
-                        Primeira habilidade especial
-                        do personagem.
+                        Primeira habilidade especial.
+                        Disponível desde o início.
                     </span>
 
                 </div>
@@ -223,7 +287,7 @@
                     </strong>
 
                     <span>
-                        Habilidade poderosa.
+                        Habilidade máxima.
                         Desbloqueada no nível 10.
                     </span>
 
@@ -237,7 +301,8 @@
                     </strong>
 
                     <span>
-                        Entrar ou sair de construções.
+                        Entrar e sair de construções.
+                        É necessário estar próximo da porta.
                     </span>
 
                 </div>
@@ -250,7 +315,7 @@
                     </strong>
 
                     <span>
-                        Abrir e fechar o inventário.
+                        Abrir ou fechar o inventário.
                     </span>
 
                 </div>
@@ -263,7 +328,7 @@
                     </strong>
 
                     <span>
-                        Abrir e fechar o mapa.
+                        Abrir ou fechar o mapa.
                     </span>
 
                 </div>
@@ -289,7 +354,7 @@
                     </strong>
 
                     <span>
-                        Usar Poção de Cura.
+                        Usar uma Poção de Cura.
                     </span>
 
                 </div>
@@ -302,7 +367,7 @@
                     </strong>
 
                     <span>
-                        Usar Elixir de Energia.
+                        Usar um Elixir de Energia.
                     </span>
 
                 </div>
@@ -315,7 +380,8 @@
                     </strong>
 
                     <span>
-                        Comer comida do inventário.
+                        Comer Carne de Caça.
+                        Caso não tenha, usa Pão.
                     </span>
 
                 </div>
@@ -328,8 +394,8 @@
                     </strong>
 
                     <span>
-                        Tocar a Flauta da Memória,
-                        quando ela for encontrada.
+                        Tocar a Flauta da Memória
+                        depois de obtê-la.
                     </span>
 
                 </div>
@@ -342,7 +408,7 @@
                     </strong>
 
                     <span>
-                        Fechar interfaces ou voltar
+                        Fechar interfaces ou retornar
                         ao menu principal.
                     </span>
 
@@ -351,14 +417,47 @@
             </div>
 
 
-            <p class="how-note">
+            <div class="how-warning">
 
-                Observe o chão durante batalhas.
+                <div class="warning-icon">
+                    ⚠
+                </div>
 
-                Quando aparecer uma área vermelha,
-                saia dela antes do ataque acontecer.
+                <div>
+                    <strong>
+                        Observe o chão durante as batalhas.
+                    </strong>
 
-            </p>
+                    <p>
+                        Quando um círculo vermelho aparecer,
+                        significa que uma habilidade inimiga
+                        está prestes a atingir aquela área.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="how-warning sleep-warning">
+
+                <div class="warning-icon">
+                    💤
+                </div>
+
+                <div>
+
+                    <strong>
+                        Para descansar
+                    </strong>
+
+                    <p>
+                        Volte até sua casa na Vila do Crepúsculo,
+                        aproxime-se da cama e pressione E.
+                    </p>
+
+                </div>
+
+            </div>
 
         </div>
 
@@ -391,6 +490,7 @@
                 CRÉDITOS
             </p>
 
+
             <h2>
                 VEYRA — A QUIETUDE
             </h2>
@@ -401,24 +501,34 @@
             </div>
 
 
-            <p>
-                Conceito e criação do projeto:
+            <div class="credit-card">
+
+                <span>
+                    Conceito e criação do projeto
+                </span>
+
                 <strong>
                     Pedro
                 </strong>
-            </p>
+
+            </div>
 
 
-            <p>
-                Desenvolvimento e apoio de programação:
+            <div class="credit-card">
+
+                <span>
+                    Desenvolvimento e apoio de programação
+                </span>
+
                 <strong>
                     ChatGPT
                 </strong>
-            </p>
+
+            </div>
 
 
-            <p class="muted">
-                HTML5 • CSS3 • JavaScript
+            <p class="muted technology-credit">
+                HTML5 • CSS3 • JavaScript puro
             </p>
 
         </div>
@@ -446,13 +556,15 @@
                         VILA DO CREPÚSCULO
                     </p>
 
+
                     <h2>
                         ESCOLHA SEU PERSONAGEM
                     </h2>
 
+
                     <p class="muted">
-                        Cada personagem possui
-                        atributos e habilidades próprias.
+                        Cada aventureiro possui atributos,
+                        habilidades e estilo de combate próprios.
                     </p>
 
                 </div>
@@ -469,41 +581,61 @@
             </div>
 
 
+            <div class="selection-decoration">
+
+                <span></span>
+
+                <b>
+                    ✦
+                </b>
+
+                <span></span>
+
+            </div>
+
+
             <div
                 id="characterCards"
                 class="character-grid"
             ></div>
 
 
-            <div class="name-area">
+            <div class="character-bottom">
 
-                <label for="playerName">
-                    NOME DO PERSONAGEM
-                </label>
+                <div class="name-area">
 
-                <input
-                    id="playerName"
-                    type="text"
-                    maxlength="16"
-                    autocomplete="off"
-                    placeholder="Digite seu nome"
+                    <label for="playerName">
+                        NOME DO PERSONAGEM
+                    </label>
+
+
+                    <input
+                        id="playerName"
+                        type="text"
+                        maxlength="16"
+                        autocomplete="off"
+                        spellcheck="false"
+                        placeholder="Digite seu nome"
+                    >
+
+
+                    <p
+                        id="nameError"
+                        class="error"
+                    ></p>
+
+                </div>
+
+
+                <button
+                    id="startGameBtn"
+                    class="primary-btn start-game-btn"
+                    type="button"
                 >
-
-                <p
-                    id="nameError"
-                    class="error"
-                ></p>
+                    ENTRAR EM VEYRA
+                </button>
 
             </div>
-
-
-            <button
-                id="startGameBtn"
-                class="primary-btn"
-                type="button"
-            >
-                ENTRAR EM VEYRA
-            </button>
 
         </div>
 
@@ -547,7 +679,7 @@
                         </span>
 
 
-                        <div>
+                        <div class="hud-player-data">
 
                             <span id="hudClass">
                                 Aventureiro
@@ -564,7 +696,9 @@
 
                     <div class="hud-money">
 
-                        💰
+                        <span>
+                            🪙
+                        </span>
 
                         <b id="moneyText">
                             0
@@ -578,7 +712,7 @@
 
                 <div class="bar-row">
 
-                    <span>
+                    <span class="bar-label">
                         HP
                     </span>
 
@@ -591,7 +725,10 @@
 
                     </div>
 
-                    <span id="hpText">
+                    <span
+                        id="hpText"
+                        class="bar-number"
+                    >
                         100/100
                     </span>
 
@@ -601,7 +738,7 @@
 
                 <div class="bar-row">
 
-                    <span>
+                    <span class="bar-label">
                         MAGIA
                     </span>
 
@@ -614,7 +751,10 @@
 
                     </div>
 
-                    <span id="magicText">
+                    <span
+                        id="magicText"
+                        class="bar-number"
+                    >
                         100/100
                     </span>
 
@@ -624,7 +764,7 @@
 
                 <div class="bar-row">
 
-                    <span>
+                    <span class="bar-label">
                         ENERGIA
                     </span>
 
@@ -637,7 +777,10 @@
 
                     </div>
 
-                    <span id="energyText">
+                    <span
+                        id="energyText"
+                        class="bar-number"
+                    >
                         100/100
                     </span>
 
@@ -648,24 +791,22 @@
                 <div class="survival-row">
 
                     <span>
-
-                        🍖 Fome
+                        🍖
+                        Fome
 
                         <b id="hungerText">
                             100
                         </b>
-
                     </span>
 
 
                     <span>
-
-                        💤 Cansaço
+                        💤
+                        Cansaço
 
                         <b id="fatigueText">
                             100
                         </b>
-
                     </span>
 
                 </div>
@@ -689,7 +830,7 @@
                 </div>
 
 
-                <div class="mini-card">
+                <div class="mini-card xp-card">
 
                     <span>
                         XP
@@ -704,9 +845,9 @@
 
                 <button
                     id="inventoryBtn"
-                    class="hud-btn"
+                    class="hud-btn icon-hud-btn"
                     type="button"
-                    title="Inventário"
+                    title="Inventário [I]"
                 >
                     🎒
                 </button>
@@ -714,9 +855,9 @@
 
                 <button
                     id="mapBtn"
-                    class="hud-btn"
+                    class="hud-btn icon-hud-btn"
                     type="button"
-                    title="Mapa"
+                    title="Mapa [M]"
                 >
                     🗺️
                 </button>
@@ -724,9 +865,9 @@
 
                 <button
                     id="bookBtn"
-                    class="hud-btn"
+                    class="hud-btn icon-hud-btn"
                     type="button"
-                    title="Livro"
+                    title="Livro dos Guardiões [L]"
                 >
                     📖
                 </button>
@@ -734,7 +875,7 @@
 
                 <button
                     id="saveBtn"
-                    class="hud-btn"
+                    class="hud-btn text-hud-btn"
                     type="button"
                 >
                     SALVAR
@@ -743,7 +884,7 @@
 
                 <button
                     id="menuBtn"
-                    class="hud-btn"
+                    class="hud-btn text-hud-btn"
                     type="button"
                 >
                     MENU
@@ -756,7 +897,7 @@
 
 
         <!-- =================================================
-             LOCAL
+             NOME DA REGIÃO
         ================================================== -->
 
         <div id="locationLabel">
@@ -774,15 +915,24 @@
             class="minimap"
         >
 
+            <div class="minimap-header">
+
+                <span>
+                    MAPA
+                </span>
+
+                <small>
+                    M
+                </small>
+
+            </div>
+
+
             <canvas
                 id="miniCanvas"
                 width="190"
                 height="135"
             ></canvas>
-
-            <span>
-                MINIMAPA
-            </span>
 
         </div>
 
@@ -802,57 +952,69 @@
                 data-skill-slot="q"
             >
 
-                <b>
+                <b class="skill-key">
                     Q
                 </b>
 
-                <span id="skillQName">
-                    Habilidade
-                </span>
+                <div class="skill-data">
 
-                <small id="skillQCooldown">
-                    PRONTA
-                </small>
+                    <span id="skillQName">
+                        Habilidade
+                    </span>
+
+                    <small id="skillQCooldown">
+                        PRONTA
+                    </small>
+
+                </div>
 
             </div>
 
 
             <div
-                class="skill-slot"
+                class="skill-slot locked"
                 data-skill-slot="r"
             >
 
-                <b>
+                <b class="skill-key">
                     R
                 </b>
 
-                <span id="skillRName">
-                    Nível 5
-                </span>
+                <div class="skill-data">
 
-                <small id="skillRCooldown">
-                    BLOQUEADA
-                </small>
+                    <span id="skillRName">
+                        Nível 5
+                    </span>
+
+                    <small id="skillRCooldown">
+                        NÍVEL 5
+                    </small>
+
+                </div>
 
             </div>
 
 
             <div
-                class="skill-slot"
+                class="skill-slot locked"
                 data-skill-slot="f"
             >
 
-                <b>
+                <b class="skill-key">
                     F
                 </b>
 
-                <span id="skillFName">
-                    Nível 10
-                </span>
+                <div class="skill-data">
 
-                <small id="skillFCooldown">
-                    BLOQUEADA
-                </small>
+                    <span id="skillFName">
+                        Nível 10
+                    </span>
+
+                    <small id="skillFCooldown">
+                        NÍVEL 10
+                    </small>
+
+                </div>
 
             </div>
 
@@ -871,40 +1033,40 @@
             </span>
             mover
 
-            •
+            <b>•</b>
 
             <span>
                 MOUSE
             </span>
             atacar
 
-            •
+            <b>•</b>
 
             <span>
                 E
             </span>
-            interagir/coletar
+            interagir
 
-            •
+            <b>•</b>
 
             <span>
                 Q R F
             </span>
             habilidades
 
-            •
+            <b>•</b>
 
             <span>
                 Z
             </span>
-            entrar/sair
+            portas
 
         </div>
 
 
 
         <!-- =================================================
-             BARRA DE COLETA
+             COLETA SEGURANDO E
         ================================================== -->
 
         <div
@@ -912,15 +1074,24 @@
             class="hold-progress hidden"
         >
 
-            <strong id="holdProgressTitle">
-                Coletando...
-            </strong>
+            <div class="hold-header">
+
+                <span class="hold-icon">
+                    ✦
+                </span>
+
+                <strong id="holdProgressTitle">
+                    Coletando...
+                </strong>
+
+            </div>
 
 
             <div class="hold-progress-track">
 
                 <div
                     id="holdProgressFill"
+                    class="hold-progress-fill"
                 ></div>
 
             </div>
@@ -947,6 +1118,7 @@
                 E
             </b>
 
+
             <span id="interactionText">
                 Interagir
             </span>
@@ -964,11 +1136,20 @@
             class="dialogue-box hidden"
         >
 
-            <div
-                id="dialogueSpeaker"
-                class="dialogue-speaker"
-            >
-                NPC
+            <div class="dialogue-top">
+
+                <div
+                    id="dialogueSpeaker"
+                    class="dialogue-speaker"
+                >
+                    NPC
+                </div>
+
+
+                <div class="dialogue-symbol">
+                    ✦
+                </div>
+
             </div>
 
 
@@ -995,11 +1176,17 @@
             class="modal hidden"
         >
 
-            <div class="modal-card">
+            <div class="modal-card compact-modal">
 
                 <p class="eyebrow">
                     CAMINHO
                 </p>
+
+
+                <div class="modal-symbol">
+                    ◇
+                </div>
+
 
                 <h2>
                     DESEJA CONTINUAR?
@@ -1048,7 +1235,7 @@
             class="modal hidden"
         >
 
-            <div class="modal-card">
+            <div class="modal-card boss-modal">
 
                 <div
                     id="battleIcon"
@@ -1059,7 +1246,7 @@
 
 
                 <p class="eyebrow">
-                    DESAFIO
+                    GUARDIÃO
                 </p>
 
 
@@ -1072,6 +1259,11 @@
                     id="battleText"
                     class="muted"
                 ></p>
+
+
+                <div class="boss-warning">
+                    ⚠ Observe as áreas vermelhas no chão.
+                </div>
 
 
                 <div class="modal-actions">
@@ -1116,6 +1308,7 @@
                     class="close-btn panel-close"
                     type="button"
                     data-close="inventoryPanel"
+                    aria-label="Fechar inventário"
                 >
                     ×
                 </button>
@@ -1129,6 +1322,7 @@
                             ITENS
                         </p>
 
+
                         <h2>
                             INVENTÁRIO
                         </h2>
@@ -1136,15 +1330,17 @@
                     </div>
 
 
-                    <span>
+                    <div class="weight-box">
 
-                        Peso:
+                        <span>
+                            PESO
+                        </span>
 
                         <b id="weightText">
                             0/100
                         </b>
 
-                    </span>
+                    </div>
 
                 </div>
 
@@ -1239,9 +1435,18 @@
 
                 <div class="equipment-box">
 
-                    <h3>
-                        EQUIPAMENTO
-                    </h3>
+                    <div class="equipment-title">
+
+                        <span>
+                            ⚔
+                        </span>
+
+                        <h3>
+                            EQUIPAMENTO
+                        </h3>
+
+                    </div>
+
 
                     <div
                         id="equipmentGrid"
@@ -1265,12 +1470,13 @@
             class="modal hidden"
         >
 
-            <div class="wide-panel">
+            <div class="wide-panel map-wide-panel">
 
                 <button
                     class="close-btn panel-close"
                     type="button"
                     data-close="mapPanel"
+                    aria-label="Fechar mapa"
                 >
                     ×
                 </button>
@@ -1286,17 +1492,21 @@
                 </h2>
 
 
-                <canvas
-                    id="worldMapCanvas"
-                    width="900"
-                    height="560"
-                ></canvas>
+                <div class="map-frame">
+
+                    <canvas
+                        id="worldMapCanvas"
+                        width="900"
+                        height="560"
+                    ></canvas>
+
+                </div>
 
 
                 <p class="muted map-caption">
-                    O mapa mostra a região atual,
-                    NPCs, caminhos descobertos e
-                    Guardiões encontrados.
+                    Caminhos, construções, NPCs,
+                    drops, passagens e Guardiões descobertos
+                    são mostrados no mapa.
                 </p>
 
             </div>
@@ -1314,12 +1524,13 @@
             class="modal hidden"
         >
 
-            <div class="wide-panel">
+            <div class="wide-panel book-wide-panel">
 
                 <button
                     class="close-btn panel-close"
                     type="button"
                     data-close="bookPanel"
+                    aria-label="Fechar livro"
                 >
                     ×
                 </button>
@@ -1333,6 +1544,12 @@
                 <h2>
                     LIVRO DOS GUARDIÕES
                 </h2>
+
+
+                <p class="muted panel-description">
+                    Identidades desconhecidas só são reveladas
+                    depois que você encontra seus respectivos Guardiões.
+                </p>
 
 
                 <div
@@ -1355,19 +1572,20 @@
             class="modal hidden"
         >
 
-            <div class="wide-panel">
+            <div class="wide-panel shop-wide-panel">
 
                 <button
                     class="close-btn panel-close"
                     type="button"
                     data-close="shopPanel"
+                    aria-label="Fechar loja"
                 >
                     ×
                 </button>
 
 
                 <p class="eyebrow">
-                    COMERCIANTE
+                    COMÉRCIO
                 </p>
 
 
@@ -1378,7 +1596,7 @@
 
                 <div
                     id="shopTabs"
-                    class="tabs"
+                    class="tabs shop-tabs"
                 >
 
                     <button
@@ -1386,7 +1604,7 @@
                         type="button"
                         data-shop="buy"
                     >
-                        Comprar
+                        COMPRAR
                     </button>
 
 
@@ -1395,7 +1613,7 @@
                         type="button"
                         data-shop="sell"
                     >
-                        Vender
+                        VENDER
                     </button>
 
                 </div>
@@ -1413,7 +1631,7 @@
 
 
         <!-- =================================================
-             MISSÕES
+             MISSÃO
         ================================================== -->
 
         <div
@@ -1421,12 +1639,13 @@
             class="modal hidden"
         >
 
-            <div class="modal-card">
+            <div class="modal-card quest-modal">
 
                 <button
                     class="close-btn panel-close"
                     type="button"
                     data-close="questPanel"
+                    aria-label="Fechar missão"
                 >
                     ×
                 </button>
@@ -1435,6 +1654,11 @@
                 <p class="eyebrow">
                     MISSÃO
                 </p>
+
+
+                <div class="quest-icon">
+                    !
+                </div>
 
 
                 <h2 id="questTitle">
@@ -1456,7 +1680,7 @@
 
                 <button
                     id="questActionBtn"
-                    class="primary-btn"
+                    class="primary-btn quest-action-btn"
                     type="button"
                 >
                     ACEITAR
@@ -1477,11 +1701,16 @@
             class="modal hidden"
         >
 
-            <div class="modal-card">
+            <div class="modal-card death-modal">
 
-                <div class="battle-icon">
+                <div class="battle-icon death-icon">
                     ☠
                 </div>
+
+
+                <p class="eyebrow death-eyebrow">
+                    A QUIETUDE SE APROXIMA
+                </p>
 
 
                 <h2>
@@ -1490,14 +1719,14 @@
 
 
                 <p class="muted">
-                    Você retornará ao último
-                    ponto seguro.
+                    Você retornará ao último ponto seguro
+                    e perderá uma pequena parte das moedas.
                 </p>
 
 
                 <button
                     id="respawnBtn"
-                    class="primary-btn"
+                    class="primary-btn danger-btn"
                     type="button"
                 >
                     RETORNAR
@@ -1518,8 +1747,20 @@
             class="transition-screen hidden"
         >
 
-            <div id="transitionMessage">
-                VEYRA
+            <div class="transition-content">
+
+                <span class="transition-symbol">
+                    ✦
+                </span>
+
+
+                <div id="transitionMessage">
+                    VEYRA
+                </div>
+
+
+                <span class="transition-line"></span>
+
             </div>
 
         </div>

@@ -2,10 +2,9 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    >
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
     <title>VEYRA — A Quietude</title>
 
     <link rel="stylesheet" href="style.css">
@@ -14,127 +13,126 @@
 <body>
 
     <!-- =====================================================
-         MENU PRINCIPAL
+         MENU
     ====================================================== -->
 
-    <section id="menuScreen" class="screen active">
-        <div class="menu-overlay"></div>
+    <main id="menuScreen" class="screen active">
+
+        <div class="menu-background"></div>
 
         <div class="menu-content">
+
             <div class="game-logo">
-                <span>VEYRA</span>
-                <small>A QUIETUDE</small>
+                <span class="logo-small">AS CRÔNICAS DE</span>
+                <h1>VEYRA</h1>
+                <span class="logo-subtitle">A QUIETUDE</span>
             </div>
 
-            <p class="menu-subtitle">
-                Algumas coisas não são destruídas.<br>
-                Elas simplesmente são esquecidas.
+            <p class="menu-description">
+                Um mundo começou a ser consumido pelo vazio.
+                Explore, lute, descubra seus habitantes e descubra
+                o que aconteceu com Veyra.
             </p>
 
             <div class="menu-buttons">
-                <button id="newGameBtn" class="main-button">
-                    JOGAR
+
+                <button id="newGameBtn" class="menu-button primary">
+                    NOVO JOGO
                 </button>
 
-                <button id="continueBtn" class="main-button">
+                <button id="continueBtn" class="menu-button">
                     CONTINUAR
                 </button>
 
-                <button id="howToBtn" class="main-button secondary">
+                <button id="howToPlayBtn" class="menu-button">
                     COMO JOGAR
                 </button>
 
-                <button id="creditsBtn" class="main-button secondary">
+                <button id="creditsBtn" class="menu-button">
                     CRÉDITOS
                 </button>
+
             </div>
 
-            <p id="continueHint" class="menu-hint">
-                Nenhum jogo salvo encontrado.
-            </p>
+            <p id="continueHint" class="continue-hint"></p>
 
-            <div class="version">
-                VEYRA — A QUIETUDE • VERSÃO 7.0
-            </div>
         </div>
-    </section>
+    </main>
 
 
     <!-- =====================================================
          COMO JOGAR
     ====================================================== -->
 
-    <section id="howToScreen" class="screen">
-        <div class="panel large-panel">
-            <button class="close-button back-menu-generic">×</button>
+    <section id="howToPlayScreen" class="screen overlay-screen">
 
-            <h1>COMO JOGAR</h1>
+        <div class="panel">
 
-            <div class="controls-grid">
+            <button id="closeHowToPlay" class="close-button">×</button>
 
-                <div class="info-box">
-                    <h3>🎮 MOVIMENTO</h3>
-                    <p><b>W A S D</b> — movimentar</p>
-                    <p><b>↑ ↓ ← →</b> — movimentar</p>
+            <h2>COMO JOGAR</h2>
+
+            <div class="instructions">
+
+                <div class="instruction">
+                    <strong>W A S D</strong>
+                    <span>Movimentar o personagem</span>
                 </div>
 
-                <div class="info-box">
-                    <h3>⚔️ COMBATE</h3>
-                    <p><b>ESPAÇO</b> — ataque básico</p>
-                    <p><b>Q</b> — habilidade da classe</p>
-                    <p><b>E</b> — habilidade secundária</p>
+                <div class="instruction">
+                    <strong>↑ ↓ ← →</strong>
+                    <span>Também movimentam o personagem</span>
                 </div>
 
-                <div class="info-box">
-                    <h3>🎒 INTERFACE</h3>
-                    <p><b>I</b> — inventário</p>
-                    <p><b>M</b> — mapa</p>
-                    <p><b>L</b> — livro</p>
-                    <p><b>ESC</b> — fechar interface</p>
+                <div class="instruction">
+                    <strong>E</strong>
+                    <span>Atacar / usar habilidade</span>
                 </div>
 
-                <div class="info-box">
-                    <h3>💬 INTERAÇÃO</h3>
-                    <p><b>F</b> — conversar/interagir</p>
-                    <p>Aproxime-se de NPCs, lojas e objetos.</p>
+                <div class="instruction">
+                    <strong>Z</strong>
+                    <span>Entrar em casas e construções</span>
                 </div>
 
-                <div class="info-box">
-                    <h3>🧪 POÇÕES</h3>
-                    <p><b>1</b> — poção de cura</p>
-                    <p><b>2</b> — poção de força</p>
-                    <p><b>3</b> — poção de resistência</p>
+                <div class="instruction">
+                    <strong>I</strong>
+                    <span>Abrir o inventário</span>
                 </div>
 
-                <div class="info-box">
-                    <h3>💾 JOGO</h3>
-                    <p><b>F5</b> — o navegador pode recarregar normalmente.</p>
-                    <p>Use o botão <b>SALVAR</b> para registrar seu progresso.</p>
+                <div class="instruction">
+                    <strong>M</strong>
+                    <span>Abrir o mapa</span>
+                </div>
+
+                <div class="instruction">
+                    <strong>ESC</strong>
+                    <span>Voltar ao menu</span>
+                </div>
+
+                <div class="instruction">
+                    <strong>NPCs</strong>
+                    <span>Aproxime-se deles para conversar</span>
+                </div>
+
+                <div class="instruction">
+                    <strong>INIMIGOS</strong>
+                    <span>
+                        Alguns atacam quando você entra no campo
+                        de visão deles. Outros precisam ser desafiados.
+                    </span>
+                </div>
+
+                <div class="instruction">
+                    <strong>CAMINHOS</strong>
+                    <span>
+                        Alguns levam para outras regiões de Veyra.
+                    </span>
                 </div>
 
             </div>
 
-            <div class="howto-story">
-                <h2>OBJETIVO</h2>
-
-                <p>
-                    Explore a Ilha de Veyra, preserve memórias,
-                    ajude seus habitantes, colete recursos,
-                    evolua, enfrente criaturas e descubra a verdade
-                    por trás da Quietude.
-                </p>
-
-                <p>
-                    A jornada começa na Vila do Crepúsculo.
-                    Algumas regiões estão bloqueadas e precisam ser
-                    descobertas ou desbloqueadas.
-                </p>
-            </div>
-
-            <button class="main-button back-menu-generic">
-                VOLTAR
-            </button>
         </div>
+
     </section>
 
 
@@ -142,72 +140,67 @@
          CRÉDITOS
     ====================================================== -->
 
-    <section id="creditsScreen" class="screen">
+    <section id="creditsScreen" class="screen overlay-screen">
+
         <div class="panel credits-panel">
-            <button class="close-button back-menu-generic">×</button>
 
-            <h1>CRÉDITOS</h1>
+            <button id="closeCredits" class="close-button">×</button>
 
-            <div class="credits-content">
-                <div class="credit-symbol">✦</div>
+            <h2>CRÉDITOS</h2>
 
-                <h2>VEYRA — A QUIETUDE</h2>
+            <p>
+                <strong>VEYRA — A QUIETUDE</strong>
+            </p>
 
-                <p>
-                    Um RPG de fantasia sobre memória,
-                    identidade e esquecimento.
-                </p>
+            <p>
+                RPG de aventura e exploração.
+            </p>
 
-                <div class="credit-divider"></div>
-
-                <h3>POR</h3>
-                <p class="big-credit">
-                    Pedro
-                </p>
-
-                <h3>COM AJUDA DO</h3>
-                <p class="big-credit">
-                    Chat GPT
-                </p>
-
-                <div class="credit-divider"></div>
-
-                <p>
-                    Projeto desenvolvido em HTML5,
-                    CSS3 e JavaScript puro.
-                </p>
-
-                <p class="small-credit">
-                    VERSÃO 7.0
-                </p>
+            <div class="credits-line">
+                <span>Conceito</span>
+                <span>Projeto Veyra</span>
             </div>
 
-            <button class="main-button back-menu-generic">
-                VOLTAR
-            </button>
+            <div class="credits-line">
+                <span>Programação</span>
+                <span>Projeto Veyra</span>
+            </div>
+
+            <div class="credits-line">
+                <span>Mundo</span>
+                <span>Veyra</span>
+            </div>
+
+            <p class="credits-final">
+                A história ainda está sendo escrita...
+            </p>
+
         </div>
+
     </section>
 
 
     <!-- =====================================================
-         SELEÇÃO DE PERSONAGEM
+         ESCOLHA DE PERSONAGEM
     ====================================================== -->
 
     <section id="characterScreen" class="screen">
 
         <div class="character-container">
 
-            <div class="screen-title">
-                <span>ESCOLHA SEU DESTINO</span>
-                <small>Selecione um personagem</small>
-            </div>
+            <h1>ESCOLHA SEU PERSONAGEM</h1>
+
+            <p class="character-subtitle">
+                Cada personagem possui características,
+                habilidades e estilos de combate diferentes.
+            </p>
 
             <div id="characterCards" class="character-cards"></div>
 
             <div class="name-area">
 
                 <label for="playerName">
-                    NOME DO PERSONAGEM
+                    Nome do aventureiro
                 </label>
 
                 <input
@@ -218,21 +211,24 @@
                     placeholder="Digite seu nome..."
                 >
 
-                <p id="nameError" class="error-message"></p>
+                <p id="nameError"></p>
 
-                <div class="character-actions">
-                    <button id="backMenuBtn" class="main-button secondary">
-                        VOLTAR
-                    </button>
+            </div>
 
-                    <button id="startGameBtn" class="main-button">
-                        COMEÇAR
-                    </button>
-                </div>
+            <div class="character-actions">
+
+                <button id="backMenuBtn" class="menu-button">
+                    VOLTAR
+                </button>
+
+                <button id="startGameBtn" class="menu-button primary">
+                    COMEÇAR AVENTURA
+                </button>
 
             </div>
 
         </div>
+
     </section>
 
 
@@ -244,451 +240,243 @@
 
         <canvas id="gameCanvas"></canvas>
 
+
         <!-- HUD -->
 
         <div id="hud" class="hud">
 
             <div class="hud-player">
 
-                <div class="avatar-small" id="hudAvatar">
+                <div class="hud-avatar" id="hudAvatar">
+                    ?
+                </div>
+
+                <div class="hud-info">
+
+                    <div class="hud-name" id="hudName">
+                        Aventureiro
+                    </div>
+
+                    <div class="hud-class" id="hudClass">
+                        Classe
+                    </div>
+
+                    <div class="bar-container hp-container">
+                        <div id="hpBar" class="bar hp-bar"></div>
+                    </div>
+
+                    <span id="hpText">0/0</span>
+
+                    <div class="bar-container energy-container">
+                        <div id="energyBar" class="bar energy-bar"></div>
+                    </div>
+
+                    <span id="energyText">0/0</span>
+
+                </div>
+
+            </div>
+
+
+            <div class="hud-progress">
+
+                <div>
+                    NÍVEL
+                    <strong id="levelText">1</strong>
+                </div>
+
+                <div>
+                    XP
+                    <strong id="xpText">0 / 100</strong>
+                </div>
+
+            </div>
+
+
+            <div class="hud-actions">
+
+                <button id="inventoryBtn" title="Inventário">
+                    🎒
+                </button>
+
+                <button id="mapBtn" title="Mapa">
+                    🗺️
+                </button>
+
+                <button id="saveBtn" title="Salvar">
+                    💾
+                </button>
+
+                <button id="menuBtn" title="Menu">
+                    ☰
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- ÁREA DE HABILIDADE -->
+
+        <div id="skillHud" class="skill-hud">
+
+            <div class="skill-box">
+
+                <div id="skillIcon" class="skill-icon">
                     ✦
                 </div>
 
-                <div class="hud-player-info">
-                    <strong id="hudName">Jogador</strong>
-                    <span id="hudClass">Classe</span>
+                <div class="skill-info">
+                    <strong id="skillName">
+                        Habilidade
+                    </strong>
+
+                    <span id="skillHint">
+                        E para usar
+                    </span>
                 </div>
 
-                <div class="level-badge">
-                    Nv. <span id="levelText">1</span>
-                </div>
-
-            </div>
-
-            <div class="bars">
-
-                <div class="bar-row">
-                    <span>❤️</span>
-                    <div class="bar">
-                        <div id="hpBar" class="bar-fill hp"></div>
-                    </div>
-                    <small id="hpText">100/100</small>
-                </div>
-
-                <div class="bar-row">
-                    <span>✨</span>
-                    <div class="bar">
-                        <div id="magicBar" class="bar-fill magic"></div>
-                    </div>
-                    <small id="magicText">100/100</small>
-                </div>
-
-                <div class="bar-row">
-                    <span>⚡</span>
-                    <div class="bar">
-                        <div id="energyBar" class="bar-fill energy"></div>
-                    </div>
-                    <small id="energyText">100/100</small>
-                </div>
-
-                <div class="bar-row">
-                    <span>🍖</span>
-                    <div class="bar">
-                        <div id="hungerBar" class="bar-fill hunger"></div>
-                    </div>
-                    <small id="hungerText">100/100</small>
-                </div>
-
-                <div class="bar-row">
-                    <span>😴</span>
-                    <div class="bar">
-                        <div id="fatigueBar" class="bar-fill fatigue"></div>
-                    </div>
-                    <small id="fatigueText">100/100</small>
+                <div class="skill-energy">
+                    <span id="skillEnergyText">0</span>
                 </div>
 
             </div>
 
-            <div class="hud-bottom-info">
-
-                <span>
-                    💰 <b id="moneyText">0</b>
-                </span>
-
-                <span>
-                    ⭐ <b id="xpText">0 / 100</b>
-                </span>
-
-            </div>
-
         </div>
-
-
-        <!-- HABILIDADES -->
-
-        <div class="skill-bar">
-
-            <button class="skill-slot" data-skill="basic">
-                <span>⚔</span>
-                <small>ESPAÇO</small>
-            </button>
-
-            <button class="skill-slot" data-skill="primary">
-                <span id="primarySkillIcon">Q</span>
-                <small>Q</small>
-                <i id="primaryCooldown"></i>
-            </button>
-
-            <button class="skill-slot" data-skill="secondary">
-                <span>E</span>
-                <small>E</small>
-                <i id="secondaryCooldown"></i>
-            </button>
-
-            <button class="skill-slot potion-slot">
-                <span>🧪</span>
-                <small>1</small>
-            </button>
-
-            <button id="inventoryQuickBtn" class="skill-slot">
-                <span>🎒</span>
-                <small>I</small>
-            </button>
-
-            <button id="mapQuickBtn" class="skill-slot">
-                <span>🗺</span>
-                <small>M</small>
-            </button>
-
-        </div>
-
-
-        <!-- MINIMAPA -->
-
-        <div id="miniMap" class="mini-map hidden">
-            <canvas id="miniMapCanvas"></canvas>
-            <span>MINIMAPA</span>
-        </div>
-
-
-        <!-- INDICADOR DE INTERAÇÃO -->
-
-        <div id="interactionHint" class="interaction-hint hidden">
-            <b>F</b>
-            <span>Interagir</span>
-        </div>
-
-
-        <!-- DAMAGE -->
-
-        <div id="damageIndicator" class="damage-indicator"></div>
 
 
         <!-- TOAST -->
 
-        <div id="toast" class="toast"></div>
+        <div id="saveMessage" class="toast"></div>
 
 
-        <!-- BOTÕES -->
+        <!-- BALÃO DE FALA -->
 
-        <div class="game-menu-buttons">
+        <div id="dialogueBox" class="dialogue-box">
 
-            <button id="saveBtn">
-                💾 Salvar
-            </button>
+            <div class="dialogue-name" id="dialogueName">
+                NPC
+            </div>
 
-            <button id="menuBtn">
-                ☰ Menu
-            </button>
+            <div class="dialogue-text" id="dialogueText">
+                ...
+            </div>
 
-        </div>
-
-
-        <!-- =================================================
-             INVENTÁRIO
-        ================================================== -->
-
-        <div id="inventoryModal" class="modal hidden">
-
-            <div class="modal-panel inventory-panel">
-
-                <button class="close-button modal-close">×</button>
-
-                <h1>INVENTÁRIO</h1>
-
-                <div class="inventory-top">
-
-                    <div>
-                        Peso:
-                        <b id="weightText">0 / 100</b>
-                    </div>
-
-                    <div>
-                        💰
-                        <b id="inventoryMoney">0</b>
-                    </div>
-
-                </div>
-
-                <div class="inventory-tabs">
-
-                    <button class="inventory-tab active" data-category="all">
-                        Todos
-                    </button>
-
-                    <button class="inventory-tab" data-category="materials">
-                        Materiais
-                    </button>
-
-                    <button class="inventory-tab" data-category="weapons">
-                        Armas
-                    </button>
-
-                    <button class="inventory-tab" data-category="armor">
-                        Armaduras
-                    </button>
-
-                    <button class="inventory-tab" data-category="potions">
-                        Poções
-                    </button>
-
-                    <button class="inventory-tab" data-category="special">
-                        Especiais
-                    </button>
-
-                </div>
-
-                <div id="inventoryGrid" class="inventory-grid"></div>
-
-                <div id="equipmentArea" class="equipment-area">
-
-                    <h2>EQUIPAMENTO</h2>
-
-                    <div class="equipment-slots">
-
-                        <div class="equipment-slot">
-                            <span>Arma</span>
-                            <b id="weaponEquip">Espada simples</b>
-                        </div>
-
-                        <div class="equipment-slot">
-                            <span>Armadura</span>
-                            <b id="armorEquip">Nenhuma</b>
-                        </div>
-
-                        <div class="equipment-slot">
-                            <span>Acessório</span>
-                            <b id="accessoryEquip">Nenhum</b>
-                        </div>
-
-                    </div>
-
-                </div>
-
+            <div class="dialogue-hint">
+                Pressione E para continuar
             </div>
 
         </div>
 
 
-        <!-- =================================================
-             MAPA
-        ================================================== -->
+        <!-- INTERAÇÃO -->
 
-        <div id="mapModal" class="modal hidden">
+        <div id="interactionHint" class="interaction-hint">
+            E — Interagir
+        </div>
 
-            <div class="modal-panel map-panel">
 
-                <button class="close-button modal-close">×</button>
+        <!-- BATALHA -->
 
-                <h1>MAPA DE VEYRA</h1>
+        <div id="battlePrompt" class="modal-game">
 
-                <p id="mapLockedMessage" class="map-locked">
-                    Você ainda não possui um mapa.
-                    Compre um na loja.
+            <div class="battle-panel">
+
+                <div id="battleEnemyIcon" class="battle-enemy-icon">
+                    👹
+                </div>
+
+                <h2 id="battleEnemyName">
+                    Inimigo
+                </h2>
+
+                <p id="battleEnemyDescription">
+                    Um inimigo poderoso.
                 </p>
-
-                <canvas id="worldMapCanvas"></canvas>
-
-                <div id="mapLegend" class="map-legend">
-
-                    <span>🟢 Explorado</span>
-                    <span>🔒 Bloqueado</span>
-                    <span>⚔ Boss descoberto</span>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- =================================================
-             LIVRO
-        ================================================== -->
-
-        <div id="bookModal" class="modal hidden">
-
-            <div class="modal-panel book-panel">
-
-                <button class="close-button modal-close">×</button>
-
-                <h1>O LIVRO</h1>
 
                 <p>
-                    O Livro registra os bosses necessários
-                    para a progressão.
+                    Este inimigo guarda o caminho.
                 </p>
 
-                <div id="bossBookGrid" class="boss-book-grid"></div>
+                <div class="battle-buttons">
+
+                    <button id="acceptBattleBtn"
+                            class="menu-button primary">
+                        ACEITAR BATALHA
+                    </button>
+
+                    <button id="declineBattleBtn"
+                            class="menu-button">
+                        NÃO AGORA
+                    </button>
+
+                </div>
 
             </div>
 
         </div>
 
 
-        <!-- =================================================
-             LOJA
-        ================================================== -->
+        <!-- TRANSIÇÃO -->
 
-        <div id="shopModal" class="modal hidden">
+        <div id="transitionScreen" class="transition-screen">
 
-            <div class="modal-panel shop-panel">
-
-                <button class="close-button modal-close">×</button>
-
-                <h1>LOJA</h1>
-
-                <div class="shop-tabs">
-
-                    <button class="shop-tab active" data-shop="buy">
-                        Comprar
-                    </button>
-
-                    <button class="shop-tab" data-shop="sell">
-                        Vender
-                    </button>
-
-                </div>
-
-                <div id="shopContent"></div>
-
+            <div id="transitionText">
+                Viajando...
             </div>
 
         </div>
 
 
-        <!-- =================================================
-             DIÁLOGO
-        ================================================== -->
+        <!-- INVENTÁRIO -->
 
-        <div id="dialogModal" class="dialog-modal hidden">
+        <div id="inventoryPanel" class="modal-game">
 
-            <div class="dialog-box">
+            <div class="panel game-panel">
 
-                <div class="dialog-header">
-                    <div id="dialogPortrait" class="dialog-portrait">
-                        ?
-                    </div>
-
-                    <div>
-                        <h2 id="dialogName">NPC</h2>
-                        <small id="dialogRole">Morador</small>
-                    </div>
-                </div>
-
-                <div id="dialogText" class="dialog-text"></div>
-
-                <div id="dialogChoices" class="dialog-choices"></div>
-
-                <button id="dialogClose" class="main-button secondary">
-                    Fechar
+                <button id="closeInventory"
+                        class="close-button">
+                    ×
                 </button>
 
+                <h2>INVENTÁRIO</h2>
+
+                <div id="inventoryGrid"
+                     class="inventory-grid">
+                </div>
+
             </div>
 
         </div>
 
 
-        <!-- =================================================
-             LEVEL UP
-        ================================================== -->
+        <!-- MAPA -->
 
-        <div id="levelModal" class="modal hidden">
+        <div id="mapPanel" class="modal-game">
 
-            <div class="modal-panel level-panel">
+            <div class="panel map-panel">
 
-                <h1>✨ NOVO NÍVEL!</h1>
+                <button id="closeMap"
+                        class="close-button">
+                    ×
+                </button>
+
+                <h2>MAPA DE VEYRA</h2>
+
+                <canvas id="mapCanvas"></canvas>
 
                 <p>
-                    Você recebeu <b>3 pontos de atributo</b>.
+                    Sua posição está marcada no mapa.
                 </p>
-
-                <div class="stat-points">
-                    Pontos disponíveis:
-                    <b id="statPointsText">3</b>
-                </div>
-
-                <div class="stat-upgrades">
-
-                    <button data-stat="hp">
-                        ❤️ VIDA
-                        <span>+</span>
-                    </button>
-
-                    <button data-stat="magic">
-                        ✨ MAGIA
-                        <span>+</span>
-                    </button>
-
-                    <button data-stat="energy">
-                        ⚡ ENERGIA
-                        <span>+</span>
-                    </button>
-
-                </div>
-
-                <button id="levelCloseBtn" class="main-button">
-                    CONTINUAR
-                </button>
 
             </div>
 
         </div>
-
-
-        <!-- =================================================
-             MORTE
-        ================================================== -->
-
-        <div id="deathModal" class="modal hidden">
-
-            <div class="modal-panel death-panel">
-
-                <h1>VOCÊ FOI DERROTADO</h1>
-
-                <p>
-                    A memória permanece.
-                    A jornada continua.
-                </p>
-
-                <button id="respawnBtn" class="main-button">
-                    RETORNAR AO CHECKPOINT
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <!-- =================================================
-             TRANSIÇÃO
-        ================================================== -->
-
-        <div id="transitionOverlay" class="transition-overlay"></div>
 
     </section>
 
 
     <script src="script.js"></script>
+
 </body>
 </html>

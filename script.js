@@ -1,44 +1,31 @@
 (() => {
     "use strict";
 
-    /*
-     * VEYRA — A QUIETUDE
-     * VERSÃO 12.0
-     *
-     * Estrutura:
-     * 1. Dados
-     * 2. Estado
-     * 3. Utilidades
-     * 4. Personagem
-     * 5. Mundo
-     * 6. Colisão
-     * 7. Movimento
-     * 8. IA
-     * 9. Combate
-     * 10. Coleta
-     * 11. NPCs / quests
-     * 12. Inventário / equipamentos
-     * 13. Loja
-     * 14. Mapa / Livro
-     * 15. Casas
-     * 16. Progressão / áreas
-     * 17. Salvamento
-     * 18. Render
-     * 19. Eventos
-     */
 
-    const SAVE_KEY = "veyra_save_v12";
+    /* =====================================================
+       CONFIGURAÇÃO
+    ====================================================== */
+
+    const SAVE_KEY = "veyra_save_stable_v13";
 
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    const miniCanvas = document.getElementById("miniCanvas");
-    const miniCtx = miniCanvas.getContext("2d");
+    const miniCanvas =
+        document.getElementById("miniCanvas");
 
-    const mapCanvas = document.getElementById("worldMapCanvas");
-    const mapCtx = mapCanvas.getContext("2d");
+    const miniCtx =
+        miniCanvas.getContext("2d");
 
-    const $ = (id) => document.getElementById(id);
+    const mapCanvas =
+        document.getElementById("worldMapCanvas");
+
+    const mapCtx =
+        mapCanvas.getContext("2d");
+
+
+    const $ = id =>
+        document.getElementById(id);
 
 
     /* =====================================================
@@ -46,6 +33,7 @@
     ====================================================== */
 
     const CHARACTERS = [
+
         {
             id: "kaelion",
             name: "KAELION",
@@ -53,18 +41,16 @@
             icon: "🧙",
             role: "Magia • Longo alcance",
             description:
-                "Grande poder mágico, menor resistência física.",
-            color: "#e49345",
-            bg: "rgba(228,147,69,.16)",
-            glow: "rgba(228,147,69,.25)",
+                "Grande poder mágico, mas menor resistência física.",
             hp: 85,
             magic: 140,
-            energy: 110,
-            speed: 180,
+            energy: 120,
+            speed: 175,
             damage: 24,
             defense: 5,
-            skill: "Raio de Memória",
-            skillCost: 18
+            color: "#e49345",
+            bg: "rgba(228,147,69,.16)",
+            glow: "rgba(228,147,69,.28)"
         },
 
         {
@@ -74,18 +60,16 @@
             icon: "🛡️",
             role: "Espada • Defesa",
             description:
-                "Resistente, forte e preparado para o combate corpo a corpo.",
-            color: "#b8bec8",
-            bg: "rgba(184,190,200,.13)",
-            glow: "rgba(184,190,200,.2)",
-            hp: 145,
-            magic: 70,
-            energy: 120,
+                "Resistente e preparado para o combate corpo a corpo.",
+            hp: 140,
+            magic: 75,
+            energy: 105,
             speed: 145,
             damage: 30,
             defense: 20,
-            skill: "Golpe do Guardião",
-            skillCost: 12
+            color: "#bfc5ce",
+            bg: "rgba(191,197,206,.14)",
+            glow: "rgba(191,197,206,.23)"
         },
 
         {
@@ -95,18 +79,16 @@
             icon: "👹",
             role: "Força • Vida",
             description:
-                "Muita vida e dano físico, porém com baixa velocidade.",
-            color: "#718f51",
-            bg: "rgba(113,143,81,.15)",
-            glow: "rgba(113,143,81,.22)",
-            hp: 180,
+                "Muita vida e dano físico, mas baixa velocidade.",
+            hp: 175,
             magic: 55,
-            energy: 90,
+            energy: 85,
             speed: 110,
             damage: 38,
             defense: 18,
-            skill: "Esmagamento",
-            skillCost: 10
+            color: "#718f51",
+            bg: "rgba(113,143,81,.16)",
+            glow: "rgba(113,143,81,.24)"
         },
 
         {
@@ -116,18 +98,16 @@
             icon: "🧚",
             role: "Velocidade • Cura",
             description:
-                "Rápida, mágica e capaz de restaurar a própria vida.",
-            color: "#dd8bcf",
-            bg: "rgba(221,139,207,.15)",
-            glow: "rgba(221,139,207,.22)",
+                "Rápida, mágica e capaz de usar poderes de suporte.",
             hp: 95,
             magic: 130,
-            energy: 130,
+            energy: 135,
             speed: 210,
             damage: 19,
             defense: 7,
-            skill: "Luz Vital",
-            skillCost: 20
+            color: "#dd8bd0",
+            bg: "rgba(221,139,208,.16)",
+            glow: "rgba(221,139,208,.25)"
         },
 
         {
@@ -137,19 +117,18 @@
             icon: "🦊",
             role: "Adaptação • Equilíbrio",
             description:
-                "Equilibrado e capaz de adaptar o próprio estilo.",
-            color: "#cb9058",
-            bg: "rgba(203,144,88,.15)",
-            glow: "rgba(203,144,88,.22)",
+                "Características equilibradas e grande capacidade de adaptação.",
             hp: 115,
             magic: 105,
             energy: 110,
             speed: 170,
             damage: 25,
             defense: 13,
-            skill: "Forma Adaptativa",
-            skillCost: 16
+            color: "#cb9058",
+            bg: "rgba(203,144,88,.15)",
+            glow: "rgba(203,144,88,.23)"
         }
+
     ];
 
 
@@ -158,6 +137,7 @@
     ====================================================== */
 
     const ITEMS = {
+
         madeira: {
             name: "Madeira",
             icon: "🪵",
@@ -187,7 +167,7 @@
             icon: "🪙",
             category: "materials",
             weight: 2,
-            value: 32
+            value: 30
         },
 
         rubi: {
@@ -201,13 +181,13 @@
         cristal: {
             name: "Cristal",
             icon: "💎",
-            category: "materials",
+            category: "special",
             weight: 2,
             value: 45
         },
 
         essencia: {
-            name: "Essência da Quietude",
+            name: "Essência",
             icon: "✦",
             category: "special",
             weight: 1,
@@ -229,7 +209,7 @@
             category: "potions",
             weight: 1,
             value: 35,
-            mana: 50
+            energy: 50
         },
 
         espadaFerro: {
@@ -241,15 +221,6 @@
             damage: 12
         },
 
-        espadaRuina: {
-            name: "Espada da Ruína",
-            icon: "🗡️",
-            category: "weapons",
-            weight: 5,
-            value: 300,
-            damage: 25
-        },
-
         armaduraCouro: {
             name: "Armadura de Couro",
             icon: "🥋",
@@ -259,30 +230,14 @@
             defense: 8
         },
 
-        armaduraCeu: {
-            name: "Armadura Celestial",
-            icon: "🪽",
-            category: "armor",
-            weight: 6,
-            value: 400,
-            defense: 20
-        },
-
         machado: {
-            name: "Machado de Coleta",
+            name: "Machado",
             icon: "🪓",
             category: "tools",
             weight: 3,
             value: 50
-        },
-
-        mapa: {
-            name: "Mapa de Veyra",
-            icon: "🗺️",
-            category: "map",
-            weight: 1,
-            value: 350
         }
+
     };
 
 
@@ -291,104 +246,90 @@
     ====================================================== */
 
     const REGIONS = {
+
         village: {
             name: "VILA DO CREPÚSCULO",
             width: 3200,
             height: 2200,
-            visual: "village",
-            next: "forest"
+            visual: "village"
         },
 
         forest: {
             name: "FLORESTA",
             width: 3400,
             height: 2400,
-            visual: "forest",
-            next: "grove"
+            visual: "forest"
         },
 
         grove: {
             name: "BOSQUE",
             width: 3200,
             height: 2300,
-            visual: "forest",
-            next: "mountains"
+            visual: "forest"
         },
 
         mountains: {
             name: "MONTANHAS",
             width: 3500,
             height: 2300,
-            visual: "mountains",
-            next: "ironCave"
+            visual: "mountains"
         },
 
-        ironCave: {
+        iron: {
             name: "CAVERNA DE FERRO",
             width: 2900,
             height: 1900,
-            visual: "cave",
-            next: "rubyCave"
+            visual: "cave"
         },
 
-        rubyCave: {
+        ruby: {
             name: "CAVERNA DE RUBI",
             width: 3100,
             height: 2100,
-            visual: "ruby",
-            next: "shadowCave"
+            visual: "ruby"
         },
 
-        shadowCave: {
+        shadow: {
             name: "CAVERNA SOMBRIA",
             width: 3000,
             height: 2000,
-            visual: "shadow",
-            next: "fairy"
+            visual: "shadow"
         },
 
         fairy: {
             name: "REINO DAS FADAS",
             width: 3200,
             height: 2200,
-            visual: "fairy",
-            next: "sky"
+            visual: "fairy"
         },
 
         sky: {
             name: "CÉU",
             width: 3400,
             height: 2200,
-            visual: "sky",
-            next: "hell"
+            visual: "sky"
         },
 
         hell: {
             name: "INFERNO",
             width: 3600,
             height: 2400,
-            visual: "hell",
-            next: "final"
-        },
-
-        final: {
-            name: "CÂMARA FINAL",
-            width: 2200,
-            height: 1500,
-            visual: "final",
-            next: null
+            visual: "hell"
         }
+
     };
 
 
     /* =====================================================
-       ESTADO CENTRAL
+       ESTADO
     ====================================================== */
 
     const state = {
-        player: null,
 
-        area: "village",
+        selectedCharacter:
+            CHARACTERS[0],
+
+        player: null,
 
         running: false,
 
@@ -399,6 +340,8 @@
         lastTime: 0,
 
         keys: new Set(),
+
+        area: "village",
 
         camera: {
             x: 0,
@@ -417,8 +360,7 @@
             enemies: [],
             drops: [],
             portals: [],
-            particles: [],
-            effects: []
+            particles: []
         },
 
         houseMode: false,
@@ -431,7 +373,7 @@
 
         battle: null,
 
-        currentQuestNPC: null,
+        questNPC: null,
 
         shopNPC: null,
 
@@ -439,11 +381,10 @@
 
         inventoryCategory: "all",
 
-        portalCooldown: 0,
-
         toastTimer: null,
 
-        audio: null
+        portalCooldown: 0
+
     };
 
 
@@ -451,25 +392,36 @@
        UTILIDADES
     ====================================================== */
 
-    function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
+    function clamp(
+        value,
+        min,
+        max
+    ) {
+        return Math.max(
+            min,
+            Math.min(max, value)
+        );
+    }
+
+
+    function distance(a, b) {
+        return Math.hypot(
+            a.x - b.x,
+            a.y - b.y
+        );
     }
 
 
     function random(min, max) {
-        return min + Math.random() * (max - min);
+        return Math.random() *
+            (max - min) +
+            min;
     }
 
 
     function randomInt(min, max) {
-        return Math.floor(random(min, max + 1));
-    }
-
-
-    function dist(a, b) {
-        return Math.hypot(
-            a.x - b.x,
-            a.y - b.y
+        return Math.floor(
+            random(min, max + 1)
         );
     }
 
@@ -480,10 +432,7 @@
             "_" +
             Math.random()
                 .toString(36)
-                .slice(2, 8) +
-            Date.now()
-                .toString(36)
-                .slice(-5)
+                .slice(2, 8)
         );
     }
 
@@ -491,8 +440,8 @@
     function currentCharacter() {
         return (
             CHARACTERS.find(
-                character =>
-                    character.id ===
+                c =>
+                    c.id ===
                     state.player?.characterId
             ) ||
             CHARACTERS[0]
@@ -501,133 +450,106 @@
 
 
     function showScreen(name) {
-        Object.values(
-            {
-                menu: $("menuScreen"),
-                how: $("howScreen"),
-                credits: $("creditsScreen"),
-                character: $("characterScreen"),
-                game: $("gameScreen")
-            }
-        ).forEach(screen => {
-            screen.classList.remove("active");
-        });
 
-        const target = {
-            menu: $("menuScreen"),
-            how: $("howScreen"),
-            credits: $("creditsScreen"),
-            character: $("characterScreen"),
-            game: $("gameScreen")
-        }[name];
+        const screens = {
 
-        if (target) {
-            target.classList.add("active");
-        }
+            menu:
+                $("menuScreen"),
+
+            how:
+                $("howScreen"),
+
+            credits:
+                $("creditsScreen"),
+
+            character:
+                $("characterScreen"),
+
+            game:
+                $("gameScreen")
+
+        };
+
+
+        Object.values(screens)
+            .forEach(
+                screen =>
+                    screen.classList
+                        .remove("active")
+            );
+
+
+        screens[name]
+            .classList
+            .add("active");
     }
 
 
     function showToast(message) {
-        const toast = $("saveMessage");
 
-        toast.textContent = message;
-
-        toast.classList.add("show");
-
-        clearTimeout(state.toastTimer);
-
-        state.toastTimer = setTimeout(() => {
-            toast.classList.remove("show");
-        }, 2200);
-    }
+        const toast =
+            $("saveMessage");
 
 
-    function beep(type = "click") {
-        try {
-            if (!state.audio) {
-                state.audio =
-                    new (
-                        window.AudioContext ||
-                        window.webkitAudioContext
-                    )();
-            }
+        toast.textContent =
+            message;
 
-            const osc =
-                state.audio.createOscillator();
 
-            const gain =
-                state.audio.createGain();
+        toast.classList.add(
+            "show"
+        );
 
-            const sounds = {
-                click: [420, 0.05],
-                hit: [130, 0.08],
-                magic: [620, 0.12],
-                collect: [760, 0.07],
-                level: [920, 0.16]
-            };
 
-            const [frequency, duration] =
-                sounds[type] || sounds.click;
+        clearTimeout(
+            state.toastTimer
+        );
 
-            osc.frequency.value =
-                frequency;
 
-            osc.type =
-                type === "hit"
-                    ? "sawtooth"
-                    : "sine";
-
-            gain.gain.setValueAtTime(
-                0.035,
-                state.audio.currentTime
+        state.toastTimer =
+            setTimeout(
+                () => {
+                    toast.classList
+                        .remove("show");
+                },
+                2200
             );
-
-            gain.gain.exponentialRampToValueAtTime(
-                0.001,
-                state.audio.currentTime +
-                    duration
-            );
-
-            osc.connect(gain);
-            gain.connect(state.audio.destination);
-
-            osc.start();
-            osc.stop(
-                state.audio.currentTime +
-                    duration
-            );
-        } catch (_) {
-            /* Áudio é opcional. */
-        }
     }
 
 
     /* =====================================================
-       CANVAS
+       RESIZE
     ====================================================== */
 
     function resizeCanvas() {
+
         const dpr =
             window.devicePixelRatio ||
             1;
 
+
         canvas.width =
             Math.floor(
                 window.innerWidth *
-                    dpr
+                dpr
             );
+
 
         canvas.height =
             Math.floor(
                 window.innerHeight *
-                    dpr
+                dpr
             );
 
+
         canvas.style.width =
-            window.innerWidth + "px";
+            window.innerWidth +
+            "px";
+
 
         canvas.style.height =
-            window.innerHeight + "px";
+            window.innerHeight +
+            "px";
+
 
         ctx.setTransform(
             dpr,
@@ -641,14 +563,18 @@
 
 
     /* =====================================================
-       CARTÕES DE PERSONAGEM
+       PERSONAGEM
     ====================================================== */
 
     function createCharacterCards() {
+
         const container =
             $("characterCards");
 
-        container.innerHTML = "";
+
+        container.innerHTML =
+            "";
+
 
         CHARACTERS.forEach(
             (character, index) => {
@@ -658,30 +584,38 @@
                         "button"
                     );
 
+
                 card.type = "button";
 
                 card.className =
                     "character-card" +
-                    (index === 0
-                        ? " selected"
-                        : "");
+                    (
+                        index === 0
+                            ? " selected"
+                            : ""
+                    );
+
 
                 card.style.setProperty(
                     "--char-color",
                     character.color
                 );
 
+
                 card.style.setProperty(
                     "--char-bg",
                     character.bg
                 );
+
 
                 card.style.setProperty(
                     "--char-glow",
                     character.glow
                 );
 
+
                 card.innerHTML = `
+
                     <div class="char-art">
                         ${character.icon}
                     </div>
@@ -692,7 +626,7 @@
 
                     <p class="role">
                         ${character.className}
-                        •
+                        —
                         ${character.role}
                     </p>
 
@@ -715,13 +649,8 @@
                         •
                         🏃 ${character.speed}
                     </p>
-
-                    <p>
-                        <b>
-                            ${character.skill}
-                        </b>
-                    </p>
                 `;
+
 
                 card.addEventListener(
                     "click",
@@ -730,39 +659,79 @@
                         state.selectedCharacter =
                             character;
 
+
                         document
                             .querySelectorAll(
                                 ".character-card"
                             )
                             .forEach(
                                 other =>
-                                    other.classList.remove(
-                                        "selected"
-                                    )
+                                    other.classList
+                                        .remove(
+                                            "selected"
+                                        )
                             );
+
 
                         card.classList.add(
                             "selected"
                         );
-
-                        beep();
                     }
                 );
 
-                container.appendChild(card);
+
+                container.appendChild(
+                    card
+                );
             }
         );
     }
 
 
-    /* =====================================================
-       NOVO PLAYER
-    ====================================================== */
+    function startNewGame() {
+
+        $("playerName").value =
+            "";
+
+        $("nameError").textContent =
+            "";
+
+
+        state.selectedCharacter =
+            CHARACTERS[0];
+
+
+        document
+            .querySelectorAll(
+                ".character-card"
+            )
+            .forEach(
+                (card, index) =>
+                    card.classList.toggle(
+                        "selected",
+                        index === 0
+                    )
+            );
+
+
+        showScreen(
+            "character"
+        );
+
+
+        setTimeout(
+            () =>
+                $("playerName").focus(),
+            100
+        );
+    }
+
 
     function createPlayer(
         name,
         character
     ) {
+
         state.player = {
 
             name,
@@ -822,15 +791,9 @@
 
             hunger: 100,
 
-            maxHunger: 100,
-
             fatigue: 100,
 
-            maxFatigue: 100,
-
             memory: 0,
-
-            memoryMax: 100,
 
             inventory: {
 
@@ -854,15 +817,10 @@
 
                 espadaFerro: 0,
 
-                espadaRuina: 0,
-
                 armaduraCouro: 0,
 
-                armaduraCeu: 0,
+                machado: 1
 
-                machado: 1,
-
-                mapa: 0
             },
 
             equipment: {
@@ -872,22 +830,12 @@
                 armor: null,
 
                 tool: "machado"
+
             },
 
-            quest: {
+            treesCut: 0,
 
-                wood: {
-                    state: "none",
-                    need: 10,
-                    reward: 100
-                },
-
-                coal: {
-                    state: "none",
-                    need: 8,
-                    reward: 140
-                }
-            },
+            enemiesDefeated: 0,
 
             discoveredBosses: [],
 
@@ -897,42 +845,216 @@
                 "village"
             ],
 
-            collected: {},
+            checkpoints: {
 
-            treesCut: 0,
+                village: {
+                    x: 480,
+                    y: 610
+                },
 
-            enemiesDefeated: 0,
+                forest: {
+                    x: 150,
+                    y: 1100
+                },
 
-            hellTypesDefeated: {},
+                grove: {
+                    x: 150,
+                    y: 1100
+                },
 
-            checkpoint: {
-                area: "village",
-                x: 480,
-                y: 610
+                mountains: {
+                    x: 150,
+                    y: 1100
+                },
+
+                iron: {
+                    x: 150,
+                    y: 950
+                },
+
+                ruby: {
+                    x: 150,
+                    y: 1050
+                },
+
+                shadow: {
+                    x: 150,
+                    y: 1000
+                },
+
+                fairy: {
+                    x: 150,
+                    y: 1100
+                },
+
+                sky: {
+                    x: 150,
+                    y: 1100
+                },
+
+                hell: {
+                    x: 150,
+                    y: 1200
+                }
+
             },
 
-            flags: {},
+            quest: {
+                wood: {
+                    state: "none",
+                    need: 10,
+                    rewardXP: 100,
+                    rewardMoney: 80
+                },
+
+                coal: {
+                    state: "none",
+                    need: 8,
+                    rewardXP: 130,
+                    rewardMoney: 110
+                }
+            },
+
+            collected: {},
 
             mapOwned: false,
 
-            finalChoice: null,
+            dead: false,
 
-            finalDefeated: false,
+            invincible: 0,
 
-            effects: [],
+            attackCooldown: 0
 
-            dead: false
         };
     }
 
 
+    function startGame() {
+
+        const name =
+            $("playerName")
+                .value
+                .trim();
+
+
+        if (
+            name.length <
+            2
+        ) {
+
+            $("nameError")
+                .textContent =
+                "Digite pelo menos 2 caracteres.";
+
+            return;
+        }
+
+
+        createPlayer(
+            name,
+            state.selectedCharacter
+        );
+
+
+        state.area =
+            "village";
+
+
+        state.houseMode =
+            false;
+
+
+        state.currentHouse =
+            null;
+
+
+        buildWorld();
+
+
+        state.player.x =
+            480;
+
+
+        state.player.y =
+            610;
+
+
+        updateHUD();
+
+
+        showScreen(
+            "game"
+        );
+
+
+        state.running =
+            true;
+
+
+        state.paused =
+            false;
+
+
+        state.time =
+            0;
+
+
+        state.lastTime =
+            performance.now();
+
+
+        $("transitionScreen")
+            .classList
+            .remove(
+                "hidden"
+            );
+
+
+        $("transitionMessage")
+            .textContent =
+            "VEYRA";
+
+
+        state.paused =
+            true;
+
+
+        setTimeout(
+            () => {
+
+                $("transitionScreen")
+                    .classList
+                    .add(
+                        "hidden"
+                    );
+
+                state.paused =
+                    false;
+
+                showToast(
+                    "Você despertou na Vila do Crepúsculo."
+                );
+
+            },
+            700
+        );
+
+
+        requestAnimationFrame(
+            gameLoop
+        );
+    }
+
+
     /* =====================================================
-       RESETAR MUNDO
+       MUNDO
     ====================================================== */
 
     function resetWorld() {
+
         const region =
             REGIONS[state.area];
+
 
         state.world = {
 
@@ -958,22 +1080,17 @@
 
             portals: [],
 
-            particles: [],
+            particles: []
 
-            effects: []
         };
     }
 
 
-    /* =====================================================
-       HELPERS DO MUNDO
-    ====================================================== */
-
     function addObstacle(
         x,
         y,
-        width,
-        height,
+        w,
+        h,
         type,
         extra = {}
     ) {
@@ -981,86 +1098,56 @@
         state.world.obstacles.push({
 
             x,
-
             y,
-
-            w: width,
-
-            h: height,
-
+            w,
+            h,
             type,
-
             ...extra
+
         });
     }
 
 
     function addBuilding(
+        id,
         x,
         y,
-        width,
-        height,
+        w,
+        h,
         name,
         roof,
-        color,
-        id
+        color
     ) {
 
         const building = {
 
-            id:
-                id ||
-                uid("building"),
-
+            id,
             x,
-
             y,
-
-            w:
-                width,
-
-            h:
-                height,
-
+            w,
+            h,
             name,
-
             roof,
+            color
 
-            color,
-
-            interior: {
-
-                x: 220,
-
-                y: 180,
-
-                w:
-                    Math.max(
-                        240,
-                        width - 80
-                    ),
-
-                h:
-                    Math.max(
-                        150,
-                        height - 100
-                    )
-            }
         };
 
-        state.world.buildings.push(
-            building
-        );
+
+        state.world.buildings
+            .push(
+                building
+            );
+
 
         addObstacle(
             x,
             y,
-            width,
-            height,
+            w,
+            h,
             "building",
             {
                 buildingId:
-                    building.id
+                    id
             }
         );
     }
@@ -1074,25 +1161,29 @@
 
         const tree = {
 
-            id:
-                id ||
-                uid("tree"),
+            id,
 
             x,
 
             y,
 
-            alive: true,
-
-            respawn: 0,
+            alive:
+                true,
 
             amount:
-                randomInt(2, 5)
+                randomInt(2, 5),
+
+            respawn:
+                0
+
         };
 
-        state.world.trees.push(
-            tree
-        );
+
+        state.world.trees
+            .push(
+                tree
+            );
+
 
         addObstacle(
             x - 30,
@@ -1102,7 +1193,7 @@
             "tree",
             {
                 treeId:
-                    tree.id
+                    id
             }
         );
     }
@@ -1111,29 +1202,28 @@
     function addResource(
         x,
         y,
-        type,
-        id
+        type
     ) {
 
         state.world.resources.push({
 
             id:
-                id ||
-                uid(type),
+                uid("resource"),
 
             x,
 
             y,
 
-            resource:
-                type,
+            type,
 
-            alive: true,
-
-            respawn: 0,
+            alive:
+                true,
 
             amount:
-                randomInt(1, 3)
+                randomInt(1, 3),
+
+            respawn:
+                0
         });
     }
 
@@ -1157,7 +1247,8 @@
 
             y,
 
-            radius: 17,
+            radius:
+                17,
 
             name,
 
@@ -1168,29 +1259,43 @@
             lines,
 
             ...extra
+
         });
     }
 
 
-    function addEnemy(data) {
+    function addEnemy(
+        enemy
+    ) {
 
         state.world.enemies.push({
 
-            ...data,
+            state:
+                "idle",
 
-            state: "idle",
+            aggressive:
+                false,
 
-            aggressive: false,
+            accepted:
+                false,
 
-            accepted: false,
+            attackTimer:
+                0,
 
-            attackTimer: 0,
+            hitFlash:
+                0,
 
-            hitFlash: 0,
+            dead:
+                false,
 
-            dead: false,
+            respawnTimer:
+                0,
 
-            phase: 1
+            phase:
+                1,
+
+            ...enemy
+
         });
     }
 
@@ -1207,9 +1312,6 @@
 
         state.world.portals.push({
 
-            id:
-                uid("portal"),
-
             x,
 
             y,
@@ -1223,19 +1325,22 @@
             requirement,
 
             title
+
         });
     }
 
 
-    /* =====================================================
-       CONSTRUIR REGIÃO
-    ====================================================== */
-
-    function buildArea() {
+    function buildWorld() {
 
         resetWorld();
 
-        switch (state.area) {
+
+        addWorldBounds();
+
+
+        switch (
+            state.area
+        ) {
 
             case "village":
                 buildVillage();
@@ -1253,16 +1358,16 @@
                 buildMountains();
                 break;
 
-            case "ironCave":
-                buildIronCave();
+            case "iron":
+                buildIron();
                 break;
 
-            case "rubyCave":
-                buildRubyCave();
+            case "ruby":
+                buildRuby();
                 break;
 
-            case "shadowCave":
-                buildShadowCave();
+            case "shadow":
+                buildShadow();
                 break;
 
             case "fairy":
@@ -1276,15 +1381,54 @@
             case "hell":
                 buildHell();
                 break;
-
-            case "final":
-                buildFinal();
-                break;
         }
 
-        updateLocationUI();
 
-        ensureCheckpoint();
+        updateLocation();
+    }
+
+
+    function addWorldBounds() {
+
+        const gap = 70;
+
+
+        addObstacle(
+            0,
+            0,
+            state.world.width,
+            gap,
+            "wall"
+        );
+
+
+        addObstacle(
+            0,
+            state.world.height -
+                gap,
+            state.world.width,
+            gap,
+            "wall"
+        );
+
+
+        addObstacle(
+            0,
+            0,
+            gap,
+            state.world.height,
+            "wall"
+        );
+
+
+        addObstacle(
+            state.world.width -
+                gap,
+            0,
+            gap,
+            state.world.height,
+            "wall"
+        );
     }
 
 
@@ -1295,58 +1439,62 @@
     function buildVillage() {
 
         addBuilding(
+            "home",
             270,
             280,
             430,
             270,
             "CASA DO AVENTUREIRO",
-            "#71483a",
-            "#ad825d",
-            "home"
+            "#70483a",
+            "#ae835e"
         );
 
+
         addBuilding(
+            "elian",
             830,
             260,
             350,
             260,
             "CASA DE ELIAN",
-            "#654b3b",
-            "#b38a61",
-            "elianHome"
+            "#604a3d",
+            "#b48961"
         );
 
+
         addBuilding(
+            "forge",
             2070,
             300,
             500,
             300,
             "FORJA DO FERREIRO",
-            "#464441",
-            "#8a7e70",
-            "forge"
+            "#484744",
+            "#8f8172"
         );
 
+
         addBuilding(
+            "shop",
             2500,
             1260,
             430,
             300,
             "LOJA DE DORAN",
-            "#704735",
-            "#b2845a",
-            "shop"
+            "#684638",
+            "#b4865b"
         );
 
+
         addBuilding(
+            "woodshop",
             400,
             1560,
             450,
             300,
             "CARPINTARIA",
-            "#735537",
-            "#a57b4e",
-            "woodshop"
+            "#735638",
+            "#a77c4f"
         );
 
 
@@ -1369,6 +1517,7 @@
             [650, 1160],
             [2370, 1830]
         ];
+
 
         rocks.forEach(
             ([x, y]) =>
@@ -1410,12 +1559,14 @@
             [1150,1000]
         ];
 
+
         trees.forEach(
             ([x, y], index) =>
                 addTree(
                     x,
                     y,
-                    `village_tree_${index}`
+                    "village_tree_" +
+                    index
                 )
         );
 
@@ -1427,13 +1578,14 @@
             "Morador",
             "#d4b27c",
             [
-                "A Quietude está chegando mais perto. Ontem ouvi o sino da praça tocar sozinho.",
-                "Dizem que o primeiro esquecimento acontece com pequenas coisas: um nome, uma música, um caminho.",
-                "Se você for até a floresta, não confie no silêncio. Às vezes o silêncio está ouvindo você.",
-                "Há um Guardião perto da estrada leste. Ele parece estar esperando alguém."
+                "A Quietude parece estar chegando mais perto.",
+                "Algumas pessoas já começaram a esquecer pequenas coisas.",
+                "Quando uma vila perde suas histórias, ela começa a desaparecer.",
+                "Há caminhos fora da vila que talvez escondam respostas."
             ],
             {
-                questId: "wood"
+                questId:
+                    "wood"
             }
         );
 
@@ -1445,10 +1597,10 @@
             "Historiadora",
             "#b98bc4",
             [
-                "Meu avô escreveu que a Quietude veio de um lugar onde o céu perdeu a cor.",
-                "Alguns lugares não foram destruídos. Eles apenas deixaram de ser lembrados pelas pessoas.",
-                "Eu sonhei com uma Caverna de Rubi. Cada cristal guardava uma memória diferente.",
-                "Existe uma história sobre alguém que venceu a Quietude e acabou se tornando parte dela."
+                "O silêncio de hoje não é o mesmo silêncio de ontem.",
+                "A Quietude não destrói tudo de uma vez.",
+                "Algumas histórias foram apagadas antes mesmo de serem contadas.",
+                "Tenho a sensação de que alguém está procurando nossas memórias."
             ]
         );
 
@@ -1460,13 +1612,14 @@
             "Comerciante",
             "#c58a54",
             [
-                "Compro madeira, carvão, ferro, ouro e rubi. Materiais raros valem muito mais.",
-                "Uma boa espada custa dinheiro. Uma boa armadura custa ainda mais.",
-                "Tenho mapas de regiões que nem todo mundo consegue alcançar.",
-                "Se for enfrentar bosses, volte aqui antes. Equipamento ruim transforma aventura em funeral."
+                "Material raro sempre encontra comprador.",
+                "Uma boa aventura começa com bons preparativos.",
+                "Se encontrar algo valioso, passe na loja.",
+                "Não confie em uma estrada só porque ela parece tranquila."
             ],
             {
-                merchant: true
+                merchant:
+                    true
             }
         );
 
@@ -1478,13 +1631,14 @@
             "Carpinteiro",
             "#8d7053",
             [
-                "Corte árvores, mas deixe a floresta se recuperar. Madeira é vida para esta vila.",
-                "Algumas árvores mudaram depois que a Quietude chegou. Elas voltam a nascer longe do lugar onde caíram.",
-                "Meu pai dizia que a madeira certa pode guardar uma memória por décadas.",
-                "Preciso de dez madeiras para reforçar as casas do sul. Se trouxer, eu lhe recompenso."
+                "Madeira ainda é uma das coisas mais importantes da vila.",
+                "Cuidado ao cortar árvores tocadas pela Quietude.",
+                "Algumas árvores parecem voltar a nascer longe do lugar onde caíram.",
+                "Se puder me ajudar com madeira, eu posso recompensá-lo."
             ],
             {
-                questId: "wood"
+                questId:
+                    "wood"
             }
         );
 
@@ -1496,97 +1650,153 @@
             "Ferreiro",
             "#8e8d89",
             [
-                "Ferro é o começo. Depois vêm as ligas raras.",
-                "Já ouvi falar de uma espada feita com metal encontrado no Inferno.",
-                "Uma arma melhor pode ser a diferença entre fugir e sobreviver.",
-                "Traga minério. Eu faço o resto."
+                "Ferro é o começo de todo bom equipamento.",
+                "Armas melhores aumentam suas chances de sobreviver.",
+                "Não desperdice materiais raros.",
+                "Se precisar de ajuda com equipamento, procure Doran ou volte aqui."
             ],
             {
-                forge: true,
-                questId: "coal"
+                forge:
+                    true
             }
         );
 
 
         addEnemy({
-            id: "forest_guardian",
-            x: 2860,
-            y: 1080,
-            name: "GUARDIÃO DA ESTRADA",
-            icon: "👺",
-            type: "progression",
-            hp: 280,
-            maxHp: 280,
-            damage: 20,
-            speed: 58,
-            vision: 280,
-            attackRange: 75,
-            radius: 28,
-            color: "#914f45",
-            drop: "cristal",
-            dropAmount: 2,
-            gateTarget: "forest"
+            id:
+                "forest_guardian",
+
+            name:
+                "GUARDIÃO DA ESTRADA",
+
+            icon:
+                "👺",
+
+            type:
+                "progression",
+
+            hp:
+                280,
+
+            maxHp:
+                280,
+
+            damage:
+                20,
+
+            speed:
+                55,
+
+            vision:
+                270,
+
+            attackRange:
+                72,
+
+            radius:
+                29,
+
+            color:
+                "#945149",
+
+            drop:
+                "cristal",
+
+            dropAmount:
+                2,
+
+            unlock:
+                "forest"
         });
 
 
         addEnemy({
-            id: "village_resource_boss",
-            x: 2350,
-            y: 1720,
-            name: "CERVO ANCESTRAL",
-            icon: "🦌",
-            type: "resourceBoss",
-            hp: 500,
-            maxHp: 500,
-            damage: 18,
-            speed: 65,
-            vision: 260,
-            attackRange: 70,
-            radius: 30,
-            color: "#798a61",
-            drop: "ouro",
-            dropAmount: 2,
-            respawnTime: 60
+            id:
+                "wolf_village",
+
+            name:
+                "LOBO ESQUECIDO",
+
+            icon:
+                "🐺",
+
+            type:
+                "normal",
+
+            hp:
+                80,
+
+            maxHp:
+                80,
+
+            damage:
+                12,
+
+            speed:
+                90,
+
+            vision:
+                250,
+
+            attackRange:
+                65,
+
+            radius:
+                21,
+
+            color:
+                "#686d78",
+
+            drop:
+                "carvao",
+
+            dropAmount:
+                1
         });
 
 
         addEnemy({
-            id: "slime_village",
-            x: 1250,
-            y: 700,
-            name: "LIMO DA QUIETUDE",
-            icon: "🟢",
-            type: "normal",
-            hp: 55,
-            maxHp: 55,
-            damage: 8,
-            speed: 55,
-            vision: 210,
-            attackRange: 55,
-            radius: 18,
-            color: "#5f8d5e",
-            drop: "erva",
-            dropAmount: 1
-        });
+            id:
+                "slime_village",
 
+            name:
+                "LIMO DA QUIETUDE",
 
-        addEnemy({
-            id: "wolf_village",
-            x: 2200,
-            y: 1450,
-            name: "LOBO ESQUECIDO",
-            icon: "🐺",
-            type: "normal",
-            hp: 80,
-            maxHp: 80,
-            damage: 12,
-            speed: 90,
-            vision: 280,
-            attackRange: 65,
-            radius: 21,
-            color: "#5d626d",
-            drop: "carvao",
-            dropAmount: 1
+            icon:
+                "🟢",
+
+            type:
+                "normal",
+
+            hp:
+                55,
+
+            maxHp:
+                55,
+
+            damage:
+                8,
+
+            speed:
+                55,
+
+            vision:
+                190,
+
+            attackRange:
+                55,
+
+            radius:
+                18,
+
+            color:
+                "#6c9862",
+
+            drop:
+                "erva",
+
+            dropAmount:
+                1
         });
 
 
@@ -1596,18 +1806,13 @@
             70,
             220,
             "forest",
-            "guardianForest",
+            () =>
+                state.player
+                    .defeatedBosses
+                    .includes(
+                        "forest_guardian"
+                    ),
             "FLORESTA"
-        );
-
-        addPortal(
-            1510,
-            2060,
-            180,
-            70,
-            "cave",
-            "questWood",
-            "CAVERNA"
         );
     }
 
@@ -1620,13 +1825,19 @@
 
         for (
             let i = 0;
-            i < 45;
+            i < 35;
             i++
         ) {
 
             addTree(
-                randomInt(130, 3250),
-                randomInt(140, 2250),
+                randomInt(
+                    140,
+                    3200
+                ),
+                randomInt(
+                    140,
+                    2250
+                ),
                 `forest_tree_${i}`
             );
         }
@@ -1634,81 +1845,119 @@
 
         for (
             let i = 0;
-            i < 10;
+            i < 8;
             i++
         ) {
 
             addEnemy({
-                id: `forest_wolf_${i}`,
-                x: randomInt(300, 3100),
-                y: randomInt(250, 2100),
-                name: "LOBO FLORESTAL",
-                icon: "🐺",
-                type: "normal",
-                hp: 95,
-                maxHp: 95,
-                damage: 14,
-                speed: 105,
-                vision: 260,
-                attackRange: 60,
-                radius: 22,
-                color: "#666a74",
+
+                id:
+                    `forest_wolf_${i}`,
+
+                name:
+                    "LOBO FLORESTAL",
+
+                icon:
+                    "🐺",
+
+                type:
+                    "normal",
+
+                hp:
+                    100,
+
+                maxHp:
+                    100,
+
+                damage:
+                    15,
+
+                speed:
+                    100,
+
+                vision:
+                    260,
+
+                attackRange:
+                    65,
+
+                radius:
+                    22,
+
+                color:
+                    "#68707b",
+
                 drop:
                     i % 2
-                        ? "carvao"
-                        : "erva",
-                dropAmount: 1
+                        ? "erva"
+                        : "carvao",
+
+                dropAmount:
+                    1
             });
         }
 
 
         addEnemy({
-            id: "forest_resource_boss",
-            x: 2550,
-            y: 1700,
-            name: "ALCE ANCIÃO",
-            icon: "🦌",
-            type: "resourceBoss",
-            hp: 520,
-            maxHp: 520,
-            damage: 22,
-            speed: 55,
-            vision: 310,
-            attackRange: 75,
-            radius: 32,
-            color: "#788a5f",
-            drop: "ouro",
-            dropAmount: 2,
-            respawnTime: 60
+
+            id:
+                "grove_guardian",
+
+            name:
+                "GUARDIÃO DA FLORESTA",
+
+            icon:
+                "🌳",
+
+            type:
+                "progression",
+
+            hp:
+                420,
+
+            maxHp:
+                420,
+
+            damage:
+                24,
+
+            speed:
+                60,
+
+            vision:
+                300,
+
+            attackRange:
+                80,
+
+            radius:
+                31,
+
+            color:
+                "#4d754b",
+
+            drop:
+                "ferro",
+
+            dropAmount:
+                2,
+
+            unlock:
+                "grove"
         });
 
 
         addNPC(
-            720,
+            700,
             850,
             "NARA",
             "Guardião da Floresta",
             "#7ea56b",
             [
-                "As árvores aqui lembram quem passa entre elas.",
-                "A Quietude chegou antes de nós. Algumas folhas caem sem vento.",
-                "Há um bosque ao norte. As criaturas lá protegem algo antigo.",
-                "Preserve suas memórias. É assim que a magia cresce."
-            ]
-        );
-
-
-        addNPC(
-            2100,
-            1400,
-            "ORIN",
-            "Caçador",
-            "#91765c",
-            [
-                "Eu nunca caço quem não me vê. Os monstros daqui também têm regras.",
-                "Quando você entra no campo de visão de uma criatura, ela percebe você.",
-                "Se atacar primeiro, espere que ela responda.",
-                "Os caminhos para as montanhas estão bloqueados por criaturas mais fortes."
+                "A floresta percebe quando alguém pisa nela.",
+                "A Quietude começou a alterar algumas árvores.",
+                "Há lugares aqui onde o silêncio parece antigo.",
+                "Observe as criaturas antes de decidir se vale a pena enfrentá-las."
             ]
         );
 
@@ -1719,7 +1968,12 @@
             70,
             220,
             "grove",
-            "forestBoss",
+            () =>
+                state.player
+                    .defeatedBosses
+                    .includes(
+                        "grove_guardian"
+                    ),
             "BOSQUE"
         );
     }
@@ -1733,13 +1987,19 @@
 
         for (
             let i = 0;
-            i < 55;
+            i < 30;
             i++
         ) {
 
             addTree(
-                randomInt(120, 3050),
-                randomInt(120, 2180),
+                randomInt(
+                    120,
+                    3050
+                ),
+                randomInt(
+                    120,
+                    2150
+                ),
                 `grove_tree_${i}`
             );
         }
@@ -1747,65 +2007,104 @@
 
         for (
             let i = 0;
-            i < 8;
+            i < 7;
             i++
         ) {
 
             addEnemy({
-                id: `grove_beast_${i}`,
-                x: randomInt(300, 2900),
-                y: randomInt(250, 2050),
-                name: "FERA DO BOSQUE",
-                icon: "🦌",
-                type: "normal",
-                hp: 120,
-                maxHp: 120,
-                damage: 16,
-                speed: 92,
-                vision: 250,
-                attackRange: 60,
-                radius: 23,
-                color: "#60725d",
-                drop: "ferro",
-                dropAmount: 1
+
+                id:
+                    `grove_beast_${i}`,
+
+                name:
+                    "FERA DO BOSQUE",
+
+                icon:
+                    "🦌",
+
+                type:
+                    "normal",
+
+                hp:
+                    130,
+
+                maxHp:
+                    130,
+
+                damage:
+                    17,
+
+                speed:
+                    86,
+
+                vision:
+                    250,
+
+                attackRange:
+                    65,
+
+                radius:
+                    23,
+
+                color:
+                    "#60745e",
+
+                drop:
+                    "ferro",
+
+                dropAmount:
+                    1
             });
         }
 
 
         addEnemy({
-            id: "grove_guardian",
-            x: 2750,
-            y: 1100,
-            name: "GUARDIÃO DO BOSQUE",
-            icon: "🌳",
-            type: "progression",
-            hp: 380,
-            maxHp: 380,
-            damage: 25,
-            speed: 65,
-            vision: 300,
-            attackRange: 80,
-            radius: 30,
-            color: "#4f7c4d",
-            drop: "ouro",
-            dropAmount: 2,
-            gateTarget: "mountains"
+
+            id:
+                "mountain_guardian",
+
+            name:
+                "GUARDIÃO DAS MONTANHAS",
+
+            icon:
+                "🗿",
+
+            type:
+                "progression",
+
+            hp:
+                500,
+
+            maxHp:
+                500,
+
+            damage:
+                28,
+
+            speed:
+                57,
+
+            vision:
+                320,
+
+            attackRange:
+                82,
+
+            radius:
+                32,
+
+            color:
+                "#848a8c",
+
+            drop:
+                "ouro",
+
+            dropAmount:
+                2,
+
+            unlock:
+                "mountains"
         });
-
-
-        addNPC(
-            1450,
-            780,
-            "LYRA",
-            "Druida",
-            "#829f6f",
-            [
-                "Você chegou onde a floresta tenta lembrar do que era antes.",
-                "O próximo caminho leva às montanhas, mas o Guardião não confia nos viajantes.",
-                "A Quietude se alimenta de memórias abandonadas.",
-                "Leve histórias com você. Elas são uma forma de resistência."
-            ]
-        );
 
 
         addPortal(
@@ -1814,7 +2113,12 @@
             70,
             220,
             "mountains",
-            "groveGuardian",
+            () =>
+                state.player
+                    .defeatedBosses
+                    .includes(
+                        "mountain_guardian"
+                    ),
             "MONTANHAS"
         );
     }
@@ -1828,18 +2132,73 @@
 
         for (
             let i = 0;
-            i < 18;
+            i < 20;
             i++
         ) {
 
             addObstacle(
-                randomInt(200, 3200),
-                randomInt(160, 2100),
+                randomInt(
+                    200,
+                    3200
+                ),
+                randomInt(
+                    160,
+                    2100
+                ),
                 70,
                 52,
                 "snowrock"
             );
         }
+
+
+        addEnemy({
+
+            id:
+                "iron_guardian",
+
+            name:
+                "SENTINELA DAS MONTANHAS",
+
+            icon:
+                "⚙️",
+
+            type:
+                "progression",
+
+            hp:
+                620,
+
+            maxHp:
+                620,
+
+            damage:
+                31,
+
+            speed:
+                54,
+
+            vision:
+                330,
+
+            attackRange:
+                85,
+
+            radius:
+                34,
+
+            color:
+                "#72797e",
+
+            drop:
+                "ferro",
+
+            dropAmount:
+                3,
+
+            unlock:
+                "iron"
+        });
 
 
         for (
@@ -1849,60 +2208,50 @@
         ) {
 
             addEnemy({
-                id: `mountain_beast_${i}`,
-                x: randomInt(400, 3000),
-                y: randomInt(250, 2000),
-                name: "BESTA DAS MONTANHAS",
-                icon: "🐐",
-                type: "normal",
-                hp: 150,
-                maxHp: 150,
-                damage: 19,
-                speed: 72,
-                vision: 260,
-                attackRange: 65,
-                radius: 24,
-                color: "#d0d3d1",
-                drop: "ferro",
-                dropAmount: 2
+
+                id:
+                    `mountain_beast_${i}`,
+
+                name:
+                    "BESTA DA MONTANHA",
+
+                icon:
+                    "🐐",
+
+                type:
+                    "normal",
+
+                hp:
+                    155,
+
+                maxHp:
+                    155,
+
+                damage:
+                    20,
+
+                speed:
+                    70,
+
+                vision:
+                    250,
+
+                attackRange:
+                    65,
+
+                radius:
+                    24,
+
+                color:
+                    "#c7ccca",
+
+                drop:
+                    "ferro",
+
+                dropAmount:
+                    1
             });
         }
-
-
-        addEnemy({
-            id: "mountain_guardian",
-            x: 2800,
-            y: 1050,
-            name: "SENTINELA DAS MONTANHAS",
-            icon: "🗿",
-            type: "progression",
-            hp: 460,
-            maxHp: 460,
-            damage: 27,
-            speed: 58,
-            vision: 320,
-            attackRange: 80,
-            radius: 32,
-            color: "#8d9191",
-            drop: "ouro",
-            dropAmount: 3,
-            gateTarget: "ironCave"
-        });
-
-
-        addNPC(
-            750,
-            900,
-            "KAEL",
-            "Montanhista",
-            "#d2d6d2",
-            [
-                "O frio preserva algumas memórias melhor que o calor.",
-                "Abaixo da montanha existe uma Caverna de Ferro.",
-                "Não subestime as criaturas que guardam minério.",
-                "Depois das montanhas, a cor das cavernas muda."
-            ]
-        );
 
 
         addPortal(
@@ -1910,8 +2259,13 @@
             980,
             70,
             220,
-            "ironCave",
-            "mountainGuardian",
+            "iron",
+            () =>
+                state.player
+                    .defeatedBosses
+                    .includes(
+                        "iron_guardian"
+                    ),
             "CAVERNA DE FERRO"
         );
     }
@@ -1921,7 +2275,7 @@
        CAVERNA DE FERRO
     ====================================================== */
 
-    function buildIronCave() {
+    function buildIron() {
 
         for (
             let i = 0;
@@ -1930,11 +2284,131 @@
         ) {
 
             addObstacle(
-                randomInt(160, 2700),
-                randomInt(180, 1700),
+                randomInt(
+                    160,
+                    2700
+                ),
+                randomInt(
+                    160,
+                    1750
+                ),
                 65,
                 48,
                 "ironrock"
+            );
+        }
+
+
+        for (
+            let i = 0;
+            i < 18;
+            i++
+        ) {
+
+            addResource(
+                randomInt(
+                    180,
+                    2700
+                ),
+                randomInt(
+                    180,
+                    1750
+                ),
+                "ferro"
+            );
+        }
+
+
+        addEnemy({
+
+            id:
+                "ruby_guardian",
+
+            name:
+                "GUARDIÃO DE FERRO",
+
+            icon:
+                "⛓️",
+
+            type:
+                "progression",
+
+            hp:
+                700,
+
+            maxHp:
+                700,
+
+            damage:
+                34,
+
+            speed:
+                53,
+
+            vision:
+                340,
+
+            attackRange:
+                85,
+
+            radius:
+                34,
+
+            color:
+                "#72797e",
+
+            drop:
+                "ferro",
+
+            dropAmount:
+                4,
+
+            unlock:
+                "ruby"
+        });
+
+
+        addPortal(
+            2750,
+            820,
+            80,
+            240,
+            "ruby",
+            () =>
+                state.player
+                    .defeatedBosses
+                    .includes(
+                        "ruby_guardian"
+                    ),
+            "CAVERNA DE RUBI"
+        );
+    }
+
+
+    /* =====================================================
+       CAVERNA DE RUBI
+    ====================================================== */
+
+    function buildRuby() {
+
+        for (
+            let i = 0;
+            i < 25;
+            i++
+        ) {
+
+            addObstacle(
+                randomInt(
+                    180,
+                    2850
+                ),
+                randomInt(
+                    180,
+                    1900
+                ),
+                68,
+                48,
+                "rubyrock"
             );
         }
 
@@ -1946,104 +2420,14 @@
         ) {
 
             addResource(
-                randomInt(250, 2600),
-                randomInt(220, 1650),
-                "ferro"
-            );
-        }
-
-
-        for (
-            let i = 0;
-            i < 7;
-            i++
-        ) {
-
-            addEnemy({
-                id: `iron_beast_${i}`,
-                x: randomInt(400, 2500),
-                y: randomInt(250, 1650),
-                name: "MINERADOR ESQUECIDO",
-                icon: "⛏️",
-                type: "normal",
-                hp: 175,
-                maxHp: 175,
-                damage: 21,
-                speed: 62,
-                vision: 250,
-                attackRange: 70,
-                radius: 24,
-                color: "#5e6568",
-                drop: "ferro",
-                dropAmount: 2
-            });
-        }
-
-
-        addEnemy({
-            id: "iron_guardian",
-            x: 2450,
-            y: 950,
-            name: "GUARDIÃO DE FERRO",
-            icon: "⚙️",
-            type: "progression",
-            hp: 560,
-            maxHp: 560,
-            damage: 30,
-            speed: 55,
-            vision: 320,
-            attackRange: 85,
-            radius: 32,
-            color: "#6d7478",
-            drop: "ouro",
-            dropAmount: 3,
-            gateTarget: "rubyCave"
-        });
-
-
-        addPortal(
-            2750,
-            820,
-            80,
-            240,
-            "rubyCave",
-            "ironGuardian",
-            "CAVERNA DE RUBI"
-        );
-    }
-
-
-    /* =====================================================
-       CAVERNA DE RUBI
-    ====================================================== */
-
-    function buildRubyCave() {
-
-        for (
-            let i = 0;
-            i < 25;
-            i++
-        ) {
-
-            addObstacle(
-                randomInt(180, 2850),
-                randomInt(180, 1850),
-                68,
-                48,
-                "rubyrock"
-            );
-        }
-
-
-        for (
-            let i = 0;
-            i < 30;
-            i++
-        ) {
-
-            addResource(
-                randomInt(250, 2850),
-                randomInt(180, 1900),
+                randomInt(
+                    220,
+                    2850
+                ),
+                randomInt(
+                    180,
+                    1900
+                ),
                 "rubi"
             );
         }
@@ -2056,54 +2440,113 @@
         ) {
 
             addEnemy({
-                id: `ruby_beast_${i}`,
-                x: randomInt(400, 2600),
-                y: randomInt(250, 1800),
-                name: "CRIATURA RUBI",
-                icon: "♦",
-                type: "normal",
-                hp: 210,
-                maxHp: 210,
-                damage: 25,
-                speed: 70,
-                vision: 260,
-                attackRange: 70,
-                radius: 25,
-                color: "#9f4254",
-                drop: "rubi",
-                dropAmount: 1
+
+                id:
+                    `ruby_beast_${i}`,
+
+                name:
+                    "CRIATURA RUBI",
+
+                icon:
+                    "♦",
+
+                type:
+                    "normal",
+
+                hp:
+                    220,
+
+                maxHp:
+                    220,
+
+                damage:
+                    25,
+
+                speed:
+                    70,
+
+                vision:
+                    260,
+
+                attackRange:
+                    70,
+
+                radius:
+                    25,
+
+                color:
+                    "#a04551",
+
+                drop:
+                    "rubi",
+
+                dropAmount:
+                    1
             });
         }
 
 
         addEnemy({
-            id: "ruby_guardian",
-            x: 2500,
-            y: 1000,
-            name: "GUARDIÃO DE RUBI",
-            icon: "🔴",
-            type: "progression",
-            hp: 700,
-            maxHp: 700,
-            damage: 34,
-            speed: 60,
-            vision: 340,
-            attackRange: 90,
-            radius: 34,
-            color: "#a83e50",
-            drop: "rubi",
-            dropAmount: 3,
-            gateTarget: "shadowCave"
+
+            id:
+                "shadow_guardian",
+
+            name:
+                "GUARDIÃO RUBI",
+
+            icon:
+                "🔴",
+
+            type:
+                "progression",
+
+            hp:
+                800,
+
+            maxHp:
+                800,
+
+            damage:
+                38,
+
+            speed:
+                58,
+
+            vision:
+                350,
+
+            attackRange:
+                90,
+
+            radius:
+                35,
+
+            color:
+                "#a53e51",
+
+            drop:
+                "rubi",
+
+            dropAmount:
+                3,
+
+            unlock:
+                "shadow"
         });
 
 
         addPortal(
-            2780,
+            2790,
             850,
             80,
-            240,
-            "shadowCave",
-            "rubyGuardian",
+            250,
+            "shadow",
+            () =>
+                state.player
+                    .defeatedBosses
+                    .includes(
+                        "shadow_guardian"
+                    ),
             "CAVERNA SOMBRIA"
         );
     }
@@ -2113,69 +2556,107 @@
        CAVERNA SOMBRIA
     ====================================================== */
 
-    function buildShadowCave() {
+    function buildShadow() {
 
         for (
             let i = 0;
-            i < 32;
-            i++
-        ) {
-
-            addObstacle(
-                randomInt(170, 2700),
-                randomInt(160, 1800),
-                70,
-                50,
-                "darkrock"
-            );
-        }
-
-
-        for (
-            let i = 0;
-            i < 9;
+            i < 8;
             i++
         ) {
 
             addEnemy({
-                id: `shadow_beast_${i}`,
-                x: randomInt(350, 2600),
-                y: randomInt(250, 1750),
-                name: "SOMBRA ESQUECIDA",
-                icon: "👤",
-                type: "normal",
-                hp: 240,
-                maxHp: 240,
-                damage: 29,
-                speed: 78,
-                vision: 290,
-                attackRange: 70,
-                radius: 25,
-                color: "#443d58",
-                drop: "essencia",
-                dropAmount: 1
+
+                id:
+                    `shadow_enemy_${i}`,
+
+                name:
+                    "SOMBRA ESQUECIDA",
+
+                icon:
+                    "👤",
+
+                type:
+                    "normal",
+
+                hp:
+                    260,
+
+                maxHp:
+                    260,
+
+                damage:
+                    30,
+
+                speed:
+                    78,
+
+                vision:
+                    290,
+
+                attackRange:
+                    70,
+
+                radius:
+                    25,
+
+                color:
+                    "#49425f",
+
+                drop:
+                    "essencia",
+
+                dropAmount:
+                    1
             });
         }
 
 
         addEnemy({
-            id: "shadow_guardian",
-            x: 2500,
-            y: 950,
-            name: "GUARDIÃO SOMBRIO",
-            icon: "🌑",
-            type: "progression",
-            hp: 820,
-            maxHp: 820,
-            damage: 38,
-            speed: 64,
-            vision: 350,
-            attackRange: 90,
-            radius: 35,
-            color: "#44354e",
-            drop: "essencia",
-            dropAmount: 3,
-            gateTarget: "fairy"
+
+            id:
+                "fairy_guardian",
+
+            name:
+                "GUARDIÃO SOMBRIO",
+
+            icon:
+                "🌑",
+
+            type:
+                "progression",
+
+            hp:
+                900,
+
+            maxHp:
+                900,
+
+            damage:
+                41,
+
+            speed:
+                62,
+
+            vision:
+                350,
+
+            attackRange:
+                90,
+
+            radius:
+                35,
+
+            color:
+                "#42364f",
+
+            drop:
+                "essencia",
+
+            dropAmount:
+                3,
+
+            unlock:
+                "fairy"
         });
 
 
@@ -2185,7 +2666,12 @@
             90,
             250,
             "fairy",
-            "shadowGuardian",
+            () =>
+                state.player
+                    .defeatedBosses
+                    .includes(
+                        "fairy_guardian"
+                    ),
             "REINO DAS FADAS"
         );
     }
@@ -2199,94 +2685,71 @@
 
         for (
             let i = 0;
-            i < 30;
+            i < 22;
             i++
         ) {
 
             addResource(
-                randomInt(170, 3000),
-                randomInt(180, 2000),
+                randomInt(
+                    170,
+                    3000
+                ),
+                randomInt(
+                    180,
+                    2000
+                ),
                 "cristal"
             );
         }
 
 
-        for (
-            let i = 0;
-            i < 15;
-            i++
-        ) {
-
-            state.world.effects.push({
-                type: "flower",
-                x: randomInt(150, 3050),
-                y: randomInt(150, 2050),
-                phase: random(0, 6)
-            });
-        }
-
-
-        for (
-            let i = 0;
-            i < 7;
-            i++
-        ) {
-
-            addEnemy({
-                id: `fairy_beast_${i}`,
-                x: randomInt(450, 2700),
-                y: randomInt(300, 1800),
-                name: "ESPÍRITO FEÉRICO",
-                icon: "🦋",
-                type: "normal",
-                hp: 260,
-                maxHp: 260,
-                damage: 31,
-                speed: 92,
-                vision: 290,
-                attackRange: 70,
-                radius: 23,
-                color: "#b887be",
-                drop: "cristal",
-                dropAmount: 1
-            });
-        }
-
-
         addEnemy({
-            id: "fairy_guardian",
-            x: 2500,
-            y: 1000,
-            name: "GUARDIÃ DOS FIOS DE MEMÓRIA",
-            icon: "🧚",
-            type: "progression",
-            hp: 980,
-            maxHp: 980,
-            damage: 42,
-            speed: 70,
-            vision: 360,
-            attackRange: 90,
-            radius: 36,
-            color: "#cb8dd0",
-            drop: "essencia",
-            dropAmount: 3,
-            gateTarget: "sky"
+
+            id:
+                "sky_guardian",
+
+            name:
+                "GUARDIÃO FEÉRICO",
+
+            icon:
+                "🧚",
+
+            type:
+                "progression",
+
+            hp:
+                1050,
+
+            maxHp:
+                1050,
+
+            damage:
+                43,
+
+            speed:
+                69,
+
+            vision:
+                370,
+
+            attackRange:
+                95,
+
+            radius:
+                37,
+
+            color:
+                "#cb8dd0",
+
+            drop:
+                "cristal",
+
+            dropAmount:
+                4,
+
+            unlock:
+                "sky"
         });
-
-
-        addNPC(
-            1000,
-            1000,
-            "AELIA",
-            "Habitante das Fadas",
-            "#d49ad4",
-            [
-                "As flores daqui brilham quando alguém lembra de algo importante.",
-                "A Quietude odeia memória compartilhada.",
-                "O Céu guarda uma passagem que não pertence a este mundo.",
-                "Não chegue ao céu pensando que a história terminou."
-            ]
-        );
 
 
         addPortal(
@@ -2295,7 +2758,12 @@
             80,
             300,
             "sky",
-            "fairyGuardian",
+            () =>
+                state.player
+                    .defeatedBosses
+                    .includes(
+                        "sky_guardian"
+                    ),
             "CÉU"
         );
     }
@@ -2309,79 +2777,104 @@
 
         for (
             let i = 0;
-            i < 22;
-            i++
-        ) {
-
-            addResource(
-                randomInt(180, 3200),
-                randomInt(180, 1950),
-                "cristal"
-            );
-        }
-
-
-        for (
-            let i = 0;
             i < 8;
             i++
         ) {
 
             addEnemy({
-                id: `sky_beast_${i}`,
-                x: randomInt(500, 3000),
-                y: randomInt(260, 1800),
-                name: "SERAFIM CAÍDO",
-                icon: "🪽",
-                type: "normal",
-                hp: 320,
-                maxHp: 320,
-                damage: 35,
-                speed: 105,
-                vision: 320,
-                attackRange: 75,
-                radius: 26,
-                color: "#cbd8e1",
-                drop: "cristal",
-                dropAmount: 2
+
+                id:
+                    `sky_enemy_${i}`,
+
+                name:
+                    "SERAFIM CAÍDO",
+
+                icon:
+                    "🪽",
+
+                type:
+                    "normal",
+
+                hp:
+                    340,
+
+                maxHp:
+                    340,
+
+                damage:
+                    35,
+
+                speed:
+                    100,
+
+                vision:
+                    320,
+
+                attackRange:
+                    75,
+
+                radius:
+                    27,
+
+                color:
+                    "#cbd7df",
+
+                drop:
+                    "cristal",
+
+                dropAmount:
+                    1
             });
         }
 
 
         addEnemy({
-            id: "sky_guardian",
-            x: 2850,
-            y: 1100,
-            name: "SERAFIM DA QUIETUDE",
-            icon: "☀️",
-            type: "progression",
-            hp: 1150,
-            maxHp: 1150,
-            damage: 47,
-            speed: 72,
-            vision: 380,
-            attackRange: 100,
-            radius: 38,
-            color: "#d4b17a",
-            drop: "essencia",
-            dropAmount: 4,
-            gateTarget: "hell"
+
+            id:
+                "hell_guardian",
+
+            name:
+                "SERAFIM DA QUIETUDE",
+
+            icon:
+                "☀️",
+
+            type:
+                "progression",
+
+            hp:
+                1200,
+
+            maxHp:
+                1200,
+
+            damage:
+                49,
+
+            speed:
+                70,
+
+            vision:
+                390,
+
+            attackRange:
+                100,
+
+            radius:
+                39,
+
+            color:
+                "#d1b377",
+
+            drop:
+                "essencia",
+
+            dropAmount:
+                4,
+
+            unlock:
+                "hell"
         });
-
-
-        addNPC(
-            1200,
-            850,
-            "AERIS",
-            "Guardião Celeste",
-            "#c7d4df",
-            [
-                "O céu também foi tocado.",
-                "Algumas memórias chegam aqui antes de serem apagadas.",
-                "O Inferno não é apenas um lugar. É onde a Quietude se torna consciente.",
-                "Você ainda pode voltar. Mas, se continuar, não poderá fingir que não sabe."
-            ]
-        );
 
 
         addPortal(
@@ -2390,7 +2883,12 @@
             80,
             260,
             "hell",
-            "skyGuardian",
+            () =>
+                state.player
+                    .defeatedBosses
+                    .includes(
+                        "hell_guardian"
+                    ),
             "INFERNO"
         );
     }
@@ -2402,62 +2900,68 @@
 
     function buildHell() {
 
-        for (
-            let i = 0;
-            i < 25;
-            i++
-        ) {
+        const types = [
 
-            addObstacle(
-                randomInt(170, 3400),
-                randomInt(170, 2150),
-                70,
-                50,
-                "basalt"
-            );
-        }
-
-
-        const enemyTypes = [
             {
-                name: "DEMÔNIO DE CINZA",
-                icon: "🔥",
-                color: "#8a4d3e",
-                drop: "essencia"
+                name:
+                    "DEMÔNIO DE CINZA",
+                icon:
+                    "🔥",
+                color:
+                    "#8c4d3f",
+                drop:
+                    "essencia"
             },
 
             {
-                name: "CÃO DE LAVA",
-                icon: "🐕",
-                color: "#94482f",
-                drop: "ouro"
+                name:
+                    "CÃO DE LAVA",
+                icon:
+                    "🐕",
+                color:
+                    "#984b31",
+                drop:
+                    "ouro"
             },
 
             {
-                name: "ESPECTRO CARMESIM",
-                icon: "👻",
-                color: "#6f4057",
-                drop: "essencia"
+                name:
+                    "ESPECTRO CARMESIM",
+                icon:
+                    "👻",
+                color:
+                    "#724056",
+                drop:
+                    "essencia"
             },
 
             {
-                name: "GÁRGULA QUEBRADA",
-                icon: "🗿",
-                color: "#695148",
-                drop: "ouro"
+                name:
+                    "GÁRGULA QUEBRADA",
+                icon:
+                    "🗿",
+                color:
+                    "#70554a",
+                drop:
+                    "ouro"
             },
 
             {
-                name: "PARASITA DO VAZIO",
-                icon: "🕷️",
-                color: "#4a354f",
-                drop: "essencia"
+                name:
+                    "PARASITA DO VAZIO",
+                icon:
+                    "🕷️",
+                color:
+                    "#4b3551",
+                drop:
+                    "essencia"
             }
+
         ];
 
 
-        enemyTypes.forEach(
-            (info, index) => {
+        types.forEach(
+            (type, index) => {
 
                 for (
                     let i = 0;
@@ -2466,25 +2970,15 @@
                 ) {
 
                     addEnemy({
-                        id: `hell_${index}_${i}`,
 
-                        x:
-                            randomInt(
-                                400,
-                                3000
-                            ),
-
-                        y:
-                            randomInt(
-                                250,
-                                2100
-                            ),
+                        id:
+                            `hell_${index}_${i}`,
 
                         name:
-                            info.name,
+                            type.name,
 
                         icon:
-                            info.icon,
+                            type.icon,
 
                         type:
                             "hell",
@@ -2493,20 +2987,20 @@
                             index,
 
                         hp:
-                            360 +
-                            index * 40,
+                            370 +
+                            index * 25,
 
                         maxHp:
-                            360 +
-                            index * 40,
+                            370 +
+                            index * 25,
 
                         damage:
-                            34 +
+                            35 +
                             index * 3,
 
                         speed:
-                            80 +
-                            index * 5,
+                            78 +
+                            index * 4,
 
                         vision:
                             330,
@@ -2518,78 +3012,18 @@
                             26,
 
                         color:
-                            info.color,
+                            type.color,
 
                         drop:
-                            info.drop,
+                            type.drop,
 
                         dropAmount:
                             1
                     });
-
                 }
 
             }
         );
-
-
-        addEnemy({
-            id: "hell_guardian",
-            x: 3050,
-            y: 1100,
-            name: "SENHOR DA QUIETUDE",
-            icon: "👿",
-            type: "progression",
-            hp: 1500,
-            maxHp: 1500,
-            damage: 55,
-            speed: 76,
-            vision: 420,
-            attackRange: 105,
-            radius: 40,
-            color: "#a64139",
-            drop: "essencia",
-            dropAmount: 6,
-            gateTarget: "final"
-        });
-
-
-        addPortal(
-            3390,
-            980,
-            70,
-            260,
-            "final",
-            "hellGuardian",
-            "CÂMARA FINAL"
-        );
-    }
-
-
-    /* =====================================================
-       CÂMARA FINAL
-    ====================================================== */
-
-    function buildFinal() {
-
-        addEnemy({
-            id: "other_self",
-            x: 1500,
-            y: 700,
-            name: "O OUTRO EU",
-            icon: "☯",
-            type: "final",
-            hp: 2200,
-            maxHp: 2200,
-            damage: 62,
-            speed: 88,
-            vision: 600,
-            attackRange: 110,
-            radius: 42,
-            color: "#c3b5a4",
-            drop: "essencia",
-            dropAmount: 10
-        });
     }
 
 
@@ -2608,27 +3042,35 @@
             clamp(
                 cx,
                 rect.x,
-                rect.x + rect.w
+                rect.x +
+                    rect.w
             );
+
 
         const closestY =
             clamp(
                 cy,
                 rect.y,
-                rect.y + rect.h
+                rect.y +
+                    rect.h
             );
 
+
         const dx =
-            cx - closestX;
+            cx -
+            closestX;
+
 
         const dy =
-            cy - closestY;
+            cy -
+            closestY;
+
 
         return (
             dx * dx +
             dy * dy
         ) <
-            radius * radius;
+        radius * radius;
     }
 
 
@@ -2638,39 +3080,59 @@
         radius
     ) {
 
-        if (state.houseMode) {
+        if (
+            state.houseMode
+        ) {
 
-            const area = {
-                x: 200,
-                y: 160,
+            const room = {
+
+                x: 180,
+
+                y: 140,
+
                 w:
                     state.currentHouse
-                        ?.interior?.w ||
-                    250,
+                        ? Math.max(
+                            300,
+                            state.currentHouse.w -
+                                80
+                        )
+                        : 420,
+
                 h:
                     state.currentHouse
-                        ?.interior?.h ||
-                    150
+                        ? Math.max(
+                            190,
+                            state.currentHouse.h -
+                                100
+                        )
+                        : 190
+
             };
 
+
             return (
-                x - radius >= area.x &&
-                y - radius >= area.y &&
+                x - radius >= room.x &&
+                y - radius >= room.y &&
                 x + radius <=
-                    area.x + area.w &&
+                    room.x + room.w &&
                 y + radius <=
-                    area.y + area.h
+                    room.y + room.h
             );
         }
 
 
         if (
-            x - radius < 70 ||
-            y - radius < 70 ||
+            x - radius <
+                75 ||
+            y - radius <
+                75 ||
             x + radius >
-                state.world.width - 70 ||
+                state.world.width -
+                75 ||
             y + radius >
-                state.world.height - 70
+                state.world.height -
+                75
         ) {
 
             return false;
@@ -2679,7 +3141,7 @@
 
         for (
             const obstacle of
-            state.world.obstacles
+                state.world.obstacles
         ) {
 
             if (
@@ -2691,17 +3153,17 @@
 
 
             if (
-                obstacle.type ===
-                    "tree" &&
                 obstacle.treeId
             ) {
 
                 const tree =
-                    state.world.trees.find(
-                        t =>
-                            t.id ===
-                            obstacle.treeId
-                    );
+                    state.world.trees
+                        .find(
+                            item =>
+                                item.id ===
+                                obstacle.treeId
+                        );
+
 
                 if (
                     !tree ||
@@ -2727,24 +3189,24 @@
         }
 
 
-        if (!state.houseMode) {
-
-            for (
-                const npc of
+        for (
+            const npc of
                 state.world.npcs
+        ) {
+
+            if (
+                distance(
+                    {
+                        x,
+                        y
+                    },
+                    npc
+                ) <
+                radius +
+                npc.radius
             ) {
 
-                if (
-                    Math.hypot(
-                        x - npc.x,
-                        y - npc.y
-                    ) <
-                    radius +
-                    npc.radius
-                ) {
-
-                    return false;
-                }
+                return false;
             }
         }
 
@@ -2757,11 +3219,12 @@
        MOVIMENTO
     ====================================================== */
 
-    function updateMovement(dt) {
+    function updateMovement(
+        dt
+    ) {
 
         if (
-            state.paused ||
-            state.houseMode
+            state.paused
         ) {
 
             return;
@@ -2809,8 +3272,8 @@
 
 
         if (
-            dx === 0 &&
-            dy === 0
+            !dx &&
+            !dy
         ) {
 
             return;
@@ -2818,7 +3281,11 @@
 
 
         const length =
-            Math.hypot(dx, dy);
+            Math.hypot(
+                dx,
+                dy
+            );
+
 
         dx /= length;
         dy /= length;
@@ -2829,34 +3296,42 @@
 
 
         let speed =
-            p.speed;
+            state.houseMode
+                ? 120
+                : p.speed;
 
 
         if (
-            p.hunger <= 20
+            !state.houseMode &&
+            p.hunger <
+                20
         ) {
 
             speed *=
-                0.72;
+                .75;
         }
 
 
         if (
-            p.fatigue <= 20
+            !state.houseMode &&
+            p.fatigue <
+                20
         ) {
 
             speed *=
-                0.72;
+                .75;
         }
 
 
         const step =
-            speed * dt;
+            speed *
+            dt;
 
 
         const nextX =
             p.x +
-            dx * step;
+            dx *
+            step;
 
 
         if (
@@ -2874,7 +3349,8 @@
 
         const nextY =
             p.y +
-            dy * step;
+            dy *
+            step;
 
 
         if (
@@ -2895,7 +3371,9 @@
        SOBREVIVÊNCIA
     ====================================================== */
 
-    function updateSurvival(dt) {
+    function updateSurvival(
+        dt
+    ) {
 
         if (
             state.houseMode
@@ -2912,44 +3390,40 @@
         p.hunger =
             clamp(
                 p.hunger -
-                    0.35 * dt,
+                .28 *
+                dt,
                 0,
-                p.maxHunger
+                100
             );
 
 
         p.fatigue =
             clamp(
                 p.fatigue -
-                    0.28 * dt,
+                .22 *
+                dt,
                 0,
-                p.maxFatigue
+                100
+            );
+
+
+        p.magic =
+            clamp(
+                p.magic +
+                2 *
+                dt,
+                0,
+                p.maxMagic
             );
 
 
         p.energy =
             clamp(
                 p.energy +
-                    3.2 * dt,
+                3 *
+                dt,
                 0,
                 p.maxEnergy
-            );
-
-
-        p.maxMagic =
-            currentCharacter().magic +
-            Math.floor(
-                p.memory / 5
-            ) *
-                3;
-
-
-        p.magic =
-            clamp(
-                p.magic +
-                    1.7 * dt,
-                0,
-                p.maxMagic
             );
 
 
@@ -2961,373 +3435,337 @@
             p.hp =
                 clamp(
                     p.hp -
-                        0.25 * dt,
+                    .15 *
+                    dt,
                     1,
                     p.maxHp
                 );
         }
+
+
+        if (
+            p.hunger < 18
+        ) {
+
+            showLowNeedMessage(
+                "fome"
+            );
+        }
+
+
+        if (
+            p.fatigue < 18
+        ) {
+
+            showLowNeedMessage(
+                "cansaço"
+            );
+        }
+    }
+
+
+    let lastNeedWarning = 0;
+
+
+    function showLowNeedMessage(
+        type
+    ) {
+
+        if (
+            performance.now() -
+            lastNeedWarning <
+            6000
+        ) {
+
+            return;
+        }
+
+
+        lastNeedWarning =
+            performance.now();
+
+
+        showToast(
+            type ===
+                "fome"
+                ? "Você está ficando com fome."
+                : "Você está cansado."
+        );
     }
 
 
     /* =====================================================
-       IA DOS INIMIGOS
+       IA
     ====================================================== */
 
-    function updateEnemies(dt) {
+    function updateEnemies(
+        dt
+    ) {
 
         const player =
             state.player;
 
 
-        for (
-            const enemy of
-            state.world.enemies
-        ) {
+        state.world.enemies
+            .forEach(
+                enemy => {
 
-            if (
-                enemy.dead
-            ) {
+                    if (
+                        enemy.dead
+                    ) {
 
-                continue;
-            }
+                        if (
+                            enemy.type ===
+                            "resourceBoss"
+                        ) {
 
-
-            enemy.attackTimer =
-                Math.max(
-                    0,
-                    enemy.attackTimer -
-                        dt
-                );
+                            enemy.respawnTimer -=
+                                dt;
 
 
-            enemy.hitFlash =
-                Math.max(
-                    0,
-                    enemy.hitFlash -
-                        dt
-                );
+                            if (
+                                enemy.respawnTimer <=
+                                0
+                            ) {
+
+                                enemy.dead =
+                                    false;
+
+                                enemy.hp =
+                                    enemy.maxHp;
+
+                                enemy.aggressive =
+                                    false;
+
+                                enemy.accepted =
+                                    false;
+
+                                enemy.state =
+                                    "idle";
+                            }
+                        }
 
 
-            const distanceToPlayer =
-                dist(
-                    enemy,
-                    player
-                );
+                        return;
+                    }
 
 
-            /*
-             * BOSS FINAL:
-             * não ataca até o jogador decidir.
-             */
-
-            if (
-                enemy.type ===
-                    "final" &&
-                !player.finalChoice
-            ) {
-
-                if (
-                    distanceToPlayer <
-                    120
-                ) {
-
-                    openFinalChoice();
-                }
-
-                continue;
-            }
+                    enemy.attackTimer =
+                        Math.max(
+                            0,
+                            enemy.attackTimer -
+                            dt
+                        );
 
 
-            /*
-             * BOSS DE PROGRESSÃO:
-             * só ataca depois de aceitar a batalha.
-             */
-
-            if (
-                enemy.type ===
-                    "progression" &&
-                !enemy.accepted
-            ) {
-
-                if (
-                    distanceToPlayer <
-                    enemy.radius +
-                        60
-                ) {
-
-                    enemy.state =
-                        "waiting";
-                }
-
-                continue;
-            }
+                    enemy.hitFlash =
+                        Math.max(
+                            0,
+                            enemy.hitFlash -
+                            dt
+                        );
 
 
-            /*
-             * CAMPO DE VISÃO
-             */
-
-            if (
-                !enemy.aggressive &&
-                distanceToPlayer <=
-                    enemy.vision
-            ) {
-
-                enemy.aggressive =
-                    true;
-
-                enemy.state =
-                    "chasing";
-
-                showToast(
-                    `${enemy.name} percebeu você!`
-                );
-
-                beep("hit");
-            }
+                    const d =
+                        distance(
+                            enemy,
+                            player
+                        );
 
 
-            if (
-                !enemy.aggressive
-            ) {
+                    if (
+                        enemy.type ===
+                            "progression" &&
+                        !enemy.accepted
+                    ) {
 
-                continue;
-            }
-
-
-            /*
-             * Perde o jogador se sair
-             * muito além do campo de visão.
-             */
-
-            if (
-                distanceToPlayer >
-                    enemy.vision * 1.9 &&
-                enemy.type !==
-                    "hell"
-            ) {
-
-                enemy.aggressive =
-                    false;
-
-                enemy.state =
-                    "idle";
-
-                continue;
-            }
+                        continue;
+                    }
 
 
-            /*
-             * PERSEGUIÇÃO
-             */
+                    if (
+                        !enemy.aggressive &&
+                        d <=
+                            enemy.vision
+                    ) {
 
-            if (
-                distanceToPlayer >
-                    enemy.attackRange
-            ) {
+                        enemy.aggressive =
+                            true;
 
-                let dx =
-                    player.x -
-                    enemy.x;
+                        enemy.state =
+                            "chasing";
 
-                let dy =
-                    player.y -
-                    enemy.y;
+                        showToast(
+                            `${enemy.name} percebeu você!`
+                        );
 
-                const length =
-                    Math.hypot(
-                        dx,
-                        dy
-                    ) || 1;
-
-                dx /= length;
-                dy /= length;
+                        continue;
+                    }
 
 
-                const step =
-                    enemy.speed *
-                    dt;
+                    if (
+                        !enemy.aggressive
+                    ) {
+
+                        continue;
+                    }
 
 
-                const nextX =
-                    enemy.x +
-                    dx * step;
+                    if (
+                        d >
+                        enemy.vision *
+                            1.9 &&
+                        enemy.type !==
+                            "hell"
+                    ) {
 
-                const nextY =
-                    enemy.y +
-                    dy * step;
+                        enemy.aggressive =
+                            false;
+
+                        enemy.state =
+                            "idle";
+
+                        continue;
+                    }
 
 
-                if (
-                    !state.world.obstacles.some(
-                        obstacle =>
-                            !obstacle.disabled &&
-                            circleRectCollision(
-                                nextX,
+                    if (
+                        d >
+                        enemy.attackRange
+                    ) {
+
+                        const dx =
+                            player.x -
+                            enemy.x;
+
+
+                        const dy =
+                            player.y -
+                            enemy.y;
+
+
+                        const length =
+                            Math.hypot(
+                                dx,
+                                dy
+                            ) ||
+                            1;
+
+
+                        const vx =
+                            dx /
+                            length *
+                            enemy.speed *
+                            dt;
+
+
+                        const vy =
+                            dy /
+                            length *
+                            enemy.speed *
+                            dt;
+
+
+                        if (
+                            canEnemyMoveTo(
+                                enemy.x +
+                                vx,
                                 enemy.y,
-                                enemy.radius,
-                                obstacle
+                                enemy.radius
                             )
-                    )
-                ) {
+                        ) {
 
-                    enemy.x =
-                        nextX;
-                }
+                            enemy.x +=
+                                vx;
+                        }
 
 
-                if (
-                    !state.world.obstacles.some(
-                        obstacle =>
-                            !obstacle.disabled &&
-                            circleRectCollision(
+                        if (
+                            canEnemyMoveTo(
                                 enemy.x,
-                                nextY,
-                                enemy.radius,
-                                obstacle
+                                enemy.y +
+                                vy,
+                                enemy.radius
                             )
-                    )
-                ) {
+                        ) {
 
-                    enemy.y =
-                        nextY;
+                            enemy.y +=
+                                vy;
+                        }
+
+                    }
+
+                    else if (
+                        enemy.attackTimer <=
+                            0
+                    ) {
+
+                        damagePlayer(
+                            enemy.damage
+                        );
+
+                        enemy.attackTimer =
+                            1.1;
+                    }
                 }
-
-            }
-
-            /*
-             * ATAQUE
-             */
-
-            else if (
-                enemy.attackTimer <= 0
-            ) {
-
-                damagePlayer(
-                    enemy.damage
-                );
-
-                enemy.attackTimer =
-                    1.15;
-            }
-
-
-            /*
-             * Mecânicas especiais do boss final.
-             */
-
-            if (
-                enemy.type ===
-                "final"
-            ) {
-
-                updateFinalBoss(
-                    enemy,
-                    dt
-                );
-            }
-        }
+            );
     }
 
 
-    /* =====================================================
-       BOSS FINAL
-    ====================================================== */
-
-    function updateFinalBoss(
-        enemy,
-        dt
+    function canEnemyMoveTo(
+        x,
+        y,
+        radius
     ) {
 
-        const percent =
-            enemy.hp /
-            enemy.maxHp;
-
-
-        const phase =
-            percent > 0.75
-                ? 1
-                : percent > 0.5
-                    ? 2
-                    : percent > 0.25
-                        ? 3
-                        : 4;
-
-
         if (
-            phase !==
-            enemy.phase
+            x - radius < 80 ||
+            y - radius < 80 ||
+            x + radius >
+                state.world.width -
+                80 ||
+            y + radius >
+                state.world.height -
+                80
         ) {
 
-            enemy.phase =
-                phase;
-
-            showToast(
-                `O Outro Eu entrou na Fase ${phase}.`
-            );
-
-            beep("magic");
+            return false;
         }
 
 
-        if (
-            Math.random() <
-            dt *
-                (phase + 0.3) *
-                0.22
+        for (
+            const obstacle of
+                state.world.obstacles
         ) {
 
             if (
-                phase >= 2
+                obstacle.disabled
             ) {
 
-                state.world.effects.push(
-                    {
-                        type: "orb",
-                        x: enemy.x,
-                        y: enemy.y,
-                        life: 2
-                    }
-                );
+                continue;
             }
 
 
             if (
-                phase >= 3
+                circleRectCollision(
+                    x,
+                    y,
+                    radius,
+                    obstacle
+                )
             ) {
 
-                addObstacle(
-                    enemy.x +
-                        random(
-                            -100,
-                            100
-                        ),
-                    enemy.y +
-                        random(
-                            -100,
-                            100
-                        ),
-                    40,
-                    30,
-                    "memoryrock"
-                );
-            }
-
-
-            if (
-                phase >= 4
-            ) {
-
-                damagePlayer(
-                    8 * phase
-                );
+                return false;
             }
         }
+
+
+        return true;
     }
 
 
     /* =====================================================
-       DANO NO PLAYER
+       COMBATE
     ====================================================== */
 
     function damagePlayer(
@@ -3348,48 +3786,42 @@
         }
 
 
-        const armorDefense =
+        const armor =
             ITEMS[
                 p.equipment.armor
             ]?.defense || 0;
 
 
-        const finalDamage =
+        const damage =
             Math.max(
                 1,
                 Math.round(
                     amount -
-                        (
-                            p.defense +
-                            armorDefense
-                        ) *
-                            0.35
+                    (
+                        p.defense +
+                        armor
+                    ) *
+                    .35
                 )
             );
 
 
-        p.hp =
-            Math.max(
-                0,
-                p.hp -
-                    finalDamage
-            );
+        p.hp -=
+            damage;
 
 
         p.invincible =
-            0.65;
+            .65;
 
 
         showToast(
-            `Você sofreu ${finalDamage} de dano.`
+            `Você sofreu ${damage} de dano.`
         );
 
 
-        beep("hit");
-
-
         if (
-            p.hp <= 0
+            p.hp <=
+            0
         ) {
 
             playerDeath();
@@ -3397,115 +3829,11 @@
     }
 
 
-    /* =====================================================
-       MORTE
-    ====================================================== */
-
-    function playerDeath() {
+    function performAttack() {
 
         if (
-            state.player.dead
-        ) {
-
-            return;
-        }
-
-
-        state.player.dead =
-            true;
-
-        state.paused =
-            true;
-
-        $("deathPanel")
-            .classList.remove(
-                "hidden"
-            );
-    }
-
-
-    function respawnPlayer() {
-
-        const p =
-            state.player;
-
-
-        p.dead =
-            false;
-
-
-        state.area =
-            p.checkpoint.area;
-
-
-        buildArea();
-
-
-        p.x =
-            p.checkpoint.x;
-
-        p.y =
-            p.checkpoint.y;
-
-
-        p.hp =
-            Math.round(
-                p.maxHp * 0.7
-            );
-
-        p.magic =
-            Math.round(
-                p.maxMagic * 0.7
-            );
-
-        p.energy =
-            Math.round(
-                p.maxEnergy * 0.7
-            );
-
-        p.money =
-            Math.floor(
-                p.money * 0.9
-            );
-
-
-        state.paused =
-            false;
-
-
-        $("deathPanel")
-            .classList.add(
-                "hidden"
-            );
-
-
-        showToast(
-            "Você retornou ao último checkpoint."
-        );
-    }
-
-
-    /* =====================================================
-       ATAQUE
-    ====================================================== */
-
-    function performPlayerAttack() {
-
-        const p =
-            state.player;
-
-
-        if (
-            state.dialogue
-        ) {
-
-            advanceDialogue();
-
-            return;
-        }
-
-
-        if (
+            state.paused ||
+            state.dialogue ||
             state.travel ||
             state.battle
         ) {
@@ -3514,9 +3842,13 @@
         }
 
 
+        const p =
+            state.player;
+
+
         if (
             p.attackCooldown >
-                0
+            0
         ) {
 
             return;
@@ -3529,7 +3861,7 @@
 
         if (
             p.energy <
-            c.skillCost
+            8
         ) {
 
             showToast(
@@ -3541,36 +3873,19 @@
 
 
         p.energy -=
-            c.skillCost;
-
-
-        p.hunger =
-            Math.max(
-                0,
-                p.hunger - 1.5
-            );
-
-
-        p.fatigue =
-            Math.max(
-                0,
-                p.fatigue - 2
-            );
+            8;
 
 
         p.attackCooldown =
-            0.45;
+            .45;
 
 
         const target =
             findNearestEnemy(
-                Math.max(
-                    115,
-                    c.id ===
-                        "kaelion"
-                        ? 280
-                        : 150
-                )
+                c.id ===
+                    "kaelion"
+                    ? 240
+                    : 115
             );
 
 
@@ -3597,33 +3912,6 @@
 
 
             if (
-                c.id ===
-                "theron"
-            ) {
-
-                damage += 10;
-            }
-
-
-            if (
-                c.id ===
-                "grumgar"
-            ) {
-
-                damage += 18;
-            }
-
-
-            if (
-                c.id ===
-                "kaelion"
-            ) {
-
-                damage += 6;
-            }
-
-
-            if (
                 p.equipment.weapon
             ) {
 
@@ -3632,6 +3920,26 @@
                         p.equipment.weapon
                     ]?.damage ||
                     0;
+            }
+
+
+            if (
+                c.id ===
+                "grumgar"
+            ) {
+
+                damage +=
+                    10;
+            }
+
+
+            if (
+                c.id ===
+                "kaelion"
+            ) {
+
+                damage +=
+                    5;
             }
 
 
@@ -3645,166 +3953,65 @@
         }
 
 
-        /*
-         * Se não existe inimigo,
-         * a habilidade ainda faz algo.
-         */
-
-        useClassSkill();
+        useClassAbility();
     }
 
-
-    function useClassSkill() {
-
-        const p =
-            state.player;
-
-        const c =
-            currentCharacter();
-
-
-        if (
-            c.id ===
-            "lirael"
-        ) {
-
-            p.hp =
-                clamp(
-                    p.hp + 50,
-                    0,
-                    p.maxHp
-                );
-
-            showToast(
-                "Lirael canalizou Luz Vital."
-            );
-
-        }
-
-        else if (
-            c.id ===
-            "zephyr"
-        ) {
-
-            p.speed += 25;
-
-            p.damage += 5;
-
-            setTimeout(
-                () => {
-
-                    if (
-                        state.player
-                    ) {
-
-                        p.speed -=
-                            25;
-
-                        p.damage -=
-                            5;
-                    }
-
-                },
-                8000
-            );
-
-            showToast(
-                "Zephyr assumiu uma forma adaptativa."
-            );
-
-        }
-
-        else {
-
-            showToast(
-                `${c.skill}!`
-            );
-        }
-
-
-        spawnParticles(
-            p.x,
-            p.y,
-            c.color,
-            18
-        );
-
-        beep("magic");
-    }
-
-
-    /* =====================================================
-       INIMIGO PRÓXIMO
-    ====================================================== */
 
     function findNearestEnemy(
         range
     ) {
 
-        let best =
+        let nearest =
             null;
 
-        let bestDistance =
+        let nearestDistance =
             Infinity;
 
 
-        for (
-            const enemy of
-            state.world.enemies
-        ) {
+        state.world.enemies
+            .forEach(
+                enemy => {
 
-            if (
-                enemy.dead
-            ) {
+                    if (
+                        enemy.dead
+                    ) {
 
-                continue;
-            }
-
-
-            const d =
-                dist(
-                    enemy,
-                    state.player
-                );
+                        return;
+                    }
 
 
-            if (
-                d <
-                    range &&
-                d <
-                    bestDistance
-            ) {
-
-                best =
-                    enemy;
-
-                bestDistance =
-                    d;
-            }
-        }
+                    const d =
+                        distance(
+                            enemy,
+                            state.player
+                        );
 
 
-        return best;
+                    if (
+                        d <
+                            range &&
+                        d <
+                            nearestDistance
+                    ) {
+
+                        nearest =
+                            enemy;
+
+                        nearestDistance =
+                            d;
+                    }
+                }
+            );
+
+
+        return nearest;
     }
 
-
-    /* =====================================================
-       DANO NO INIMIGO
-    ====================================================== */
 
     function attackEnemy(
         enemy,
         damage
     ) {
-
-        if (
-            !enemy ||
-            enemy.dead
-        ) {
-
-            return;
-        }
-
 
         enemy.accepted =
             true;
@@ -3820,34 +4027,126 @@
             Math.max(
                 0,
                 enemy.hp -
-                    damage
+                damage
             );
 
 
         enemy.hitFlash =
-            0.18;
-
-
-        beep("hit");
+            .18;
 
 
         if (
             enemy.hp <=
-                0
+            0
         ) {
 
             defeatEnemy(
                 enemy
             );
-
         }
-
     }
 
 
-    /* =====================================================
-       MORTE DO INIMIGO
-    ====================================================== */
+    function useClassAbility() {
+
+        const p =
+            state.player;
+
+        const c =
+            currentCharacter();
+
+
+        if (
+            c.id ===
+            "lirael"
+        ) {
+
+            p.hp =
+                Math.min(
+                    p.maxHp,
+                    p.hp + 50
+                );
+
+            showToast(
+                "Lirael usou Luz Vital."
+            );
+        }
+
+        else if (
+            c.id ===
+            "zephyr"
+        ) {
+
+            p.speed +=
+                20;
+
+            p.damage +=
+                5;
+
+
+            setTimeout(
+                () => {
+
+                    if (
+                        state.player
+                    ) {
+
+                        p.speed -=
+                            20;
+
+                        p.damage -=
+                            5;
+                    }
+
+                },
+                6000
+            );
+
+
+            showToast(
+                "Zephyr assumiu uma forma adaptativa."
+            );
+        }
+
+        else {
+
+            showToast(
+                `${c.name}: ${getSkillName(c.id)}`
+            );
+        }
+    }
+
+
+    function getSkillName(
+        id
+    ) {
+
+        const skills = {
+
+            kaelion:
+                "Raio de Memória",
+
+            theron:
+                "Golpe do Guardião",
+
+            grumgar:
+                "Esmagamento",
+
+            lirael:
+                "Luz Vital",
+
+            zephyr:
+                "Forma Adaptativa"
+
+        };
+
+
+        return (
+            skills[id] ||
+            "Habilidade"
+        );
+    }
+
 
     function defeatEnemy(
         enemy
@@ -3864,40 +4163,19 @@
         enemy.dead =
             true;
 
+
         enemy.state =
             "dead";
 
 
-        let xp =
-            30;
-
-
-        if (
+        const xp =
             enemy.type ===
-            "progression"
-        ) {
-
-            xp =
-                180;
-        }
-
-        else if (
-            enemy.type ===
-            "resourceBoss"
-        ) {
-
-            xp =
-                120;
-        }
-
-        else if (
-            enemy.type ===
-            "hell"
-        ) {
-
-            xp =
-                55;
-        }
+                "progression"
+                ? 180
+                : enemy.type ===
+                    "hell"
+                    ? 55
+                    : 30;
 
 
         state.player.xp +=
@@ -3915,6 +4193,19 @@
 
 
         if (
+            enemy.hellType !==
+            undefined
+        ) {
+
+            state.player[
+                "hellType_" +
+                enemy.hellType
+            ] =
+                true;
+        }
+
+
+        if (
             enemy.drop
         ) {
 
@@ -3925,30 +4216,34 @@
             );
 
 
-            state.world.drops.push(
-                {
-                    x: enemy.x,
-                    y: enemy.y,
-                    type: enemy.drop,
-                    amount:
-                        enemy.dropAmount ||
+            state.world.drops.push({
+
+                x:
+                    enemy.x,
+
+                y:
+                    enemy.y,
+
+                type:
+                    enemy.drop,
+
+                amount:
+                    enemy.dropAmount ||
                         1,
-                    life: 18
-                }
-            );
+
+                life:
+                    18
+            });
         }
 
 
         if (
             enemy.type ===
-                "hell" &&
-            enemy.hellType !==
-                undefined
+            "resourceBoss"
         ) {
 
-            state.player.hellTypesDefeated[
-                enemy.hellType
-            ] = true;
+            enemy.respawnTimer =
+                60;
         }
 
 
@@ -3958,77 +4253,57 @@
         ) {
 
             if (
-                !state.player.defeatedBosses.includes(
-                    enemy.id
-                )
+                !state.player
+                    .defeatedBosses
+                    .includes(
+                        enemy.id
+                    )
             ) {
 
-                state.player.defeatedBosses.push(
-                    enemy.id
-                );
+                state.player
+                    .defeatedBosses
+                    .push(
+                        enemy.id
+                    );
             }
 
 
             if (
-                !state.player.discoveredBosses.includes(
-                    enemy.id
-                )
+                enemy.unlock &&
+                !state.player
+                    .unlockedAreas
+                    .includes(
+                        enemy.unlock
+                    )
             ) {
 
-                state.player.discoveredBosses.push(
-                    enemy.id
-                );
-            }
-
-
-            if (
-                enemy.gateTarget &&
-                !state.player.unlockedAreas.includes(
-                    enemy.gateTarget
-                )
-            ) {
-
-                state.player.unlockedAreas.push(
-                    enemy.gateTarget
-                );
+                state.player
+                    .unlockedAreas
+                    .push(
+                        enemy.unlock
+                    );
 
 
                 showToast(
-                    `Nova região desbloqueada: ${REGIONS[
-                        enemy.gateTarget
-                    ]?.name || enemy.gateTarget}`
+                    `Novo caminho descoberto.`
                 );
             }
-        }
-
-
-        if (
-            enemy.type ===
-            "final"
-        ) {
-
-            state.player.finalDefeated =
-                true;
-
-            endGame(
-                "fight"
-            );
         }
 
 
         checkLevelUp();
 
-        saveGame(false);
+
+        saveGame(
+            false
+        );
+
 
         showToast(
             `${enemy.name} derrotado! +${xp} XP`
         );
     }
 
-
-    /* =====================================================
-       LEVEL UP
-    ====================================================== */
 
     function checkLevelUp() {
 
@@ -4073,123 +4348,17 @@
             p.energy =
                 p.maxEnergy;
 
-            p.memory =
-                Math.min(
-                    p.memoryMax,
-                    p.memory + 8
-                );
-
-
-            beep("level");
 
             showToast(
-                `Nível ${p.level}!`
+                `Você chegou ao nível ${p.level}!`
             );
         }
     }
 
 
     /* =====================================================
-       RECURSOS / COLETA
+       COLETA
     ====================================================== */
-
-    function getNearestTree() {
-
-        let best =
-            null;
-
-        let bestDistance =
-            Infinity;
-
-
-        for (
-            const tree of
-            state.world.trees
-        ) {
-
-            if (
-                !tree.alive
-            ) {
-
-                continue;
-            }
-
-
-            const d =
-                dist(
-                    tree,
-                    state.player
-                );
-
-
-            if (
-                d <
-                    75 &&
-                d <
-                    bestDistance
-            ) {
-
-                best =
-                    tree;
-
-                bestDistance =
-                    d;
-            }
-        }
-
-
-        return best;
-    }
-
-
-    function getNearestResource() {
-
-        let best =
-            null;
-
-        let bestDistance =
-            Infinity;
-
-
-        for (
-            const resource of
-            state.world.resources
-        ) {
-
-            if (
-                !resource.alive
-            ) {
-
-                continue;
-            }
-
-
-            const d =
-                dist(
-                    resource,
-                    state.player
-                );
-
-
-            if (
-                d <
-                    75 &&
-                d <
-                    bestDistance
-            ) {
-
-                best =
-                    resource;
-
-                bestDistance =
-                    d;
-            }
-        }
-
-
-        return best;
-    }
-
 
     function harvestTree(
         tree
@@ -4204,17 +4373,13 @@
         }
 
 
-        const cost =
-            randomInt(3, 5);
-
-
         if (
             state.player.magic <
-            cost
+            4
         ) {
 
             showToast(
-                "Você precisa de magia para coletar madeira."
+                "Magia insuficiente."
             );
 
             return;
@@ -4222,57 +4387,34 @@
 
 
         state.player.magic -=
-            cost;
+            4;
 
 
         state.player.hunger =
             Math.max(
                 0,
-                state.player.hunger - 1
+                state.player.hunger -
+                1
             );
 
 
         state.player.fatigue =
             Math.max(
                 0,
-                state.player.fatigue - 2
+                state.player.fatigue -
+                2
             );
 
 
         tree.alive =
             false;
 
+
         tree.respawn =
             random(
                 12,
                 24
             );
-
-
-        const key =
-            `tree:${state.area}`;
-
-
-        const already =
-            state.player.collected[
-                key
-            ] || 0;
-
-
-        const xp =
-            Math.max(
-                3,
-                8 -
-                    Math.floor(
-                        already / 3
-                    )
-            );
-
-
-        state.player.collected[
-            key
-        ] =
-            already + 1;
 
 
         addItem(
@@ -4283,27 +4425,17 @@
 
         state.player.treesCut++;
 
+
         state.player.xp +=
-            xp;
+            6;
 
 
-        spawnParticles(
-            tree.x,
-            tree.y,
-            "#9b7345",
-            10
-        );
-
-
-        beep("collect");
+        checkLevelUp();
 
 
         showToast(
             `Madeira coletada: x${tree.amount}`
         );
-
-
-        updateInventory();
     }
 
 
@@ -4322,30 +4454,23 @@
 
         const costs = {
 
-            carvao: [6, 9],
+            ferro: 13,
 
-            ferro: [12, 16],
+            rubi: 35,
 
-            ouro: [22, 30],
+            cristal: 18,
 
-            rubi: [35, 45],
+            carvao: 7,
 
-            cristal: [15, 20]
+            ouro: 24
 
         };
 
 
-        const [minCost, maxCost] =
-            costs[
-                resource.resource
-            ] || [6, 9];
-
-
         const cost =
-            randomInt(
-                minCost,
-                maxCost
-            );
+            costs[
+                resource.type
+            ] || 7;
 
 
         if (
@@ -4354,7 +4479,7 @@
         ) {
 
             showToast(
-                "Magia insuficiente para coletar este recurso."
+                "Magia insuficiente."
             );
 
             return;
@@ -4368,238 +4493,600 @@
         state.player.hunger =
             Math.max(
                 0,
-                state.player.hunger - 1
+                state.player.hunger -
+                1
             );
 
 
         state.player.fatigue =
             Math.max(
                 0,
-                state.player.fatigue - 2
+                state.player.fatigue -
+                2
             );
 
 
         resource.alive =
             false;
 
+
         resource.respawn =
             random(
-                18,
-                35
-            );
-
-
-        const key =
-            `resource:${state.area}:${resource.resource}`;
-
-
-        const seen =
-            state.player.collected[
-                key
-            ] || 0;
-
-
-        state.player.collected[
-            key
-        ] =
-            seen + 1;
-
-
-        const xp =
-            Math.max(
-                2,
-                6 -
-                    Math.min(
-                        4,
-                        Math.floor(
-                            seen / 3
-                        )
-                    )
+                15,
+                30
             );
 
 
         addItem(
-            resource.resource,
+            resource.type,
             resource.amount
         );
 
 
+        state.player.xp +=
+            7;
+
+
         state.player.memory =
             Math.min(
-                state.player.memoryMax,
-                state.player.memory + 1
+                100,
+                state.player.memory +
+                1
             );
 
 
-        state.player.xp +=
-            xp;
-
-
-        beep("collect");
+        checkLevelUp();
 
 
         showToast(
             `${ITEMS[
-                resource.resource
-            ]?.name || resource.resource} coletado: x${resource.amount}`
+                resource.type
+            ]?.name || resource.type} coletado: x${resource.amount}`
         );
-
-
-        checkLevelUp();
     }
 
 
-    function updateResources(dt) {
+    function updateResources(
+        dt
+    ) {
 
-        for (
-            const tree of
-            state.world.trees
-        ) {
+        state.world.trees
+            .forEach(
+                tree => {
 
-            if (
-                !tree.alive
-            ) {
+                    if (
+                        tree.alive
+                    ) {
 
-                tree.respawn -=
-                    dt;
-
-
-                if (
-                    tree.respawn <=
-                    0
-                ) {
-
-                    let tries =
-                        0;
-
-
-                    do {
-
-                        tree.x =
-                            randomInt(
-                                120,
-                                state.world.width -
-                                    120
-                            );
-
-                        tree.y =
-                            randomInt(
-                                120,
-                                state.world.height -
-                                    120
-                            );
-
-                        tries++;
-
+                        return;
                     }
-                    while (
-                        tries < 50 &&
-                        !canMoveTo(
-                            tree.x,
-                            tree.y,
-                            38
-                        )
-                    );
 
 
-                    tree.alive =
-                        true;
-
-
-                    const obstacle =
-                        state.world.obstacles.find(
-                            o =>
-                                o.treeId ===
-                                tree.id
-                        );
+                    tree.respawn -=
+                        dt;
 
 
                     if (
-                        obstacle
+                        tree.respawn <=
+                        0
                     ) {
 
-                        obstacle.x =
-                            tree.x - 30;
-
-                        obstacle.y =
-                            tree.y - 38;
+                        respawnTree(
+                            tree
+                        );
                     }
                 }
-            }
-        }
+            );
 
 
-        for (
-            const resource of
-            state.world.resources
-        ) {
+        state.world.resources
+            .forEach(
+                resource => {
 
-            if (
-                !resource.alive
-            ) {
+                    if (
+                        resource.alive
+                    ) {
 
-                resource.respawn -=
-                    dt;
+                        return;
+                    }
 
 
-                if (
-                    resource.respawn <=
-                    0
-                ) {
+                    resource.respawn -=
+                        dt;
 
-                    resource.alive =
-                        true;
+
+                    if (
+                        resource.respawn <=
+                        0
+                    ) {
+
+                        resource.alive =
+                            true;
+
+                    }
                 }
-            }
+            );
+
+
+        state.world.drops
+            .forEach(
+                drop =>
+                    drop.life -=
+                    dt
+            );
+
+
+        state.world.drops =
+            state.world.drops
+                .filter(
+                    drop =>
+                        drop.life >
+                        0
+                );
+    }
+
+
+    function respawnTree(
+        tree
+    ) {
+
+        let tries =
+            0;
+
+
+        let x = tree.x;
+        let y = tree.y;
+
+
+        do {
+
+            x =
+                randomInt(
+                    120,
+                    state.world.width -
+                        120
+                );
+
+
+            y =
+                randomInt(
+                    120,
+                    state.world.height -
+                        120
+                );
+
+
+            tries++;
+
+        }
+        while (
+            tries < 60 &&
+            !canMoveTo(
+                x,
+                y,
+                35
+            )
+        );
+
+
+        tree.x =
+            x;
+
+        tree.y =
+            y;
+
+        tree.alive =
+            true;
+
+
+        const obstacle =
+            state.world.obstacles
+                .find(
+                    o =>
+                        o.treeId ===
+                        tree.id
+                );
+
+
+        if (
+            obstacle
+        ) {
+
+            obstacle.x =
+                x - 30;
+
+            obstacle.y =
+                y - 38;
+        }
+    }
+
+
+    /* =====================================================
+       INVENTÁRIO
+    ====================================================== */
+
+    function addItem(
+        id,
+        amount
+    ) {
+
+        if (
+            !ITEMS[id]
+        ) {
+
+            return;
         }
 
 
-        for (
-            const enemy of
-            state.world.enemies
+        if (
+            state.player.inventory[
+                id
+            ] ===
+            undefined
         ) {
 
-            if (
-                enemy.type ===
-                    "resourceBoss" &&
-                enemy.dead
-            ) {
-
-                enemy.respawnTimer =
-                    (
-                        enemy.respawnTimer ||
-                        enemy.respawnTime ||
-                        60
-                    ) -
-                    dt;
+            state.player.inventory[
+                id
+            ] = 0;
+        }
 
 
-                if (
-                    enemy.respawnTimer <=
-                    0
-                ) {
+        state.player.inventory[
+            id
+        ] +=
+            Math.max(
+                0,
+                amount
+            );
+    }
 
-                    enemy.dead =
-                        false;
 
-                    enemy.hp =
-                        enemy.maxHp;
+    function removeItem(
+        id,
+        amount
+    ) {
 
-                    enemy.aggressive =
-                        false;
+        const current =
+            state.player.inventory[
+                id
+            ] || 0;
 
-                    enemy.state =
-                        "idle";
 
-                    enemy.respawnTimer =
-                        0;
+        if (
+            current <
+            amount
+        ) {
 
-                    showToast(
-                        `${enemy.name} retornou à região.`
+            return false;
+        }
+
+
+        state.player.inventory[
+            id
+        ] =
+            current -
+            amount;
+
+
+        return true;
+    }
+
+
+    function openInventory() {
+
+        updateInventory();
+
+
+        $("inventoryPanel")
+            .classList
+            .remove(
+                "hidden"
+            );
+    }
+
+
+    function updateInventory() {
+
+        const grid =
+            $("inventoryGrid");
+
+
+        grid.innerHTML =
+            "";
+
+
+        Object.entries(
+            state.player.inventory
+        )
+            .forEach(
+                ([id, amount]) => {
+
+                    if (
+                        amount <= 0
+                    ) {
+
+                        return;
+                    }
+
+
+                    const item =
+                        ITEMS[id];
+
+
+                    if (
+                        !item
+                    ) {
+
+                        return;
+                    }
+
+
+                    if (
+                        state.inventoryCategory !==
+                            "all" &&
+                        item.category !==
+                            state.inventoryCategory
+                    ) {
+
+                        return;
+                    }
+
+
+                    const div =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    div.className =
+                        "inventory-item";
+
+
+                    div.innerHTML = `
+
+                        <div class="icon">
+                            ${item.icon}
+                        </div>
+
+                        <div class="name">
+                            ${item.name}
+                        </div>
+
+                        <div class="count">
+                            x${amount}
+                        </div>
+
+                    `;
+
+
+                    div.addEventListener(
+                        "click",
+                        () =>
+                            useItem(
+                                id
+                            )
+                    );
+
+
+                    grid.appendChild(
+                        div
                     );
                 }
-            }
+            );
+
+
+        if (
+            !grid.children.length
+        ) {
+
+            grid.innerHTML = `
+
+                <div
+                    class="muted"
+                    style="
+                        grid-column:1/-1;
+                        text-align:center;
+                        padding:30px
+                    "
+                >
+                    Nenhum item nesta categoria.
+                </div>
+            `;
         }
+
+
+        let weight =
+            0;
+
+
+        Object.entries(
+            state.player.inventory
+        )
+            .forEach(
+                ([id, amount]) => {
+
+                    weight +=
+                        (
+                            ITEMS[id]
+                                ?.weight ||
+                            0
+                        ) *
+                        amount;
+                }
+            );
+
+
+        $("weightText")
+            .textContent =
+            `${weight}/100`;
+
+
+        updateEquipment();
+    }
+
+
+    function useItem(
+        id
+    ) {
+
+        const item =
+            ITEMS[id];
+
+
+        if (
+            !item
+        ) {
+
+            return;
+        }
+
+
+        if (
+            item.heal &&
+            removeItem(
+                id,
+                1
+            )
+        ) {
+
+            state.player.hp =
+                Math.min(
+                    state.player.maxHp,
+                    state.player.hp +
+                    item.heal
+                );
+
+
+            showToast(
+                "Poção usada."
+            );
+        }
+
+
+        else if (
+            item.energy &&
+            removeItem(
+                id,
+                1
+            )
+        ) {
+
+            state.player.energy =
+                Math.min(
+                    state.player.maxEnergy,
+                    state.player.energy +
+                    item.energy
+                );
+
+
+            showToast(
+                "Elixir usado."
+            );
+        }
+
+
+        else if (
+            item.damage
+        ) {
+
+            state.player
+                .equipment
+                .weapon =
+                id;
+
+
+            showToast(
+                `${item.name} equipada.`
+            );
+        }
+
+
+        else if (
+            item.defense
+        ) {
+
+            state.player
+                .equipment
+                .armor =
+                id;
+
+
+            showToast(
+                `${item.name} equipada.`
+            );
+        }
+
+
+        updateInventory();
+        updateHUD();
+    }
+
+
+    function updateEquipment() {
+
+        const grid =
+            $("equipmentGrid");
+
+
+        const weapon =
+            ITEMS[
+                state.player
+                    .equipment
+                    .weapon
+            ]?.name ||
+            "Nenhuma";
+
+
+        const armor =
+            ITEMS[
+                state.player
+                    .equipment
+                    .armor
+            ]?.name ||
+            "Nenhuma";
+
+
+        const tool =
+            ITEMS[
+                state.player
+                    .equipment
+                    .tool
+            ]?.name ||
+            "Nenhuma";
+
+
+        grid.innerHTML = `
+
+            <div class="equipment-slot">
+
+                Arma
+
+                <strong>
+                    ${weapon}
+                </strong>
+
+            </div>
+
+            <div class="equipment-slot">
+
+                Armadura
+
+                <strong>
+                    ${armor}
+                </strong>
+
+            </div>
+
+            <div class="equipment-slot">
+
+                Ferramenta
+
+                <strong>
+                    ${tool}
+                </strong>
+
+            </div>
+        `;
     }
 
 
@@ -4609,31 +5096,19 @@
 
     function getInteraction() {
 
-        const p =
-            state.player;
-
-
-        if (
-            !p
-        ) {
-
-            return null;
-        }
-
-
         if (
             state.houseMode
         ) {
 
             return {
-
                 type:
-                    "houseExit",
-
-                object:
-                    state.currentHouse
+                    "exitHouse"
             };
         }
+
+
+        const p =
+            state.player;
 
 
         let best =
@@ -4643,210 +5118,205 @@
             Infinity;
 
 
-        for (
-            const npc of
-            state.world.npcs
-        ) {
+        state.world.npcs
+            .forEach(
+                npc => {
 
-            const d =
-                dist(
-                    npc,
-                    p
-                );
-
-
-            if (
-                d < 70 &&
-                d < bestDistance
-            ) {
-
-                best = {
-
-                    type:
-                        "npc",
-
-                    object:
-                        npc
-                };
+                    const d =
+                        distance(
+                            p,
+                            npc
+                        );
 
 
-                bestDistance =
-                    d;
-            }
-        }
+                    if (
+                        d < 70 &&
+                        d <
+                            bestDistance
+                    ) {
+
+                        best = {
+                            type:
+                                "npc",
+
+                            object:
+                                npc
+                        };
+
+                        bestDistance =
+                            d;
+                    }
+                }
+            );
 
 
-        for (
-            const tree of
-            state.world.trees
-        ) {
+        state.world.trees
+            .forEach(
+                tree => {
 
-            if (
-                !tree.alive
-            ) {
+                    if (
+                        !tree.alive
+                    ) {
 
-                continue;
-            }
-
-
-            const d =
-                dist(
-                    tree,
-                    p
-                );
+                        return;
+                    }
 
 
-            if (
-                d < 72 &&
-                d < bestDistance
-            ) {
-
-                best = {
-
-                    type:
-                        "tree",
-
-                    object:
-                        tree
-                };
+                    const d =
+                        distance(
+                            p,
+                            tree
+                        );
 
 
-                bestDistance =
-                    d;
-            }
-        }
+                    if (
+                        d < 72 &&
+                        d <
+                            bestDistance
+                    ) {
+
+                        best = {
+                            type:
+                                "tree",
+
+                            object:
+                                tree
+                        };
+
+                        bestDistance =
+                            d;
+                    }
+                }
+            );
 
 
-        for (
-            const resource of
-            state.world.resources
-        ) {
+        state.world.resources
+            .forEach(
+                resource => {
 
-            if (
-                !resource.alive
-            ) {
+                    if (
+                        !resource.alive
+                    ) {
 
-                continue;
-            }
-
-
-            const d =
-                dist(
-                    resource,
-                    p
-                );
+                        return;
+                    }
 
 
-            if (
-                d < 75 &&
-                d < bestDistance
-            ) {
-
-                best = {
-
-                    type:
-                        "resource",
-
-                    object:
-                        resource
-                };
+                    const d =
+                        distance(
+                            p,
+                            resource
+                        );
 
 
-                bestDistance =
-                    d;
-            }
-        }
+                    if (
+                        d < 72 &&
+                        d <
+                            bestDistance
+                    ) {
+
+                        best = {
+                            type:
+                                "resource",
+
+                            object:
+                                resource
+                        };
+
+                        bestDistance =
+                            d;
+                    }
+                }
+            );
 
 
-        for (
-            const enemy of
-            state.world.enemies
-        ) {
+        state.world.enemies
+            .forEach(
+                enemy => {
 
-            if (
-                enemy.dead
-            ) {
+                    if (
+                        enemy.dead
+                    ) {
 
-                continue;
-            }
-
-
-            const d =
-                dist(
-                    enemy,
-                    p
-                );
+                        return;
+                    }
 
 
-            if (
-                d < 105 &&
-                d < bestDistance
-            ) {
-
-                best = {
-
-                    type:
-                        enemy.type ===
-                        "progression"
-                            ? "boss"
-                            : "enemy",
-
-                    object:
-                        enemy
-                };
+                    const d =
+                        distance(
+                            p,
+                            enemy
+                        );
 
 
-                bestDistance =
-                    d;
-            }
-        }
+                    if (
+                        d < 105 &&
+                        d <
+                            bestDistance
+                    ) {
+
+                        best = {
+                            type:
+                                enemy.type ===
+                                    "progression"
+                                    ? "boss"
+                                    : "enemy",
+
+                            object:
+                                enemy
+                        };
+
+                        bestDistance =
+                            d;
+                    }
+                }
+            );
 
 
-        for (
-            const building of
-            state.world.buildings
-        ) {
+        state.world.buildings
+            .forEach(
+                building => {
 
-            const door = {
-
-                x:
-                    building.x +
-                    building.w /
-                        2,
-
-                y:
-                    building.y +
-                    building.h +
-                    18
-            };
+                    const doorX =
+                        building.x +
+                        building.w /
+                            2;
 
 
-            const d =
-                Math.hypot(
-                    p.x - door.x,
-                    p.y - door.y
-                );
+                    const doorY =
+                        building.y +
+                        building.h +
+                        20;
 
 
-            if (
-                d < 88 &&
-                d < bestDistance
-            ) {
-
-                best = {
-
-                    type:
-                        "house",
-
-                    object:
-                        building
-                };
+                    const d =
+                        Math.hypot(
+                            p.x -
+                                doorX,
+                            p.y -
+                                doorY
+                        );
 
 
-                bestDistance =
-                    d;
-            }
-        }
+                    if (
+                        d < 88 &&
+                        d <
+                            bestDistance
+                    ) {
+
+                        best = {
+                            type:
+                                "house",
+
+                            object:
+                                building
+                        };
+
+                        bestDistance =
+                            d;
+                    }
+                }
+            );
 
 
         return best;
@@ -4854,15 +5324,6 @@
 
 
     function playerAction() {
-
-        if (
-            !state.player ||
-            state.paused
-        ) {
-
-            return;
-        }
-
 
         if (
             state.dialogue
@@ -4875,127 +5336,306 @@
 
 
         if (
-            state.travel ||
-            state.battle
+            state.paused
         ) {
 
             return;
         }
 
 
-        const interaction =
+        const action =
             getInteraction();
 
 
         if (
-            interaction
+            action
         ) {
 
-            switch (
-                interaction.type
+            if (
+                action.type ===
+                "npc"
             ) {
 
-                case "npc":
+                if (
+                    action.object
+                        .merchant
+                ) {
 
-                    if (
-                        interaction.object
-                            .merchant
-                    ) {
-
-                        openShop(
-                            interaction.object
-                        );
-
-                    }
-
-                    else if (
-                        interaction.object
-                            .questId
-                    ) {
-
-                        openQuest(
-                            interaction.object
-                        );
-
-                    }
-
-                    else {
-
-                        startDialogue(
-                            interaction.object
-                        );
-                    }
-
-                    return;
-
-
-                case "tree":
-
-                    harvestTree(
-                        interaction.object
+                    openShop(
+                        action.object
                     );
 
                     return;
+                }
 
 
-                case "resource":
+                if (
+                    action.object
+                        .questId
+                ) {
 
-                    collectResource(
-                        interaction.object
+                    openQuest(
+                        action.object
                     );
 
                     return;
+                }
 
 
-                case "boss":
+                startDialogue(
+                    action.object
+                );
 
-                    if (
-                        !interaction.object
-                            .accepted
-                    ) {
-
-                        openBattle(
-                            interaction.object
-                        );
-
-                    }
-
-                    else {
-
-                        performPlayerAttack();
-                    }
-
-                    return;
-
-
-                case "enemy":
-
-                    performPlayerAttack();
-
-                    return;
-
-
-                case "house":
-
-                case "houseExit":
-
-                    /*
-                     * Casa é Z, não E.
-                     */
-                    return;
+                return;
             }
+
+
+            if (
+                action.type ===
+                "tree"
+            ) {
+
+                harvestTree(
+                    action.object
+                );
+
+                return;
+            }
+
+
+            if (
+                action.type ===
+                "resource"
+            ) {
+
+                collectResource(
+                    action.object
+                );
+
+                return;
+            }
+
+
+            if (
+                action.type ===
+                "boss"
+            ) {
+
+                if (
+                    !action.object.accepted
+                ) {
+
+                    openBattle(
+                        action.object
+                    );
+
+                    return;
+                }
+            }
+
+
+            if (
+                action.type ===
+                "enemy" ||
+                action.type ===
+                "boss"
+            ) {
+
+                performAttack();
+
+                return;
+            }
+
+
+            return;
         }
 
 
-        performPlayerAttack();
+        performAttack();
+    }
+
+
+    function handleZ() {
+
+        if (
+            state.dialogue
+        ) {
+
+            advanceDialogue();
+
+            return;
+        }
+
+
+        if (
+            state.paused
+        ) {
+
+            return;
+        }
+
+
+        if (
+            state.houseMode
+        ) {
+
+            exitHouse();
+
+            return;
+        }
+
+
+        enterHouse();
     }
 
 
     /* =====================================================
-       NPC / DIÁLOGO
+       CASAS
     ====================================================== */
 
-    function startDialogue(npc) {
+    function enterHouse() {
+
+        if (
+            state.area !==
+            "village"
+        ) {
+
+            return;
+        }
+
+
+        let closest =
+            null;
+
+        let best =
+            Infinity;
+
+
+        state.world.buildings
+            .forEach(
+                building => {
+
+                    const doorX =
+                        building.x +
+                        building.w /
+                            2;
+
+
+                    const doorY =
+                        building.y +
+                        building.h +
+                        20;
+
+
+                    const d =
+                        Math.hypot(
+                            state.player.x -
+                                doorX,
+                            state.player.y -
+                                doorY
+                        );
+
+
+                    if (
+                        d < 90 &&
+                        d <
+                            best
+                    ) {
+
+                        best =
+                            d;
+
+                        closest =
+                            building;
+                    }
+                }
+            );
+
+
+        if (
+            !closest
+        ) {
+
+            showToast(
+                "Aproxime-se da porta."
+            );
+
+            return;
+        }
+
+
+        state.currentHouse =
+            closest;
+
+
+        state.houseMode =
+            true;
+
+
+        state.player.x =
+            380;
+
+
+        state.player.y =
+            270;
+
+
+        showToast(
+            `Você entrou em ${closest.name}.`
+        );
+    }
+
+
+    function exitHouse() {
+
+        const building =
+            state.currentHouse;
+
+
+        if (
+            !building
+        ) {
+
+            state.houseMode =
+                false;
+
+            return;
+        }
+
+
+        state.houseMode =
+            false;
+
+
+        state.player.x =
+            building.x +
+            building.w /
+                2;
+
+
+        state.player.y =
+            building.y +
+            building.h +
+            60;
+
+
+        state.currentHouse =
+            null;
+
+
+        showToast(
+            "Você saiu da casa."
+        );
+    }
+
+
+    /* =====================================================
+       DIÁLOGOS
+    ====================================================== */
+
+    function startDialogue(
+        npc
+    ) {
 
         state.dialogue = {
 
@@ -5004,18 +5644,24 @@
             lines:
                 npc.lines.slice(),
 
-            index: 0,
+            index:
+                0,
 
-            typing: false,
+            typing:
+                false,
 
-            charIndex: 0,
+            charIndex:
+                0,
 
-            timer: null
+            timer:
+                null
+
         };
 
 
         $("dialogueBox")
-            .classList.remove(
+            .classList
+            .remove(
                 "hidden"
             );
 
@@ -5051,6 +5697,7 @@
 
         dialogue.charIndex =
             0;
+
 
         dialogue.typing =
             true;
@@ -5090,12 +5737,13 @@
                             dialogue.timer
                         );
 
+
                         dialogue.typing =
                             false;
                     }
 
                 },
-                15
+                16
             );
     }
 
@@ -5123,15 +5771,11 @@
             );
 
 
-            const line =
+            $("dialogueText")
+                .textContent =
                 dialogue.lines[
                     dialogue.index
                 ];
-
-
-            $("dialogueText")
-                .textContent =
-                line;
 
 
             dialogue.typing =
@@ -5177,7 +5821,8 @@
 
 
         $("dialogueBox")
-            .classList.add(
+            .classList
+            .add(
                 "hidden"
             );
     }
@@ -5187,9 +5832,11 @@
        MISSÕES
     ====================================================== */
 
-    function openQuest(npc) {
+    function openQuest(
+        npc
+    ) {
 
-        state.currentQuestNPC =
+        state.questNPC =
             npc;
 
 
@@ -5199,27 +5846,13 @@
             ];
 
 
-        const isWood =
+        const wood =
             npc.questId ===
             "wood";
 
 
-        $("questTitle")
-            .textContent =
-            isWood
-                ? "Madeira para a Vila"
-                : "Carvão para a Forja";
-
-
-        $("questText")
-            .textContent =
-            isWood
-                ? "Colete 10 madeiras para reforçar as casas do sul."
-                : "Colete 8 carvões para ajudar o ferreiro.";
-
-
         const item =
-            isWood
+            wood
                 ? "madeira"
                 : "carvao";
 
@@ -5230,48 +5863,57 @@
             ] || 0;
 
 
+        $("questTitle")
+            .textContent =
+            wood
+                ? "Madeira para a vila"
+                : "Carvão para a forja";
+
+
+        $("questText")
+            .textContent =
+            wood
+                ? "Ajude a vila coletando madeira."
+                : "Ajude o ferreiro coletando carvão.";
+
+
         $("questStatus")
             .textContent =
             `Progresso: ${Math.min(
                 current,
                 quest.need
-            )} / ${quest.need}`;
+            )}/${quest.need}`;
 
 
-        const button =
-            $("questAction");
-
-
-        button.textContent =
+        $("questAction")
+            .textContent =
             quest.state ===
-            "none"
-
+                "none"
                 ? "ACEITAR"
-
                 : quest.state ===
                     "accepted"
-
                     ? "ENTREGAR"
-
                     : "CONCLUÍDA";
 
 
-        button.disabled =
+        $("questAction")
+            .disabled =
             quest.state ===
             "completed";
 
 
         $("questPanel")
-            .classList.remove(
+            .classList
+            .remove(
                 "hidden"
             );
     }
 
 
-    function executeQuest() {
+    function questAction() {
 
         const npc =
-            state.currentQuestNPC;
+            state.questNPC;
 
 
         if (
@@ -5321,10 +5963,12 @@
         if (
             quest.state ===
                 "accepted" &&
-            hasItem(
-                item,
+            (
+                state.player.inventory[
+                    item
+                ] || 0
+            ) >=
                 quest.need
-            )
         ) {
 
             removeItem(
@@ -5337,1310 +5981,26 @@
                 "completed";
 
 
-            state.player.money +=
-                quest.reward;
-
-
             state.player.xp +=
-                quest.reward;
+                quest.rewardXP;
+
+
+            state.player.money +=
+                quest.rewardMoney;
 
 
             checkLevelUp();
 
 
             showToast(
-                "Missão concluída e recompensa recebida."
-            );
-        }
-
-
-        openQuest(
-            npc
-        );
-    }
-
-
-    /* =====================================================
-       HELPER ITEM
-    ====================================================== */
-
-    function hasItem(
-        id,
-        amount
-    ) {
-
-        return (
-            state.player
-                .inventory[id] ||
-            0
-        ) >= amount;
-    }
-
-
-    function removeItem(
-        id,
-        amount
-    ) {
-
-        if (
-            !hasItem(
-                id,
-                amount
-            )
-        ) {
-
-            return false;
-        }
-
-
-        state.player
-            .inventory[id] -=
-            amount;
-
-
-        return true;
-    }
-
-
-    function addItem(
-        id,
-        amount
-    ) {
-
-        if (
-            !ITEMS[id]
-        ) {
-
-            return;
-        }
-
-
-        if (
-            state.player.inventory[
-                id
-            ] === undefined
-        ) {
-
-            state.player.inventory[
-                id
-            ] = 0;
-        }
-
-
-        state.player.inventory[
-            id
-        ] += amount;
-    }
-
-
-    /* =====================================================
-       INVENTÁRIO
-    ====================================================== */
-
-    function openInventory() {
-
-        updateInventory();
-
-        $("inventoryPanel")
-            .classList.remove(
-                "hidden"
-            );
-    }
-
-
-    function updateInventory() {
-
-        const grid =
-            $("inventoryGrid");
-
-
-        grid.innerHTML = "";
-
-
-        for (
-            const [id, count] of
-            Object.entries(
-                state.player.inventory
-            )
-        ) {
-
-            if (
-                count <= 0
-            ) {
-
-                continue;
-            }
-
-
-            const item =
-                ITEMS[id];
-
-
-            if (
-                !item
-            ) {
-
-                continue;
-            }
-
-
-            if (
-                state.inventoryCategory !==
-                    "all" &&
-                item.category !==
-                    state.inventoryCategory
-            ) {
-
-                continue;
-            }
-
-
-            const slot =
-                document.createElement(
-                    "div"
-                );
-
-
-            slot.className =
-                "inventory-item owned";
-
-
-            slot.innerHTML = `
-
-                <div class="icon">
-                    ${item.icon}
-                </div>
-
-                <span class="name">
-                    ${item.name}
-                </span>
-
-                <span class="count">
-                    x${count}
-                </span>
-
-            `;
-
-
-            slot.addEventListener(
-                "click",
-                () =>
-                    useItem(
-                        id
-                    )
+                "Missão concluída!"
             );
 
 
-            grid.appendChild(
-                slot
+            openQuest(
+                npc
             );
         }
-
-
-        if (
-            grid.children.length ===
-            0
-        ) {
-
-            grid.innerHTML = `
-                <div
-                    class="muted"
-                    style="
-                        grid-column:1/-1;
-                        text-align:center;
-                        padding:30px
-                    "
-                >
-                    Nenhum item nesta categoria.
-                </div>
-            `;
-        }
-
-
-        let weight = 0;
-
-
-        for (
-            const [id, count] of
-            Object.entries(
-                state.player.inventory
-            )
-        ) {
-
-            weight +=
-                (
-                    ITEMS[id]
-                        ?.weight ||
-                    0
-                ) *
-                count;
-        }
-
-
-        $("weightText")
-            .textContent =
-            `${weight}/100`;
-
-
-        updateEquipment();
-    }
-
-
-    function useItem(
-        id
-    ) {
-
-        const item =
-            ITEMS[id];
-
-
-        if (
-            !item
-        ) {
-
-            return;
-        }
-
-
-        if (
-            item.heal
-        ) {
-
-            if (
-                removeItem(
-                    id,
-                    1
-                )
-            ) {
-
-                state.player.hp =
-                    clamp(
-                        state.player.hp +
-                            item.heal,
-                        0,
-                        state.player.maxHp
-                    );
-
-                showToast(
-                    "Poção usada."
-                );
-
-                beep("collect");
-            }
-        }
-
-
-        else if (
-            item.mana
-        ) {
-
-            if (
-                removeItem(
-                    id,
-                    1
-                )
-            ) {
-
-                state.player.energy =
-                    clamp(
-                        state.player.energy +
-                            item.mana,
-                        0,
-                        state.player.maxEnergy
-                    );
-
-                showToast(
-                    "Elixir usado."
-                );
-
-                beep("collect");
-            }
-        }
-
-
-        else if (
-            item.damage
-        ) {
-
-            state.player.equipment.weapon =
-                id;
-
-            showToast(
-                `${item.name} equipada.`
-            );
-        }
-
-
-        else if (
-            item.defense
-        ) {
-
-            state.player.equipment.armor =
-                id;
-
-            showToast(
-                `${item.name} equipada.`
-            );
-        }
-
-
-        else if (
-            id ===
-            "mapa"
-        ) {
-
-            state.player.mapOwned =
-                true;
-
-            showToast(
-                "Mapa adquirido."
-            );
-        }
-
-
-        updateInventory();
-
-        updateHUD();
-    }
-
-
-    function updateEquipment() {
-
-        const grid =
-            $("equipmentGrid");
-
-
-        const weapon =
-            ITEMS[
-                state.player.equipment.weapon
-            ]?.name ||
-            "Nenhuma";
-
-
-        const armor =
-            ITEMS[
-                state.player.equipment.armor
-            ]?.name ||
-            "Nenhuma";
-
-
-        const tool =
-            ITEMS[
-                state.player.equipment.tool
-            ]?.name ||
-            "Nenhuma";
-
-
-        grid.innerHTML = `
-
-            <div class="equipment-slot">
-
-                Arma
-
-                <b>
-                    ${weapon}
-                </b>
-
-                ${
-                    state.player.equipment.weapon
-                        ? `
-                            <button
-                                data-slot="weapon"
-                            >
-                                Desequipar
-                            </button>
-                        `
-                        : ""
-                }
-
-            </div>
-
-
-            <div class="equipment-slot">
-
-                Armadura
-
-                <b>
-                    ${armor}
-                </b>
-
-                ${
-                    state.player.equipment.armor
-                        ? `
-                            <button
-                                data-slot="armor"
-                            >
-                                Desequipar
-                            </button>
-                        `
-                        : ""
-                }
-
-            </div>
-
-
-            <div class="equipment-slot">
-
-                Ferramenta
-
-                <b>
-                    ${tool}
-                </b>
-
-            </div>
-        `;
-
-
-        grid
-            .querySelectorAll(
-                "button"
-            )
-            .forEach(
-                button => {
-
-                    button.addEventListener(
-                        "click",
-                        () => {
-
-                            state.player
-                                .equipment[
-                                    button.dataset.slot
-                                ] = null;
-
-
-                            updateInventory();
-                        }
-                    );
-                }
-            );
-    }
-
-
-    /* =====================================================
-       LOJA
-    ====================================================== */
-
-    function openShop(npc) {
-
-        state.shopNPC =
-            npc;
-
-
-        $("shopTitle")
-            .textContent =
-            `LOJA DE ${npc.name}`;
-
-
-        renderShop();
-
-
-        $("shopPanel")
-            .classList.remove(
-                "hidden"
-            );
-    }
-
-
-    function renderShop() {
-
-        const grid =
-            $("shopGrid");
-
-
-        grid.innerHTML = "";
-
-
-        if (
-            state.shopMode ===
-            "buy"
-        ) {
-
-            const goods = [
-                "pocao",
-                "elixir",
-                "espadaFerro",
-                "armaduraCouro",
-                "mapa"
-            ];
-
-
-            goods.forEach(
-                id => {
-
-                    const item =
-                        ITEMS[id];
-
-
-                    const price =
-                        id ===
-                            "mapa"
-                            ? 350
-                            : item.value;
-
-
-                    const row =
-                        document.createElement(
-                            "div"
-                        );
-
-
-                    row.className =
-                        "shop-row";
-
-
-                    row.innerHTML = `
-
-                        <div class="shop-icon">
-                            ${item.icon}
-                        </div>
-
-                        <div class="shop-info">
-
-                            <strong>
-                                ${item.name}
-                            </strong>
-
-                            <small>
-                                Item útil para sua jornada.
-                            </small>
-
-                        </div>
-
-                        <div class="shop-price">
-                            💰 ${price}
-                        </div>
-
-                        <button class="small-btn">
-                            Comprar
-                        </button>
-
-                    `;
-
-
-                    row
-                        .querySelector(
-                            "button"
-                        )
-                        .addEventListener(
-                            "click",
-                            () => {
-
-                                if (
-                                    id ===
-                                        "mapa" &&
-                                    state.player
-                                        .mapOwned
-                                ) {
-
-                                    showToast(
-                                        "Você já possui o mapa."
-                                    );
-
-                                    return;
-                                }
-
-
-                                if (
-                                    state.player.money <
-                                    price
-                                ) {
-
-                                    showToast(
-                                        "Dinheiro insuficiente."
-                                    );
-
-                                    return;
-                                }
-
-
-                                state.player.money -=
-                                    price;
-
-
-                                if (
-                                    id ===
-                                    "mapa"
-                                ) {
-
-                                    state.player.mapOwned =
-                                        true;
-
-                                }
-
-                                else {
-
-                                    addItem(
-                                        id,
-                                        1
-                                    );
-                                }
-
-
-                                showToast(
-                                    `${item.name} comprado.`
-                                );
-
-
-                                renderShop();
-
-                                updateHUD();
-                            }
-                        );
-
-
-                    grid.appendChild(
-                        row
-                    );
-                }
-            );
-
-        }
-
-        else {
-
-            for (
-                const [id, count] of
-                Object.entries(
-                    state.player.inventory
-                )
-            ) {
-
-                if (
-                    count <= 0
-                ) {
-
-                    continue;
-                }
-
-
-                const item =
-                    ITEMS[id];
-
-
-                if (
-                    !item
-                ) {
-
-                    continue;
-                }
-
-
-                const price =
-                    Math.max(
-                        1,
-                        Math.floor(
-                            item.value *
-                            .7
-                        )
-                    );
-
-
-                const row =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                row.className =
-                    "shop-row";
-
-
-                row.innerHTML = `
-
-                    <div class="shop-icon">
-                        ${item.icon}
-                    </div>
-
-                    <div class="shop-info">
-
-                        <strong>
-                            ${item.name}
-                        </strong>
-
-                        <small>
-                            Quantidade: ${count}
-                        </small>
-
-                    </div>
-
-                    <div class="shop-price">
-                        💰 ${price}
-                    </div>
-
-                    <button class="small-btn">
-                        Vender
-                    </button>
-
-                `;
-
-
-                row
-                    .querySelector(
-                        "button"
-                    )
-                    .addEventListener(
-                        "click",
-                        () => {
-
-                            if (
-                                removeItem(
-                                    id,
-                                    1
-                                )
-                            ) {
-
-                                state.player.money +=
-                                    price;
-
-
-                                showToast(
-                                    `${item.name} vendido.`
-                                );
-
-
-                                renderShop();
-
-                                updateHUD();
-                            }
-                        }
-                    );
-
-
-                grid.appendChild(
-                    row
-                );
-            }
-        }
-    }
-
-
-    /* =====================================================
-       MAPA
-    ====================================================== */
-
-    function openMap() {
-
-        if (
-            !state.player.mapOwned
-        ) {
-
-            showToast(
-                "Você precisa comprar o mapa com Doran."
-            );
-
-            return;
-        }
-
-
-        drawMap();
-
-
-        $("mapPanel")
-            .classList.remove(
-                "hidden"
-            );
-    }
-
-
-    function drawMap() {
-
-        const width = 900;
-        const height = 560;
-
-
-        mapCanvas.width =
-            width;
-
-        mapCanvas.height =
-            height;
-
-
-        mapCtx.fillStyle =
-            "#1d291e";
-
-
-        mapCtx.fillRect(
-            0,
-            0,
-            width,
-            height
-        );
-
-
-        const sx =
-            width /
-            state.world.width;
-
-
-        const sy =
-            height /
-            state.world.height;
-
-
-        mapCtx.fillStyle =
-            "#8a6b4f";
-
-
-        for (
-            const building of
-            state.world.buildings
-        ) {
-
-            mapCtx.fillRect(
-                building.x * sx,
-                building.y * sy,
-                building.w * sx,
-                building.h * sy
-            );
-        }
-
-
-        for (
-            const enemy of
-            state.world.enemies
-        ) {
-
-            if (
-                enemy.dead
-            ) {
-
-                continue;
-            }
-
-
-            mapCtx.fillStyle =
-                enemy.type ===
-                    "progression"
-                    ||
-                    enemy.type ===
-                        "final"
-                    ? "#ff544a"
-                    : "#db8663";
-
-
-            mapCtx.beginPath();
-
-
-            mapCtx.arc(
-                enemy.x * sx,
-                enemy.y * sy,
-                enemy.type ===
-                    "progression"
-                    ||
-                    enemy.type ===
-                        "final"
-                    ? 7
-                    : 4,
-                0,
-                Math.PI * 2
-            );
-
-
-            mapCtx.fill();
-        }
-
-
-        mapCtx.fillStyle =
-            "#e0c57b";
-
-
-        for (
-            const npc of
-            state.world.npcs
-        ) {
-
-            mapCtx.fillRect(
-                npc.x * sx - 3,
-                npc.y * sy - 3,
-                6,
-                6
-            );
-        }
-
-
-        mapCtx.fillStyle =
-            "#5a9ed1";
-
-
-        for (
-            const portal of
-            state.world.portals
-        ) {
-
-            mapCtx.fillRect(
-                portal.x * sx,
-                portal.y * sy,
-                portal.w * sx,
-                portal.h * sy
-            );
-        }
-
-
-        mapCtx.fillStyle =
-            "#ffffff";
-
-
-        mapCtx.beginPath();
-
-
-        mapCtx.arc(
-            state.player.x * sx,
-            state.player.y * sy,
-            7,
-            0,
-            Math.PI * 2
-        );
-
-
-        mapCtx.fill();
-    }
-
-
-    /* =====================================================
-       LIVRO
-    ====================================================== */
-
-    function openBook() {
-
-        renderBook();
-
-
-        $("bookPanel")
-            .classList.remove(
-                "hidden"
-            );
-    }
-
-
-    function renderBook() {
-
-        const grid =
-            $("bossBook");
-
-
-        grid.innerHTML = "";
-
-
-        const bossIds = [
-
-            "forest_guardian",
-
-            "grove_guardian",
-
-            "mountain_guardian",
-
-            "iron_guardian",
-
-            "ruby_guardian",
-
-            "shadow_guardian",
-
-            "fairy_guardian",
-
-            "sky_guardian",
-
-            "hell_guardian",
-
-            "other_self"
-        ];
-
-
-        bossIds.forEach(
-            id => {
-
-                const known =
-                    state.player
-                        .discoveredBosses
-                        .includes(
-                            id
-                        );
-
-
-                const defeated =
-                    state.player
-                        .defeatedBosses
-                        .includes(
-                            id
-                        );
-
-
-                const enemy =
-                    state.world.enemies.find(
-                        e =>
-                            e.id === id
-                    );
-
-
-                const entry =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                entry.className =
-                    "boss-entry" +
-                    (
-                        known ||
-                        defeated
-                            ? " known"
-                            : ""
-                    );
-
-
-                if (
-                    !known &&
-                    !defeated
-                ) {
-
-                    entry.innerHTML = `
-
-                        <div class="boss-symbol">
-                            ?
-                        </div>
-
-                        <strong>
-                            DESCONHECIDO
-                        </strong>
-
-                        <p>
-                            Descubra este boss para
-                            atualizar o Livro.
-                        </p>
-
-                    `;
-
-                }
-
-                else {
-
-                    entry.innerHTML = `
-
-                        <div class="boss-symbol">
-                            ${enemy?.icon || "☠"}
-                        </div>
-
-                        <strong>
-                            ${enemy?.name || id}
-                        </strong>
-
-                        <p>
-                            ${
-                                defeated
-                                    ? "Derrotado."
-                                    : "Ainda ativo."
-                            }
-                        </p>
-
-                        <p>
-                            “A memória guarda o que o
-                            mundo tenta apagar.”
-                        </p>
-
-                    `;
-                }
-
-
-                grid.appendChild(
-                    entry
-                );
-            }
-        );
-    }
-
-
-    /* =====================================================
-       CASAS
-    ====================================================== */
-
-    function enterHouse() {
-
-        if (
-            state.area !==
-            "village" ||
-            state.houseMode
-        ) {
-
-            return;
-        }
-
-
-        let closest =
-            null;
-
-        let best =
-            100;
-
-
-        for (
-            const building of
-            state.world.buildings
-        ) {
-
-            const door = {
-
-                x:
-                    building.x +
-                    building.w /
-                        2,
-
-                y:
-                    building.y +
-                    building.h +
-                    18
-            };
-
-
-            const d =
-                Math.hypot(
-                    state.player.x -
-                        door.x,
-                    state.player.y -
-                        door.y
-                );
-
-
-            if (
-                d < best
-            ) {
-
-                best =
-                    d;
-
-                closest =
-                    building;
-            }
-        }
-
-
-        if (
-            !closest
-        ) {
-
-            showToast(
-                "Aproxime-se da porta."
-            );
-
-            return;
-        }
-
-
-        state.currentHouse =
-            closest;
-
-
-        state.houseMode =
-            true;
-
-
-        for (
-            const obstacle of
-            state.world.obstacles
-        ) {
-
-            if (
-                obstacle.type ===
-                "building"
-            ) {
-
-                obstacle.disabled =
-                    true;
-            }
-        }
-
-
-        state.player.x =
-            320;
-
-
-        state.player.y =
-            280;
-
-
-        showToast(
-            `Você entrou em ${closest.name}.`
-        );
-    }
-
-
-    function exitHouse() {
-
-        if (
-            !state.houseMode
-        ) {
-
-            return;
-        }
-
-
-        const building =
-            state.currentHouse;
-
-
-        for (
-            const obstacle of
-            state.world.obstacles
-        ) {
-
-            if (
-                obstacle.type ===
-                "building"
-            ) {
-
-                obstacle.disabled =
-                    false;
-            }
-        }
-
-
-        state.houseMode =
-            false;
-
-
-        state.player.x =
-            building.x +
-            building.w /
-                2;
-
-
-        state.player.y =
-            building.y +
-            building.h +
-            55;
-
-
-        state.currentHouse =
-            null;
-
-
-        showToast(
-            "Você saiu da casa."
-        );
-    }
-
-
-    function handleZ() {
-
-        if (
-            state.dialogue
-        ) {
-
-            advanceDialogue();
-
-            return;
-        }
-
-
-        if (
-            state.houseMode
-        ) {
-
-            exitHouse();
-
-            return;
-        }
-
-
-        enterHouse();
     }
 
 
@@ -6656,6 +6016,10 @@
             enemy;
 
 
+        state.paused =
+            true;
+
+
         $("battleIcon")
             .textContent =
             enemy.icon;
@@ -6668,17 +6032,14 @@
 
         $("battleText")
             .textContent =
-            `${enemy.name} bloqueia a progressão. Se aceitar, a criatura ficará agressiva e a batalha começará.`;
+            "Essa criatura guarda o caminho. Você aceita enfrentá-la?";
 
 
         $("battlePanel")
-            .classList.remove(
+            .classList
+            .remove(
                 "hidden"
             );
-
-
-        state.paused =
-            true;
     }
 
 
@@ -6704,24 +6065,24 @@
             "chasing";
 
 
-        state.battle = null;
+        state.battle =
+            null;
+
 
         state.paused =
             false;
 
 
         $("battlePanel")
-            .classList.add(
+            .classList
+            .add(
                 "hidden"
             );
 
 
         showToast(
-            "Batalha aceita!"
+            "A batalha começou."
         );
-
-
-        beep("magic");
     }
 
 
@@ -6730,12 +6091,14 @@
         state.battle =
             null;
 
+
         state.paused =
             false;
 
 
         $("battlePanel")
-            .classList.add(
+            .classList
+            .add(
                 "hidden"
             );
     }
@@ -6745,106 +6108,11 @@
        PORTAIS
     ====================================================== */
 
-    function requirementMet(
-        requirement
-    ) {
-
-        const p =
-            state.player;
-
-
-        const requirements = {
-
-            guardianForest:
-                () =>
-                    p.defeatedBosses.includes(
-                        "forest_guardian"
-                    ),
-
-            forestBoss:
-                () =>
-                    p.defeatedBosses.includes(
-                        "forest_guardian"
-                    ),
-
-            groveGuardian:
-                () =>
-                    p.defeatedBosses.includes(
-                        "grove_guardian"
-                    ),
-
-            mountainGuardian:
-                () =>
-                    p.defeatedBosses.includes(
-                        "mountain_guardian"
-                    ),
-
-            ironGuardian:
-                () =>
-                    p.defeatedBosses.includes(
-                        "iron_guardian"
-                    ),
-
-            rubyGuardian:
-                () =>
-                    p.defeatedBosses.includes(
-                        "ruby_guardian"
-                    ),
-
-            shadowGuardian:
-                () =>
-                    p.defeatedBosses.includes(
-                        "shadow_guardian"
-                    ),
-
-            fairyGuardian:
-                () =>
-                    p.defeatedBosses.includes(
-                        "fairy_guardian"
-                    ),
-
-            skyGuardian:
-                () =>
-                    p.defeatedBosses.includes(
-                        "sky_guardian"
-                    ),
-
-            questWood:
-                () =>
-                    p.quest.wood.state ===
-                    "completed" ||
-                    p.defeatedBosses.includes(
-                        "forest_guardian"
-                    ),
-
-            hellGuardian:
-                () =>
-                    p.defeatedBosses.includes(
-                        "hell_guardian"
-                    ) &&
-                    Object.keys(
-                        p.hellTypesDefeated
-                    ).length >=
-                        5
-        };
-
-
-        return (
-            !requirement ||
-            Boolean(
-                requirements[
-                    requirement
-                ]?.()
-            )
-        );
-    }
-
-
     function checkPortals() {
 
         if (
-            state.houseMode ||
             state.paused ||
+            state.houseMode ||
             state.portalCooldown >
                 0
         ) {
@@ -6855,17 +6123,21 @@
 
         for (
             const portal of
-            state.world.portals
+                state.world.portals
         ) {
 
             const inside =
+
                 state.player.x >
                     portal.x &&
+
                 state.player.x <
                     portal.x +
                     portal.w &&
+
                 state.player.y >
                     portal.y &&
+
                 state.player.y <
                     portal.y +
                     portal.h;
@@ -6879,23 +6151,19 @@
             }
 
 
+            const unlocked =
+                portal.requirement
+                    ? portal.requirement()
+                    : true;
+
+
             if (
-                !requirementMet(
-                    portal.requirement
-                )
+                !unlocked
             ) {
 
                 showToast(
                     "Esse caminho ainda está bloqueado."
                 );
-
-
-                state.player.x =
-                    Math.max(
-                        90,
-                        portal.x -
-                            65
-                    );
 
 
                 state.portalCooldown =
@@ -6920,14 +6188,6 @@
         portal
     ) {
 
-        if (
-            state.travel
-        ) {
-
-            return;
-        }
-
-
         state.travel =
             portal;
 
@@ -6936,37 +6196,14 @@
             true;
 
 
-        $("travelTitle")
-            .textContent =
-            "DESEJA CONTINUAR?";
-
-
         $("travelText")
             .textContent =
-            `O caminho leva para ${portal.title}. Deseja continuar?`;
+            `Você encontrou um caminho para ${portal.title}.`;
 
 
         $("travelPanel")
-            .classList.remove(
-                "hidden"
-            );
-    }
-
-
-    function cancelTravel() {
-
-        state.travel =
-            null;
-
-        state.paused =
-            false;
-
-        state.portalCooldown =
-            1.2;
-
-
-        $("travelPanel")
-            .classList.add(
+            .classList
+            .remove(
                 "hidden"
             );
     }
@@ -6991,7 +6228,8 @@
 
 
         $("travelPanel")
-            .classList.add(
+            .classList
+            .add(
                 "hidden"
             );
 
@@ -7002,15 +6240,33 @@
     }
 
 
+    function cancelTravel() {
+
+        state.travel =
+            null;
+
+
+        state.paused =
+            false;
+
+
+        state.portalCooldown =
+            1.2;
+
+
+        $("travelPanel")
+            .classList
+            .add(
+                "hidden"
+            );
+    }
+
+
     function transitionTo(
         target
     ) {
 
-        const transition =
-            $("transitionScreen");
-
-
-        transition
+        $("transitionScreen")
             .classList
             .remove(
                 "hidden"
@@ -7019,7 +6275,9 @@
 
         $("transitionMessage")
             .textContent =
-            `Viajando para ${REGIONS[target].name}...`;
+            REGIONS[
+                target
+            ].name;
 
 
         state.paused =
@@ -7033,56 +6291,54 @@
                     target;
 
 
-                buildArea();
+                buildWorld();
+
+
+                const checkpoint =
+                    state.player
+                        .checkpoints[
+                            target
+                        ];
 
 
                 state.player.x =
-                    150;
+                    checkpoint
+                        ?.x ||
+                    120;
 
 
                 state.player.y =
+                    checkpoint
+                        ?.y ||
                     state.world.height /
-                    2;
-
-
-                state.player.checkpoint = {
-
-                    area:
-                        target,
-
-                    x:
-                        state.player.x,
-
-                    y:
-                        state.player.y
-                };
+                        2;
 
 
                 if (
-                    !state.player.unlockedAreas.includes(
-                        target
-                    )
+                    !state.player
+                        .unlockedAreas
+                        .includes(
+                            target
+                        )
                 ) {
 
-                    state.player.unlockedAreas.push(
-                        target
-                    );
+                    state.player
+                        .unlockedAreas
+                        .push(
+                            target
+                        );
                 }
 
 
-                state.player.magic =
-                    state.player.maxMagic;
-
-
-                state.player.energy =
-                    state.player.maxEnergy;
+                state.player.checkpoint =
+                    target;
 
 
                 state.paused =
                     false;
 
 
-                transition
+                $("transitionScreen")
                     .classList
                     .add(
                         "hidden"
@@ -7105,80 +6361,17 @@
 
 
     /* =====================================================
-       CHECKPOINT
+       MAPA
     ====================================================== */
 
-    function ensureCheckpoint() {
+    function openMap() {
 
         if (
-            !state.player.checkpoint
+            !state.player.mapOwned
         ) {
 
-            state.player.checkpoint = {
-
-                area:
-                    state.area,
-
-                x:
-                    state.player.x,
-
-                y:
-                    state.player.y
-            };
-        }
-    }
-
-
-    /* =====================================================
-       FINAL
-    ====================================================== */
-
-    function openFinalChoice() {
-
-        if (
-            state.player.finalChoice
-        ) {
-
-            return;
-        }
-
-
-        state.paused =
-            true;
-
-
-        $("finalPanel")
-            .classList.remove(
-                "hidden"
-            );
-    }
-
-
-    function chooseFinal(
-        choice
-    ) {
-
-        state.player.finalChoice =
-            choice;
-
-
-        $("finalPanel")
-            .classList.add(
-                "hidden"
-            );
-
-
-        state.paused =
-            false;
-
-
-        if (
-            choice ===
-            "join"
-        ) {
-
-            endGame(
-                "join"
+            showToast(
+                "Você ainda não possui um mapa."
             );
 
 
@@ -7186,2053 +6379,192 @@
         }
 
 
-        const boss =
-            state.world.enemies.find(
-                enemy =>
-                    enemy.id ===
-                    "other_self"
-            );
+        drawMap();
 
 
-        if (
-            boss
-        ) {
-
-            boss.accepted =
-                true;
-
-            boss.aggressive =
-                true;
-
-            boss.state =
-                "chasing";
-        }
-
-
-        showToast(
-            "A batalha final começou."
-        );
-    }
-
-
-    function endGame(
-        type
-    ) {
-
-        state.running =
-            false;
-
-        state.paused =
-            true;
-
-
-        $("transitionScreen")
-            .classList.remove(
+        $("mapPanel")
+            .classList
+            .remove(
                 "hidden"
             );
-
-
-        $("transitionMessage")
-            .textContent =
-            type ===
-                "join"
-                ? "QUIETUDE ABSOLUTA"
-                : "VEYRA FOI PRESERVADA";
-
-
-        setTimeout(
-            () => {
-
-                $("transitionScreen")
-                    .classList.add(
-                        "hidden"
-                    );
-
-
-                showScreen(
-                    "menu"
-                );
-
-
-                updateContinueButton();
-
-
-                showToast(
-                    type ===
-                        "join"
-                        ? "Você aceitou a Quietude."
-                        : "Você derrotou o Outro Eu."
-                );
-
-            },
-            2500
-        );
-
-
-        saveGame(
-            false
-        );
     }
 
 
-    /* =====================================================
-       RENDER — CHÃO
-    ====================================================== */
+    function drawMap() {
 
-    function drawGround() {
-
-        const visual =
-            REGIONS[
-                state.area
-            ].visual;
-
-
-        const colors = {
-
-            village:
-                "#566d4c",
-
-            forest:
-                "#3e6141",
-
-            mountains:
-                "#90969a",
-
-            cave:
-                "#292e31",
-
-            ruby:
-                "#48252b",
-
-            shadow:
-                "#171c2d",
-
-            fairy:
-                "#54426b",
-
-            sky:
-                "#93b3c8",
-
-            hell:
-                "#48211f",
-
-            final:
-                "#191719"
-        };
-
-
-        ctx.fillStyle =
-            colors[
-                visual
-            ] || "#566d4c";
-
-
-        ctx.fillRect(
+        mapCtx.clearRect(
             0,
             0,
-            state.world.width,
-            state.world.height
+            mapCanvas.width,
+            mapCanvas.height
         );
 
 
-        const tile =
-            64;
+        mapCtx.fillStyle =
+            "#18221a";
 
 
-        for (
-            let y = 70;
-            y <
-            state.world.height -
-                70;
-            y += tile
-        ) {
-
-            for (
-                let x = 70;
-                x <
-                state.world.width -
-                    70;
-                x += tile
-            ) {
-
-                ctx.fillStyle =
-                    (
-                        (
-                            x / tile +
-                            y / tile
-                        ) %
-                        2 ===
-                            0
-                    )
-                        ? "rgba(255,255,255,.015)"
-                        : "rgba(0,0,0,.018)";
-
-
-                ctx.fillRect(
-                    x,
-                    y,
-                    tile,
-                    tile
-                );
-            }
-        }
-
-
-        if (
-            state.area ===
-            "village"
-        ) {
-
-            ctx.fillStyle =
-                "rgba(18,22,18,.22)";
-
-
-            ctx.beginPath();
-
-
-            ctx.moveTo(
-                2200,
-                650
-            );
-
-
-            ctx.bezierCurveTo(
-                2700,
-                500,
-                3200,
-                750,
-                3050,
-                1200
-            );
-
-
-            ctx.bezierCurveTo(
-                3100,
-                1500,
-                2600,
-                1540,
-                2350,
-                1270
-            );
-
-
-            ctx.bezierCurveTo(
-                2140,
-                1040,
-                2140,
-                780,
-                2200,
-                650
-            );
-
-
-            ctx.fill();
-
-
-            ctx.fillStyle =
-                "#a99d7d";
-
-
-            ctx.font =
-                "bold 15px Georgia";
-
-
-            ctx.textAlign =
-                "center";
-
-
-            ctx.fillText(
-                "TERRAS TOCADAS PELO VAZIO",
-                2700,
-                1030
-            );
-        }
-
-
-        if (
-            visual ===
-            "hell"
-        ) {
-
-            ctx.fillStyle =
-                "rgba(170,45,25,.18)";
-
-
-            ctx.fillRect(
-                0,
-                0,
-                state.world.width,
-                state.world.height
-            );
-        }
-
-
-        if (
-            visual ===
-            "shadow"
-        ) {
-
-            ctx.fillStyle =
-                "rgba(20,20,55,.34)";
-
-
-            ctx.fillRect(
-                0,
-                0,
-                state.world.width,
-                state.world.height
-            );
-        }
-    }
-
-
-    /* =====================================================
-       RENDER — CAMINHOS
-    ====================================================== */
-
-    function drawPaths() {
-
-        if (
-            state.area !==
-            "village"
-        ) {
-
-            return;
-        }
-
-
-        ctx.fillStyle =
-            "#b89d6b";
-
-
-        ctx.globalAlpha =
-            0.72;
-
-
-        ctx.fillRect(
-            70,
-            1080,
-            state.world.width -
-                140,
-            115
+        mapCtx.fillRect(
+            0,
+            0,
+            mapCanvas.width,
+            mapCanvas.height
         );
 
 
-        ctx.fillRect(
-            1545,
-            70,
-            110,
-            state.world.height -
-                140
-        );
+        const sx =
+            mapCanvas.width /
+            state.world.width;
 
 
-        ctx.fillRect(
-            1690,
-            1110,
-            1030,
-            72
-        );
+        const sy =
+            mapCanvas.height /
+            state.world.height;
 
 
-        ctx.fillRect(
-            610,
-            1110,
-            95,
-            600
-        );
+        mapCtx.fillStyle =
+            "#89694e";
 
 
-        ctx.globalAlpha =
-            1;
-    }
+        state.world.buildings
+            .forEach(
+                building => {
 
-
-    /* =====================================================
-       RENDER — GRAMA
-    ====================================================== */
-
-    function drawGrass() {
-
-        if (
-            state.area ===
-                "cave" ||
-            state.area ===
-                "rubyCave"
-        ) {
-
-            return;
-        }
-
-
-        ctx.strokeStyle =
-            "rgba(35,75,40,.45)";
-
-
-        ctx.lineWidth = 2;
-
-
-        for (
-            let y = 100;
-            y <
-            state.world.height -
-                100;
-            y += 45
-        ) {
-
-            for (
-                let x = 100;
-                x <
-                state.world.width -
-                    100;
-                x += 45
-            ) {
-
-                if (
-                    (
-                        x * 7 +
-                        y * 3
-                    ) %
-                    13 <
-                    5
-                ) {
-
-                    ctx.beginPath();
-
-
-                    ctx.moveTo(
-                        x,
-                        y + 5
+                    mapCtx.fillRect(
+                        building.x *
+                            sx,
+                        building.y *
+                            sy,
+                        building.w *
+                            sx,
+                        building.h *
+                            sy
                     );
-
-
-                    ctx.lineTo(
-                        x - 4,
-                        y - 4
-                    );
-
-
-                    ctx.moveTo(
-                        x,
-                        y + 5
-                    );
-
-
-                    ctx.lineTo(
-                        x + 5,
-                        y - 5
-                    );
-
-
-                    ctx.stroke();
                 }
-            }
-        }
-    }
-
-
-    /* =====================================================
-       RENDER — CONSTRUÇÕES
-    ====================================================== */
-
-    function drawBuildings() {
-
-        if (
-            state.houseMode &&
-            state.currentHouse
-        ) {
-
-            drawHouseInterior(
-                state.currentHouse
-            );
-
-            return;
-        }
-
-
-        for (
-            const building of
-            state.world.buildings
-        ) {
-
-            ctx.fillStyle =
-                "rgba(0,0,0,.28)";
-
-
-            ctx.fillRect(
-                building.x + 14,
-                building.y + 16,
-                building.w,
-                building.h
             );
 
 
-            ctx.fillStyle =
-                building.color;
+        mapCtx.fillStyle =
+            "#4d91b4";
 
 
-            ctx.fillRect(
-                building.x,
-                building.y,
-                building.w,
-                building.h
+        state.world.portals
+            .forEach(
+                portal => {
+
+                    mapCtx.fillRect(
+                        portal.x *
+                            sx,
+                        portal.y *
+                            sy,
+                        portal.w *
+                            sx,
+                        portal.h *
+                            sy
+                    );
+                }
             );
 
 
-            ctx.strokeStyle =
-                "rgba(30,25,20,.45)";
+        state.world.enemies
+            .forEach(
+                enemy => {
 
+                    if (
+                        enemy.dead
+                    ) {
 
-            ctx.lineWidth =
-                4;
+                        return;
+                    }
 
 
-            ctx.strokeRect(
-                building.x + 3,
-                building.y + 3,
-                building.w - 6,
-                building.h - 6
-            );
+                    mapCtx.fillStyle =
+                        enemy.type ===
+                            "progression"
+                            ? "#e84f4c"
+                            : "#d18562";
 
 
-            ctx.fillStyle =
-                building.roof;
+                    mapCtx.beginPath();
 
 
-            ctx.beginPath();
-
-
-            ctx.moveTo(
-                building.x - 25,
-                building.y
-            );
-
-
-            ctx.lineTo(
-                building.x +
-                    building.w / 2,
-                building.y - 100
-            );
-
-
-            ctx.lineTo(
-                building.x +
-                    building.w + 25,
-                building.y
-            );
-
-
-            ctx.closePath();
-
-
-            ctx.fill();
-
-
-            ctx.fillStyle =
-                "#4b3025";
-
-
-            ctx.fillRect(
-                building.x +
-                    building.w / 2 -
-                    25,
-
-                building.y +
-                    building.h -
-                    70,
-
-                50,
-                70
-            );
-
-
-            ctx.fillStyle =
-                "#dbc67d";
-
-
-            ctx.fillRect(
-                building.x + 38,
-                building.y + 60,
-                50,
-                42
-            );
-
-
-            ctx.fillRect(
-                building.x +
-                    building.w -
-                    88,
-                building.y + 60,
-                50,
-                42
-            );
-
-
-            ctx.fillStyle =
-                "#171714";
-
-
-            ctx.fillRect(
-                building.x +
-                    building.w / 2 -
-                    85,
-
-                building.y +
-                    building.h +
-                    10,
-
-                170,
-                25
-            );
-
-
-            ctx.fillStyle =
-                "#efdfb8";
-
-
-            ctx.font =
-                "bold 12px Georgia";
-
-
-            ctx.textAlign =
-                "center";
-
-
-            ctx.fillText(
-                building.name,
-                building.x +
-                    building.w / 2,
-                building.y +
-                    building.h +
-                    27
-            );
-        }
-    }
-
-
-    function drawHouseInterior(
-        building
-    ) {
-
-        ctx.fillStyle =
-            "#6f513d";
-
-
-        ctx.fillRect(
-            0,
-            0,
-            state.world.width,
-            state.world.height
-        );
-
-
-        const room =
-            building.interior;
-
-
-        ctx.fillStyle =
-            "#9b7955";
-
-
-        ctx.fillRect(
-            200,
-            160,
-            room.w,
-            room.h
-        );
-
-
-        ctx.strokeStyle =
-            "#d2b477";
-
-
-        ctx.lineWidth =
-            5;
-
-
-        ctx.strokeRect(
-            200,
-            160,
-            room.w,
-            room.h
-        );
-
-
-        ctx.fillStyle =
-            "#4b3025";
-
-
-        ctx.fillRect(
-            200 +
-                room.w / 2 -
-                25,
-
-            160 +
-                room.h -
-                8,
-
-            50,
-            20
-        );
-
-
-        ctx.fillStyle =
-            "#d9c47d";
-
-
-        ctx.fillRect(
-            250,
-            220,
-            55,
-            45
-        );
-
-
-        ctx.fillRect(
-            200 +
-                room.w -
-                95,
-
-            220,
-
-            55,
-            45
-        );
-
-
-        ctx.fillStyle =
-            "#433225";
-
-
-        ctx.fillRect(
-            390,
-            310,
-            180,
-            90
-        );
-
-
-        ctx.fillStyle =
-            "#c59d6c";
-
-
-        ctx.fillRect(
-            420,
-            345,
-            120,
-            15
-        );
-
-
-        ctx.fillStyle =
-            "#b98d65";
-
-
-        ctx.fillRect(
-            690,
-            290,
-            90,
-            120
-        );
-
-
-        ctx.fillStyle =
-            "#f1dfb7";
-
-
-        ctx.font =
-            "bold 18px Georgia";
-
-
-        ctx.textAlign =
-            "center";
-
-
-        ctx.fillText(
-            building.name,
-            200 +
-                room.w / 2,
-            130
-        );
-
-
-        ctx.font =
-            "11px Arial";
-
-
-        ctx.fillText(
-            "[Z] SAIR",
-            200 +
-                room.w / 2,
-            160 +
-                room.h +
-                35
-        );
-    }
-
-
-    /* =====================================================
-       RENDER — ÁRVORES
-    ====================================================== */
-
-    function drawTrees() {
-
-        for (
-            const tree of
-            state.world.trees
-        ) {
-
-            if (
-                !tree.alive
-            ) {
-
-                continue;
-            }
-
-
-            const sway =
-                Math.sin(
-                    state.time * 1.7 +
-                        tree.x
-                ) * 1.8;
-
-
-            ctx.fillStyle =
-                "rgba(0,0,0,.2)";
-
-
-            ctx.beginPath();
-
-
-            ctx.ellipse(
-                tree.x,
-                tree.y + 28,
-                34,
-                11,
-                0,
-                0,
-                Math.PI * 2
-            );
-
-
-            ctx.fill();
-
-
-            ctx.fillStyle =
-                "#6a4a31";
-
-
-            ctx.fillRect(
-                tree.x - 9,
-                tree.y,
-                18,
-                42
-            );
-
-
-            ctx.fillStyle =
-                "#315d37";
-
-
-            ctx.beginPath();
-
-
-            ctx.arc(
-                tree.x + sway,
-                tree.y - 14,
-                34,
-                0,
-                Math.PI * 2
-            );
-
-
-            ctx.fill();
-
-
-            ctx.fillStyle =
-                "#467b46";
-
-
-            ctx.beginPath();
-
-
-            ctx.arc(
-                tree.x -
-                    14 +
-                    sway,
-                tree.y - 27,
-                24,
-                0,
-                Math.PI * 2
-            );
-
-
-            ctx.arc(
-                tree.x +
-                    14 +
-                    sway,
-                tree.y - 28,
-                25,
-                0,
-                Math.PI * 2
-            );
-
-
-            ctx.fill();
-
-
-            if (
-                !state.houseMode &&
-                dist(
-                    tree,
-                    state.player
-                ) <
-                    85
-            ) {
-
-                ctx.strokeStyle =
-                    "#d5b968";
-
-
-                ctx.lineWidth =
-                    2;
-
-
-                ctx.beginPath();
-
-
-                ctx.arc(
-                    tree.x,
-                    tree.y - 12,
-                    40,
-                    0,
-                    Math.PI * 2
-                );
-
-
-                ctx.stroke();
-            }
-        }
-    }
-
-
-    /* =====================================================
-       RENDER — RECURSOS
-    ====================================================== */
-
-    function drawResources() {
-
-        const icons = {
-
-            ferro: "⛓️",
-
-            rubi: "♦",
-
-            cristal: "💎",
-
-            ouro: "🪙",
-
-            carvao: "⬛"
-
-        };
-
-
-        for (
-            const resource of
-            state.world.resources
-        ) {
-
-            if (
-                !resource.alive
-            ) {
-
-                continue;
-            }
-
-
-            ctx.font =
-                "20px Arial";
-
-
-            ctx.textAlign =
-                "center";
-
-
-            ctx.fillText(
-                icons[
-                    resource.resource
-                ] ||
-                    "✦",
-
-                resource.x,
-                resource.y + 7
-            );
-        }
-    }
-
-
-    /* =====================================================
-       RENDER — OBSTÁCULOS
-    ====================================================== */
-
-    function drawObstacles() {
-
-        for (
-            const obstacle of
-            state.world.obstacles
-        ) {
-
-            if (
-                obstacle.disabled ||
-                obstacle.type ===
-                    "building" ||
-                obstacle.type ===
-                    "tree"
-            ) {
-
-                continue;
-            }
-
-
-            if (
-                obstacle.type ===
-                "wall"
-            ) {
-
-                ctx.fillStyle =
-                    "#414944";
-
-
-                ctx.fillRect(
-                    obstacle.x,
-                    obstacle.y,
-                    obstacle.w,
-                    obstacle.h
-                );
-            }
-
-
-            else if (
-                obstacle.type.includes(
-                    "rock"
-                )
-            ) {
-
-                const colors = {
-
-                    rock:
-                        "#6f746f",
-
-                    rubyrock:
-                        "#6d3447",
-
-                    snowrock:
-                        "#b8c0c2",
-
-                    basalt:
-                        "#403334",
-
-                    memoryrock:
-                        "#5b4b70",
-
-                    darkrock:
-                        "#313448",
-
-                    ironrock:
-                        "#62686a"
-
-                };
-
-
-                ctx.fillStyle =
-                    colors[
-                        obstacle.type
-                    ] ||
-                    "#6f746f";
-
-
-                ctx.beginPath();
-
-
-                ctx.ellipse(
-                    obstacle.x +
-                        obstacle.w / 2,
-
-                    obstacle.y +
-                        obstacle.h / 2,
-
-                    obstacle.w / 2,
-
-                    obstacle.h / 2,
-
-                    -0.12,
-
-                    0,
-
-                    Math.PI * 2
-                );
-
-
-                ctx.fill();
-            }
-
-
-            else if (
-                obstacle.type ===
-                "fountain"
-            ) {
-
-                ctx.fillStyle =
-                    "#89877a";
-
-
-                ctx.beginPath();
-
-
-                ctx.ellipse(
-                    obstacle.x +
-                        obstacle.w / 2,
-
-                    obstacle.y +
-                        obstacle.h / 2,
-
-                    obstacle.w / 2,
-
-                    obstacle.h / 2,
-
-                    0,
-
-                    0,
-
-                    Math.PI * 2
-                );
-
-
-                ctx.fill();
-
-
-                ctx.fillStyle =
-                    "#5a9bb0";
-
-
-                ctx.beginPath();
-
-
-                ctx.ellipse(
-                    obstacle.x +
-                        obstacle.w / 2,
-
-                    obstacle.y +
-                        obstacle.h / 2,
-
-                    obstacle.w / 2 -
-                        23,
-
-                    obstacle.h / 2 -
-                        23,
-
-                    0,
-
-                    0,
-
-                    Math.PI * 2
-                );
-
-
-                ctx.fill();
-            }
-        }
-    }
-
-
-    /* =====================================================
-       RENDER — NPC
-    ====================================================== */
-
-    function drawNPCs() {
-
-        for (
-            const npc of
-            state.world.npcs
-        ) {
-
-            ctx.fillStyle =
-                "rgba(0,0,0,.25)";
-
-
-            ctx.beginPath();
-
-
-            ctx.ellipse(
-                npc.x,
-                npc.y + 19,
-                18,
-                7,
-                0,
-                0,
-                Math.PI * 2
-            );
-
-
-            ctx.fill();
-
-
-            ctx.fillStyle =
-                npc.color;
-
-
-            ctx.beginPath();
-
-
-            ctx.arc(
-                npc.x,
-                npc.y,
-                17,
-                0,
-                Math.PI * 2
-            );
-
-
-            ctx.fill();
-
-
-            ctx.fillStyle =
-                "#29262a";
-
-
-            ctx.beginPath();
-
-
-            ctx.arc(
-                npc.x,
-                npc.y - 8,
-                9,
-                0,
-                Math.PI * 2
-            );
-
-
-            ctx.fill();
-
-
-            ctx.textAlign =
-                "center";
-
-
-            ctx.font =
-                "bold 12px Arial";
-
-
-            ctx.fillStyle =
-                "#f0dfb6";
-
-
-            ctx.fillText(
-                npc.name,
-                npc.x,
-                npc.y - 31
-            );
-
-
-            ctx.font =
-                "10px Arial";
-
-
-            ctx.fillStyle =
-                "#cbc2ae";
-
-
-            ctx.fillText(
-                npc.role,
-                npc.x,
-                npc.y + 37
-            );
-        }
-    }
-
-
-    /* =====================================================
-       RENDER — INIMIGOS
-    ====================================================== */
-
-    function drawEnemies() {
-
-        for (
-            const enemy of
-            state.world.enemies
-        ) {
-
-            if (
-                enemy.dead
-            ) {
-
-                continue;
-            }
-
-
-            if (
-                enemy.aggressive
-            ) {
-
-                ctx.strokeStyle =
-                    "rgba(220,65,55,.12)";
-
-
-                ctx.lineWidth =
-                    2;
-
-
-                ctx.beginPath();
-
-
-                ctx.arc(
-                    enemy.x,
-                    enemy.y,
-                    enemy.vision,
-                    0,
-                    Math.PI * 2
-                );
-
-
-                ctx.stroke();
-            }
-
-
-            ctx.fillStyle =
-                "rgba(0,0,0,.25)";
-
-
-            ctx.beginPath();
-
-
-            ctx.ellipse(
-                enemy.x,
-                enemy.y +
-                    enemy.radius,
-                enemy.radius *
-                    1.1,
-                enemy.radius *
-                    .42,
-                0,
-                0,
-                Math.PI * 2
-            );
-
-
-            ctx.fill();
-
-
-            ctx.fillStyle =
-                enemy.hitFlash >
-                    0
-                    ? "#fff"
-                    : enemy.color;
-
-
-            ctx.beginPath();
-
-
-            if (
-                enemy.type ===
-                    "progression" ||
-                enemy.type ===
-                    "final"
-            ) {
-
-                ctx.moveTo(
-                    enemy.x,
-                    enemy.y -
-                        enemy.radius
-                );
-
-
-                ctx.lineTo(
-                    enemy.x +
-                        enemy.radius,
-                    enemy.y
-                );
-
-
-                ctx.lineTo(
-                    enemy.x,
-                    enemy.y +
-                        enemy.radius
-                );
-
-
-                ctx.lineTo(
-                    enemy.x -
-                        enemy.radius,
-                    enemy.y
-                );
-
-
-                ctx.closePath();
-
-            }
-
-            else {
-
-                ctx.arc(
-                    enemy.x,
-                    enemy.y,
-                    enemy.radius,
-                    0,
-                    Math.PI * 2
-                );
-            }
-
-
-            ctx.fill();
-
-
-            ctx.strokeStyle =
-                enemy.type ===
-                    "progression" ||
-                enemy.type ===
-                    "final"
-                    ? "#f0b762"
-                    : "#d0bd74";
-
-
-            ctx.lineWidth =
-                enemy.type ===
-                    "progression" ||
-                enemy.type ===
-                    "final"
-                    ? 3
-                    : 1.5;
-
-
-            ctx.stroke();
-
-
-            ctx.font =
-                enemy.type ===
-                    "progression" ||
-                enemy.type ===
-                    "final"
-                    ? "24px Arial"
-                    : "19px Arial";
-
-
-            ctx.textAlign =
-                "center";
-
-
-            ctx.fillText(
-                enemy.icon,
-                enemy.x,
-                enemy.y + 7
-            );
-
-
-            ctx.font =
-                "bold 11px Arial";
-
-
-            ctx.fillStyle =
-                enemy.type ===
-                    "progression" ||
-                enemy.type ===
-                    "final"
-                    ? "#ffc58b"
-                    : "#f0dfbd";
-
-
-            ctx.fillText(
-                enemy.name,
-                enemy.x,
-                enemy.y +
-                    enemy.radius +
-                    17
-            );
-
-
-            const barWidth =
-                enemy.radius *
-                2.5;
-
-
-            ctx.fillStyle =
-                "#1e1d1a";
-
-
-            ctx.fillRect(
-                enemy.x -
-                    barWidth / 2,
-
-                enemy.y -
-                    enemy.radius -
-                    13,
-
-                barWidth,
-
-                5
-            );
-
-
-            ctx.fillStyle =
-                "#ba524b";
-
-
-            ctx.fillRect(
-                enemy.x -
-                    barWidth / 2,
-
-                enemy.y -
-                    enemy.radius -
-                    13,
-
-                barWidth *
-                    clamp(
-                        enemy.hp /
-                            enemy.maxHp,
+                    mapCtx.arc(
+                        enemy.x *
+                            sx,
+                        enemy.y *
+                            sy,
+                        enemy.type ===
+                            "progression"
+                            ? 7
+                            : 4,
                         0,
-                        1
-                    ),
-
-                5
-            );
-        }
-    }
+                        Math.PI *
+                            2
+                    );
 
 
-    /* =====================================================
-       RENDER — PORTAIS
-    ====================================================== */
-
-    function drawPortals() {
-
-        for (
-            const portal of
-            state.world.portals
-        ) {
-
-            const unlocked =
-                requirementMet(
-                    portal.requirement
-                );
-
-
-            ctx.fillStyle =
-                unlocked
-                    ? "rgba(85,155,205,.23)"
-                    : "rgba(80,80,80,.18)";
-
-
-            ctx.fillRect(
-                portal.x,
-                portal.y,
-                portal.w,
-                portal.h
+                    mapCtx.fill();
+                }
             );
 
 
-            ctx.strokeStyle =
-                unlocked
-                    ? "#8fc4dc"
-                    : "#73746d";
+        mapCtx.fillStyle =
+            "#e1c37d";
 
 
-            ctx.lineWidth =
-                2;
+        state.world.npcs
+            .forEach(
+                npc => {
 
-
-            ctx.strokeRect(
-                portal.x,
-                portal.y,
-                portal.w,
-                portal.h
+                    mapCtx.fillRect(
+                        npc.x *
+                            sx -
+                            2,
+                        npc.y *
+                            sy -
+                            2,
+                        4,
+                        4
+                    );
+                }
             );
 
 
-            ctx.fillStyle =
-                unlocked
-                    ? "#e9d6a0"
-                    : "#96958c";
+        mapCtx.fillStyle =
+            "#ffffff";
 
 
-            ctx.font =
-                "bold 12px Georgia";
+        mapCtx.beginPath();
 
 
-            ctx.textAlign =
-                "center";
-
-
-            ctx.fillText(
-                unlocked
-                    ? "CONTINUAR"
-                    : "BLOQUEADO",
-
-                portal.x +
-                    portal.w / 2,
-
-                portal.y - 10
-            );
-        }
-    }
-
-
-    /* =====================================================
-       RENDER — DROPS
-    ====================================================== */
-
-    function drawDrops() {
-
-        const icons = {
-
-            madeira:
-                "🪵",
-
-            carvao:
-                "⬛",
-
-            ferro:
-                "⛓️",
-
-            ouro:
-                "🪙",
-
-            rubi:
-                "♦",
-
-            cristal:
-                "💎",
-
-            essencia:
-                "✦",
-
-            erva:
-                "🌿"
-
-        };
-
-
-        for (
-            const drop of
-            state.world.drops
-        ) {
-
-            if (
-                drop.life <=
-                0
-            ) {
-
-                continue;
-            }
-
-
-            ctx.font =
-                "20px Arial";
-
-
-            ctx.textAlign =
-                "center";
-
-
-            ctx.fillText(
-                icons[
-                    drop.type
-                ] ||
-                    "✦",
-
-                drop.x,
-                drop.y
-            );
-        }
-    }
-
-
-    /* =====================================================
-       RENDER — EFEITOS
-    ====================================================== */
-
-    function drawEffects() {
-
-        for (
-            const effect of
-            state.world.effects
-        ) {
-
-            if (
-                effect.type ===
-                "flower"
-            ) {
-
-                const glow =
-                    Math.sin(
-                        state.time +
-                        effect.phase
-                    ) *
-                    0.2 +
-                    0.45;
-
-
-                ctx.fillStyle =
-                    `rgba(237,187,255,${glow})`;
-
-
-                ctx.beginPath();
-
-
-                ctx.arc(
-                    effect.x,
-                    effect.y,
-                    4,
-                    0,
-                    Math.PI * 2
-                );
-
-
-                ctx.fill();
-            }
-
-
-            if (
-                effect.type ===
-                "orb"
-            ) {
-
-                ctx.fillStyle =
-                    "#d9baf0";
-
-
-                ctx.beginPath();
-
-
-                ctx.arc(
-                    effect.x,
-                    effect.y,
-                    7,
-                    0,
-                    Math.PI * 2
-                );
-
-
-                ctx.fill();
-            }
-        }
-    }
-
-
-    /* =====================================================
-       RENDER — PARTÍCULAS
-    ====================================================== */
-
-    function drawParticles() {
-
-        for (
-            const particle of
-            state.world.particles
-        ) {
-
-            ctx.globalAlpha =
-                clamp(
-                    particle.life /
-                        0.8,
-                    0,
-                    1
-                );
-
-
-            ctx.fillStyle =
-                particle.color;
-
-
-            ctx.fillRect(
-                particle.x,
-                particle.y,
-                4,
-                4
-            );
-        }
-
-
-        ctx.globalAlpha =
-            1;
-    }
-
-
-    function spawnParticles(
-        x,
-        y,
-        color,
-        amount
-    ) {
-
-        for (
-            let i = 0;
-            i < amount;
-            i++
-        ) {
-
-            const angle =
-                random(
-                    0,
-                    Math.PI * 2
-                );
-
-
-            const speed =
-                random(
-                    30,
-                    100
-                );
-
-
-            state.world.particles.push({
-
-                x,
-
-                y,
-
-                vx:
-                    Math.cos(
-                        angle
-                    ) *
-                    speed,
-
-                vy:
-                    Math.sin(
-                        angle
-                    ) *
-                    speed,
-
-                life:
-                    random(
-                        0.35,
-                        0.8
-                    ),
-
-                color
-            });
-        }
-    }
-
-
-    /* =====================================================
-       RENDER — PLAYER
-    ====================================================== */
-
-    function drawPlayer() {
-
-        const p =
-            state.player;
-
-
-        if (
-            !p
-        ) {
-
-            return;
-        }
-
-
-        if (
-            p.invincible >
-                0 &&
-            Math.floor(
-                p.invincible *
-                    12
-            ) %
-                2 ===
-                0
-        ) {
-
-            return;
-        }
-
-
-        ctx.fillStyle =
-            "rgba(0,0,0,.28)";
-
-
-        ctx.beginPath();
-
-
-        ctx.ellipse(
-            p.x,
-            p.y + 19,
-            21,
-            8,
+        mapCtx.arc(
+            state.player.x *
+                sx,
+            state.player.y *
+                sy,
+            7,
             0,
-            0,
-            Math.PI * 2
+            Math.PI *
+                2
         );
 
 
-        ctx.fill();
-
-
-        ctx.fillStyle =
-            p.color;
-
-
-        ctx.beginPath();
-
-
-        ctx.arc(
-            p.x,
-            p.y,
-            p.radius,
-            0,
-            Math.PI * 2
-        );
-
-
-        ctx.fill();
-
-
-        ctx.fillStyle =
-            "#e5c3a2";
-
-
-        ctx.beginPath();
-
-
-        ctx.arc(
-            p.x,
-            p.y - 12,
-            10,
-            0,
-            Math.PI * 2
-        );
-
-
-        ctx.fill();
-
-
-        ctx.fillStyle =
-            "#2c241f";
-
-
-        ctx.beginPath();
-
-
-        ctx.arc(
-            p.x,
-            p.y - 16,
-            10,
-            Math.PI,
-            Math.PI * 2
-        );
-
-
-        ctx.fill();
-
-
-        ctx.fillStyle =
-            "#fff0c6";
-
-
-        ctx.font =
-            "bold 13px Arial";
-
-
-        ctx.textAlign =
-            "center";
-
-
-        ctx.fillText(
-            p.name,
-            p.x,
-            p.y - 39
-        );
+        mapCtx.fill();
     }
 
-
-    /* =====================================================
-       RENDER — COMPLETO
-    ====================================================== */
-
-    function draw() {
-
-        ctx.clearRect(
-            0,
-            0,
-            window.innerWidth,
-            window.innerHeight
-        );
-
-
-        ctx.save();
-
-
-        ctx.translate(
-            -state.camera.x,
-            -state.camera.y
-        );
-
-
-        if (
-            state.houseMode
-        ) {
-
-            drawBuildings();
-
-            drawPlayer();
-
-            drawParticles();
-
-        }
-
-        else {
-
-            drawGround();
-
-            drawPaths();
-
-            drawGrass();
-
-            drawBuildings();
-
-            drawTrees();
-
-            drawResources();
-
-            drawObstacles();
-
-            drawPortals();
-
-            drawDrops();
-
-            drawEffects();
-
-            drawNPCs();
-
-            drawEnemies();
-
-            drawPlayer();
-
-            drawParticles();
-        }
-
-
-        ctx.restore();
-
-
-        drawMinimap();
-    }
-
-
-    /* =====================================================
-       MINIMAPA
-    ====================================================== */
 
     function drawMinimap() {
 
         miniCtx.clearRect(
             0,
             0,
-            190,
-            135
+            miniCanvas.width,
+            miniCanvas.height
         );
 
 
         miniCtx.fillStyle =
-            "#1b251c";
+            "#1a241b";
 
 
         miniCtx.fillRect(
@@ -9254,102 +6586,89 @@
 
 
         miniCtx.fillStyle =
-            "#7f6249";
+            "#85664d";
 
 
-        for (
-            const building of
-            state.world.buildings
-        ) {
+        state.world.buildings
+            .forEach(
+                building => {
 
-            miniCtx.fillRect(
-                building.x * sx,
-                building.y * sy,
-                building.w * sx,
-                building.h * sy
+                    miniCtx.fillRect(
+                        building.x *
+                            sx,
+                        building.y *
+                            sy,
+                        building.w *
+                            sx,
+                        building.h *
+                            sy
+                    );
+                }
             );
-        }
+
+
+        state.world.enemies
+            .forEach(
+                enemy => {
+
+                    if (
+                        enemy.dead
+                    ) {
+
+                        return;
+                    }
+
+
+                    miniCtx.fillStyle =
+                        enemy.type ===
+                            "progression"
+                            ? "#ee504c"
+                            : "#d48765";
+
+
+                    miniCtx.beginPath();
+
+
+                    miniCtx.arc(
+                        enemy.x *
+                            sx,
+                        enemy.y *
+                            sy,
+                        enemy.type ===
+                            "progression"
+                            ? 4
+                            : 2.5,
+                        0,
+                        Math.PI *
+                            2
+                    );
+
+
+                    miniCtx.fill();
+                }
+            );
 
 
         miniCtx.fillStyle =
-            "#649dc5";
+            "#dfc37d";
 
 
-        for (
-            const portal of
-            state.world.portals
-        ) {
+        state.world.npcs
+            .forEach(
+                npc => {
 
-            miniCtx.fillRect(
-                portal.x * sx,
-                portal.y * sy,
-                portal.w * sx,
-                portal.h * sy
+                    miniCtx.fillRect(
+                        npc.x *
+                            sx -
+                            2,
+                        npc.y *
+                            sy -
+                            2,
+                        4,
+                        4
+                    );
+                }
             );
-        }
-
-
-        for (
-            const enemy of
-            state.world.enemies
-        ) {
-
-            if (
-                enemy.dead
-            ) {
-
-                continue;
-            }
-
-
-            miniCtx.fillStyle =
-                enemy.type ===
-                    "progression" ||
-                enemy.type ===
-                    "final"
-
-                    ? "#ff544a"
-
-                    : "#db8663";
-
-
-            miniCtx.beginPath();
-
-
-            miniCtx.arc(
-                enemy.x * sx,
-                enemy.y * sy,
-                enemy.type ===
-                    "progression" ||
-                enemy.type ===
-                    "final"
-                    ? 4
-                    : 2.5,
-                0,
-                Math.PI * 2
-            );
-
-
-            miniCtx.fill();
-        }
-
-
-        miniCtx.fillStyle =
-            "#e0c379";
-
-
-        for (
-            const npc of
-            state.world.npcs
-        ) {
-
-            miniCtx.fillRect(
-                npc.x * sx - 2,
-                npc.y * sy - 2,
-                4,
-                4
-            );
-        }
 
 
         miniCtx.fillStyle =
@@ -9360,15 +6679,365 @@
 
 
         miniCtx.arc(
-            state.player.x * sx,
-            state.player.y * sy,
+            state.player.x *
+                sx,
+            state.player.y *
+                sy,
             4,
             0,
-            Math.PI * 2
+            Math.PI *
+                2
         );
 
 
         miniCtx.fill();
+    }
+
+
+    /* =====================================================
+       LIVRO
+    ====================================================== */
+
+    function openBook() {
+
+        renderBook();
+
+
+        $("bookPanel")
+            .classList
+            .remove(
+                "hidden"
+            );
+    }
+
+
+    function renderBook() {
+
+        const grid =
+            $("bossBook");
+
+
+        grid.innerHTML =
+            "";
+
+
+        const known =
+            state.player
+                .defeatedBosses;
+
+
+        state.world.enemies
+            .filter(
+                enemy =>
+                    enemy.type ===
+                    "progression"
+            )
+            .forEach(
+                enemy => {
+
+                    const div =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    div.className =
+                        "boss-entry";
+
+
+                    const defeated =
+                        known.includes(
+                            enemy.id
+                        );
+
+
+                    div.innerHTML = `
+
+                        <div class="symbol">
+                            ${
+                                defeated
+                                    ? enemy.icon
+                                    : "?"
+                            }
+                        </div>
+
+                        <strong>
+                            ${
+                                defeated
+                                    ? enemy.name
+                                    : "DESCONHECIDO"
+                            }
+                        </strong>
+
+                        <p>
+                            ${
+                                defeated
+                                    ? "Registro desbloqueado."
+                                    : "Descubra mais para atualizar o Livro."
+                            }
+                        </p>
+                    `;
+
+
+                    grid.appendChild(
+                        div
+                    );
+                }
+            );
+    }
+
+
+    /* =====================================================
+       LOJA
+    ====================================================== */
+
+    function openShop(
+        npc
+    ) {
+
+        state.shopNPC =
+            npc;
+
+
+        renderShop();
+
+
+        $("shopPanel")
+            .classList
+            .remove(
+                "hidden"
+            );
+    }
+
+
+    function renderShop() {
+
+        const grid =
+            $("shopGrid");
+
+
+        grid.innerHTML =
+            "";
+
+
+        if (
+            state.shopMode ===
+            "buy"
+        ) {
+
+            [
+                "pocao",
+                "elixir",
+                "espadaFerro",
+                "armaduraCouro"
+            ]
+                .forEach(
+                    id => {
+
+                        const item =
+                            ITEMS[id];
+
+
+                        const row =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        row.className =
+                            "shop-row";
+
+
+                        row.innerHTML = `
+
+                            <div class="shop-icon">
+                                ${item.icon}
+                            </div>
+
+                            <div class="shop-info">
+                                <strong>
+                                    ${item.name}
+                                </strong>
+
+                                <small>
+                                    Item útil para sua jornada.
+                                </small>
+                            </div>
+
+                            <div class="shop-price">
+                                💰 ${item.value}
+                            </div>
+
+                            <button class="small-btn">
+                                Comprar
+                            </button>
+                        `;
+
+
+                        row
+                            .querySelector(
+                                "button"
+                            )
+                            .addEventListener(
+                                "click",
+                                () => {
+
+                                    if (
+                                        state.player.money <
+                                        item.value
+                                    ) {
+
+                                        showToast(
+                                            "Dinheiro insuficiente."
+                                        );
+
+                                        return;
+                                    }
+
+
+                                    state.player
+                                        .money -=
+                                        item.value;
+
+
+                                    addItem(
+                                        id,
+                                        1
+                                    );
+
+
+                                    showToast(
+                                        `${item.name} comprado.`
+                                    );
+
+
+                                    renderShop();
+
+                                    updateHUD();
+                                }
+                            );
+
+
+                        grid.appendChild(
+                            row
+                        );
+                    }
+                );
+
+        }
+
+        else {
+
+            Object.entries(
+                state.player.inventory
+            )
+                .forEach(
+                    ([id, amount]) => {
+
+                        if (
+                            amount <=
+                            0
+                        ) {
+
+                            return;
+                        }
+
+
+                        const item =
+                            ITEMS[id];
+
+
+                        if (
+                            !item
+                        ) {
+
+                            return;
+                        }
+
+
+                        const price =
+                            Math.max(
+                                1,
+                                Math.floor(
+                                    item.value *
+                                    .7
+                                )
+                            );
+
+
+                        const row =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        row.className =
+                            "shop-row";
+
+
+                        row.innerHTML = `
+
+                            <div class="shop-icon">
+                                ${item.icon}
+                            </div>
+
+                            <div class="shop-info">
+                                <strong>
+                                    ${item.name}
+                                </strong>
+
+                                <small>
+                                    x${amount}
+                                </small>
+                            </div>
+
+                            <div class="shop-price">
+                                💰 ${price}
+                            </div>
+
+                            <button class="small-btn">
+                                Vender
+                            </button>
+                        `;
+
+
+                        row
+                            .querySelector(
+                                "button"
+                            )
+                            .addEventListener(
+                                "click",
+                                () => {
+
+                                    if (
+                                        removeItem(
+                                            id,
+                                            1
+                                        )
+                                    ) {
+
+                                        state.player
+                                            .money +=
+                                            price;
+
+                                        showToast(
+                                            `${item.name} vendido.`
+                                        );
+
+
+                                        renderShop();
+                                        updateHUD();
+                                    }
+                                }
+                            );
+
+
+                        grid.appendChild(
+                            row
+                        );
+                    }
+                );
+        }
     }
 
 
@@ -9429,14 +7098,14 @@
         setBar(
             "hungerBar",
             p.hunger,
-            p.maxHunger
+            100
         );
 
 
         setBar(
             "fatigueBar",
             p.fatigue,
-            p.maxFatigue
+            100
         );
 
 
@@ -9467,14 +7136,14 @@
             .textContent =
             `${Math.ceil(
                 p.hunger
-            )}/${p.maxHunger}`;
+            )}/100`;
 
 
         $("fatigueText")
             .textContent =
             `${Math.ceil(
                 p.fatigue
-            )}/${p.maxFatigue}`;
+            )}/100`;
 
 
         $("levelText")
@@ -9492,7 +7161,7 @@
             p.money;
 
 
-        updateInteractionPrompt();
+        updateInteractionHint();
     }
 
 
@@ -9506,18 +7175,15 @@
             .style
             .width =
             `${clamp(
-                (
-                    value /
-                    max
-                ) *
-                    100,
+                value / max *
+                100,
                 0,
                 100
             )}%`;
     }
 
 
-    function updateLocationUI() {
+    function updateLocation() {
 
         $("locationLabel")
             .textContent =
@@ -9527,7 +7193,7 @@
     }
 
 
-    function updateInteractionPrompt() {
+    function updateInteractionHint() {
 
         const hint =
             $("interactionHint");
@@ -9535,15 +7201,12 @@
 
         if (
             state.paused ||
-            state.dialogue ||
-            state.travel ||
-            state.battle
+            state.dialogue
         ) {
 
             hint.classList.add(
                 "hidden"
             );
-
 
             return;
         }
@@ -9561,7 +7224,6 @@
                 "hidden"
             );
 
-
             return;
         }
 
@@ -9573,21 +7235,37 @@
 
         if (
             interaction.type ===
-                "house" ||
-            interaction.type ===
-                "houseExit"
+                "house"
         ) {
 
             $("interactionKey")
                 .textContent =
                 "Z";
 
+
             $("interactionText")
                 .textContent =
-                interaction.type ===
-                    "houseExit"
-                    ? "Sair"
-                    : "Entrar";
+                "Entrar";
+
+
+            return;
+        }
+
+
+        if (
+            interaction.type ===
+                "exitHouse"
+        ) {
+
+            $("interactionKey")
+                .textContent =
+                "Z";
+
+
+            $("interactionText")
+                .textContent =
+                "Sair";
+
 
             return;
         }
@@ -9613,18 +7291,14 @@
                 "Cortar árvore",
 
             resource:
-                `Coletar ${
-                    ITEMS[
-                        interaction.object.resource
-                    ]?.name ||
-                    "recurso"
-                }`,
+                "Coletar",
 
             boss:
                 "Aceitar batalha",
 
             enemy:
                 "Atacar"
+
         };
 
 
@@ -9634,6 +7308,1499 @@
                 interaction.type
             ] ||
             "Interagir";
+    }
+
+
+    /* =====================================================
+       MORTE / CHECKPOINT
+    ====================================================== */
+
+    function playerDeath() {
+
+        state.player.dead =
+            true;
+
+
+        state.paused =
+            true;
+
+
+        $("deathPanel")
+            .classList
+            .remove(
+                "hidden"
+            );
+    }
+
+
+    function respawnPlayer() {
+
+        const p =
+            state.player;
+
+
+        const checkpoint =
+            p.checkpoints[
+                state.area
+            ] ||
+            p.checkpoints.village;
+
+
+        p.x =
+            checkpoint.x;
+
+
+        p.y =
+            checkpoint.y;
+
+
+        p.hp =
+            Math.max(
+                1,
+                Math.floor(
+                    p.maxHp *
+                    .7
+                )
+            );
+
+
+        p.magic =
+            Math.max(
+                1,
+                Math.floor(
+                    p.maxMagic *
+                    .7
+                )
+            );
+
+
+        p.energy =
+            Math.max(
+                1,
+                Math.floor(
+                    p.maxEnergy *
+                    .7
+                )
+            );
+
+
+        p.money =
+            Math.floor(
+                p.money *
+                .9
+            );
+
+
+        p.dead =
+            false;
+
+
+        p.invincible =
+            1;
+
+
+        state.paused =
+            false;
+
+
+        $("deathPanel")
+            .classList
+            .add(
+                "hidden"
+            );
+
+
+        showToast(
+            "Você retornou ao checkpoint."
+        );
+    }
+
+
+    /* =====================================================
+       DESENHO
+    ====================================================== */
+
+    function drawGround() {
+
+        const visual =
+            REGIONS[
+                state.area
+            ].visual;
+
+
+        const colors = {
+
+            village:
+                "#566c4d",
+
+            forest:
+                "#3d6140",
+
+            mountains:
+                "#919799",
+
+            cave:
+                "#292e31",
+
+            ruby:
+                "#48252b",
+
+            shadow:
+                "#171d2e",
+
+            fairy:
+                "#56436b",
+
+            sky:
+                "#92b0c7",
+
+            hell:
+                "#45201f"
+        };
+
+
+        ctx.fillStyle =
+            colors[
+                visual
+            ] ||
+            "#566c4d";
+
+
+        ctx.fillRect(
+            0,
+            0,
+            state.world.width,
+            state.world.height
+        );
+
+
+        const tile =
+            64;
+
+
+        for (
+            let y = 70;
+            y <
+            state.world.height -
+                70;
+            y += tile
+        ) {
+
+            for (
+                let x = 70;
+                x <
+                state.world.width -
+                    70;
+                x += tile
+            ) {
+
+                ctx.fillStyle =
+                    (
+                        (
+                            x / tile +
+                            y / tile
+                        ) %
+                        2 === 0
+                    )
+                        ? "rgba(255,255,255,.015)"
+                        : "rgba(0,0,0,.018)";
+
+
+                ctx.fillRect(
+                    x,
+                    y,
+                    tile,
+                    tile
+                );
+            }
+        }
+
+
+        if (
+            state.area ===
+            "village"
+        ) {
+
+            ctx.fillStyle =
+                "#b69c6d";
+
+
+            ctx.globalAlpha =
+                .65;
+
+
+            ctx.fillRect(
+                70,
+                1080,
+                state.world.width -
+                    140,
+                115
+            );
+
+
+            ctx.fillRect(
+                1540,
+                70,
+                110,
+                state.world.height -
+                    140
+            );
+
+
+            ctx.globalAlpha =
+                1;
+        }
+    }
+
+
+    function drawBuildings() {
+
+        if (
+            state.houseMode &&
+            state.currentHouse
+        ) {
+
+            drawHouseInterior();
+
+            return;
+        }
+
+
+        state.world.buildings
+            .forEach(
+                building => {
+
+                    ctx.fillStyle =
+                        "rgba(0,0,0,.28)";
+
+
+                    ctx.fillRect(
+                        building.x + 13,
+                        building.y + 16,
+                        building.w,
+                        building.h
+                    );
+
+
+                    ctx.fillStyle =
+                        building.color;
+
+
+                    ctx.fillRect(
+                        building.x,
+                        building.y,
+                        building.w,
+                        building.h
+                    );
+
+
+                    ctx.strokeStyle =
+                        "rgba(30,25,20,.45)";
+
+
+                    ctx.lineWidth =
+                        4;
+
+
+                    ctx.strokeRect(
+                        building.x + 3,
+                        building.y + 3,
+                        building.w - 6,
+                        building.h - 6
+                    );
+
+
+                    ctx.fillStyle =
+                        building.roof;
+
+
+                    ctx.beginPath();
+
+
+                    ctx.moveTo(
+                        building.x - 24,
+                        building.y
+                    );
+
+
+                    ctx.lineTo(
+                        building.x +
+                            building.w /
+                                2,
+                        building.y - 95
+                    );
+
+
+                    ctx.lineTo(
+                        building.x +
+                            building.w +
+                            24,
+                        building.y
+                    );
+
+
+                    ctx.closePath();
+
+
+                    ctx.fill();
+
+
+                    ctx.fillStyle =
+                        "#452d25";
+
+
+                    ctx.fillRect(
+                        building.x +
+                            building.w /
+                                2 -
+                            25,
+                        building.y +
+                            building.h -
+                            70,
+                        50,
+                        70
+                    );
+
+
+                    ctx.fillStyle =
+                        "#dbc77d";
+
+
+                    ctx.fillRect(
+                        building.x + 35,
+                        building.y + 60,
+                        50,
+                        42
+                    );
+
+
+                    ctx.fillRect(
+                        building.x +
+                            building.w -
+                            85,
+                        building.y + 60,
+                        50,
+                        42
+                    );
+
+
+                    ctx.font =
+                        "bold 12px Georgia";
+
+
+                    ctx.textAlign =
+                        "center";
+
+
+                    ctx.fillStyle =
+                        "#f1e0ba";
+
+
+                    ctx.fillText(
+                        building.name,
+                        building.x +
+                            building.w /
+                                2,
+                        building.y +
+                            building.h +
+                            27
+                    );
+                }
+            );
+    }
+
+
+    function drawHouseInterior() {
+
+        const building =
+            state.currentHouse;
+
+
+        ctx.fillStyle =
+            "#6f503b";
+
+
+        ctx.fillRect(
+            0,
+            0,
+            state.world.width,
+            state.world.height
+        );
+
+
+        const roomW =
+            Math.max(
+                300,
+                building.w -
+                    80
+            );
+
+
+        const roomH =
+            Math.max(
+                190,
+                building.h -
+                    100
+            );
+
+
+        ctx.fillStyle =
+            "#9b7855";
+
+
+        ctx.fillRect(
+            180,
+            140,
+            roomW,
+            roomH
+        );
+
+
+        ctx.strokeStyle =
+            "#d2b477";
+
+
+        ctx.lineWidth =
+            5;
+
+
+        ctx.strokeRect(
+            180,
+            140,
+            roomW,
+            roomH
+        );
+
+
+        ctx.fillStyle =
+            "#4e3024";
+
+
+        ctx.fillRect(
+            320,
+            270,
+            180,
+            75
+        );
+
+
+        ctx.fillStyle =
+            "#8c6d4f";
+
+
+        ctx.fillRect(
+            650,
+            245,
+            85,
+            110
+        );
+
+
+        ctx.fillStyle =
+            "#edddb9";
+
+
+        ctx.font =
+            "bold 18px Georgia";
+
+
+        ctx.textAlign =
+            "center";
+
+
+        ctx.fillText(
+            building.name,
+            180 +
+                roomW /
+                    2,
+            115
+        );
+    }
+
+
+    function drawTrees() {
+
+        state.world.trees
+            .forEach(
+                tree => {
+
+                    if (
+                        !tree.alive
+                    ) {
+
+                        return;
+                    }
+
+
+                    const sway =
+                        Math.sin(
+                            state.time *
+                                1.7 +
+                            tree.x
+                        ) *
+                        2;
+
+
+                    ctx.fillStyle =
+                        "rgba(0,0,0,.22)";
+
+
+                    ctx.beginPath();
+
+
+                    ctx.ellipse(
+                        tree.x,
+                        tree.y + 28,
+                        34,
+                        11,
+                        0,
+                        0,
+                        Math.PI * 2
+                    );
+
+
+                    ctx.fill();
+
+
+                    ctx.fillStyle =
+                        "#684a30";
+
+
+                    ctx.fillRect(
+                        tree.x - 9,
+                        tree.y,
+                        18,
+                        42
+                    );
+
+
+                    ctx.fillStyle =
+                        "#305c36";
+
+
+                    ctx.beginPath();
+
+
+                    ctx.arc(
+                        tree.x +
+                            sway,
+                        tree.y - 14,
+                        34,
+                        0,
+                        Math.PI * 2
+                    );
+
+
+                    ctx.fill();
+
+
+                    ctx.fillStyle =
+                        "#447a45";
+
+
+                    ctx.beginPath();
+
+
+                    ctx.arc(
+                        tree.x -
+                            14 +
+                            sway,
+                        tree.y - 27,
+                        24,
+                        0,
+                        Math.PI * 2
+                    );
+
+
+                    ctx.arc(
+                        tree.x +
+                            14 +
+                            sway,
+                        tree.y - 27,
+                        25,
+                        0,
+                        Math.PI * 2
+                    );
+
+
+                    ctx.fill();
+
+
+                    if (
+                        distance(
+                            tree,
+                            state.player
+                        ) <
+                        85
+                    ) {
+
+                        ctx.strokeStyle =
+                            "#d8bc73";
+
+
+                        ctx.lineWidth =
+                            2;
+
+
+                        ctx.beginPath();
+
+
+                        ctx.arc(
+                            tree.x,
+                            tree.y - 10,
+                            40,
+                            0,
+                            Math.PI * 2
+                        );
+
+
+                        ctx.stroke();
+                    }
+                }
+            );
+    }
+
+
+    function drawResources() {
+
+        const icons = {
+
+            ferro: "⛓️",
+
+            rubi: "♦",
+
+            cristal: "💎",
+
+            ouro: "🪙",
+
+            carvao: "⬛"
+
+        };
+
+
+        state.world.resources
+            .forEach(
+                resource => {
+
+                    if (
+                        !resource.alive
+                    ) {
+
+                        return;
+                    }
+
+
+                    ctx.font =
+                        "20px Arial";
+
+
+                    ctx.textAlign =
+                        "center";
+
+
+                    ctx.fillText(
+                        icons[
+                            resource.type
+                        ] ||
+                        "✦",
+                        resource.x,
+                        resource.y
+                    );
+                }
+            );
+    }
+
+
+    function drawObstacles() {
+
+        state.world.obstacles
+            .forEach(
+                obstacle => {
+
+                    if (
+                        obstacle.disabled ||
+                        obstacle.type ===
+                            "building" ||
+                        obstacle.type ===
+                            "tree"
+                    ) {
+
+                        return;
+                    }
+
+
+                    if (
+                        obstacle.type ===
+                        "wall"
+                    ) {
+
+                        ctx.fillStyle =
+                            "#444b47";
+
+
+                        ctx.fillRect(
+                            obstacle.x,
+                            obstacle.y,
+                            obstacle.w,
+                            obstacle.h
+                        );
+
+
+                        return;
+                    }
+
+
+                    const colors = {
+
+                        rock:
+                            "#737771",
+
+                        snowrock:
+                            "#bec5c7",
+
+                        ironrock:
+                            "#666c6f",
+
+                        rubyrock:
+                            "#73384b",
+
+                        fountain:
+                            "#88867b"
+                    };
+
+
+                    if (
+                        obstacle.type ===
+                        "fountain"
+                    ) {
+
+                        ctx.fillStyle =
+                            "#89877c";
+
+
+                        ctx.beginPath();
+
+
+                        ctx.ellipse(
+                            obstacle.x +
+                                obstacle.w /
+                                    2,
+                            obstacle.y +
+                                obstacle.h /
+                                    2,
+                            obstacle.w /
+                                2,
+                            obstacle.h /
+                                2,
+                            0,
+                            0,
+                            Math.PI * 2
+                        );
+
+
+                        ctx.fill();
+
+
+                        ctx.fillStyle =
+                            "#5b98aa";
+
+
+                        ctx.beginPath();
+
+
+                        ctx.ellipse(
+                            obstacle.x +
+                                obstacle.w /
+                                    2,
+                            obstacle.y +
+                                obstacle.h /
+                                    2,
+                            obstacle.w /
+                                2 -
+                                22,
+                            obstacle.h /
+                                2 -
+                                22,
+                            0,
+                            0,
+                            Math.PI * 2
+                        );
+
+
+                        ctx.fill();
+
+
+                        return;
+                    }
+
+
+                    ctx.fillStyle =
+                        colors[
+                            obstacle.type
+                        ] ||
+                        "#737771";
+
+
+                    ctx.beginPath();
+
+
+                    ctx.ellipse(
+                        obstacle.x +
+                            obstacle.w /
+                                2,
+                        obstacle.y +
+                            obstacle.h /
+                                2,
+                        obstacle.w /
+                            2,
+                        obstacle.h /
+                            2,
+                        -.12,
+                        0,
+                        Math.PI * 2
+                    );
+
+
+                    ctx.fill();
+                }
+            );
+    }
+
+
+    function drawNPCs() {
+
+        state.world.npcs
+            .forEach(
+                npc => {
+
+                    ctx.fillStyle =
+                        "rgba(0,0,0,.23)";
+
+
+                    ctx.beginPath();
+
+
+                    ctx.ellipse(
+                        npc.x,
+                        npc.y + 19,
+                        18,
+                        7,
+                        0,
+                        0,
+                        Math.PI * 2
+                    );
+
+
+                    ctx.fill();
+
+
+                    ctx.fillStyle =
+                        npc.color;
+
+
+                    ctx.beginPath();
+
+
+                    ctx.arc(
+                        npc.x,
+                        npc.y,
+                        17,
+                        0,
+                        Math.PI * 2
+                    );
+
+
+                    ctx.fill();
+
+
+                    ctx.fillStyle =
+                        "#28272b";
+
+
+                    ctx.beginPath();
+
+
+                    ctx.arc(
+                        npc.x,
+                        npc.y - 8,
+                        9,
+                        0,
+                        Math.PI * 2
+                    );
+
+
+                    ctx.fill();
+
+
+                    ctx.textAlign =
+                        "center";
+
+
+                    ctx.font =
+                        "bold 12px Arial";
+
+
+                    ctx.fillStyle =
+                        "#f0dfb8";
+
+
+                    ctx.fillText(
+                        npc.name,
+                        npc.x,
+                        npc.y - 30
+                    );
+
+
+                    ctx.font =
+                        "10px Arial";
+
+
+                    ctx.fillStyle =
+                        "#cac3b0";
+
+
+                    ctx.fillText(
+                        npc.role,
+                        npc.x,
+                        npc.y + 36
+                    );
+                }
+            );
+    }
+
+
+    function drawEnemies() {
+
+        state.world.enemies
+            .forEach(
+                enemy => {
+
+                    if (
+                        enemy.dead
+                    ) {
+
+                        return;
+                    }
+
+
+                    if (
+                        enemy.aggressive
+                    ) {
+
+                        ctx.strokeStyle =
+                            "rgba(220,60,55,.11)";
+
+
+                        ctx.lineWidth =
+                            2;
+
+
+                        ctx.beginPath();
+
+
+                        ctx.arc(
+                            enemy.x,
+                            enemy.y,
+                            enemy.vision,
+                            0,
+                            Math.PI * 2
+                        );
+
+
+                        ctx.stroke();
+                    }
+
+
+                    ctx.fillStyle =
+                        "rgba(0,0,0,.3)";
+
+
+                    ctx.beginPath();
+
+
+                    ctx.ellipse(
+                        enemy.x,
+                        enemy.y +
+                            enemy.radius,
+                        enemy.radius *
+                            1.1,
+                        enemy.radius *
+                            .42,
+                        0,
+                        0,
+                        Math.PI * 2
+                    );
+
+
+                    ctx.fill();
+
+
+                    ctx.fillStyle =
+                        enemy.hitFlash >
+                            0
+                            ? "#fff"
+                            : enemy.color;
+
+
+                    ctx.beginPath();
+
+
+                    if (
+                        enemy.type ===
+                            "progression"
+                    ) {
+
+                        ctx.moveTo(
+                            enemy.x,
+                            enemy.y -
+                                enemy.radius
+                        );
+
+
+                        ctx.lineTo(
+                            enemy.x +
+                                enemy.radius,
+                            enemy.y
+                        );
+
+
+                        ctx.lineTo(
+                            enemy.x,
+                            enemy.y +
+                                enemy.radius
+                        );
+
+
+                        ctx.lineTo(
+                            enemy.x -
+                                enemy.radius,
+                            enemy.y
+                        );
+
+
+                        ctx.closePath();
+
+                    }
+
+                    else {
+
+                        ctx.arc(
+                            enemy.x,
+                            enemy.y,
+                            enemy.radius,
+                            0,
+                            Math.PI * 2
+                        );
+                    }
+
+
+                    ctx.fill();
+
+
+                    ctx.strokeStyle =
+                        enemy.type ===
+                            "progression"
+                            ? "#e0ae63"
+                            : "#d0bd78";
+
+
+                    ctx.lineWidth =
+                        enemy.type ===
+                            "progression"
+                            ? 3
+                            : 1.5;
+
+
+                    ctx.stroke();
+
+
+                    ctx.font =
+                        enemy.type ===
+                            "progression"
+                            ? "24px Arial"
+                            : "19px Arial";
+
+
+                    ctx.textAlign =
+                        "center";
+
+
+                    ctx.fillText(
+                        enemy.icon,
+                        enemy.x,
+                        enemy.y + 7
+                    );
+
+
+                    ctx.font =
+                        "bold 11px Arial";
+
+
+                    ctx.fillStyle =
+                        enemy.type ===
+                            "progression"
+                            ? "#ffcc8a"
+                            : "#ede2c2";
+
+
+                    ctx.fillText(
+                        enemy.name,
+                        enemy.x,
+                        enemy.y +
+                            enemy.radius +
+                            17
+                    );
+
+
+                    const barWidth =
+                        enemy.radius *
+                        2.5;
+
+
+                    ctx.fillStyle =
+                        "#211f1d";
+
+
+                    ctx.fillRect(
+                        enemy.x -
+                            barWidth /
+                                2,
+                        enemy.y -
+                            enemy.radius -
+                            13,
+                        barWidth,
+                        5
+                    );
+
+
+                    ctx.fillStyle =
+                        "#b84e48";
+
+
+                    ctx.fillRect(
+                        enemy.x -
+                            barWidth /
+                                2,
+                        enemy.y -
+                            enemy.radius -
+                            13,
+                        barWidth *
+                            clamp(
+                                enemy.hp /
+                                    enemy.maxHp,
+                                0,
+                                1
+                            ),
+                        5
+                    );
+                }
+            );
+    }
+
+
+    function drawPortals() {
+
+        state.world.portals
+            .forEach(
+                portal => {
+
+                    const unlocked =
+                        portal.requirement
+                            ? portal.requirement()
+                            : true;
+
+
+                    ctx.fillStyle =
+                        unlocked
+                            ? "rgba(76,150,198,.20)"
+                            : "rgba(80,80,80,.15)";
+
+
+                    ctx.fillRect(
+                        portal.x,
+                        portal.y,
+                        portal.w,
+                        portal.h
+                    );
+
+
+                    ctx.strokeStyle =
+                        unlocked
+                            ? "#8fbcd0"
+                            : "#686963";
+
+
+                    ctx.lineWidth =
+                        2;
+
+
+                    ctx.strokeRect(
+                        portal.x,
+                        portal.y,
+                        portal.w,
+                        portal.h
+                    );
+
+
+                    ctx.textAlign =
+                        "center";
+
+
+                    ctx.font =
+                        "bold 12px Georgia";
+
+
+                    ctx.fillStyle =
+                        unlocked
+                            ? "#e3d19f"
+                            : "#94948b";
+
+
+                    ctx.fillText(
+                        unlocked
+                            ? "CONTINUAR"
+                            : "BLOQUEADO",
+                        portal.x +
+                            portal.w /
+                                2,
+                        portal.y -
+                            10
+                    );
+                }
+            );
+    }
+
+
+    function drawDrops() {
+
+        const icons = {
+
+            madeira:
+                "🪵",
+
+            carvao:
+                "⬛",
+
+            ferro:
+                "⛓️",
+
+            ouro:
+                "🪙",
+
+            rubi:
+                "♦",
+
+            cristal:
+                "💎",
+
+            essencia:
+                "✦"
+
+        };
+
+
+        state.world.drops
+            .forEach(
+                drop => {
+
+                    ctx.font =
+                        "19px Arial";
+
+
+                    ctx.textAlign =
+                        "center";
+
+
+                    ctx.fillText(
+                        icons[
+                            drop.type
+                        ] ||
+                        "✦",
+                        drop.x,
+                        drop.y
+                    );
+                }
+            );
+    }
+
+
+    function drawPlayer() {
+
+        const p =
+            state.player;
+
+
+        if (
+            !p
+        ) {
+
+            return;
+        }
+
+
+        if (
+            p.invincible >
+                0 &&
+            Math.floor(
+                p.invincible *
+                10
+            ) %
+                2 ===
+                0
+        ) {
+
+            return;
+        }
+
+
+        ctx.fillStyle =
+            "rgba(0,0,0,.28)";
+
+
+        ctx.beginPath();
+
+
+        ctx.ellipse(
+            p.x,
+            p.y + 20,
+            21,
+            8,
+            0,
+            0,
+            Math.PI * 2
+        );
+
+
+        ctx.fill();
+
+
+        ctx.fillStyle =
+            p.color;
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+            p.x,
+            p.y,
+            p.radius,
+            0,
+            Math.PI * 2
+        );
+
+
+        ctx.fill();
+
+
+        ctx.fillStyle =
+            "#e5c3a2";
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+            p.x,
+            p.y - 12,
+            10,
+            0,
+            Math.PI * 2
+        );
+
+
+        ctx.fill();
+
+
+        ctx.fillStyle =
+            "#2d241f";
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+            p.x,
+            p.y - 16,
+            10,
+            Math.PI,
+            Math.PI * 2
+        );
+
+
+        ctx.fill();
+
+
+        ctx.textAlign =
+            "center";
+
+
+        ctx.font =
+            "bold 13px Arial";
+
+
+        ctx.fillStyle =
+            "#fff0c8";
+
+
+        ctx.fillText(
+            p.name,
+            p.x,
+            p.y - 40
+        );
+    }
+
+
+    function draw() {
+
+        ctx.clearRect(
+            0,
+            0,
+            window.innerWidth,
+            window.innerHeight
+        );
+
+
+        ctx.save();
+
+
+        ctx.translate(
+            -state.camera.x,
+            -state.camera.y
+        );
+
+
+        drawGround();
+
+        drawBuildings();
+
+        if (
+            !state.houseMode
+        ) {
+
+            drawTrees();
+
+            drawResources();
+
+            drawObstacles();
+
+            drawPortals();
+
+            drawDrops();
+
+            drawNPCs();
+
+            drawEnemies();
+
+        }
+
+        drawPlayer();
+
+
+        ctx.restore();
+
+
+        drawMinimap();
     }
 
 
@@ -9679,93 +8846,127 @@
 
 
     /* =====================================================
-       PARTÍCULAS / EFEITOS
+       LOOP
     ====================================================== */
 
-    function updateVisualEffects(
+    function update(
         dt
     ) {
 
-        state.world.particles =
-            state.world.particles.filter(
-                particle => {
-
-                    particle.x +=
-                        particle.vx *
-                        dt;
-
-
-                    particle.y +=
-                        particle.vy *
-                        dt;
-
-
-                    particle.vy +=
-                        45 *
-                        dt;
-
-
-                    particle.life -=
-                        dt;
-
-
-                    return (
-                        particle.life >
-                        0
-                    );
-                }
-            );
-
-
-        state.world.effects =
-            state.world.effects.filter(
-                effect => {
-
-                    if (
-                        effect.type ===
-                        "orb"
-                    ) {
-
-                        effect.y -=
-                            15 *
-                            dt;
-
-                        effect.life -=
-                            dt;
-
-                        return (
-                            effect.life >
-                            0
-                        );
-                    }
-
-
-                    return true;
-                }
-            );
-
-
-        for (
-            const drop of
-            state.world.drops
+        if (
+            !state.player
         ) {
 
-            drop.life -=
-                dt;
+            return;
         }
 
 
-        state.world.drops =
-            state.world.drops.filter(
-                drop =>
-                    drop.life >
-                    0
+        state.portalCooldown =
+            Math.max(
+                0,
+                state.portalCooldown -
+                dt
             );
+
+
+        state.player.invincible =
+            Math.max(
+                0,
+                state.player.invincible -
+                dt
+            );
+
+
+        state.player.attackCooldown =
+            Math.max(
+                0,
+                state.player.attackCooldown -
+                dt
+            );
+
+
+        if (
+            !state.paused
+        ) {
+
+            updateMovement(
+                dt
+            );
+
+
+            updateSurvival(
+                dt
+            );
+
+
+            updateEnemies(
+                dt
+            );
+
+
+            updateResources(
+                dt
+            );
+
+
+            checkPortals();
+        }
+
+
+        updateCamera();
+
+
+        updateHUD();
+
+
+        draw();
+    }
+
+
+    function gameLoop(
+        timestamp
+    ) {
+
+        if (
+            !state.running
+        ) {
+
+            return;
+        }
+
+
+        const dt =
+            Math.min(
+                (
+                    timestamp -
+                    state.lastTime
+                ) /
+                    1000,
+                0.05
+            );
+
+
+        state.lastTime =
+            timestamp;
+
+
+        state.time +=
+            dt;
+
+
+        update(
+            dt
+        );
+
+
+        requestAnimationFrame(
+            gameLoop
+        );
     }
 
 
     /* =====================================================
-       SALVAMENTO
+       SALVAR / CARREGAR
     ====================================================== */
 
     function saveGame(
@@ -9780,26 +8981,23 @@
         }
 
 
-        const save = {
-
-            version: 12,
-
-            area:
-                state.area,
-
-            player:
-                state.player,
-
-            savedAt:
-                new Date().toISOString()
-        };
-
-
         try {
 
             localStorage.setItem(
                 SAVE_KEY,
-                JSON.stringify(save)
+                JSON.stringify({
+                    version:
+                        13,
+
+                    area:
+                        state.area,
+
+                    player:
+                        state.player,
+
+                    savedAt:
+                        Date.now()
+                })
             );
 
 
@@ -9822,7 +9020,6 @@
         ) {
 
             console.error(
-                "Falha ao salvar:",
                 error
             );
 
@@ -9888,92 +9085,6 @@
                 save.player;
 
 
-            state.player.inventory =
-                save.player.inventory ||
-                {};
-
-
-            state.player.quest =
-                save.player.quest ||
-                {
-                    wood: {
-                        state: "none",
-                        need: 10,
-                        reward: 100
-                    },
-
-                    coal: {
-                        state: "none",
-                        need: 8,
-                        reward: 140
-                    }
-                };
-
-
-            state.player.flags =
-                save.player.flags ||
-                {};
-
-
-            state.player.collected =
-                save.player.collected ||
-                {};
-
-
-            state.player.discoveredBosses =
-                save.player.discoveredBosses ||
-                [];
-
-
-            state.player.defeatedBosses =
-                save.player.defeatedBosses ||
-                [];
-
-
-            state.player.unlockedAreas =
-                save.player.unlockedAreas ||
-                ["village"];
-
-
-            state.player.hellTypesDefeated =
-                save.player.hellTypesDefeated ||
-                {};
-
-
-            state.player.mapOwned =
-                Boolean(
-                    save.player.mapOwned
-                );
-
-
-            state.player.memory =
-                Number(
-                    save.player.memory
-                ) || 0;
-
-
-            state.player.memoryMax =
-                Number(
-                    save.player.memoryMax
-                ) || 100;
-
-
-            state.player.radius =
-                18;
-
-
-            state.player.invincible =
-                0;
-
-
-            state.player.attackCooldown =
-                0;
-
-
-            state.player.dead =
-                false;
-
-
             state.area =
                 REGIONS[
                     save.area
@@ -9982,7 +9093,12 @@
                     : "village";
 
 
-            buildArea();
+            fixLoadedPlayer(
+                character
+            );
+
+
+            buildWorld();
 
 
             updateHUD();
@@ -10010,11 +9126,6 @@
             );
 
 
-            showToast(
-                "Jogo carregado."
-            );
-
-
             return true;
 
         }
@@ -10024,7 +9135,6 @@
         ) {
 
             console.error(
-                "Save inválido:",
                 error
             );
 
@@ -10036,6 +9146,159 @@
 
             return false;
         }
+    }
+
+
+    function fixLoadedPlayer(
+        character
+    ) {
+
+        const p =
+            state.player;
+
+
+        p.inventory =
+            p.inventory ||
+            {};
+
+
+        Object.keys(
+            ITEMS
+        )
+            .forEach(
+                id => {
+
+                    if (
+                        p.inventory[id] ===
+                        undefined
+                    ) {
+
+                        p.inventory[id] =
+                            0;
+                    }
+                }
+            );
+
+
+        p.equipment =
+            p.equipment ||
+            {
+                weapon: null,
+                armor: null,
+                tool: "machado"
+            };
+
+
+        p.quest =
+            p.quest ||
+            {
+                wood: {
+                    state: "none",
+                    need: 10,
+                    rewardXP: 100,
+                    rewardMoney: 80
+                },
+
+                coal: {
+                    state: "none",
+                    need: 8,
+                    rewardXP: 130,
+                    rewardMoney: 110
+                }
+            };
+
+
+        p.defeatedBosses =
+            p.defeatedBosses ||
+            [];
+
+
+        p.unlockedAreas =
+            p.unlockedAreas ||
+            ["village"];
+
+
+        p.discoveredBosses =
+            p.discoveredBosses ||
+            [];
+
+
+        p.checkpoints =
+            p.checkpoints ||
+            {};
+
+
+        p.checkpoints.village =
+            p.checkpoints.village ||
+            {
+                x: 480,
+                y: 610
+            };
+
+
+        p.hp =
+            clamp(
+                Number(
+                    p.hp
+                ) || character.hp,
+                0,
+                Number(
+                    p.maxHp
+                ) || character.hp
+            );
+
+
+        p.maxHp =
+            Number(
+                p.maxHp
+            ) ||
+            character.hp;
+
+
+        p.magic =
+            Number(
+                p.magic
+            ) || character.magic;
+
+
+        p.maxMagic =
+            Number(
+                p.maxMagic
+            ) ||
+            character.magic;
+
+
+        p.energy =
+            Number(
+                p.energy
+            ) || character.energy;
+
+
+        p.maxEnergy =
+            Number(
+                p.maxEnergy
+            ) ||
+            character.energy;
+
+
+        p.hunger =
+            Number(
+                p.hunger
+            ) || 100;
+
+
+        p.fatigue =
+            Number(
+                p.fatigue
+            ) || 100;
+
+
+        p.radius =
+            18;
+
+
+        p.dead =
+            false;
     }
 
 
@@ -10052,6 +9315,7 @@
         }
 
         catch {
+
             return false;
         }
     }
@@ -10059,26 +9323,22 @@
 
     function updateContinueButton() {
 
-        const available =
+        const exists =
             hasSave();
 
 
         $("continueBtn")
             .disabled =
-            !available;
+            !exists;
 
 
         $("continueHint")
             .textContent =
-            available
+            exists
                 ? "Existe um jogo salvo neste navegador."
                 : "Nenhum jogo salvo encontrado.";
     }
 
-
-    /* =====================================================
-       MENU
-    ====================================================== */
 
     function returnToMenu() {
 
@@ -10118,9 +9378,10 @@
             )
             .forEach(
                 modal =>
-                    modal.classList.add(
-                        "hidden"
-                    )
+                    modal.classList
+                        .add(
+                            "hidden"
+                        )
             );
 
 
@@ -10135,7 +9396,7 @@
             null;
 
 
-        state.currentQuestNPC =
+        state.questNPC =
             null;
 
 
@@ -10145,788 +9406,8 @@
 
 
     /* =====================================================
-       UPDATE PRINCIPAL
-    ====================================================== */
-
-    function update(
-        dt
-    ) {
-
-        if (
-            !state.player
-        ) {
-
-            return;
-        }
-
-
-        state.portalCooldown =
-            Math.max(
-                0,
-                state.portalCooldown -
-                    dt
-            );
-
-
-        if (
-            state.player.attackCooldown >
-                0
-        ) {
-
-            state.player.attackCooldown =
-                Math.max(
-                    0,
-                    state.player
-                        .attackCooldown -
-                        dt
-                );
-        }
-
-
-        state.player.invincible =
-            Math.max(
-                0,
-                state.player.invincible -
-                    dt
-            );
-
-
-        if (
-            !state.paused
-        ) {
-
-            updateMovement(
-                dt
-            );
-
-
-            updateSurvival(
-                dt
-            );
-
-
-            updateEnemies(
-                dt
-            );
-
-
-            updateResources(
-                dt
-            );
-
-
-            checkPortals();
-        }
-
-
-        updateVisualEffects(
-            dt
-        );
-
-
-        updateCamera();
-
-
-        updateHUD();
-
-
-        if (
-            $("mapPanel")
-                .classList.contains(
-                    "hidden"
-                ) ===
-                false
-        ) {
-
-            drawMap();
-        }
-    }
-
-
-    function updateMovement(
-        dt
-    ) {
-
-        updatePlayerMovement(
-            dt
-        );
-    }
-
-
-    function updatePlayerMovement(
-        dt
-    ) {
-
-        if (
-            state.houseMode
-        ) {
-
-            const p =
-                state.player;
-
-
-            let dx = 0;
-            let dy = 0;
-
-
-            if (
-                state.keys.has(
-                    "w"
-                )
-            ) {
-
-                dy--;
-            }
-
-            if (
-                state.keys.has(
-                    "s"
-                )
-            ) {
-
-                dy++;
-            }
-
-            if (
-                state.keys.has(
-                    "a"
-                )
-            ) {
-
-                dx--;
-            }
-
-            if (
-                state.keys.has(
-                    "d"
-                )
-            ) {
-
-                dx++;
-            }
-
-
-            if (
-                !dx &&
-                !dy
-            ) {
-
-                return;
-            }
-
-
-            const length =
-                Math.hypot(
-                    dx,
-                    dy
-                );
-
-
-            dx /= length;
-            dy /= length;
-
-
-            const step =
-                120 *
-                dt;
-
-
-            const nx =
-                p.x +
-                dx * step;
-
-
-            const ny =
-                p.y +
-                dy * step;
-
-
-            if (
-                canMoveTo(
-                    nx,
-                    p.y,
-                    p.radius
-                )
-            ) {
-
-                p.x =
-                    nx;
-            }
-
-
-            if (
-                canMoveTo(
-                    p.x,
-                    ny,
-                    p.radius
-                )
-            ) {
-
-                p.y =
-                    ny;
-            }
-
-
-            return;
-        }
-
-
-        updatePlayerFromWorld(
-            dt
-        );
-    }
-
-
-    function updatePlayerFromWorld(
-        dt
-    ) {
-
-        let dx = 0;
-        let dy = 0;
-
-
-        if (
-            state.keys.has(
-                "w"
-            ) ||
-            state.keys.has(
-                "arrowup"
-            )
-        ) {
-
-            dy--;
-        }
-
-
-        if (
-            state.keys.has(
-                "s"
-            ) ||
-            state.keys.has(
-                "arrowdown"
-            )
-        ) {
-
-            dy++;
-        }
-
-
-        if (
-            state.keys.has(
-                "a"
-            ) ||
-            state.keys.has(
-                "arrowleft"
-            )
-        ) {
-
-            dx--;
-        }
-
-
-        if (
-            state.keys.has(
-                "d"
-            ) ||
-            state.keys.has(
-                "arrowright"
-            )
-        ) {
-
-            dx++;
-        }
-
-
-        if (
-            !dx &&
-            !dy
-        ) {
-
-            return;
-        }
-
-
-        const length =
-            Math.hypot(
-                dx,
-                dy
-            );
-
-
-        dx /= length;
-        dy /= length;
-
-
-        const p =
-            state.player;
-
-
-        let speed =
-            p.speed;
-
-
-        if (
-            p.hunger <
-            20
-        ) {
-
-            speed *=
-                0.72;
-        }
-
-
-        if (
-            p.fatigue <
-            20
-        ) {
-
-            speed *=
-                0.72;
-        }
-
-
-        const step =
-            speed *
-            dt;
-
-
-        const nx =
-            p.x +
-            dx *
-            step;
-
-
-        if (
-            canMoveTo(
-                nx,
-                p.y,
-                p.radius
-            )
-        ) {
-
-            p.x =
-                nx;
-        }
-
-
-        const ny =
-            p.y +
-            dy *
-            step;
-
-
-        if (
-            canMoveTo(
-                p.x,
-                ny,
-                p.radius
-            )
-        ) {
-
-            p.y =
-                ny;
-        }
-    }
-
-
-    /* =====================================================
-       GAME LOOP
-    ====================================================== */
-
-    function gameLoop(
-        timestamp
-    ) {
-
-        if (
-            !state.running
-        ) {
-
-            return;
-        }
-
-
-        const dt =
-            Math.min(
-                (
-                    timestamp -
-                    state.lastTime
-                ) /
-                    1000,
-                0.05
-            );
-
-
-        state.lastTime =
-            timestamp;
-
-
-        state.time +=
-            dt;
-
-
-        update(
-            dt
-        );
-
-
-        draw();
-
-
-        requestAnimationFrame(
-            gameLoop
-        );
-    }
-
-
-    /* =====================================================
        EVENTOS
     ====================================================== */
-
-    function bindEvents() {
-
-        $("newGameBtn")
-            .addEventListener(
-                "click",
-                startNewGame
-            );
-
-
-        $("continueBtn")
-            .addEventListener(
-                "click",
-                () => {
-
-                    if (
-                        !loadGame()
-                    ) {
-
-                        showToast(
-                            "Não foi possível carregar o jogo."
-                        );
-                    }
-                }
-            );
-
-
-        $("howToBtn")
-            .addEventListener(
-                "click",
-                () =>
-                    showScreen(
-                        "how"
-                    )
-            );
-
-
-        $("creditsBtn")
-            .addEventListener(
-                "click",
-                () =>
-                    showScreen(
-                        "credits"
-                    )
-            );
-
-
-        $("closeHowBtn")
-            .addEventListener(
-                "click",
-                () =>
-                    showScreen(
-                        "menu"
-                    )
-            );
-
-
-        $("closeCreditsBtn")
-            .addEventListener(
-                "click",
-                () =>
-                    showScreen(
-                        "menu"
-                    )
-            );
-
-
-        $("backMenuBtn")
-            .addEventListener(
-                "click",
-                () =>
-                    showScreen(
-                        "menu"
-                    )
-            );
-
-
-        $("startGameBtn")
-            .addEventListener(
-                "click",
-                startGame
-            );
-
-
-        $("playerName")
-            .addEventListener(
-                "keydown",
-                event => {
-
-                    if (
-                        event.key ===
-                        "Enter"
-                    ) {
-
-                        startGame();
-                    }
-                }
-            );
-
-
-        $("saveBtn")
-            .addEventListener(
-                "click",
-                () =>
-                    saveGame(
-                        true
-                    )
-            );
-
-
-        $("menuBtn")
-            .addEventListener(
-                "click",
-                returnToMenu
-            );
-
-
-        $("inventoryBtn")
-            .addEventListener(
-                "click",
-                openInventory
-            );
-
-
-        $("mapBtn")
-            .addEventListener(
-                "click",
-                openMap
-            );
-
-
-        $("bookBtn")
-            .addEventListener(
-                "click",
-                openBook
-            );
-
-
-        $("closeInventory")
-            .addEventListener(
-                "click",
-                () =>
-                    $("inventoryPanel")
-                        .classList.add(
-                            "hidden"
-                        )
-            );
-
-
-        $("closeMap")
-            .addEventListener(
-                "click",
-                () =>
-                    $("mapPanel")
-                        .classList.add(
-                            "hidden"
-                        )
-            );
-
-
-        $("travelYes")
-            .addEventListener(
-                "click",
-                confirmTravel
-            );
-
-
-        $("travelNo")
-            .addEventListener(
-                "click",
-                cancelTravel
-            );
-
-
-        $("battleAccept")
-            .addEventListener(
-                "click",
-                acceptBattle
-            );
-
-
-        $("battleDecline")
-            .addEventListener(
-                "click",
-                declineBattle
-            );
-
-
-        $("respawnBtn")
-            .addEventListener(
-                "click",
-                respawnPlayer
-            );
-
-
-        $("questAction")
-            .addEventListener(
-                "click",
-                executeQuest
-            );
-
-
-        $("joinFinalBtn")
-            .addEventListener(
-                "click",
-                () =>
-                    chooseFinal(
-                        "join"
-                    )
-            );
-
-
-        $("fightFinalBtn")
-            .addEventListener(
-                "click",
-                () =>
-                    chooseFinal(
-                        "fight"
-                    )
-            );
-
-
-        document
-            .querySelectorAll(
-                "[data-close]"
-            )
-            .forEach(
-                button =>
-                    button.addEventListener(
-                        "click",
-                        () =>
-                            $(
-                                button
-                                    .dataset
-                                    .close
-                            )
-                                .classList
-                                .add(
-                                    "hidden"
-                                )
-                    )
-            );
-
-
-        document
-            .querySelectorAll(
-                "#inventoryTabs .tab"
-            )
-            .forEach(
-                tab =>
-                    tab.addEventListener(
-                        "click",
-                        () => {
-
-                            document
-                                .querySelectorAll(
-                                    "#inventoryTabs .tab"
-                                )
-                                .forEach(
-                                    button =>
-                                        button.classList.remove(
-                                            "active"
-                                        )
-                                );
-
-
-                            tab.classList.add(
-                                "active"
-                            );
-
-
-                            state.inventoryCategory =
-                                tab.dataset.cat;
-
-
-                            updateInventory();
-                        }
-                    )
-            );
-
-
-        document
-            .querySelectorAll(
-                "#shopTabs .tab"
-            )
-            .forEach(
-                tab =>
-                    tab.addEventListener(
-                        "click",
-                        () => {
-
-                            document
-                                .querySelectorAll(
-                                    "#shopTabs .tab"
-                                )
-                                .forEach(
-                                    button =>
-                                        button.classList.remove(
-                                            "active"
-                                        )
-                                );
-
-
-                            tab.classList.add(
-                                "active"
-                            );
-
-
-                            state.shopMode =
-                                tab.dataset.shop;
-
-
-                            renderShop();
-                        }
-                    )
-            );
-
-
-        window.addEventListener(
-            "resize",
-            resizeCanvas
-        );
-
-
-        window.addEventListener(
-            "blur",
-            () =>
-                state.keys.clear()
-        );
-
-
-        window.addEventListener(
-            "keydown",
-            handleKeyDown
-        );
-
-
-        window.addEventListener(
-            "keyup",
-            event =>
-                state.keys.delete(
-                    event.key.toLowerCase()
-                )
-        );
-    }
-
 
     function handleKeyDown(
         event
@@ -10939,19 +9420,12 @@
         const movementKeys = [
 
             "w",
-
             "a",
-
             "s",
-
             "d",
-
             "arrowup",
-
             "arrowdown",
-
             "arrowleft",
-
             "arrowright"
 
         ];
@@ -10968,45 +9442,53 @@
             state.keys.add(
                 key
             );
+
+            return;
         }
 
 
         if (
-            key ===
-            "e" &&
-            !event.repeat
+            event.repeat
+        ) {
+
+            return;
+        }
+
+
+        if (
+            key === "e"
         ) {
 
             event.preventDefault();
 
             playerAction();
+
+            return;
         }
 
 
         if (
-            key ===
-            "z" &&
-            !event.repeat
+            key === "z"
         ) {
 
             event.preventDefault();
 
             handleZ();
+
+            return;
         }
 
 
         if (
-            key ===
-            "i" &&
-            !event.repeat
+            key === "i"
         ) {
 
             event.preventDefault();
 
+
             if (
                 $("inventoryPanel")
-                    .classList
-                    .contains(
+                    .classList.contains(
                         "hidden"
                     )
             ) {
@@ -11022,21 +9504,22 @@
                         "hidden"
                     );
             }
+
+
+            return;
         }
 
 
         if (
-            key ===
-            "m" &&
-            !event.repeat
+            key === "m"
         ) {
 
             event.preventDefault();
 
+
             if (
                 $("mapPanel")
-                    .classList
-                    .contains(
+                    .classList.contains(
                         "hidden"
                     )
             ) {
@@ -11052,21 +9535,22 @@
                         "hidden"
                     );
             }
+
+
+            return;
         }
 
 
         if (
-            key ===
-            "l" &&
-            !event.repeat
+            key === "l"
         ) {
 
             event.preventDefault();
 
+
             if (
                 $("bookPanel")
-                    .classList
-                    .contains(
+                    .classList.contains(
                         "hidden"
                     )
             ) {
@@ -11082,74 +9566,46 @@
                         "hidden"
                     );
             }
+
+
+            return;
         }
 
 
         if (
-            key ===
-            "1" &&
-            !event.repeat
+            key === "1"
         ) {
 
             event.preventDefault();
 
-            if (
-                removeItem(
-                    "pocao",
-                    1
-                )
-            ) {
 
-                state.player.hp =
-                    clamp(
-                        state.player.hp +
-                            45,
-                        0,
-                        state.player.maxHp
-                    );
+            useItem(
+                "pocao"
+            );
 
 
-                showToast(
-                    "Poção de cura usada."
-                );
-            }
+            return;
         }
 
 
         if (
-            key ===
-            "2" &&
-            !event.repeat
+            key === "2"
         ) {
 
             event.preventDefault();
 
-            if (
-                removeItem(
-                    "elixir",
-                    1
-                )
-            ) {
 
-                state.player.energy =
-                    clamp(
-                        state.player.energy +
-                            50,
-                        0,
-                        state.player.maxEnergy
-                    );
+            useItem(
+                "elixir"
+            );
 
 
-                showToast(
-                    "Elixir de energia usado."
-                );
-            }
+            return;
         }
 
 
         if (
-            key ===
-            "escape"
+            key === "escape"
         ) {
 
             if (
@@ -11186,7 +9642,11 @@
 
 
             if (
-                screensGameActive()
+                $("gameScreen")
+                    .classList
+                    .contains(
+                        "active"
+                    )
             ) {
 
                 returnToMenu();
@@ -11195,191 +9655,328 @@
     }
 
 
-    function screensGameActive() {
+    /* =====================================================
+       INICIALIZAÇÃO
+    ====================================================== */
 
-        return $("gameScreen")
-            .classList
-            .contains(
-                "active"
-            );
-    }
-
-
-    function startNewGame() {
-
-        $("playerName")
-            .value = "";
-
-
-        $("nameError")
-            .textContent = "";
-
-
-        state.selectedCharacter =
-            CHARACTERS[0];
-
-
-        document
-            .querySelectorAll(
-                ".character-card"
-            )
-            .forEach(
-                (card, index) =>
-                    card.classList.toggle(
-                        "selected",
-                        index === 0
-                    )
-            );
-
-
-        showScreen(
-            "character"
+    $("newGameBtn")
+        .addEventListener(
+            "click",
+            startNewGame
         );
 
 
-        setTimeout(
-            () =>
-                $("playerName")
-                    .focus(),
-            100
-        );
-    }
-
-
-    function startGame() {
-
-        const name =
-            $("playerName")
-                .value
-                .trim();
-
-
-        if (
-            name.length <
-            2
-        ) {
-
-            $("nameError")
-                .textContent =
-                "Digite pelo menos 2 caracteres.";
-
-
-            $("playerName")
-                .focus();
-
-
-            return;
-        }
-
-
-        $("nameError")
-            .textContent = "";
-
-
-        createPlayer(
-            name,
-            state.selectedCharacter
-        );
-
-
-        state.area =
-            "village";
-
-
-        buildArea();
-
-
-        state.player.x =
-            480;
-
-
-        state.player.y =
-            610;
-
-
-        state.player.checkpoint = {
-
-            area:
-                "village",
-
-            x:
-                480,
-
-            y:
-                610
-        };
-
-
-        updateHUD();
-
-
-        showScreen(
-            "game"
-        );
-
-
-        state.running =
-            true;
-
-
-        state.paused =
-            true;
-
-
-        state.lastTime =
-            performance.now();
-
-
-        $("transitionScreen")
-            .classList
-            .remove(
-                "hidden"
-            );
-
-
-        $("transitionMessage")
-            .textContent =
-            "VEYRA...";
-
-
-        setTimeout(
+    $("continueBtn")
+        .addEventListener(
+            "click",
             () => {
 
-                $("transitionScreen")
-                    .classList
-                    .add(
-                        "hidden"
+                if (
+                    !loadGame()
+                ) {
+
+                    showToast(
+                        "Não foi possível carregar."
                     );
 
+                    updateContinueButton();
+                }
+            }
+        );
 
-                state.paused =
-                    false;
+
+    $("howToBtn")
+        .addEventListener(
+            "click",
+            () =>
+                showScreen(
+                    "how"
+                )
+        );
 
 
-                showToast(
-                    "Bem-vindo à Vila do Crepúsculo."
+    $("closeHowBtn")
+        .addEventListener(
+            "click",
+            () =>
+                showScreen(
+                    "menu"
+                )
+        );
+
+
+    $("creditsBtn")
+        .addEventListener(
+            "click",
+            () =>
+                showScreen(
+                    "credits"
+                )
+        );
+
+
+    $("closeCreditsBtn")
+        .addEventListener(
+            "click",
+            () =>
+                showScreen(
+                    "menu"
+                )
+        );
+
+
+    $("backMenuBtn")
+        .addEventListener(
+            "click",
+            () =>
+                showScreen(
+                    "menu"
+                )
+        );
+
+
+    $("startGameBtn")
+        .addEventListener(
+            "click",
+            startGame
+        );
+
+
+    $("playerName")
+        .addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+                    startGame();
+                }
+            }
+        );
+
+
+    $("saveBtn")
+        .addEventListener(
+            "click",
+            () =>
+                saveGame(
+                    true
+                )
+        );
+
+
+    $("menuBtn")
+        .addEventListener(
+            "click",
+            returnToMenu
+        );
+
+
+    $("inventoryBtn")
+        .addEventListener(
+            "click",
+            openInventory
+        );
+
+
+    $("mapBtn")
+        .addEventListener(
+            "click",
+            openMap
+        );
+
+
+    $("bookBtn")
+        .addEventListener(
+            "click",
+            openBook
+        );
+
+
+    $("travelYes")
+        .addEventListener(
+            "click",
+            confirmTravel
+        );
+
+
+    $("travelNo")
+        .addEventListener(
+            "click",
+            cancelTravel
+        );
+
+
+    $("battleAccept")
+        .addEventListener(
+            "click",
+            acceptBattle
+        );
+
+
+    $("battleDecline")
+        .addEventListener(
+            "click",
+            declineBattle
+        );
+
+
+    $("respawnBtn")
+        .addEventListener(
+            "click",
+            respawnPlayer
+        );
+
+
+    $("questAction")
+        .addEventListener(
+            "click",
+            questAction
+        );
+
+
+    document
+        .querySelectorAll(
+            "[data-close]"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const target =
+                            button.dataset
+                                .close;
+
+                        $(target)
+                            .classList
+                            .add(
+                                "hidden"
+                            );
+                    }
                 );
-
-            },
-            700
+            }
         );
 
 
-        requestAnimationFrame(
-            gameLoop
+    document
+        .querySelectorAll(
+            "#inventoryTabs .tab"
+        )
+        .forEach(
+            tab => {
+
+                tab.addEventListener(
+                    "click",
+                    () => {
+
+                        document
+                            .querySelectorAll(
+                                "#inventoryTabs .tab"
+                            )
+                            .forEach(
+                                item =>
+                                    item.classList
+                                        .remove(
+                                            "active"
+                                        )
+                            );
+
+
+                        tab.classList.add(
+                            "active"
+                        );
+
+
+                        state.inventoryCategory =
+                            tab.dataset
+                                .cat;
+
+
+                        updateInventory();
+                    }
+                );
+            }
         );
-    }
 
 
-    /* =====================================================
-       START
-    ====================================================== */
+    document
+        .querySelectorAll(
+            "#shopPanel .tab"
+        )
+        .forEach(
+            tab => {
+
+                tab.addEventListener(
+                    "click",
+                    () => {
+
+                        document
+                            .querySelectorAll(
+                                "#shopPanel .tab"
+                            )
+                            .forEach(
+                                item =>
+                                    item.classList
+                                        .remove(
+                                            "active"
+                                        )
+                            );
+
+
+                        tab.classList.add(
+                            "active"
+                        );
+
+
+                        state.shopMode =
+                            tab.dataset
+                                .shop;
+
+
+                        renderShop();
+                    }
+                );
+            }
+        );
+
+
+    window.addEventListener(
+        "keydown",
+        handleKeyDown
+    );
+
+
+    window.addEventListener(
+        "keyup",
+        event =>
+            state.keys.delete(
+                event.key.toLowerCase()
+            )
+    );
+
+
+    window.addEventListener(
+        "blur",
+        () =>
+            state.keys.clear()
+    );
+
+
+    window.addEventListener(
+        "resize",
+        resizeCanvas
+    );
+
 
     createCharacterCards();
 
     resizeCanvas();
-
-    bindEvents();
 
     updateContinueButton();
 

@@ -1,13438 +1,12161 @@
 (() => {
-    "use strict";
+"use strict";
+
+const SAVE_KEY = "veyra_save_v14_stable";
+
+const $ = id => document.getElementById(id);
+
+const must = id => {
+const element = $(id);
+
+if (!element) {
+throw new Error(
+`Elemento obrigatório não encontrado: #${id}`
+);
+}
+
+return element;
+};
+
+const canvas = must("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const miniCanvas = must("miniCanvas");
+const miniCtx = miniCanvas.getContext("2d");
+
+const mapCanvas = must("worldMapCanvas");
+const mapCtx = mapCanvas.getContext("2d");
+
+const screens = {
+menu: must("menuScreen"),
+how: must("howScreen"),
+credits: must("creditsScreen"),
+character: must("characterScreen"),
+game: must("gameScreen")
+};
+
+/* =====================================================
+PERSONAGENS
+====================================================== */
+
+const CHARACTERS = [
+
+{
+id: "kaelion",
+name: "KAELION",
+className: "Mago",
+icon: "🧙",
+role: "Magia • Longo alcance",
+description:
+"Grande poder mágico, controle à distância e menor resistência física.",
+story:
+"Estudioso de memórias antigas, Kaelion sente a magia desaparecer junto com as lembranças do mundo.",
+hp: 85,
+magic: 145,
+energy: 115,
+speed: 178,
+damage: 25,
+defense: 5,
+color: "#e49345",
+bg: "rgba(228,147,69,.16)",
+glow: "rgba(228,147,69,.28)",
+skill: "Raio de Memória"
+},
+
+{
+id: "theron",
+name: "THERON",
+className: "Cavaleiro",
+icon: "🛡️",
+role: "Espada • Defesa",
+description:
+"Muita defesa, boa vida e combate corpo a corpo.",
+story:
+"Theron jurou proteger a Vila do Crepúsculo enquanto ainda houver alguém capaz de lembrar seu nome.",
+hp: 145,
+magic: 75,
+energy: 120,
+speed: 145,
+damage: 30,
+defense: 21,
+color: "#bfc5ce",
+bg: "rgba(191,197,206,.14)",
+glow: "rgba(191,197,206,.23)",
+skill: "Golpe do Guardião"
+},
+
+{
+id: "grumgar",
+name: "GRUMGAR",
+className: "Troll",
+icon: "👹",
+role: "Força • Vida",
+description:
+"Enorme vida e dano físico, porém pouca velocidade.",
+story:
+"Grumgar deixou as cavernas para descobrir por que criaturas de sua espécie começaram a esquecer suas próprias tribos.",
+hp: 180,
+magic: 55,
+energy: 95,
+speed: 112,
+damage: 39,
+defense: 18,
+color: "#718f51",
+bg: "rgba(113,143,81,.16)",
+glow: "rgba(113,143,81,.24)",
+skill: "Esmagamento"
+},
+
+{
+id: "lirael",
+name: "LIRAEL",
+className: "Fada",
+icon: "🧚",
+role: "Velocidade • Cura",
+description:
+"Muito rápida, mágica e capaz de restaurar vida.",
+story:
+"Lirael percebeu que flores mágicas paravam de brilhar sempre que uma memória desaparecia.",
+hp: 95,
+magic: 135,
+energy: 135,
+speed: 210,
+damage: 20,
+defense: 7,
+color: "#dd8bd0",
+bg: "rgba(221,139,208,.16)",
+glow: "rgba(221,139,208,.25)",
+skill: "Luz Vital"
+},
+
+{
+id: "zephyr",
+name: "ZEPHYR",
+className: "Transmorfo",
+icon: "🦊",
+role: "Adaptação • Equilíbrio",
+description:
+"Atributos equilibrados e habilidade de adaptação temporária.",
+story:
+"Zephyr muda de forma para sobreviver, mas teme o dia em que esquecerá qual delas era a sua verdadeira forma.",
+hp: 115,
+magic: 108,
+energy: 112,
+speed: 170,
+damage: 26,
+defense: 13,
+color: "#8f6bd8",
+bg: "rgba(143,107,216,.16)",
+glow: "rgba(143,107,216,.25)",
+skill: "Forma Adaptativa"
+}
+
+];
+
+/* =====================================================
+ITENS
+====================================================== */
+
+const ITEMS = {
+
+madeira: {
+name: "Madeira",
+icon: "🪵",
+category: "materials",
+weight: 1,
+value: 2
+},
+
+carvao: {
+name: "Carvão",
+icon: "⬛",
+category: "materials",
+weight: 1,
+value: 6
+},
+
+ferro: {
+name: "Ferro",
+icon: "⛓️",
+category: "materials",
+weight: 2,
+value: 14
+},
+
+ouro: {
+name: "Ouro",
+icon: "🪙",
+category: "materials",
+weight: 2,
+value: 30
+},
+
+rubi: {
+name: "Rubi",
+icon: "♦",
+category: "materials",
+weight: 2,
+value: 75
+},
+
+cristal: {
+name: "Cristal",
+icon: "💎",
+category: "special",
+weight: 2,
+value: 45
+},
+
+essencia: {
+name: "Essência da Quietude",
+icon: "✦",
+category: "special",
+weight: 1,
+value: 100
+},
+
+pocao: {
+name: "Poção de Cura",
+icon: "🧪",
+category: "potions",
+weight: 1,
+value: 30,
+heal: 45
+},
+
+elixir: {
+name: "Elixir de Energia",
+icon: "💙",
+category: "potions",
+weight: 1,
+value: 35,
+energy: 50
+},
+
+espadaFerro: {
+name: "Espada de Ferro",
+icon: "⚔️",
+category: "weapons",
+weight: 4,
+value: 140,
+damage: 12
+},
+
+armaduraCouro: {
+name: "Armadura de Couro",
+icon: "🥋",
+category: "armor",
+weight: 5,
+value: 110,
+defense: 8
+},
+
+machado: {
+name: "Machado",
+icon: "🪓",
+category: "tools",
+weight: 3,
+value: 50
+}
+
+};
+
+/* =====================================================
+REGIÕES
+====================================================== */
+
+const REGIONS = {
+
+village: {
+name: "VILA DO CREPÚSCULO",
+width: 3200,
+height: 2200,
+visual: "village"
+},
+
+forest: {
+name: "FLORESTA",
+width: 3400,
+height: 2400,
+visual: "forest"
+},
+
+grove: {
+name: "BOSQUE",
+width: 3200,
+height: 2300,
+visual: "grove"
+},
+
+mountains: {
+name: "MONTANHAS",
+width: 3500,
+height: 2300,
+visual: "mountains"
+},
+
+iron: {
+name: "CAVERNA DE FERRO",
+width: 2900,
+height: 1900,
+visual: "iron"
+},
+
+ruby: {
+name: "CAVERNA DE RUBI",
+width: 3100,
+height: 2100,
+visual: "ruby"
+},
+
+shadow: {
+name: "CAVERNA SOMBRIA",
+width: 3000,
+height: 2000,
+visual: "shadow"
+},
+
+fairy: {
+name: "REINO DAS FADAS",
+width: 3200,
+height: 2200,
+visual: "fairy"
+},
+
+sky: {
+name: "CÉU",
+width: 3400,
+height: 2200,
+visual: "sky"
+},
+
+hell: {
+name: "INFERNO",
+width: 3600,
+height: 2400,
+visual: "hell"
+},
+
+final: {
+name: "CÂMARA FINAL",
+width: 2200,
+height: 1500,
+visual: "final"
+}
+
+};
+
+/* =====================================================
+ESTADO
+====================================================== */
+
+const state = {
+
+selectedCharacter: CHARACTERS[0],
+
+player: null,
+
+running: false,
+
+paused: false,
+
+time: 0,
+
+lastTime: 0,
+
+keys: new Set(),
+
+area: "village",
+
+camera: {
+x: 0,
+y: 0
+},
+
+world: createEmptyWorld(
+REGIONS.village
+),
+
+houseMode: false,
+
+currentHouse: null,
+
+houseReturn: null,
+
+dialogue: null,
+
+travel: null,
+
+battle: null,
+
+questNPC: null,
+
+shopNPC: null,
+
+shopMode: "buy",
+
+inventoryCategory: "all",
+
+toastTimer: null,
+
+portalCooldown: 0,
+
+warnedNeedAt: 0,
+
+finalChoiceShown: false
+
+};
+
+/* =====================================================
+MUNDO
+====================================================== */
+
+function createEmptyWorld(region) {
+
+return {
+
+width: region.width,
+
+height: region.height,
+
+obstacles: [],
+
+buildings: [],
+
+trees: [],
+
+resources: [],
+
+npcs: [],
+
+enemies: [],
+
+drops: [],
+
+portals: [],
+
+particles: [],
+
+effects: []
+
+};
+
+}
+
+/* =====================================================
+UTILITÁRIOS
+====================================================== */
+
+function clamp(
+value,
+min,
+max
+) {
+
+return Math.max(
+min,
+Math.min(
+max,
+value
+)
+);
+
+}
+
+function random(
+min,
+max
+) {
+
+return (
+Math.random() *
+(max - min) +
+min
+);
+
+}
+
+function randomInt(
+min,
+max
+) {
+
+return Math.floor(
+random(
+min,
+max + 1
+)
+);
+
+}
+
+function distance(
+a,
+b
+) {
+
+return Math.hypot(
+a.x - b.x,
+a.y - b.y
+);
+
+}
+
+function uid(prefix) {
+
+return (
+`${prefix}_` +
+Math.random()
+.toString(36)
+.slice(2, 9)
+);
+
+}
+
+function currentCharacter() {
+
+return (
+CHARACTERS.find(
+character =>
+character.id ===
+state.player?.characterId
+) ||
+CHARACTERS[0]
+);
+
+}
+
+function showScreen(name) {
+
+Object
+.values(screens)
+.forEach(
+screen =>
+screen.classList.remove(
+"active"
+)
+);
+
+screens[name].classList.add(
+"active"
+);
+
+}
+
+function showToast(message) {
+
+const toast =
+must("saveMessage");
+
+toast.textContent =
+message;
+
+toast.classList.add(
+"show"
+);
+
+clearTimeout(
+state.toastTimer
+);
+
+state.toastTimer =
+setTimeout(
+() => {
+
+toast.classList.remove(
+"show"
+);
+
+},
+2200
+);
+
+}
+
+/* =====================================================
+CANVAS
+====================================================== */
+
+function resizeCanvas() {
+
+const ratio =
+window.devicePixelRatio ||
+1;
+
+canvas.width =
+Math.floor(
+window.innerWidth *
+ratio
+);
+
+canvas.height =
+Math.floor(
+window.innerHeight *
+ratio
+);
+
+canvas.style.width =
+`${window.innerWidth}px`;
+
+canvas.style.height =
+`${window.innerHeight}px`;
+
+ctx.setTransform(
+ratio,
+0,
+0,
+ratio,
+0,
+0
+);
+
+}
+
+/* =====================================================
+SELEÇÃO
+====================================================== */
+
+function createCharacterCards() {
+
+const container =
+must("characterCards");
+
+container.innerHTML =
+"";
+
+CHARACTERS.forEach(
+(
+character,
+index
+) => {
+
+const card =
+document.createElement(
+"button"
+);
+
+card.type =
+"button";
+
+card.className =
+"character-card" +
+(
+index === 0
+? " selected"
+: ""
+);
+
+card.style.setProperty(
+"--char-color",
+character.color
+);
+
+card.style.setProperty(
+"--char-bg",
+character.bg
+);
+
+card.style.setProperty(
+"--char-glow",
+character.glow
+);
+
+card.innerHTML = `
+
+<div class="char-art">
+${character.icon}
+</div>
+
+<h3>
+${character.name}
+</h3>
+
+<p class="role">
+${character.className}
+—
+${character.role}
+</p>
+
+<p>
+${character.description}
+</p>
+
+<p>
+${character.story}
+</p>
+
+<p>
+❤️ ${character.hp}
+•
+✨ ${character.magic}
+•
+⚡ ${character.energy}
+</p>
+
+<p>
+⚔ ${character.damage}
+•
+🛡 ${character.defense}
+•
+🏃 ${character.speed}
+</p>
+
+<p>
+<strong>
+${character.skill}
+</strong>
+</p>
+
+`;
+
+card.addEventListener(
+"click",
+() => {
+
+state.selectedCharacter =
+character;
+
+document
+.querySelectorAll(
+".character-card"
+)
+.forEach(
+item =>
+item.classList.remove(
+"selected"
+)
+);
+
+card.classList.add(
+"selected"
+);
+
+}
+);
+
+container.appendChild(
+card
+);
+
+}
+);
+
+}
+
+function startNewGame() {
+
+must("playerName").value =
+"";
+
+must("nameError").textContent =
+"";
+
+state.selectedCharacter =
+CHARACTERS[0];
 
-    const SAVE_KEY = "veyra_save_v14_stable";
+document
+.querySelectorAll(
+".character-card"
+)
+.forEach(
+(
+card,
+index
+) => {
 
-    const $ = (id) =>
-        document.getElementById(id);
+card.classList.toggle(
+"selected",
+index === 0
+);
 
-    const must = (id) => {
+}
+);
 
-        const element =
-            $(id);
+showScreen(
+"character"
+);
 
-        if (!element) {
+setTimeout(
+() =>
+must("playerName").focus(),
+100
+);
 
-            throw new Error(
-                `Elemento obrigatório não encontrado: #${id}`
-            );
+}
 
-        }
+/* =====================================================
+JOGADOR
+====================================================== */
 
-        return element;
-    };
+function createPlayer(
+name,
+character
+) {
 
+state.player = {
 
-    const canvas =
-        must("gameCanvas");
+name,
 
-    const ctx =
-        canvas.getContext("2d");
+characterId: character.id,
 
+className: character.className,
 
-    const miniCanvas =
-        must("miniCanvas");
+icon: character.icon,
 
-    const miniCtx =
-        miniCanvas.getContext("2d");
+color: character.color,
 
+x: 380,
 
-    const mapCanvas =
-        must("worldMapCanvas");
+y: 260,
 
-    const mapCtx =
-        mapCanvas.getContext("2d");
+radius: 18,
 
+hp: character.hp,
 
-    const screens = {
+maxHp: character.hp,
 
-        menu:
-            must("menuScreen"),
+magic: character.magic,
 
-        how:
-            must("howScreen"),
+maxMagic: character.magic,
 
-        credits:
-            must("creditsScreen"),
+energy: character.energy,
 
-        character:
-            must("characterScreen"),
+maxEnergy: character.energy,
 
-        game:
-            must("gameScreen")
+speed: character.speed,
 
-    };
+damage: character.damage,
 
+defense: character.defense,
 
-    /* =====================================================
-       PERSONAGENS
-    ====================================================== */
+level: 1,
 
-    const CHARACTERS = [
+xp: 0,
 
-        {
-            id: "kaelion",
+xpToNext: 100,
 
-            name: "KAELION",
+money: 35,
 
-            className: "Mago",
+hunger: 100,
 
-            icon: "🧙",
+fatigue: 100,
 
-            role:
-                "Magia • Longo alcance",
+memory: 0,
 
-            description:
-                "Grande poder mágico, controle à distância e menor resistência física.",
+inventory: {
 
-            story:
-                "Estudioso de memórias antigas, Kaelion sente a magia desaparecer junto com as lembranças do mundo.",
+madeira: 0,
 
-            hp: 85,
+carvao: 0,
 
-            magic: 145,
+ferro: 0,
 
-            energy: 115,
+ouro: 0,
 
-            speed: 178,
+rubi: 0,
 
-            damage: 25,
+cristal: 0,
 
-            defense: 5,
+essencia: 0,
 
-            color:
-                "#e49345",
+pocao: 2,
 
-            bg:
-                "rgba(228,147,69,.16)",
+elixir: 1,
 
-            glow:
-                "rgba(228,147,69,.28)",
+espadaFerro: 0,
 
-            skill:
-                "Raio de Memória"
-        },
+armaduraCouro: 0,
 
-        {
-            id: "theron",
+machado: 1
 
-            name: "THERON",
+},
 
-            className:
-                "Cavaleiro",
+equipment: {
 
-            icon: "🛡️",
+weapon: null,
 
-            role:
-                "Espada • Defesa",
+armor: null,
 
-            description:
-                "Muita defesa, boa vida e combate corpo a corpo.",
+tool: "machado"
 
-            story:
-                "Theron jurou proteger a Vila do Crepúsculo enquanto ainda houver alguém capaz de lembrar seu nome.",
+},
 
-            hp: 145,
+quest: {
 
-            magic: 75,
+wood: {
 
-            energy: 120,
+state: "none",
 
-            speed: 145,
+need: 10,
 
-            damage: 30,
+rewardXP: 100,
 
-            defense: 21,
+rewardMoney: 80
 
-            color:
-                "#bfc5ce",
+},
 
-            bg:
-                "rgba(191,197,206,.14)",
+coal: {
 
-            glow:
-                "rgba(191,197,206,.23)",
+state: "none",
 
-            skill:
-                "Golpe do Guardião"
-        },
+need: 8,
 
-        {
-            id: "grumgar",
+rewardXP: 130,
 
-            name: "GRUMGAR",
+rewardMoney: 110
 
-            className:
-                "Troll",
+}
 
-            icon: "👹",
+},
 
-            role:
-                "Força • Vida",
+defeatedBosses: [],
 
-            description:
-                "Enorme vida e dano físico, porém pouca velocidade.",
+discoveredBosses: [],
 
-            story:
-                "Grumgar deixou as cavernas para descobrir por que criaturas de sua espécie começaram a esquecer suas próprias tribos.",
+unlockedAreas: [
+"village"
+],
 
-            hp: 180,
+collected: {},
 
-            magic: 55,
+hellTypesDefeated: {},
 
-            energy: 95,
+checkpoint: {
 
-            speed: 112,
+area: "village",
 
-            damage: 39,
+x: 480,
 
-            defense: 18,
+y: 610
 
-            color:
-                "#718f51",
+},
 
-            bg:
-                "rgba(113,143,81,.16)",
+dead: false,
 
-            glow:
-                "rgba(113,143,81,.24)",
+invincible: 0,
 
-            skill:
-                "Esmagamento"
-        },
+attackCooldown: 0,
 
-        {
-            id: "lirael",
+adaptiveBuff: false,
 
-            name: "LIRAEL",
+finalChoice: null,
 
-            className:
-                "Fada",
+finalDefeated: false
 
-            icon: "🧚",
+};
 
-            role:
-                "Velocidade • Cura",
+}
 
-            description:
-                "Muito rápida, mágica e capaz de restaurar vida.",
+function startGame() {
 
-            story:
-                "Lirael percebeu que flores mágicas paravam de brilhar sempre que uma memória desaparecia.",
+const input =
+must("playerName");
 
-            hp: 95,
+const name =
+input.value.trim();
 
-            magic: 135,
+if (
+name.length <
+2
+) {
 
-            energy: 135,
+must("nameError").textContent =
+"Digite um nome com pelo menos 2 caracteres.";
 
-            speed: 210,
+input.focus();
 
-            damage: 20,
+return;
 
-            defense: 7,
+}
 
-            color:
-                "#dd8bd0",
+createPlayer(
+name,
+state.selectedCharacter
+);
 
-            bg:
-                "rgba(221,139,208,.16)",
+state.area =
+"village";
 
-            glow:
-                "rgba(221,139,208,.25)",
+state.houseMode =
+false;
 
-            skill:
-                "Luz Vital"
-        },
+state.currentHouse =
+null;
 
-        {
-            id: "zephyr",
+state.houseReturn =
+null;
 
-            name: "ZEPHYR",
+state.finalChoiceShown =
+false;
 
-            className:
-                "Transmorfo",
+buildWorld();
 
-            icon: "🦊",
+const home =
+state.world.buildings.find(
+building =>
+building.id ===
+"home"
+);
 
-            role:
-                "Adaptação • Equilíbrio",
+if (home) {
 
-            description:
-                "Atributos equilibrados e habilidade de adaptação temporária.",
+state.currentHouse =
+home;
 
-            story:
-                "Zephyr muda de forma para sobreviver, mas teme o dia em que esquecerá qual delas era a sua verdadeira forma.",
+state.houseMode =
+true;
 
-            hp: 115,
+state.houseReturn = {
 
-            magic: 108,
+x:
+home.x +
+home.w / 2,
 
-            energy: 112,
+y:
+home.y +
+home.h +
+58
 
-            speed: 170,
+};
 
-            damage: 26,
+placePlayerInsideHouse();
 
-            defense: 13,
+}
 
-            color:
-                "#8f6bd8",
+updateHUD();
 
-            bg:
-                "rgba(143,107,216,.16)",
+showScreen(
+"game"
+);
 
-            glow:
-                "rgba(143,107,216,.25)",
+state.running =
+true;
 
-            skill:
-                "Forma Adaptativa"
-        }
+state.paused =
+true;
 
-    ];
+state.time =
+0;
 
+state.lastTime =
+performance.now();
 
-    /* =====================================================
-       ITENS
-    ====================================================== */
+must("transitionMessage").textContent =
+"VEYRA";
 
-    const ITEMS = {
+must("transitionScreen")
+.classList.remove(
+"hidden"
+);
 
-        madeira: {
-            name: "Madeira",
-            icon: "🪵",
-            category: "materials",
-            weight: 1,
-            value: 2
-        },
+setTimeout(
+() => {
 
-        carvao: {
-            name: "Carvão",
-            icon: "⬛",
-            category: "materials",
-            weight: 1,
-            value: 6
-        },
+must("transitionScreen")
+.classList.add(
+"hidden"
+);
 
-        ferro: {
-            name: "Ferro",
-            icon: "⛓️",
-            category: "materials",
-            weight: 2,
-            value: 14
-        },
+state.paused =
+false;
 
-        ouro: {
-            name: "Ouro",
-            icon: "🪙",
-            category: "materials",
-            weight: 2,
-            value: 30
-        },
+showToast(
+"Você despertou em casa. Pressione Z para sair."
+);
 
-        rubi: {
-            name: "Rubi",
-            icon: "♦",
-            category: "materials",
-            weight: 2,
-            value: 75
-        },
+},
+700
+);
 
-        cristal: {
-            name: "Cristal",
-            icon: "💎",
-            category: "special",
-            weight: 2,
-            value: 45
-        },
+requestAnimationFrame(
+gameLoop
+);
 
-        essencia: {
-            name:
-                "Essência da Quietude",
-            icon: "✦",
-            category: "special",
-            weight: 1,
-            value: 100
-        },
+}
 
-        pocao: {
-            name:
-                "Poção de Cura",
-            icon: "🧪",
-            category: "potions",
-            weight: 1,
-            value: 30,
-            heal: 45
-        },
+/* =====================================================
+WORLD HELPERS
+====================================================== */
 
-        elixir: {
-            name:
-                "Elixir de Energia",
-            icon: "💙",
-            category: "potions",
-            weight: 1,
-            value: 35,
-            energy: 50
-        },
+function resetWorld() {
 
-        espadaFerro: {
-            name:
-                "Espada de Ferro",
-            icon: "⚔️",
-            category: "weapons",
-            weight: 4,
-            value: 140,
-            damage: 12
-        },
+state.world =
+createEmptyWorld(
+REGIONS[state.area]
+);
 
-        armaduraCouro: {
-            name:
-                "Armadura de Couro",
-            icon: "🥋",
-            category: "armor",
-            weight: 5,
-            value: 110,
-            defense: 8
-        },
+}
 
-        machado: {
-            name: "Machado",
-            icon: "🪓",
-            category: "tools",
-            weight: 3,
-            value: 50
-        }
+function addObstacle(
+x,
+y,
+w,
+h,
+type,
+extra = {}
+) {
 
-    };
+state.world.obstacles.push({
 
+x,
+y,
+w,
+h,
+type,
 
-    /* =====================================================
-       REGIÕES
-    ====================================================== */
+...extra
 
-    const REGIONS = {
+});
 
-        village: {
-            name:
-                "VILA DO CREPÚSCULO",
-            width: 3200,
-            height: 2200,
-            visual: "village"
-        },
+}
 
-        forest: {
-            name: "FLORESTA",
-            width: 3400,
-            height: 2400,
-            visual: "forest"
-        },
+function addBuilding(
+id,
+x,
+y,
+w,
+h,
+name,
+roof,
+color
+) {
 
-        grove: {
-            name: "BOSQUE",
-            width: 3200,
-            height: 2300,
-            visual: "grove"
-        },
+const building = {
 
-        mountains: {
-            name: "MONTANHAS",
-            width: 3500,
-            height: 2300,
-            visual: "mountains"
-        },
+id,
+x,
+y,
+w,
+h,
+name,
+roof,
+color
 
-        iron: {
-            name:
-                "CAVERNA DE FERRO",
-            width: 2900,
-            height: 1900,
-            visual: "iron"
-        },
+};
 
-        ruby: {
-            name:
-                "CAVERNA DE RUBI",
-            width: 3100,
-            height: 2100,
-            visual: "ruby"
-        },
+state.world.buildings.push(
+building
+);
 
-        shadow: {
-            name:
-                "CAVERNA SOMBRIA",
-            width: 3000,
-            height: 2000,
-            visual: "shadow"
-        },
+addObstacle(
+x - 24,
+y - 95,
+w + 48,
+h + 95,
+"building",
+{
+buildingId: id
+}
+);
 
-        fairy: {
-            name:
-                "REINO DAS FADAS",
-            width: 3200,
-            height: 2200,
-            visual: "fairy"
-        },
+return building;
 
-        sky: {
-            name: "CÉU",
-            width: 3400,
-            height: 2200,
-            visual: "sky"
-        },
+}
 
-        hell: {
-            name: "INFERNO",
-            width: 3600,
-            height: 2400,
-            visual: "hell"
-        },
+function addTree(
+x,
+y,
+id
+) {
 
-        final: {
-            name:
-                "CÂMARA FINAL",
-            width: 2200,
-            height: 1500,
-            visual: "final"
-        }
+const tree = {
 
-    };
+id,
 
+x,
 
-    /* =====================================================
-       ESTADO
-    ====================================================== */
+y,
 
-    const state = {
+alive: true,
 
-        selectedCharacter:
-            CHARACTERS[0],
+amount:
+randomInt(
+2,
+5
+),
 
-        player:
-            null,
+respawn: 0
 
-        running:
-            false,
+};
 
-        paused:
-            false,
+state.world.trees.push(
+tree
+);
 
-        time:
-            0,
+addObstacle(
+x - 30,
+y - 38,
+60,
+76,
+"tree",
+{
+treeId: id
+}
+);
 
-        lastTime:
-            0,
+return tree;
 
-        keys:
-            new Set(),
+}
 
-        area:
-            "village",
+function addResource(
+x,
+y,
+type
+) {
 
-        camera: {
-            x: 0,
-            y: 0
-        },
+state.world.resources.push({
 
-        world:
-            createEmptyWorld(
-                REGIONS.village
-            ),
+id: uid(
+"resource"
+),
 
-        houseMode:
-            false,
+x,
 
-        currentHouse:
-            null,
+y,
 
-        houseReturn:
-            null,
+type,
 
-        dialogue:
-            null,
+alive: true,
 
-        travel:
-            null,
+amount:
+randomInt(
+1,
+3
+),
 
-        battle:
-            null,
+respawn: 0
 
-        questNPC:
-            null,
+});
 
-        shopNPC:
-            null,
+}
 
-        shopMode:
-            "buy",
+function addNPC(
+x,
+y,
+name,
+role,
+color,
+lines,
+extra = {}
+) {
 
-        inventoryCategory:
-            "all",
+state.world.npcs.push({
 
-        toastTimer:
-            null,
+id: uid(
+"npc"
+),
 
-        portalCooldown:
-            0,
+x,
 
-        warnedNeedAt:
-            0,
+y,
 
-        finalChoiceShown:
-            false
+radius: 17,
 
-    };
+name,
 
+role,
 
-    /* =====================================================
-       MUNDO VAZIO
-    ====================================================== */
+color,
 
-    function createEmptyWorld(region) {
+lines,
 
-        return {
+...extra
 
-            width:
-                region.width,
+});
 
-            height:
-                region.height,
+}
 
-            obstacles: [],
+function addEnemy(enemy) {
 
-            buildings: [],
+state.world.enemies.push({
 
-            trees: [],
+state: "idle",
 
-            resources: [],
+aggressive: false,
 
-            npcs: [],
+accepted: false,
 
-            enemies: [],
+attackTimer: 0,
 
-            drops: [],
+hitFlash: 0,
 
-            portals: [],
+dead: false,
 
-            particles: [],
+respawnTimer: 0,
 
-            effects: []
+phase: 1,
 
-        };
-    }
+...enemy
 
+});
 
-    /* =====================================================
-       FUNÇÕES UTILITÁRIAS
-    ====================================================== */
+}
 
-    function clamp(
-        value,
-        min,
-        max
-    ) {
+function addPortal(
+x,
+y,
+w,
+h,
+target,
+requirement,
+title
+) {
 
-        return Math.max(
-            min,
-            Math.min(
-                max,
-                value
-            )
-        );
-    }
+state.world.portals.push({
 
+id: uid(
+"portal"
+),
 
-    function random(
-        min,
-        max
-    ) {
+x,
 
-        return (
-            Math.random() *
-            (max - min) +
-            min
-        );
-    }
+y,
 
+w,
 
-    function randomInt(
-        min,
-        max
-    ) {
+h,
 
-        return Math.floor(
-            random(
-                min,
-                max + 1
-            )
-        );
-    }
+target,
 
+requirement,
 
-    function distance(a, b) {
+title
 
-        return Math.hypot(
-            a.x - b.x,
-            a.y - b.y
-        );
-    }
+});
 
+}
 
-    function uid(prefix) {
+function addWorldBounds() {
 
-        return (
-            `${prefix}_` +
-            Math.random()
-                .toString(36)
-                .slice(2, 9)
-        );
-    }
+const edge =
+70;
 
+addObstacle(
+0,
+0,
+state.world.width,
+edge,
+"wall"
+);
 
-    function currentCharacter() {
+addObstacle(
+0,
+state.world.height - edge,
+state.world.width,
+edge,
+"wall"
+);
 
-        return (
-            CHARACTERS.find(
-                character =>
-                    character.id ===
-                    state.player
-                        ?.characterId
-            ) ||
-            CHARACTERS[0]
-        );
-    }
+addObstacle(
+0,
+0,
+edge,
+state.world.height,
+"wall"
+);
 
+addObstacle(
+state.world.width - edge,
+0,
+edge,
+state.world.height,
+"wall"
+);
 
-    function showScreen(name) {
+}
 
-        Object
-            .values(screens)
-            .forEach(
-                screen =>
-                    screen.classList
-                        .remove(
-                            "active"
-                        )
-            );
+/* =====================================================
+MUNDO
+====================================================== */
 
+function buildWorld() {
 
-        screens[name]
-            .classList
-            .add(
-                "active"
-            );
-    }
+resetWorld();
 
+addWorldBounds();
 
-    function showToast(message) {
+const builders = {
 
-        const toast =
-            must(
-                "saveMessage"
-            );
+village: buildVillage,
 
+forest: buildForest,
 
-        toast.textContent =
-            message;
+grove: buildGrove,
 
+mountains: buildMountains,
 
-        toast.classList.add(
-            "show"
-        );
+iron: buildIron,
 
+ruby: buildRuby,
 
-        clearTimeout(
-            state.toastTimer
-        );
+shadow: buildShadow,
 
+fairy: buildFairy,
 
-        state.toastTimer =
-            setTimeout(
-                () => {
-                    toast.classList
-                        .remove(
-                            "show"
-                        );
-                },
-                2200
-            );
-    }
+sky: buildSky,
 
+hell: buildHell,
 
-    /* =====================================================
-       CANVAS
-    ====================================================== */
+final: buildFinal
 
-    function resizeCanvas() {
+};
 
-        const ratio =
-            window.devicePixelRatio ||
-            1;
+builders[
+state.area
+]();
 
+must("locationLabel").textContent =
+REGIONS[state.area].name;
 
-        canvas.width =
-            Math.floor(
-                window.innerWidth *
-                ratio
-            );
+}
 
+/* =====================================================
+VILA
+====================================================== */
 
-        canvas.height =
-            Math.floor(
-                window.innerHeight *
-                ratio
-            );
+function buildVillage() {
 
+addBuilding(
+"home",
+270,
+280,
+430,
+270,
+"CASA DO AVENTUREIRO",
+"#70483a",
+"#ae835e"
+);
 
-        canvas.style.width =
-            `${window.innerWidth}px`;
+addBuilding(
+"elianHome",
+830,
+260,
+350,
+260,
+"CASA DE ELIAN",
+"#604a3d",
+"#b48961"
+);
 
+addBuilding(
+"forge",
+2070,
+300,
+500,
+300,
+"FORJA DO FERREIRO",
+"#484744",
+"#8f8172"
+);
 
-        canvas.style.height =
-            `${window.innerHeight}px`;
+addBuilding(
+"shop",
+2500,
+1260,
+430,
+300,
+"LOJA DE DORAN",
+"#684638",
+"#b4865b"
+);
 
+addBuilding(
+"woodshop",
+400,
+1560,
+450,
+300,
+"CARPINTARIA",
+"#735638",
+"#a77c4f"
+);
 
-        ctx.setTransform(
-            ratio,
-            0,
-            0,
-            ratio,
-            0,
-            0
-        );
-    }
+addObstacle(
+1465,
+870,
+270,
+215,
+"fountain"
+);
 
+[
+[970,760],
+[1100,720],
+[1210,1800],
+[1850,1630],
+[2200,940],
+[2740,860],
+[650,1160],
+[2370,1830]
 
-    /* =====================================================
-       CARTÕES
-    ====================================================== */
+].forEach(
+([x,y]) => {
 
-    function createCharacterCards() {
+addObstacle(
+x - 30,
+y - 23,
+60,
+46,
+"rock"
+);
 
-        const container =
-            must(
-                "characterCards"
-            );
+}
+);
 
+[
+[180,180],
+[390,180],
+[650,170],
+[940,150],
+[1320,160],
+[1750,160],
+[2150,160],
+[2600,170],
+[2950,180],
 
-        container.innerHTML =
-            "";
+[150,700],
+[180,1050],
+[190,1440],
 
+[250,1960],
+[1050,2010],
+[1500,1980],
+[1950,2020],
+[2400,2030],
+[2850,1960],
 
-        CHARACTERS.forEach(
-            (
-                character,
-                index
-            ) => {
+[3040,1710],
+[3020,1200],
+[3010,650],
 
-                const card =
-                    document
-                        .createElement(
-                            "button"
-                        );
+[2850,1050],
+[2150,750],
+[1900,750],
+[1150,1000]
 
+].forEach(
+(
+[x,y],
+index
+) => {
 
-                card.type =
-                    "button";
+addTree(
+x,
+y,
+`village_tree_${index}`
+);
 
+}
+);
 
-                card.className =
-                    "character-card" +
-                    (
-                        index === 0
-                            ? " selected"
-                            : ""
-                    );
+addNPC(
+1030,
+610,
+"ELIAN",
+"Morador",
+"#d4b27c",
+[
+"A Quietude parece estar chegando mais perto. Ontem eu esqueci o nome da rua onde cresci.",
+"Meu pai dizia que a primeira coisa que some não é um lugar. É a lembrança de que ele existia.",
+"A estrada leste está estranha. Um Guardião apareceu por lá e não deixa ninguém passar.",
+"Se você descobrir alguma coisa fora da vila, volte. Precisamos de histórias novas para não esquecer as antigas."
+]
+);
 
+addNPC(
+1940,
+1055,
+"MARA",
+"Historiadora",
+"#b98bc4",
+[
+"Os registros mais antigos falam da Quietude como se ela já tivesse acontecido antes.",
+"Cada pessoa descreve a Quietude de um jeito diferente. Isso é o que mais me assusta.",
+"Alguns livros têm páginas inteiras em branco, mas a numeração continua como se algo estivesse faltando.",
+"Quando você encontrar algo que não consegue explicar, tente lembrar de cada detalhe antes de voltar."
+]
+);
 
-                card.style
-                    .setProperty(
-                        "--char-color",
-                        character.color
-                    );
+addNPC(
+2700,
+1125,
+"DORAN",
+"Comerciante",
+"#c58a54",
+[
+"Compro materiais e vendo o que consigo trazer de fora.",
+"Uma boa espada não resolve todos os problemas, mas resolve alguns deles bem rápido.",
+"Guarde dinheiro para quando realmente precisar. As regiões além da vila não são gentis.",
+"Se encontrar cristais ou minérios raros, eu pago bem."
+],
+{
+merchant: true
+}
+);
 
+addNPC(
+1050,
+1420,
+"BRAN",
+"Carpinteiro",
+"#8d7053",
+[
+"Preciso reforçar algumas casas. A madeira anda apodrecendo mais rápido desde que a Quietude chegou.",
+"As árvores daqui são estranhas. Algumas voltam a nascer longe do lugar onde caíram.",
+"Se puder trazer dez madeiras, eu pago pelo trabalho.",
+"Cortar madeira consome magia. Não se esgote por causa de uma árvore."
+],
+{
+questId: "wood"
+}
+);
 
-                card.style
-                    .setProperty(
-                        "--char-bg",
-                        character.bg
-                    );
+addNPC(
+2280,
+820,
+"BORIN",
+"Ferreiro",
+"#8e8d89",
+[
+"O fogo da forja ainda lembra como queimar. Por enquanto.",
+"Carvão bom está ficando difícil de encontrar.",
+"Se trouxer oito carvões, posso compensar seu esforço.",
+"Equipamento é investimento. Sobreviver costuma sair mais barato que morrer."
+],
+{
+questId: "coal"
+}
+);
 
+addEnemy({
 
-                card.style
-                    .setProperty(
-                        "--char-glow",
-                        character.glow
-                    );
+id: "village_slime",
 
+x: 1260,
 
-                card.innerHTML = `
+y: 760,
 
-                    <div class="char-art">
-                        ${character.icon}
-                    </div>
+name: "LIMO DA QUIETUDE",
 
-                    <h3>
-                        ${character.name}
-                    </h3>
+icon: "🟢",
 
-                    <p class="role">
-                        ${character.className}
-                        —
-                        ${character.role}
-                    </p>
+type: "normal",
 
-                    <p>
-                        ${character.description}
-                    </p>
+hp: 58,
 
-                    <p>
-                        ${character.story}
-                    </p>
+maxHp: 58,
 
-                    <p>
-                        ❤️ ${character.hp}
-                        •
-                        ✨ ${character.magic}
-                        •
-                        ⚡ ${character.energy}
-                    </p>
+damage: 8,
 
-                    <p>
-                        ⚔ ${character.damage}
-                        •
-                        🛡 ${character.defense}
-                        •
-                        🏃 ${character.speed}
-                    </p>
+speed: 56,
 
-                    <p>
-                        <strong>
-                            ${character.skill}
-                        </strong>
-                    </p>
-                `;
+vision: 190,
 
+attackRange: 55,
 
-                card.addEventListener(
-                    "click",
-                    () => {
+radius: 18,
 
-                        state.selectedCharacter =
-                            character;
+color: "#6c9862",
 
+drop: "carvao",
 
-                        document
-                            .querySelectorAll(
-                                ".character-card"
-                            )
-                            .forEach(
-                                item =>
-                                    item.classList
-                                        .remove(
-                                            "selected"
-                                        )
-                            );
+dropAmount: 1
 
+});
 
-                        card.classList.add(
-                            "selected"
-                        );
-                    }
-                );
+addEnemy({
 
+id: "village_wolf",
 
-                container
-                    .appendChild(
-                        card
-                    );
+x: 2190,
 
-            }
-        );
-    }
+y: 1450,
 
+name: "LOBO ESQUECIDO",
 
-    /* =====================================================
-       NOVO JOGO
-    ====================================================== */
+icon: "🐺",
 
-    function startNewGame() {
+type: "normal",
 
-        must(
-            "playerName"
-        ).value = "";
+hp: 82,
 
+maxHp: 82,
 
-        must(
-            "nameError"
-        ).textContent = "";
+damage: 12,
 
+speed: 92,
 
-        state.selectedCharacter =
-            CHARACTERS[0];
+vision: 260,
 
+attackRange: 65,
 
-        document
-            .querySelectorAll(
-                ".character-card"
-            )
-            .forEach(
-                (
-                    card,
-                    index
-                ) => {
+radius: 21,
 
-                    card.classList
-                        .toggle(
-                            "selected",
-                            index === 0
-                        );
+color: "#686d78",
 
-                }
-            );
+drop: "carvao",
 
+dropAmount: 1
 
-        showScreen(
-            "character"
-        );
+});
 
+addEnemy({
 
-        setTimeout(
-            () =>
-                must(
-                    "playerName"
-                ).focus(),
-            100
-        );
-    }
+id: "village_resource_boss",
 
+x: 2350,
 
-    function createPlayer(
-        name,
-        character
-    ) {
+y: 1780,
 
-        state.player = {
+name: "CERVO ANCESTRAL",
 
-            name,
+icon: "🦌",
 
-            characterId:
-                character.id,
+type: "resourceBoss",
 
-            className:
-                character.className,
+hp: 430,
 
-            icon:
-                character.icon,
+maxHp: 430,
 
-            color:
-                character.color,
+damage: 18,
 
-            x:
-                380,
+speed: 64,
 
-            y:
-                260,
+vision: 270,
 
-            radius:
-                18,
+attackRange: 75,
 
-            hp:
-                character.hp,
+radius: 30,
 
-            maxHp:
-                character.hp,
+color: "#788762",
 
-            magic:
-                character.magic,
+drop: "ouro",
 
-            maxMagic:
-                character.magic,
+dropAmount: 2,
 
-            energy:
-                character.energy,
+respawnTime: 60
 
-            maxEnergy:
-                character.energy,
+});
 
-            speed:
-                character.speed,
+addEnemy({
 
-            damage:
-                character.damage,
+id: "forest_guardian",
 
-            defense:
-                character.defense,
+x: 2850,
 
-            level:
-                1,
+y: 1090,
 
-            xp:
-                0,
+name: "GUARDIÃO DA ESTRADA",
 
-            xpToNext:
-                100,
+icon: "👺",
 
-            money:
-                35,
+type: "progression",
 
-            hunger:
-                100,
+hp: 280,
 
-            fatigue:
-                100,
+maxHp: 280,
 
-            memory:
-                0,
+damage: 20,
 
-            inventory: {
+speed: 56,
 
-                madeira: 0,
+vision: 280,
 
-                carvao: 0,
+attackRange: 75,
 
-                ferro: 0,
+radius: 29,
 
-                ouro: 0,
+color: "#945149",
 
-                rubi: 0,
+drop: "cristal",
 
-                cristal: 0,
+dropAmount: 2,
 
-                essencia: 0,
+unlock: "forest"
 
-                pocao: 2,
+});
 
-                elixir: 1,
+addPortal(
+3060,
+1010,
+70,
+210,
+"forest",
+() =>
+hasDefeatedBoss(
+"forest_guardian"
+),
+"FLORESTA"
+);
 
-                espadaFerro: 0,
+}
 
-                armaduraCouro: 0,
+/* =====================================================
+FLORESTA
+====================================================== */
 
-                machado: 1
-            },
+function buildForest() {
 
-            equipment: {
-                weapon: null,
-                armor: null,
-                tool: "machado"
-            },
+for (
+let i = 0;
+i < 42;
+i++
+) {
 
-            quest: {
+addTree(
+randomInt(
+130,
+3240
+),
+randomInt(
+130,
+2250
+),
+`forest_tree_${i}`
+);
 
-                wood: {
-                    state: "none",
-                    need: 10,
-                    rewardXP: 100,
-                    rewardMoney: 80
-                },
+}
 
-                coal: {
-                    state: "none",
-                    need: 8,
-                    rewardXP: 130,
-                    rewardMoney: 110
-                }
+for (
+let i = 0;
+i < 9;
+i++
+) {
 
-            },
+addEnemy({
 
-            defeatedBosses:
-                [],
+id: `forest_enemy_${i}`,
 
-            discoveredBosses:
-                [],
+x: randomInt(
+450,
+2900
+),
 
-            unlockedAreas:
-                [
-                    "village"
-                ],
+y: randomInt(
+300,
+2050
+),
 
-            collected:
-                {},
+name:
+i % 2
+? "LOBO FLORESTAL"
+: "JAVALI SOMBRIO",
 
-            hellTypesDefeated:
-                {},
+icon:
+i % 2
+? "🐺"
+: "🐗",
 
-            checkpoint: {
-                area: "village",
-                x: 480,
-                y: 610
-            },
+type: "normal",
 
-            dead:
-                false,
+hp:
+100 +
+i * 2,
 
-            invincible:
-                0,
+maxHp:
+100 +
+i * 2,
 
-            attackCooldown:
-                0,
+damage: 14,
 
-            adaptiveBuff:
-                false,
+speed: 95,
 
-            finalChoice:
-                null,
+vision: 260,
 
-            finalDefeated:
-                false
+attackRange: 65,
 
-        };
-    }
+radius: 22,
 
+color:
+i % 2
+? "#66716c"
+: "#685844",
 
-    function startGame() {
+drop:
+i % 3
+? "carvao"
+: "ferro",
 
-        const input =
-            must(
-                "playerName"
-            );
+dropAmount: 1
 
+});
 
-        const name =
-            input.value
-                .trim();
+}
 
+addNPC(
+720,
+850,
+"NARA",
+"Guardião da Floresta",
+"#7ea56b",
+[
+"A floresta percebe quem passa por ela.",
+"Há árvores que se movem quando ninguém está olhando.",
+"A Quietude não mata todas as coisas. Algumas continuam andando sem lembrar por quê.",
+"O caminho adiante só se abre para quem prova que consegue sobreviver aqui."
+]
+);
 
-        if (
-            name.length < 2
-        ) {
+addEnemy({
 
-            must(
-                "nameError"
-            ).textContent =
-                "Digite um nome com pelo menos 2 caracteres.";
+id: "forest_resource_boss",
 
+x: 2450,
 
-            input.focus();
+y: 1750,
 
-            return;
-        }
+name: "ALCE ANCIÃO",
 
+icon: "🦌",
 
-        createPlayer(
-            name,
-            state.selectedCharacter
-        );
+type: "resourceBoss",
 
+hp: 540,
 
-        state.area =
-            "village";
+maxHp: 540,
 
+damage: 22,
 
-        state.houseMode =
-            false;
+speed: 55,
 
+vision: 310,
 
-        state.currentHouse =
-            null;
+attackRange: 78,
 
+radius: 32,
 
-        state.houseReturn =
-            null;
+color: "#71865d",
 
+drop: "ouro",
 
-        state.finalChoiceShown =
-            false;
+dropAmount: 2,
 
+respawnTime: 60
 
-        buildWorld();
+});
 
+addEnemy({
 
-        const home =
-            state.world
-                .buildings
-                .find(
-                    building =>
-                        building.id ===
-                        "home"
-                );
+id: "grove_guardian",
 
+x: 2980,
 
-        if (home) {
+y: 1150,
 
-            state.currentHouse =
-                home;
+name: "GUARDIÃO DA FLORESTA",
 
+icon: "🌳",
 
-            state.houseMode =
-                true;
+type: "progression",
 
+hp: 420,
 
-            state.houseReturn = {
+maxHp: 420,
 
-                x:
-                    home.x +
-                    home.w / 2,
+damage: 24,
 
-                y:
-                    home.y +
-                    home.h +
-                    58
+speed: 60,
 
-            };
+vision: 310,
 
+attackRange: 82,
 
-            state.player.x =
-                380;
+radius: 31,
 
+color: "#4d754b",
 
-            state.player.y =
-                260;
+drop: "ferro",
 
-        }
+dropAmount: 2,
 
+unlock: "grove"
 
-        updateHUD();
+});
 
+addPortal(
+3260,
+1030,
+70,
+220,
+"grove",
+() =>
+hasDefeatedBoss(
+"grove_guardian"
+),
+"BOSQUE"
+);
 
-        showScreen(
-            "game"
-        );
+}
 
+/* =====================================================
+BOSQUE
+====================================================== */
 
-        state.running =
-            true;
+function buildGrove() {
 
+for (
+let i = 0;
+i < 34;
+i++
+) {
 
-        state.paused =
-            true;
+addTree(
+randomInt(
+130,
+3040
+),
+randomInt(
+130,
+2150
+),
+`grove_tree_${i}`
+);
 
+}
 
-        state.time =
-            0;
+for (
+let i = 0;
+i < 8;
+i++
+) {
 
+addEnemy({
 
-        state.lastTime =
-            performance.now();
+id: `grove_enemy_${i}`,
 
+x: randomInt(
+400,
+2700
+),
 
-        must(
-            "transitionMessage"
-        ).textContent =
-            "VEYRA";
+y: randomInt(
+300,
+1950
+),
 
+name: "FERA DO BOSQUE",
 
-        must(
-            "transitionScreen"
-        ).classList
-            .remove(
-                "hidden"
-            );
+icon: "🦌",
 
+type: "normal",
 
-        setTimeout(
-            () => {
+hp: 135,
 
-                must(
-                    "transitionScreen"
-                ).classList
-                    .add(
-                        "hidden"
-                    );
+maxHp: 135,
 
+damage: 17,
 
-                state.paused =
-                    false;
+speed: 86,
 
+vision: 260,
 
-                showToast(
-                    "Você despertou em casa. Pressione Z para sair."
-                );
+attackRange: 65,
 
-            },
-            700
-        );
+radius: 23,
 
+color: "#60745e",
 
-        requestAnimationFrame(
-            gameLoop
-        );
-    }
+drop: "ferro",
 
+dropAmount: 1
 
-    /* =====================================================
-       WORLD HELPERS
-    ====================================================== */
+});
 
-    function resetWorld() {
+}
 
-        state.world =
-            createEmptyWorld(
-                REGIONS[
-                    state.area
-                ]
-            );
-    }
+addNPC(
+1350,
+800,
+"LYRA",
+"Druida",
+"#829f6f",
+[
+"Este bosque guarda memórias nas raízes.",
+"Quando uma árvore cai, às vezes outra nasce carregando lembranças que não são dela.",
+"As montanhas ficam além deste lugar.",
+"Não confunda silêncio com paz."
+]
+);
 
+addEnemy({
 
-    function addObstacle(
-        x,
-        y,
-        w,
-        h,
-        type,
-        extra = {}
-    ) {
+id: "mountain_guardian",
 
-        state.world
-            .obstacles
-            .push({
+x: 2760,
 
-                x,
-                y,
-                w,
-                h,
-                type,
-                ...extra
+y: 1110,
 
-            });
-    }
+name: "GUARDIÃO DO BOSQUE",
 
+icon: "🌲",
 
-    function addBuilding(
-        id,
-        x,
-        y,
-        w,
-        h,
-        name,
-        roof,
-        color
-    ) {
+type: "progression",
 
-        const building = {
+hp: 510,
 
-            id,
-            x,
-            y,
-            w,
-            h,
-            name,
-            roof,
-            color
+maxHp: 510,
 
-        };
+damage: 28,
 
+speed: 58,
 
-        state.world
-            .buildings
-            .push(
-                building
-            );
+vision: 320,
 
+attackRange: 84,
 
-        /*
-         * IMPORTANTE:
-         *
-         * A colisão cobre também o telhado.
-         * Assim o jogador não consegue subir
-         * visualmente sobre a construção.
-         */
+radius: 32,
 
-        addObstacle(
-            x - 24,
-            y - 95,
-            w + 48,
-            h + 95,
-            "building",
-            {
-                buildingId:
-                    id
-            }
-        );
+color: "#557251",
 
+drop: "ouro",
 
-        return building;
-    }
+dropAmount: 2,
 
+unlock: "mountains"
 
-    function addTree(
-        x,
-        y,
-        id
-    ) {
+});
 
-        const tree = {
+addPortal(
+3060,
+1000,
+70,
+220,
+"mountains",
+() =>
+hasDefeatedBoss(
+"mountain_guardian"
+),
+"MONTANHAS"
+);
 
-            id,
+}
 
-            x,
+/* =====================================================
+MONTANHAS
+====================================================== */
 
-            y,
+function buildMountains() {
 
-            alive:
-                true,
+for (
+let i = 0;
+i < 24;
+i++
+) {
 
-            amount:
-                randomInt(
-                    2,
-                    5
-                ),
+addObstacle(
+randomInt(
+180,
+3200
+),
+randomInt(
+160,
+2100
+),
+70,
+52,
+"snowrock"
+);
 
-            respawn:
-                0
+}
 
-        };
+for (
+let i = 0;
+i < 8;
+i++
+) {
 
+addEnemy({
 
-        state.world
-            .trees
-            .push(
-                tree
-            );
+id: `mountain_enemy_${i}`,
 
+x: randomInt(
+450,
+2950
+),
 
-        addObstacle(
-            x - 30,
-            y - 38,
-            60,
-            76,
-            "tree",
-            {
-                treeId:
-                    id
-            }
-        );
+y: randomInt(
+300,
+1950
+),
 
+name: "BESTA DAS MONTANHAS",
 
-        return tree;
-    }
+icon: "🐐",
 
+type: "normal",
 
-    function addResource(
-        x,
-        y,
-        type
-    ) {
+hp: 160,
 
-        state.world
-            .resources
-            .push({
+maxHp: 160,
 
-                id:
-                    uid(
-                        "resource"
-                    ),
+damage: 20,
 
-                x,
+speed: 72,
 
-                y,
+vision: 265,
 
-                type,
+attackRange: 68,
 
-                alive:
-                    true,
+radius: 24,
 
-                amount:
-                    randomInt(
-                        1,
-                        3
-                    ),
+color: "#c7ccca",
 
-                respawn:
-                    0
+drop: "ferro",
 
-            });
-    }
+dropAmount: 1
 
+});
 
-    function addNPC(
-        x,
-        y,
-        name,
-        role,
-        color,
-        lines,
-        extra = {}
-    ) {
+}
 
-        state.world
-            .npcs
-            .push({
+addNPC(
+760,
+900,
+"KAEL",
+"Montanhista",
+"#d2d6d2",
+[
+"O vento daqui apaga pegadas em minutos.",
+"Há uma passagem antiga na montanha.",
+"Minérios abaixo da neve ainda reagem à magia.",
+"Não fique parado por muito tempo. Algumas coisas confundem viajantes com pedras."
+]
+);
 
-                id:
-                    uid(
-                        "npc"
-                    ),
+addEnemy({
 
-                x,
+id: "iron_guardian",
 
-                y,
+x: 3000,
 
-                radius:
-                    17,
+y: 1100,
 
-                name,
+name: "SENTINELA DAS MONTANHAS",
 
-                role,
+icon: "🗿",
 
-                color,
+type: "progression",
 
-                lines,
+hp: 620,
 
-                ...extra
+maxHp: 620,
 
-            });
-    }
+damage: 31,
 
+speed: 54,
 
-    function addEnemy(enemy) {
+vision: 340,
 
-        state.world
-            .enemies
-            .push({
+attackRange: 86,
 
-                state:
-                    "idle",
+radius: 34,
 
-                aggressive:
-                    false,
+color: "#72797e",
 
-                accepted:
-                    false,
+drop: "ferro",
 
-                attackTimer:
-                    0,
+dropAmount: 3,
 
-                hitFlash:
-                    0,
+unlock: "iron"
 
-                dead:
-                    false,
+});
 
-                respawnTimer:
-                    0,
+addPortal(
+3300,
+1010,
+70,
+220,
+"iron",
+() =>
+hasDefeatedBoss(
+"iron_guardian"
+),
+"PASSAGEM DA MONTANHA"
+);
 
-                phase:
-                    1,
+}
 
-                ...enemy
+/* =====================================================
+FERRO
+====================================================== */
 
-            });
-    }
+function buildIron() {
 
+for (
+let i = 0;
+i < 24;
+i++
+) {
 
-    function addPortal(
-        x,
-        y,
-        w,
-        h,
-        target,
-        requirement,
-        title
-    ) {
+addObstacle(
+randomInt(
+160,
+2680
+),
+randomInt(
+160,
+1700
+),
+65,
+48,
+"ironrock"
+);
 
-        state.world
-            .portals
-            .push({
+}
 
-                id:
-                    uid(
-                        "portal"
-                    ),
+for (
+let i = 0;
+i < 22;
+i++
+) {
 
-                x,
+addResource(
+randomInt(
+220,
+2600
+),
+randomInt(
+200,
+1650
+),
+"ferro"
+);
 
-                y,
+}
 
-                w,
+for (
+let i = 0;
+i < 7;
+i++
+) {
 
-                h,
+addEnemy({
 
-                target,
+id: `iron_enemy_${i}`,
 
-                requirement,
+x: randomInt(
+400,
+2300
+),
 
-                title
+y: randomInt(
+260,
+1550
+),
 
-            });
-    }
+name: "MINERADOR ESQUECIDO",
 
+icon: "⛏️",
 
-    function addWorldBounds() {
+type: "normal",
 
-        const edge =
-            70;
+hp: 180,
 
+maxHp: 180,
 
-        addObstacle(
-            0,
-            0,
-            state.world.width,
-            edge,
-            "wall"
-        );
+damage: 22,
 
+speed: 63,
 
-        addObstacle(
-            0,
-            state.world.height -
-                edge,
-            state.world.width,
-            edge,
-            "wall"
-        );
+vision: 250,
 
+attackRange: 70,
 
-        addObstacle(
-            0,
-            0,
-            edge,
-            state.world.height,
-            "wall"
-        );
+radius: 24,
 
+color: "#60686a",
 
-        addObstacle(
-            state.world.width -
-                edge,
-            0,
-            edge,
-            state.world.height,
-            "wall"
-        );
-    }
+drop: "ferro",
 
+dropAmount: 2
 
-    /* =====================================================
-       CONSTRUIR MUNDO
-    ====================================================== */
+});
 
-    function buildWorld() {
+}
 
-        resetWorld();
+addEnemy({
 
-        addWorldBounds();
+id: "ruby_guardian",
 
+x: 2450,
 
-        const builders = {
+y: 950,
 
-            village:
-                buildVillage,
+name: "GUARDIÃO DE FERRO",
 
-            forest:
-                buildForest,
+icon: "⚙️",
 
-            grove:
-                buildGrove,
+type: "progression",
 
-            mountains:
-                buildMountains,
+hp: 720,
 
-            iron:
-                buildIron,
+maxHp: 720,
 
-            ruby:
-                buildRuby,
+damage: 35,
 
-            shadow:
-                buildShadow,
+speed: 55,
 
-            fairy:
-                buildFairy,
+vision: 350,
 
-            sky:
-                buildSky,
+attackRange: 88,
 
-            hell:
-                buildHell,
+radius: 35,
 
-            final:
-                buildFinal
+color: "#71787c",
 
-        };
+drop: "ouro",
 
+dropAmount: 3,
 
-        builders[
-            state.area
-        ]();
+unlock: "ruby"
 
+});
 
-        must(
-            "locationLabel"
-        ).textContent =
-            REGIONS[
-                state.area
-            ].name;
-    }
+addPortal(
+2750,
+840,
+70,
+230,
+"ruby",
+() =>
+hasDefeatedBoss(
+"ruby_guardian"
+),
+"PASSAGEM VERMELHA"
+);
 
+}
 
-    /* =====================================================
-       VILA
-    ====================================================== */
+/* =====================================================
+RUBI
+====================================================== */
 
-    function buildVillage() {
+function buildRuby() {
 
-        addBuilding(
-            "home",
-            270,
-            280,
-            430,
-            270,
-            "CASA DO AVENTUREIRO",
-            "#70483a",
-            "#ae835e"
-        );
+for (
+let i = 0;
+i < 25;
+i++
+) {
 
+addObstacle(
+randomInt(
+180,
+2860
+),
+randomInt(
+180,
+1900
+),
+68,
+48,
+"rubyrock"
+);
 
-        addBuilding(
-            "elianHome",
-            830,
-            260,
-            350,
-            260,
-            "CASA DE ELIAN",
-            "#604a3d",
-            "#b48961"
-        );
+}
 
+for (
+let i = 0;
+i < 28;
+i++
+) {
 
-        addBuilding(
-            "forge",
-            2070,
-            300,
-            500,
-            300,
-            "FORJA DO FERREIRO",
-            "#484744",
-            "#8f8172"
-        );
+addResource(
+randomInt(
+230,
+2860
+),
+randomInt(
+190,
+1880
+),
+"rubi"
+);
 
+}
 
-        addBuilding(
-            "shop",
-            2500,
-            1260,
-            430,
-            300,
-            "LOJA DE DORAN",
-            "#684638",
-            "#b4865b"
-        );
+for (
+let i = 0;
+i < 8;
+i++
+) {
 
+addEnemy({
 
-        addBuilding(
-            "woodshop",
-            400,
-            1560,
-            450,
-            300,
-            "CARPINTARIA",
-            "#735638",
-            "#a77c4f"
-        );
+id: `ruby_enemy_${i}`,
 
+x: randomInt(
+400,
+2600
+),
 
-        addObstacle(
-            1465,
-            870,
-            270,
-            215,
-            "fountain"
-        );
+y: randomInt(
+260,
+1800
+),
 
+name: "CRIATURA RUBI",
 
-        [
-            [970, 760],
-            [1100, 720],
-            [1210, 1800],
-            [1850, 1630],
-            [2200, 940],
-            [2740, 860],
-            [650, 1160],
-            [2370, 1830]
+icon: "♦",
 
-        ].forEach(
-            ([x, y]) => {
+type: "normal",
 
-                addObstacle(
-                    x - 30,
-                    y - 23,
-                    60,
-                    46,
-                    "rock"
-                );
+hp: 220,
 
-            }
-        );
+maxHp: 220,
 
+damage: 26,
 
-        [
-            [180,180],
-            [390,180],
-            [650,170],
-            [940,150],
-            [1320,160],
-            [1750,160],
-            [2150,160],
-            [2600,170],
-            [2950,180],
+speed: 71,
 
-            [150,700],
-            [180,1050],
-            [190,1440],
+vision: 270,
 
-            [250,1960],
-            [1050,2010],
-            [1500,1980],
-            [1950,2020],
-            [2400,2030],
-            [2850,1960],
+attackRange: 72,
 
-            [3040,1710],
-            [3020,1200],
-            [3010,650],
+radius: 25,
 
-            [2850,1050],
-            [2150,750],
-            [1900,750],
-            [1150,1000]
+color: "#a04551",
 
-        ].forEach(
-            (
-                [x, y],
-                index
-            ) => {
+drop: "rubi",
 
-                addTree(
-                    x,
-                    y,
-                    `village_tree_${index}`
-                );
+dropAmount: 1
 
-            }
-        );
+});
 
+}
 
-        addNPC(
-            1030,
-            610,
-            "ELIAN",
-            "Morador",
-            "#d4b27c",
-            [
-                "A Quietude parece estar chegando mais perto. Ontem eu esqueci o nome da rua onde cresci.",
+addEnemy({
 
-                "Meu pai dizia que a primeira coisa que some não é um lugar. É a lembrança de que ele existia.",
+id: "shadow_guardian",
 
-                "A estrada leste está estranha. Um Guardião apareceu por lá e não deixa ninguém passar.",
+x: 2620,
 
-                "Se você descobrir alguma coisa fora da vila, volte. Precisamos de histórias novas para não esquecer as antigas."
-            ]
-        );
+y: 1010,
 
+name: "GUARDIÃO RUBI",
 
-        addNPC(
-            1940,
-            1055,
-            "MARA",
-            "Historiadora",
-            "#b98bc4",
-            [
-                "Os registros mais antigos falam da Quietude como se ela já tivesse acontecido antes.",
+icon: "🔴",
 
-                "Cada pessoa descreve a Quietude de um jeito diferente. Isso é o que mais me assusta.",
+type: "progression",
 
-                "Alguns livros têm páginas inteiras em branco, mas a numeração continua como se algo estivesse faltando.",
+hp: 830,
 
-                "Quando você encontrar algo que não consegue explicar, tente lembrar de cada detalhe antes de voltar."
-            ]
-        );
+maxHp: 830,
 
+damage: 39,
 
-        addNPC(
-            2700,
-            1125,
-            "DORAN",
-            "Comerciante",
-            "#c58a54",
-            [
-                "Compro materiais e vendo o que consigo trazer de fora.",
+speed: 59,
 
-                "Uma boa espada não resolve todos os problemas, mas resolve alguns deles bem rápido.",
+vision: 355,
 
-                "Guarde dinheiro para quando realmente precisar. As regiões além da vila não são gentis.",
+attackRange: 92,
 
-                "Se encontrar cristais ou minérios raros, eu pago bem."
-            ],
-            {
-                merchant:
-                    true
-            }
-        );
+radius: 36,
 
+color: "#a53e51",
 
-        addNPC(
-            1050,
-            1420,
-            "BRAN",
-            "Carpinteiro",
-            "#8d7053",
-            [
-                "Preciso reforçar algumas casas. A madeira anda apodrecendo mais rápido desde que a Quietude chegou.",
+drop: "rubi",
 
-                "As árvores daqui são estranhas. Algumas voltam a nascer longe do lugar onde caíram.",
+dropAmount: 3,
 
-                "Se puder trazer dez madeiras, eu pago pelo trabalho.",
+unlock: "shadow"
 
-                "Cortar madeira consome magia. Não se esgote por causa de uma árvore."
-            ],
-            {
-                questId:
-                    "wood"
-            }
-        );
+});
 
+addPortal(
+2920,
+890,
+70,
+230,
+"shadow",
+() =>
+hasDefeatedBoss(
+"shadow_guardian"
+),
+"CORREDOR ESCURO"
+);
 
-        addNPC(
-            2280,
-            820,
-            "BORIN",
-            "Ferreiro",
-            "#8e8d89",
-            [
-                "O fogo da forja ainda lembra como queimar. Por enquanto.",
+}
 
-                "Carvão bom está ficando difícil de encontrar.",
+/* =====================================================
+SOMBRA
+====================================================== */
 
-                "Se trouxer oito carvões, posso compensar seu esforço.",
+function buildShadow() {
 
-                "Equipamento é investimento. Sobreviver costuma sair mais barato que morrer."
-            ],
-            {
-                questId:
-                    "coal"
-            }
-        );
+for (
+let i = 0;
+i < 25;
+i++
+) {
 
+addObstacle(
+randomInt(
+170,
+2720
+),
+randomInt(
+170,
+1800
+),
+66,
+48,
+"darkrock"
+);
 
-        addEnemy({
+}
 
-            id:
-                "village_slime",
+for (
+let i = 0;
+i < 9;
+i++
+) {
 
-            x:
-                1260,
+addEnemy({
 
-            y:
-                760,
+id: `shadow_enemy_${i}`,
 
-            name:
-                "LIMO DA QUIETUDE",
+x: randomInt(
+420,
+2500
+),
 
-            icon:
-                "🟢",
+y: randomInt(
+260,
+1700
+),
 
-            type:
-                "normal",
+name: "SOMBRA ESQUECIDA",
 
-            hp:
-                58,
+icon: "👤",
 
-            maxHp:
-                58,
+type: "normal",
 
-            damage:
-                8,
+hp: 265,
 
-            speed:
-                56,
+maxHp: 265,
 
-            vision:
-                190,
+damage: 30,
 
-            attackRange:
-                55,
+speed: 79,
 
-            radius:
-                18,
+vision: 290,
 
-            color:
-                "#6c9862",
+attackRange: 72,
 
-            drop:
-                "carvao",
+radius: 25,
 
-            dropAmount:
-                1
-        });
+color: "#49425f",
 
+drop: "essencia",
 
-        addEnemy({
+dropAmount: 1
 
-            id:
-                "village_wolf",
+});
 
-            x:
-                2190,
+}
 
-            y:
-                1450,
+addEnemy({
 
-            name:
-                "LOBO ESQUECIDO",
+id: "fairy_guardian",
 
-            icon:
-                "🐺",
+x: 2500,
 
-            type:
-                "normal",
+y: 980,
 
-            hp:
-                82,
+name: "GUARDIÃO SOMBRIO",
 
-            maxHp:
-                82,
+icon: "🌑",
 
-            damage:
-                12,
+type: "progression",
 
-            speed:
-                92,
+hp: 930,
 
-            vision:
-                260,
+maxHp: 930,
 
-            attackRange:
-                65,
+damage: 42,
 
-            radius:
-                21,
+speed: 63,
 
-            color:
-                "#686d78",
+vision: 360,
 
-            drop:
-                "carvao",
+attackRange: 94,
 
-            dropAmount:
-                1
-        });
+radius: 36,
 
+color: "#42364f",
 
-        addEnemy({
+drop: "essencia",
 
-            id:
-                "village_resource_boss",
+dropAmount: 3,
 
-            x:
-                2350,
+unlock: "fairy"
 
-            y:
-                1780,
+});
 
-            name:
-                "CERVO ANCESTRAL",
+addPortal(
+2790,
+860,
+70,
+230,
+"fairy",
+() =>
+hasDefeatedBoss(
+"fairy_guardian"
+),
+"LUZ ADIANTE"
+);
 
-            icon:
-                "🦌",
+}
 
-            type:
-                "resourceBoss",
+/* =====================================================
+FADAS
+====================================================== */
 
-            hp:
-                430,
+function buildFairy() {
 
-            maxHp:
-                430,
+for (
+let i = 0;
+i < 26;
+i++
+) {
 
-            damage:
-                18,
+addResource(
+randomInt(
+200,
+3000
+),
+randomInt(
+180,
+2000
+),
+"cristal"
+);
 
-            speed:
-                64,
+}
 
-            vision:
-                270,
+for (
+let i = 0;
+i < 22;
+i++
+) {
 
-            attackRange:
-                75,
+state.world.effects.push({
 
-            radius:
-                30,
+type: "flower",
 
-            color:
-                "#788762",
+x:
+randomInt(
+150,
+3050
+),
 
-            drop:
-                "ouro",
+y:
+randomInt(
+150,
+2050
+),
 
-            dropAmount:
-                2,
+phase:
+random(
+0,
+Math.PI * 2
+)
 
-            respawnTime:
-                60
-        });
+});
 
+}
 
-        addEnemy({
+for (
+let i = 0;
+i < 7;
+i++
+) {
 
-            id:
-                "forest_guardian",
+addEnemy({
 
-            x:
-                2850,
+id: `fairy_enemy_${i}`,
 
-            y:
-                1090,
+x: randomInt(
+450,
+2700
+),
 
-            name:
-                "GUARDIÃO DA ESTRADA",
+y: randomInt(
+270,
+1800
+),
 
-            icon:
-                "👺",
+name: "ESPÍRITO FEÉRICO",
 
-            type:
-                "progression",
+icon: "🦋",
 
-            hp:
-                280,
+type: "normal",
 
-            maxHp:
-                280,
+hp: 285,
 
-            damage:
-                20,
+maxHp: 285,
 
-            speed:
-                56,
+damage: 32,
 
-            vision:
-                280,
+speed: 93,
 
-            attackRange:
-                75,
+vision: 300,
 
-            radius:
-                29,
+attackRange: 74,
 
-            color:
-                "#945149",
+radius: 24,
 
-            drop:
-                "cristal",
+color: "#b887be",
 
-            dropAmount:
-                2,
+drop: "cristal",
 
-            unlock:
-                "forest"
-        });
+dropAmount: 1
 
+});
 
-        addPortal(
-            3060,
-            1010,
-            70,
-            210,
-            "forest",
-            () =>
-                hasDefeatedBoss(
-                    "forest_guardian"
-                ),
-            "FLORESTA"
-        );
+}
 
-    }
+addNPC(
+1000,
+1000,
+"AELIA",
+"Habitante das Fadas",
+"#d49ad4",
+[
+"As flores daqui brilham quando alguém lembra de algo importante.",
+"A Quietude não gosta de memórias compartilhadas.",
+"Há caminhos que só aparecem depois que alguém decide não esquecer.",
+"Você trouxe lembranças de lugares que eu nunca vi. Isso já muda este reino."
+]
+);
 
+addEnemy({
 
-    /* =====================================================
-       FLORESTA
-    ====================================================== */
+id: "sky_guardian",
 
-    function buildForest() {
+x: 2700,
 
-        for (
-            let i = 0;
-            i < 42;
-            i++
-        ) {
+y: 1050,
 
-            addTree(
-                randomInt(
-                    130,
-                    3240
-                ),
-                randomInt(
-                    130,
-                    2250
-                ),
-                `forest_tree_${i}`
-            );
-        }
+name: "GUARDIÃ DOS FIOS",
 
+icon: "🧚",
 
-        for (
-            let i = 0;
-            i < 9;
-            i++
-        ) {
+type: "progression",
 
-            addEnemy({
+hp: 1080,
 
-                id:
-                    `forest_enemy_${i}`,
+maxHp: 1080,
 
-                x:
-                    randomInt(
-                        450,
-                        2900
-                    ),
+damage: 44,
 
-                y:
-                    randomInt(
-                        300,
-                        2050
-                    ),
+speed: 70,
 
-                name:
-                    i % 2
-                        ? "LOBO FLORESTAL"
-                        : "JAVALI SOMBRIO",
+vision: 380,
 
-                icon:
-                    i % 2
-                        ? "🐺"
-                        : "🐗",
+attackRange: 96,
 
-                type:
-                    "normal",
+radius: 37,
 
-                hp:
-                    100 +
-                    i * 2,
+color: "#cb8dd0",
 
-                maxHp:
-                    100 +
-                    i * 2,
+drop: "essencia",
 
-                damage:
-                    14,
+dropAmount: 4,
 
-                speed:
-                    95,
+unlock: "sky"
 
-                vision:
-                    260,
+});
 
-                attackRange:
-                    65,
+addPortal(
+3000,
+930,
+70,
+230,
+"sky",
+() =>
+hasDefeatedBoss(
+"sky_guardian"
+),
+"PASSAGEM CELESTE"
+);
 
-                radius:
-                    22,
+}
 
-                color:
-                    i % 2
-                        ? "#66716c"
-                        : "#685844",
+/* =====================================================
+CÉU
+====================================================== */
 
-                drop:
-                    i % 3
-                        ? "carvao"
-                        : "ferro",
+function buildSky() {
 
-                dropAmount:
-                    1
-            });
+for (
+let i = 0;
+i < 20;
+i++
+) {
 
-        }
+addResource(
+randomInt(
+200,
+3200
+),
+randomInt(
+180,
+1950
+),
+"cristal"
+);
 
+}
 
-        addNPC(
-            720,
-            850,
-            "NARA",
-            "Guardião da Floresta",
-            "#7ea56b",
-            [
-                "A floresta percebe quem passa por ela.",
+for (
+let i = 0;
+i < 8;
+i++
+) {
 
-                "Há árvores que se movem quando ninguém está olhando.",
+addEnemy({
 
-                "A Quietude não mata todas as coisas. Algumas continuam andando sem lembrar por quê.",
+id: `sky_enemy_${i}`,
 
-                "O caminho adiante só se abre para quem prova que consegue sobreviver aqui."
-            ]
-        );
+x: randomInt(
+500,
+2950
+),
 
+y: randomInt(
+260,
+1800
+),
 
-        addEnemy({
+name: "SERAFIM CAÍDO",
 
-            id:
-                "forest_resource_boss",
+icon: "🪽",
 
-            x:
-                2450,
+type: "normal",
 
-            y:
-                1750,
+hp: 340,
 
-            name:
-                "ALCE ANCIÃO",
+maxHp: 340,
 
-            icon:
-                "🦌",
+damage: 36,
 
-            type:
-                "resourceBoss",
+speed: 101,
 
-            hp:
-                540,
+vision: 325,
 
-            maxHp:
-                540,
+attackRange: 76,
 
-            damage:
-                22,
+radius: 27,
 
-            speed:
-                55,
+color: "#cbd7df",
 
-            vision:
-                310,
+drop: "cristal",
 
-            attackRange:
-                78,
+dropAmount: 2
 
-            radius:
-                32,
+});
 
-            color:
-                "#71865d",
+}
 
-            drop:
-                "ouro",
+addNPC(
+1200,
+850,
+"AERIS",
+"Guardião Celeste",
+"#c7d4df",
+[
+"Até aqui existem coisas que estão sendo esquecidas.",
+"O céu não fica acima de tudo. Algumas coisas ainda estão além dele.",
+"A Quietude deixa marcas até onde não há chão.",
+"Se continuar, faça isso porque escolheu lembrar — não porque alguém mandou."
+]
+);
 
-            dropAmount:
-                2,
+addEnemy({
 
-            respawnTime:
-                60
-        });
+id: "hell_guardian",
 
+x: 2890,
 
-        addEnemy({
+y: 1100,
 
-            id:
-                "grove_guardian",
+name: "SERAFIM DA QUIETUDE",
 
-            x:
-                2980,
+icon: "☀️",
 
-            y:
-                1150,
+type: "progression",
 
-            name:
-                "GUARDIÃO DA FLORESTA",
+hp: 1250,
 
-            icon:
-                "🌳",
+maxHp: 1250,
 
-            type:
-                "progression",
+damage: 50,
 
-            hp:
-                420,
+speed: 71,
 
-            maxHp:
-                420,
+vision: 400,
 
-            damage:
-                24,
+attackRange: 102,
 
-            speed:
-                60,
+radius: 40,
 
-            vision:
-                310,
+color: "#d1b377",
 
-            attackRange:
-                82,
+drop: "essencia",
 
-            radius:
-                31,
+dropAmount: 4,
 
-            color:
-                "#4d754b",
+unlock: "hell"
 
-            drop:
-                "ferro",
+});
 
-            dropAmount:
-                2,
+addPortal(
+3220,
+990,
+70,
+230,
+"hell",
+() =>
+hasDefeatedBoss(
+"hell_guardian"
+),
+"PASSAGEM DESCONHECIDA"
+);
 
-            unlock:
-                "grove"
-        });
+}
 
+/* =====================================================
+INFERNO
+====================================================== */
 
-        addPortal(
-            3260,
-            1030,
-            70,
-            220,
-            "grove",
-            () =>
-                hasDefeatedBoss(
-                    "grove_guardian"
-                ),
-            "BOSQUE"
-        );
+function buildHell() {
 
-    }
+for (
+let i = 0;
+i < 26;
+i++
+) {
 
+addObstacle(
+randomInt(
+180,
+3380
+),
+randomInt(
+170,
+2150
+),
+70,
+50,
+"basalt"
+);
 
-    /* =====================================================
-       BOSQUE
-    ====================================================== */
+}
 
-    function buildGrove() {
+const types = [
 
-        for (
-            let i = 0;
-            i < 34;
-            i++
-        ) {
+[
+"DEMÔNIO DE CINZA",
+"🔥",
+"#8c4d3f",
+"essencia"
+],
 
-            addTree(
-                randomInt(
-                    130,
-                    3040
-                ),
-                randomInt(
-                    130,
-                    2150
-                ),
-                `grove_tree_${i}`
-            );
+[
+"CÃO DE LAVA",
+"🐕",
+"#984b31",
+"ouro"
+],
 
-        }
+[
+"ESPECTRO CARMESIM",
+"👻",
+"#724056",
+"essencia"
+],
 
+[
+"GÁRGULA QUEBRADA",
+"🗿",
+"#70554a",
+"ouro"
+],
 
-        for (
-            let i = 0;
-            i < 8;
-            i++
-        ) {
+[
+"PARASITA DO VAZIO",
+"🕷️",
+"#4b3551",
+"essencia"
+]
 
-            addEnemy({
+];
 
-                id:
-                    `grove_enemy_${i}`,
+types.forEach(
+(
+[
+name,
+icon,
+color,
+drop
+],
+typeIndex
+) => {
 
-                x:
-                    randomInt(
-                        400,
-                        2700
-                    ),
+for (
+let i = 0;
+i < 2;
+i++
+) {
 
-                y:
-                    randomInt(
-                        300,
-                        1950
-                    ),
+addEnemy({
 
-                name:
-                    "FERA DO BOSQUE",
+id:
+`hell_${typeIndex}_${i}`,
 
-                icon:
-                    "🦌",
+x:
+randomInt(
+450,
+3000
+),
 
-                type:
-                    "normal",
+y:
+randomInt(
+280,
+2050
+),
 
-                hp:
-                    135,
+name,
 
-                maxHp:
-                    135,
+icon,
 
-                damage:
-                    17,
+type: "hell",
 
-                speed:
-                    86,
+hellType: typeIndex,
 
-                vision:
-                    260,
+hp:
+380 +
+typeIndex * 35,
 
-                attackRange:
-                    65,
+maxHp:
+380 +
+typeIndex * 35,
 
-                radius:
-                    23,
+damage:
+36 +
+typeIndex * 3,
 
-                color:
-                    "#60745e",
+speed:
+80 +
+typeIndex * 4,
 
-                drop:
-                    "ferro",
+vision: 340,
 
-                dropAmount:
-                    1
+attackRange: 78,
 
-            });
+radius: 27,
 
-        }
+color,
 
+drop,
 
-        addNPC(
-            1350,
-            800,
-            "LYRA",
-            "Druida",
-            "#829f6f",
-            [
-                "Este bosque guarda memórias nas raízes.",
+dropAmount: 1
 
-                "Quando uma árvore cai, às vezes outra nasce carregando lembranças que não são dela.",
+});
 
-                "As montanhas ficam além deste lugar.",
+}
 
-                "Não confunda silêncio com paz."
-            ]
-        );
+}
+);
 
+addEnemy({
 
-        addEnemy({
+id: "final_gate_guardian",
 
-            id:
-                "mountain_guardian",
+x: 3050,
 
-            x:
-                2760,
+y: 1120,
 
-            y:
-                1110,
+name: "SENHOR DA QUIETUDE",
 
-            name:
-                "GUARDIÃO DO BOSQUE",
+icon: "👿",
 
-            icon:
-                "🌲",
+type: "progression",
 
-            type:
-                "progression",
+hp: 1550,
 
-            hp:
-                510,
+maxHp: 1550,
 
-            maxHp:
-                510,
+damage: 56,
 
-            damage:
-                28,
+speed: 76,
 
-            speed:
-                58,
+vision: 430,
 
-            vision:
-                320,
+attackRange: 108,
 
-            attackRange:
-                84,
+radius: 41,
 
-            radius:
-                32,
+color: "#a64139",
 
-            color:
-                "#557251",
+drop: "essencia",
 
-            drop:
-                "ouro",
+dropAmount: 6,
 
-            dropAmount:
-                2,
+unlock: "final"
 
-            unlock:
-                "mountains"
+});
 
-        });
+addPortal(
+3390,
+1010,
+70,
+230,
+"final",
+() => {
 
+return (
 
-        addPortal(
-            3060,
-            1000,
-            70,
-            220,
-            "mountains",
-            () =>
-                hasDefeatedBoss(
-                    "mountain_guardian"
-                ),
-            "MONTANHAS"
-        );
+hasDefeatedBoss(
+"final_gate_guardian"
+) &&
 
-    }
+Object.keys(
+state.player
+.hellTypesDefeated
+).length >= 5
 
+);
 
-    /* =====================================================
-       MONTANHAS
-    ====================================================== */
+},
+"PORTA SELADA"
+);
 
-    function buildMountains() {
+}
 
-        for (
-            let i = 0;
-            i < 24;
-            i++
-        ) {
+/* =====================================================
+FINAL
+====================================================== */
 
-            addObstacle(
-                randomInt(
-                    180,
-                    3200
-                ),
-                randomInt(
-                    160,
-                    2100
-                ),
-                70,
-                52,
-                "snowrock"
-            );
+function buildFinal() {
 
-        }
+addEnemy({
 
+id: "other_self",
 
-        for (
-            let i = 0;
-            i < 8;
-            i++
-        ) {
+x: 1550,
 
-            addEnemy({
+y: 750,
 
-                id:
-                    `mountain_enemy_${i}`,
+name: "O OUTRO EU",
 
-                x:
-                    randomInt(
-                        450,
-                        2950
-                    ),
+icon: "☯",
 
-                y:
-                    randomInt(
-                        300,
-                        1950
-                    ),
+type: "final",
 
-                name:
-                    "BESTA DAS MONTANHAS",
+hp: 2200,
 
-                icon:
-                    "🐐",
+maxHp: 2200,
 
-                type:
-                    "normal",
+damage: 62,
 
-                hp:
-                    160,
+speed: 86,
 
-                maxHp:
-                    160,
+vision: 650,
 
-                damage:
-                    20,
+attackRange: 112,
 
-                speed:
-                    72,
+radius: 42,
 
-                vision:
-                    265,
+color: "#b7aaa0",
 
-                attackRange:
-                    68,
+drop: "essencia",
 
-                radius:
-                    24,
+dropAmount: 10
 
-                color:
-                    "#c7ccca",
+});
 
-                drop:
-                    "ferro",
+}
 
-                dropAmount:
-                    1
+function hasDefeatedBoss(id) {
 
-            });
+return Boolean(
+state.player
+?.defeatedBosses
+?.includes(id)
+);
 
-        }
+}
 
+/* =====================================================
+COLISÃO
+====================================================== */
 
-        addNPC(
-            760,
-            900,
-            "KAEL",
-            "Montanhista",
-            "#d2d6d2",
-            [
-                "O vento daqui apaga pegadas em minutos.",
+function circleRectCollision(
+cx,
+cy,
+radius,
+rect
+) {
 
-                "Há uma passagem antiga na montanha.",
+const closestX =
+clamp(
+cx,
+rect.x,
+rect.x + rect.w
+);
 
-                "Minérios abaixo da neve ainda reagem à magia.",
+const closestY =
+clamp(
+cy,
+rect.y,
+rect.y + rect.h
+);
 
-                "Não fique parado por muito tempo. Algumas coisas confundem viajantes com pedras."
-            ]
-        );
+const dx =
+cx - closestX;
 
+const dy =
+cy - closestY;
 
-        addEnemy({
+return (
+dx * dx +
+dy * dy <
+radius * radius
+);
 
-            id:
-                "iron_guardian",
+}
 
-            x:
-                3000,
+function canPlayerMoveTo(
+x,
+y,
+radius
+) {
 
-            y:
-                1100,
+if (
+state.houseMode
+) {
 
-            name:
-                "SENTINELA DAS MONTANHAS",
+const room =
+getHouseRoom();
 
-            icon:
-                "🗿",
+const insideRoom = (
 
-            type:
-                "progression",
+x - radius >=
+room.x + 18 &&
 
-            hp:
-                620,
+y - radius >=
+room.y + 18 &&
 
-            maxHp:
-                620,
+x + radius <=
+room.x +
+room.w -
+18 &&
 
-            damage:
-                31,
+y + radius <=
+room.y +
+room.h -
+18
 
-            speed:
-                54,
+);
 
-            vision:
-                340,
+if (
+!insideRoom
+) {
 
-            attackRange:
-                86,
+return false;
 
-            radius:
-                34,
+}
 
-            color:
-                "#72797e",
+for (
+const npc of
+getInteriorNPCs()
+) {
 
-            drop:
-                "ferro",
+if (
 
-            dropAmount:
-                3,
+Math.hypot(
+x - npc.x,
+y - npc.y
+) <
 
-            unlock:
-                "iron"
+radius +
+npc.radius +
+4
 
-        });
+) {
 
+return false;
 
-        addPortal(
-            3300,
-            1010,
-            70,
-            220,
-            "iron",
-            () =>
-                hasDefeatedBoss(
-                    "iron_guardian"
-                ),
-            "PASSAGEM DA MONTANHA"
-        );
+}
 
-    }
+}
 
+return true;
 
-    /* =====================================================
-       CAVERNA DE FERRO
-    ====================================================== */
+}
 
-    function buildIron() {
+if (
 
-        for (
-            let i = 0;
-            i < 24;
-            i++
-        ) {
+x - radius < 72 ||
 
-            addObstacle(
-                randomInt(
-                    160,
-                    2680
-                ),
-                randomInt(
-                    160,
-                    1700
-                ),
-                65,
-                48,
-                "ironrock"
-            );
+y - radius < 72 ||
 
-        }
+x + radius >
+state.world.width -
+72 ||
 
+y + radius >
+state.world.height -
+72
 
-        for (
-            let i = 0;
-            i < 22;
-            i++
-        ) {
+) {
 
-            addResource(
-                randomInt(
-                    220,
-                    2600
-                ),
-                randomInt(
-                    200,
-                    1650
-                ),
-                "ferro"
-            );
+return false;
 
-        }
+}
 
+for (
+const obstacle of
+state.world.obstacles
+) {
 
-        for (
-            let i = 0;
-            i < 7;
-            i++
-        ) {
+if (
+obstacle.treeId
+) {
 
-            addEnemy({
+const tree =
+state.world.trees.find(
+item =>
+item.id ===
+obstacle.treeId
+);
 
-                id:
-                    `iron_enemy_${i}`,
+if (
+!tree?.alive
+) {
 
-                x:
-                    randomInt(
-                        400,
-                        2300
-                    ),
+continue;
 
-                y:
-                    randomInt(
-                        260,
-                        1550
-                    ),
+}
 
-                name:
-                    "MINERADOR ESQUECIDO",
+}
 
-                icon:
-                    "⛏️",
+if (
+circleRectCollision(
+x,
+y,
+radius,
+obstacle
+)
+) {
 
-                type:
-                    "normal",
+return false;
 
-                hp:
-                    180,
+}
 
-                maxHp:
-                    180,
+}
 
-                damage:
-                    22,
+for (
+const npc of
+state.world.npcs
+) {
 
-                speed:
-                    63,
+if (
 
-                vision:
-                    250,
+Math.hypot(
+x - npc.x,
+y - npc.y
+) <
 
-                attackRange:
-                    70,
+radius +
+npc.radius
 
-                radius:
-                    24,
+) {
 
-                color:
-                    "#60686a",
+return false;
 
-                drop:
-                    "ferro",
+}
 
-                dropAmount:
-                    2
+}
 
-            });
+return true;
 
-        }
+}
 
+function canEnemyMoveTo(
+x,
+y,
+radius
+) {
 
-        addEnemy({
+if (
 
-            id:
-                "ruby_guardian",
+x - radius < 72 ||
 
-            x:
-                2450,
+y - radius < 72 ||
 
-            y:
-                950,
+x + radius >
+state.world.width -
+72 ||
 
-            name:
-                "GUARDIÃO DE FERRO",
+y + radius >
+state.world.height -
+72
 
-            icon:
-                "⚙️",
+) {
 
-            type:
-                "progression",
+return false;
 
-            hp:
-                720,
+}
 
-            maxHp:
-                720,
+for (
+const obstacle of
+state.world.obstacles
+) {
 
-            damage:
-                35,
+if (
+obstacle.treeId
+) {
 
-            speed:
-                55,
+const tree =
+state.world.trees.find(
+item =>
+item.id ===
+obstacle.treeId
+);
 
-            vision:
-                350,
+if (
+!tree?.alive
+) {
 
-            attackRange:
-                88,
+continue;
 
-            radius:
-                35,
+}
 
-            color:
-                "#71787c",
+}
 
-            drop:
-                "ouro",
+if (
+circleRectCollision(
+x,
+y,
+radius,
+obstacle
+)
+) {
 
-            dropAmount:
-                3,
+return false;
 
-            unlock:
-                "ruby"
+}
 
-        });
+}
 
+return true;
 
-        addPortal(
-            2750,
-            840,
-            70,
-            230,
-            "ruby",
-            () =>
-                hasDefeatedBoss(
-                    "ruby_guardian"
-                ),
-            "PASSAGEM VERMELHA"
-        );
+}
 
-    }
+/* =====================================================
+CASAS
+====================================================== */
 
+function getHouseRoom() {
 
-    /* =====================================================
-       CAVERNA DE RUBI
-    ====================================================== */
+const building =
+state.currentHouse;
 
-    function buildRuby() {
+const w =
+clamp(
+(building?.w || 430) +
+150,
+560,
+760
+);
 
-        for (
-            let i = 0;
-            i < 25;
-            i++
-        ) {
+const h =
+clamp(
+(building?.h || 270) +
+150,
+420,
+560
+);
 
-            addObstacle(
-                randomInt(
-                    180,
-                    2860
-                ),
-                randomInt(
-                    180,
-                    1900
-                ),
-                68,
-                48,
-                "rubyrock"
-            );
+return {
 
-        }
+x:
+state.world.width / 2 -
+w / 2,
 
+y:
+state.world.height / 2 -
+h / 2,
 
-        for (
-            let i = 0;
-            i < 28;
-            i++
-        ) {
+w,
 
-            addResource(
-                randomInt(
-                    230,
-                    2860
-                ),
-                randomInt(
-                    190,
-                    1880
-                ),
-                "rubi"
-            );
+h
 
-        }
+};
 
+}
 
-        for (
-            let i = 0;
-            i < 8;
-            i++
-        ) {
+function getHouseTheme() {
 
-            addEnemy({
+const themes = {
 
-                id:
-                    `ruby_enemy_${i}`,
+home: {
 
-                x:
-                    randomInt(
-                        400,
-                        2600
-                    ),
+wall: "#4b342b",
 
-                y:
-                    randomInt(
-                        260,
-                        1800
-                    ),
+floor: "#9a7452",
 
-                name:
-                    "CRIATURA RUBI",
+trim: "#d8b87a",
 
-                icon:
-                    "♦",
+accent: "#efb05b"
 
-                type:
-                    "normal",
+},
 
-                hp:
-                    220,
+elianHome: {
 
-                maxHp:
-                    220,
+wall: "#3f3831",
 
-                damage:
-                    26,
+floor: "#856a50",
 
-                speed:
-                    71,
+trim: "#cab07e",
 
-                vision:
-                    270,
+accent: "#6d8790"
 
-                attackRange:
-                    72,
+},
 
-                radius:
-                    25,
+forge: {
 
-                color:
-                    "#a04551",
+wall: "#292b2f",
 
-                drop:
-                    "rubi",
+floor: "#55504a",
 
-                dropAmount:
-                    1
+trim: "#a39789",
 
-            });
+accent: "#ff8149"
 
-        }
+},
 
+shop: {
 
-        addEnemy({
+wall: "#3e2e28",
 
-            id:
-                "shadow_guardian",
+floor: "#8c6847",
 
-            x:
-                2620,
+trim: "#e0bc75",
 
-            y:
-                1010,
+accent: "#e8c56f"
 
-            name:
-                "GUARDIÃO RUBI",
+},
 
-            icon:
-                "🔴",
+woodshop: {
 
-            type:
-                "progression",
+wall: "#453225",
 
-            hp:
-                830,
+floor: "#a0784f",
 
-            maxHp:
-                830,
+trim: "#d9b276",
 
-            damage:
-                39,
+accent: "#d89c55"
 
-            speed:
-                59,
+}
 
-            vision:
-                355,
+};
 
-            attackRange:
-                92,
+return (
+themes[
+state.currentHouse?.id
+] ||
+themes.home
+);
 
-            radius:
-                36,
+}
 
-            color:
-                "#a53e51",
+function getInteriorNPCs() {
 
-            drop:
-                "rubi",
+if (
+!state.houseMode ||
+!state.currentHouse
+) {
 
-            dropAmount:
-                3,
+return [];
 
-            unlock:
-                "shadow"
+}
 
-        });
+const room =
+getHouseRoom();
 
+const configs = {
 
-        addPortal(
-            2920,
-            890,
-            70,
-            230,
-            "shadow",
-            () =>
-                hasDefeatedBoss(
-                    "shadow_guardian"
-                ),
-            "CORREDOR ESCURO"
-        );
+elianHome: {
 
-    }
+name: "ELIAN",
 
+role: "Morador",
 
-    /* =====================================================
-       CAVERNA SOMBRIA
-    ====================================================== */
+color: "#d4b27c",
 
-    function buildShadow() {
+dx: .73,
 
-        for (
-            let i = 0;
-            i < 25;
-            i++
-        ) {
+dy: .38
 
-            addObstacle(
-                randomInt(
-                    170,
-                    2720
-                ),
-                randomInt(
-                    170,
-                    1800
-                ),
-                66,
-                48,
-                "darkrock"
-            );
+},
 
-        }
+forge: {
 
+name: "BORIN",
 
-        for (
-            let i = 0;
-            i < 9;
-            i++
-        ) {
+role: "Ferreiro",
 
-            addEnemy({
+color: "#8e8d89",
 
-                id:
-                    `shadow_enemy_${i}`,
+questId: "coal",
 
-                x:
-                    randomInt(
-                        420,
-                        2500
-                    ),
+dx: .73,
 
-                y:
-                    randomInt(
-                        260,
-                        1700
-                    ),
+dy: .47
 
-                name:
-                    "SOMBRA ESQUECIDA",
+},
 
-                icon:
-                    "👤",
+shop: {
 
-                type:
-                    "normal",
+name: "DORAN",
 
-                hp:
-                    265,
+role: "Comerciante",
 
-                maxHp:
-                    265,
+color: "#c58a54",
 
-                damage:
-                    30,
+merchant: true,
 
-                speed:
-                    79,
+dx: .72,
 
-                vision:
-                    290,
+dy: .34
 
-                attackRange:
-                    72,
+},
 
-                radius:
-                    25,
+woodshop: {
 
-                color:
-                    "#49425f",
+name: "BRAN",
 
-                drop:
-                    "essencia",
+role: "Carpinteiro",
 
-                dropAmount:
-                    1
+color: "#8d7053",
 
-            });
+questId: "wood",
 
-        }
+dx: .73,
 
+dy: .43
 
-        addEnemy({
+}
 
-            id:
-                "fairy_guardian",
+};
 
-            x:
-                2500,
+const config =
+configs[
+state.currentHouse.id
+];
 
-            y:
-                980,
+if (
+!config
+) {
 
-            name:
-                "GUARDIÃO SOMBRIO",
+return [];
 
-            icon:
-                "🌑",
+}
 
-            type:
-                "progression",
+const original =
+state.world.npcs.find(
+npc =>
+npc.name ===
+config.name
+);
 
-            hp:
-                930,
+return [
 
-            maxHp:
-                930,
+{
 
-            damage:
-                42,
+...(original || {}),
 
-            speed:
-                63,
+...config,
 
-            vision:
-                360,
+id:
+"inside_" +
+state.currentHouse.id +
+"_" +
+config.name,
 
-            attackRange:
-                94,
+x:
+room.x +
+room.w *
+config.dx,
 
-            radius:
-                36,
+y:
+room.y +
+room.h *
+config.dy,
 
-            color:
-                "#42364f",
+radius: 17,
 
-            drop:
-                "essencia",
+lines:
+original?.lines ||
+[
+"Bem-vindo."
+],
 
-            dropAmount:
-                3,
+interior: true
 
-            unlock:
-                "fairy"
+}
 
-        });
+];
 
+}
 
-        addPortal(
-            2790,
-            860,
-            70,
-            230,
-            "fairy",
-            () =>
-                hasDefeatedBoss(
-                    "fairy_guardian"
-                ),
-            "LUZ ADIANTE"
-        );
+function placePlayerInsideHouse() {
 
-    }
+const room =
+getHouseRoom();
 
+state.player.x =
+room.x +
+room.w / 2;
 
-    /* =====================================================
-       REINO DAS FADAS
-    ====================================================== */
+state.player.y =
+room.y +
+room.h -
+64;
 
-    function buildFairy() {
+state.keys.clear();
 
-        for (
-            let i = 0;
-            i < 26;
-            i++
-        ) {
+updateCamera();
 
-            addResource(
-                randomInt(
-                    200,
-                    3000
-                ),
-                randomInt(
-                    180,
-                    2000
-                ),
-                "cristal"
-            );
+}
 
-        }
+/* =====================================================
+MOVIMENTO
+====================================================== */
 
+function updateMovement(dt) {
 
-        for (
-            let i = 0;
-            i < 22;
-            i++
-        ) {
+if (
+state.paused ||
+!state.player
+) {
 
-            state.world
-                .effects
-                .push({
+return;
 
-                    type:
-                        "flower",
+}
 
-                    x:
-                        randomInt(
-                            150,
-                            3050
-                        ),
+let dx =
+0;
 
-                    y:
-                        randomInt(
-                            150,
-                            2050
-                        ),
+let dy =
+0;
 
-                    phase:
-                        random(
-                            0,
-                            Math.PI * 2
-                        )
+if (
+state.keys.has("w") ||
+state.keys.has("arrowup")
+) {
 
-                });
+dy--;
 
-        }
+}
 
+if (
+state.keys.has("s") ||
+state.keys.has("arrowdown")
+) {
 
-        for (
-            let i = 0;
-            i < 7;
-            i++
-        ) {
+dy++;
 
-            addEnemy({
+}
 
-                id:
-                    `fairy_enemy_${i}`,
+if (
+state.keys.has("a") ||
+state.keys.has("arrowleft")
+) {
 
-                x:
-                    randomInt(
-                        450,
-                        2700
-                    ),
+dx--;
 
-                y:
-                    randomInt(
-                        270,
-                        1800
-                    ),
+}
 
-                name:
-                    "ESPÍRITO FEÉRICO",
+if (
+state.keys.has("d") ||
+state.keys.has("arrowright")
+) {
 
-                icon:
-                    "🦋",
+dx++;
 
-                type:
-                    "normal",
+}
 
-                hp:
-                    285,
+if (
+!dx &&
+!dy
+) {
 
-                maxHp:
-                    285,
+return;
 
-                damage:
-                    32,
+}
 
-                speed:
-                    93,
+const length =
+Math.hypot(
+dx,
+dy
+) ||
+1;
 
-                vision:
-                    300,
+dx /=
+length;
 
-                attackRange:
-                    74,
+dy /=
+length;
 
-                radius:
-                    24,
+let speed =
+state.houseMode
+? 130
+: state.player.speed;
 
-                color:
-                    "#b887be",
+if (
+!state.houseMode &&
+state.player.hunger <= 20
+) {
 
-                drop:
-                    "cristal",
+speed *= .72;
 
-                dropAmount:
-                    1
+}
 
-            });
+if (
+!state.houseMode &&
+state.player.fatigue <= 20
+) {
 
-        }
+speed *= .72;
 
+}
 
-        addNPC(
-            1000,
-            1000,
-            "AELIA",
-            "Habitante das Fadas",
-            "#d49ad4",
-            [
-                "As flores daqui brilham quando alguém lembra de algo importante.",
+const step =
+speed *
+dt;
 
-                "A Quietude não gosta de memórias compartilhadas.",
+const nextX =
+state.player.x +
+dx *
+step;
 
-                "Há caminhos que só aparecem depois que alguém decide não esquecer.",
+if (
+canPlayerMoveTo(
+nextX,
+state.player.y,
+state.player.radius
+)
+) {
 
-                "Você trouxe lembranças de lugares que eu nunca vi. Isso já muda este reino."
-            ]
-        );
+state.player.x =
+nextX;
 
+}
 
-        addEnemy({
+const nextY =
+state.player.y +
+dy *
+step;
 
-            id:
-                "sky_guardian",
+if (
+canPlayerMoveTo(
+state.player.x,
+nextY,
+state.player.radius
+)
+) {
 
-            x:
-                2700,
+state.player.y =
+nextY;
 
-            y:
-                1050,
+}
 
-            name:
-                "GUARDIÃ DOS FIOS",
+}
 
-            icon:
-                "🧚",
+/* =====================================================
+SOBREVIVÊNCIA
+====================================================== */
 
-            type:
-                "progression",
+function updateSurvival(dt) {
 
-            hp:
-                1080,
+if (
+state.houseMode ||
+state.paused
+) {
 
-            maxHp:
-                1080,
+return;
 
-            damage:
-                44,
+}
 
-            speed:
-                70,
+const player =
+state.player;
 
-            vision:
-                380,
+player.hunger =
+clamp(
+player.hunger -
+.25 * dt,
+0,
+100
+);
 
-            attackRange:
-                96,
+player.fatigue =
+clamp(
+player.fatigue -
+.2 * dt,
+0,
+100
+);
 
-            radius:
-                37,
+player.magic =
+clamp(
+player.magic +
+1.7 * dt,
+0,
+player.maxMagic
+);
 
-            color:
-                "#cb8dd0",
+player.energy =
+clamp(
+player.energy +
+3 * dt,
+0,
+player.maxEnergy
+);
 
-            drop:
-                "essencia",
+if (
+player.hunger <= 0 ||
+player.fatigue <= 0
+) {
 
-            dropAmount:
-                4,
+player.hp =
+clamp(
+player.hp -
+.12 * dt,
+1,
+player.maxHp
+);
 
-            unlock:
-                "sky"
+}
 
-        });
+const now =
+performance.now();
 
+if (
+now -
+state.warnedNeedAt >
+7000
+) {
 
-        addPortal(
-            3000,
-            930,
-            70,
-            230,
-            "sky",
-            () =>
-                hasDefeatedBoss(
-                    "sky_guardian"
-                ),
-            "PASSAGEM CELESTE"
-        );
+if (
+player.hunger < 18
+) {
 
-    }
+showToast(
+"Você está ficando com fome."
+);
 
+state.warnedNeedAt =
+now;
 
-    /* =====================================================
-       CÉU
-    ====================================================== */
+}
 
-    function buildSky() {
+else if (
+player.fatigue < 18
+) {
 
-        for (
-            let i = 0;
-            i < 20;
-            i++
-        ) {
+showToast(
+"Você está cansado."
+);
 
-            addResource(
-                randomInt(
-                    200,
-                    3200
-                ),
-                randomInt(
-                    180,
-                    1950
-                ),
-                "cristal"
-            );
+state.warnedNeedAt =
+now;
 
-        }
+}
 
+}
 
-        for (
-            let i = 0;
-            i < 8;
-            i++
-        ) {
+}
 
-            addEnemy({
+/* =====================================================
+INIMIGOS
+====================================================== */
 
-                id:
-                    `sky_enemy_${i}`,
+function updateEnemies(dt) {
 
-                x:
-                    randomInt(
-                        500,
-                        2950
-                    ),
+if (
+state.houseMode ||
+state.paused
+) {
 
-                y:
-                    randomInt(
-                        260,
-                        1800
-                    ),
+return;
 
-                name:
-                    "SERAFIM CAÍDO",
+}
 
-                icon:
-                    "🪽",
+for (
+const enemy of
+state.world.enemies
+) {
 
-                type:
-                    "normal",
+if (
+enemy.dead
+) {
 
-                hp:
-                    340,
+if (
+enemy.type ===
+"resourceBoss"
+) {
 
-                maxHp:
-                    340,
+enemy.respawnTimer -=
+dt;
 
-                damage:
-                    36,
+if (
+enemy.respawnTimer <= 0
+) {
 
-                speed:
-                    101,
+enemy.dead =
+false;
 
-                vision:
-                    325,
+enemy.hp =
+enemy.maxHp;
 
-                attackRange:
-                    76,
+enemy.aggressive =
+false;
 
-                radius:
-                    27,
+enemy.accepted =
+false;
 
-                color:
-                    "#cbd7df",
+enemy.state =
+"idle";
 
-                drop:
-                    "cristal",
+showToast(
+`${enemy.name} retornou à região.`
+);
 
-                dropAmount:
-                    2
+}
 
-            });
+}
 
-        }
+continue;
 
+}
 
-        addNPC(
-            1200,
-            850,
-            "AERIS",
-            "Guardião Celeste",
-            "#c7d4df",
-            [
-                "Até aqui existem coisas que estão sendo esquecidas.",
+enemy.attackTimer =
+Math.max(
+0,
+enemy.attackTimer -
+dt
+);
 
-                "O céu não fica acima de tudo. Algumas coisas ainda estão além dele.",
+enemy.hitFlash =
+Math.max(
+0,
+enemy.hitFlash -
+dt
+);
 
-                "A Quietude deixa marcas até onde não há chão.",
+const d =
+distance(
+enemy,
+state.player
+);
 
-                "Se continuar, faça isso porque escolheu lembrar — não porque alguém mandou."
-            ]
-        );
+if (
+enemy.type ===
+"final" &&
+!state.player.finalChoice
+) {
 
+if (
+d < 130 &&
+!state.finalChoiceShown
+) {
 
-        addEnemy({
+openFinalChoice();
 
-            id:
-                "hell_guardian",
+}
 
-            x:
-                2890,
+continue;
 
-            y:
-                1100,
+}
 
-            name:
-                "SERAFIM DA QUIETUDE",
+if (
+enemy.type ===
+"progression" &&
+!enemy.accepted
+) {
 
-            icon:
-                "☀️",
+continue;
 
-            type:
-                "progression",
+}
 
-            hp:
-                1250,
+if (
+!enemy.aggressive &&
+d <= enemy.vision
+) {
 
-            maxHp:
-                1250,
+enemy.aggressive =
+true;
 
-            damage:
-                50,
+enemy.state =
+"chasing";
 
-            speed:
-                71,
+showToast(
+`${enemy.name} percebeu você!`
+);
 
-            vision:
-                400,
+}
 
-            attackRange:
-                102,
+if (
+!enemy.aggressive
+) {
 
-            radius:
-                40,
+continue;
 
-            color:
-                "#d1b377",
+}
 
-            drop:
-                "essencia",
+if (
 
-            dropAmount:
-                4,
+d >
+enemy.vision *
+1.9 &&
 
-            unlock:
-                "hell"
+enemy.type !==
+"hell" &&
 
-        });
+enemy.type !==
+"final"
 
+) {
 
-        addPortal(
-            3220,
-            990,
-            70,
-            230,
-            "hell",
-            () =>
-                hasDefeatedBoss(
-                    "hell_guardian"
-                ),
-            "PASSAGEM DESCONHECIDA"
-        );
+enemy.aggressive =
+false;
 
-    }
+enemy.state =
+"idle";
 
+continue;
 
-    /* =====================================================
-       INFERNO
-    ====================================================== */
+}
 
-    function buildHell() {
+if (
+d >
+enemy.attackRange
+) {
 
-        for (
-            let i = 0;
-            i < 26;
-            i++
-        ) {
+const length =
+d || 1;
 
-            addObstacle(
-                randomInt(
-                    180,
-                    3380
-                ),
-                randomInt(
-                    170,
-                    2150
-                ),
-                70,
-                50,
-                "basalt"
-            );
+const vx =
+(
+(
+state.player.x -
+enemy.x
+) /
+length
+) *
+enemy.speed *
+dt;
 
-        }
+const vy =
+(
+(
+state.player.y -
+enemy.y
+) /
+length
+) *
+enemy.speed *
+dt;
 
+if (
+canEnemyMoveTo(
+enemy.x + vx,
+enemy.y,
+enemy.radius
+)
+) {
 
-        const types = [
+enemy.x +=
+vx;
 
-            [
-                "DEMÔNIO DE CINZA",
-                "🔥",
-                "#8c4d3f",
-                "essencia"
-            ],
+}
 
-            [
-                "CÃO DE LAVA",
-                "🐕",
-                "#984b31",
-                "ouro"
-            ],
+if (
+canEnemyMoveTo(
+enemy.x,
+enemy.y + vy,
+enemy.radius
+)
+) {
 
-            [
-                "ESPECTRO CARMESIM",
-                "👻",
-                "#724056",
-                "essencia"
-            ],
+enemy.y +=
+vy;
 
-            [
-                "GÁRGULA QUEBRADA",
-                "🗿",
-                "#70554a",
-                "ouro"
-            ],
+}
 
-            [
-                "PARASITA DO VAZIO",
-                "🕷️",
-                "#4b3551",
-                "essencia"
-            ]
+}
 
-        ];
+else if (
+enemy.attackTimer <= 0
+) {
 
+damagePlayer(
+enemy.damage
+);
 
-        types.forEach(
-            (
-                [
-                    name,
-                    icon,
-                    color,
-                    drop
-                ],
-                typeIndex
-            ) => {
+enemy.attackTimer =
+1.15;
 
-                for (
-                    let i = 0;
-                    i < 2;
-                    i++
-                ) {
+}
 
-                    addEnemy({
+if (
+enemy.type ===
+"final"
+) {
 
-                        id:
-                            `hell_${typeIndex}_${i}`,
+updateFinalBoss(
+enemy,
+dt
+);
 
-                        x:
-                            randomInt(
-                                450,
-                                3000
-                            ),
+}
 
-                        y:
-                            randomInt(
-                                280,
-                                2050
-                            ),
+}
 
-                        name,
+}
 
-                        icon,
+function updateFinalBoss(
+enemy,
+dt
+) {
 
-                        type:
-                            "hell",
+const ratio =
+enemy.hp /
+enemy.maxHp;
 
-                        hellType:
-                            typeIndex,
+const newPhase =
+ratio > .75
+? 1
+: ratio > .5
+? 2
+: ratio > .25
+? 3
+: 4;
 
-                        hp:
-                            380 +
-                            typeIndex *
-                            35,
+if (
+newPhase !==
+enemy.phase
+) {
 
-                        maxHp:
-                            380 +
-                            typeIndex *
-                            35,
+enemy.phase =
+newPhase;
 
-                        damage:
-                            36 +
-                            typeIndex *
-                            3,
+showToast(
+`O Outro Eu mudou de comportamento. Fase ${newPhase}.`
+);
 
-                        speed:
-                            80 +
-                            typeIndex *
-                            4,
+}
 
-                        vision:
-                            340,
+if (
+Math.random() <
+dt *
+.18 *
+newPhase
+) {
 
-                        attackRange:
-                            78,
+state.world.effects.push({
 
-                        radius:
-                            27,
+type: "dangerOrb",
 
-                        color,
+x:
+enemy.x +
+random(
+-50,
+50
+),
 
-                        drop,
+y:
+enemy.y +
+random(
+-50,
+50
+),
 
-                        dropAmount:
-                            1
+life: 1.5
 
-                    });
+});
 
-                }
+if (
+newPhase === 4 &&
+distance(
+enemy,
+state.player
+) < 260
+) {
 
-            }
-        );
+damagePlayer(
+10
+);
 
+}
 
-        addEnemy({
+}
 
-            id:
-                "final_gate_guardian",
+}
 
-            x:
-                3050,
+/* =====================================================
+DANO
+====================================================== */
 
-            y:
-                1120,
+function damagePlayer(amount) {
 
-            name:
-                "SENHOR DA QUIETUDE",
+const player =
+state.player;
 
-            icon:
-                "👿",
+if (
+!player ||
+player.invincible > 0 ||
+player.dead
+) {
 
-            type:
-                "progression",
+return;
 
-            hp:
-                1550,
+}
 
-            maxHp:
-                1550,
+const armorDefense =
+ITEMS[
+player.equipment.armor
+]?.defense ||
+0;
 
-            damage:
-                56,
+const finalDamage =
+Math.max(
+1,
+Math.round(
 
-            speed:
-                76,
+amount -
 
-            vision:
-                430,
+(
+player.defense +
+armorDefense
+) *
+.35
 
-            attackRange:
-                108,
+)
+);
 
-            radius:
-                41,
+player.hp =
+Math.max(
+0,
+player.hp -
+finalDamage
+);
 
-            color:
-                "#a64139",
+player.invincible =
+.65;
 
-            drop:
-                "essencia",
+showToast(
+`Você sofreu ${finalDamage} de dano.`
+);
 
-            dropAmount:
-                6,
+if (
+player.hp <= 0
+) {
 
-            unlock:
-                "final"
+playerDeath();
 
-        });
+}
 
+}
 
-        addPortal(
-            3390,
-            1010,
-            70,
-            230,
-            "final",
-            () => {
+function playerDeath() {
 
-                return (
-                    hasDefeatedBoss(
-                        "final_gate_guardian"
-                    ) &&
-                    Object.keys(
-                        state.player
-                            .hellTypesDefeated
-                    ).length >= 5
-                );
+state.player.dead =
+true;
 
-            },
-            "PORTA SELADA"
-        );
+state.paused =
+true;
 
-    }
+must("deathPanel")
+.classList.remove(
+"hidden"
+);
 
+}
 
-    /* =====================================================
-       ÁREA FINAL
-    ====================================================== */
+function respawnPlayer() {
 
-    function buildFinal() {
+const checkpoint =
+state.player.checkpoint ||
+{
 
-        addEnemy({
+area: "village",
 
-            id:
-                "other_self",
+x: 480,
 
-            x:
-                1550,
+y: 610
 
-            y:
-                750,
+};
 
-            name:
-                "O OUTRO EU",
+state.area =
+REGIONS[
+checkpoint.area
+]
+? checkpoint.area
+: "village";
 
-            icon:
-                "☯",
+state.houseMode =
+false;
 
-            type:
-                "final",
+state.currentHouse =
+null;
 
-            hp:
-                2200,
+state.houseReturn =
+null;
 
-            maxHp:
-                2200,
+buildWorld();
 
-            damage:
-                62,
+state.player.x =
+checkpoint.x;
 
-            speed:
-                86,
+state.player.y =
+checkpoint.y;
 
-            vision:
-                650,
+state.player.hp =
+Math.max(
+1,
+Math.floor(
+state.player.maxHp *
+.7
+)
+);
 
-            attackRange:
-                112,
+state.player.magic =
+Math.max(
+1,
+Math.floor(
+state.player.maxMagic *
+.7
+)
+);
 
-            radius:
-                42,
+state.player.energy =
+Math.max(
+1,
+Math.floor(
+state.player.maxEnergy *
+.7
+)
+);
 
-            color:
-                "#b7aaa0",
+state.player.money =
+Math.floor(
+state.player.money *
+.9
+);
 
-            drop:
-                "essencia",
+state.player.dead =
+false;
 
-            dropAmount:
-                10
+state.player.invincible =
+1;
 
-        });
+state.paused =
+false;
 
-    }
+must("deathPanel")
+.classList.add(
+"hidden"
+);
 
+showToast(
+"Você retornou ao último ponto seguro."
+);
 
-    function hasDefeatedBoss(id) {
+}
 
-        return Boolean(
-            state.player
-                ?.defeatedBosses
-                ?.includes(id)
-        );
-    }
+/* =====================================================
+COMBATE
+====================================================== */
 
+function findNearestEnemy(range) {
 
-    /* =====================================================
-       COLISÃO
-    ====================================================== */
+let best =
+null;
 
-    function circleRectCollision(
-        cx,
-        cy,
-        radius,
-        rect
-    ) {
+let bestDistance =
+Infinity;
 
-        const closestX =
-            clamp(
-                cx,
-                rect.x,
-                rect.x +
-                rect.w
-            );
+for (
+const enemy of
+state.world.enemies
+) {
 
+if (
+enemy.dead
+) {
 
-        const closestY =
-            clamp(
-                cy,
-                rect.y,
-                rect.y +
-                rect.h
-            );
+continue;
 
+}
 
-        const dx =
-            cx -
-            closestX;
+const d =
+distance(
+enemy,
+state.player
+);
 
+if (
+d <= range &&
+d < bestDistance
+) {
 
-        const dy =
-            cy -
-            closestY;
+best =
+enemy;
 
+bestDistance =
+d;
 
-        return (
-            dx * dx +
-            dy * dy <
-            radius * radius
-        );
-    }
+}
 
+}
 
-    function canPlayerMoveTo(
-        x,
-        y,
-        radius
-    ) {
+return best;
 
-        if (
-            state.houseMode
-        ) {
+}
 
-            const room =
-                getHouseRoom();
+function performAttack() {
 
+const player =
+state.player;
 
-            return (
+if (
+!player ||
+state.paused ||
+state.dialogue ||
+state.travel ||
+state.battle ||
+player.dead
+) {
 
-                x - radius >=
-                    room.x &&
+return;
 
-                y - radius >=
-                    room.y &&
+}
 
-                x + radius <=
-                    room.x +
-                    room.w &&
+if (
+player.attackCooldown > 0
+) {
 
-                y + radius <=
-                    room.y +
-                    room.h
+return;
 
-            );
-        }
+}
 
+if (
+player.energy < 8
+) {
 
-        if (
+showToast(
+"Energia insuficiente."
+);
 
-            x - radius < 72 ||
+return;
 
-            y - radius < 72 ||
+}
 
-            x + radius >
-                state.world.width -
-                72 ||
+player.energy -=
+8;
 
-            y + radius >
-                state.world.height -
-                72
+player.attackCooldown =
+.45;
 
-        ) {
+player.hunger =
+Math.max(
+0,
+player.hunger -
+.6
+);
 
-            return false;
-        }
+player.fatigue =
+Math.max(
+0,
+player.fatigue -
+.9
+);
 
+const character =
+currentCharacter();
 
-        for (
-            const obstacle of
-            state.world.obstacles
-        ) {
+const attackRange =
 
-            if (
-                obstacle.treeId
-            ) {
+character.id ===
+"kaelion" ||
 
-                const tree =
-                    state.world
-                        .trees
-                        .find(
-                            item =>
-                                item.id ===
-                                obstacle.treeId
-                        );
+character.id ===
+"lirael"
 
+? 250
+: 125;
 
-                if (
-                    !tree?.alive
-                ) {
+const target =
+findNearestEnemy(
+attackRange
+);
 
-                    continue;
-                }
-            }
+if (
+!target
+) {
 
+useClassAbility();
 
-            if (
-                circleRectCollision(
-                    x,
-                    y,
-                    radius,
-                    obstacle
-                )
-            ) {
+return;
 
-                return false;
-            }
+}
 
-        }
+if (
+target.type ===
+"progression" &&
+!target.accepted
+) {
 
+openBattle(
+target
+);
 
-        for (
-            const npc of
-            state.world.npcs
-        ) {
+return;
 
-            if (
+}
 
-                Math.hypot(
-                    x - npc.x,
-                    y - npc.y
-                ) <
+let damage =
+player.damage +
 
-                radius +
-                npc.radius
+(
+ITEMS[
+player.equipment.weapon
+]?.damage ||
+0
+);
 
-            ) {
+if (
+character.id ===
+"grumgar"
+) {
 
-                return false;
-            }
+damage +=
+10;
 
-        }
+}
 
+if (
+character.id ===
+"kaelion"
+) {
 
-        return true;
-    }
+damage +=
+5;
 
+}
 
-    function canEnemyMoveTo(
-        x,
-        y,
-        radius
-    ) {
+if (
+character.id ===
+"theron"
+) {
 
-        if (
+damage +=
+5;
 
-            x - radius < 72 ||
+}
 
-            y - radius < 72 ||
+attackEnemy(
+target,
+damage
+);
 
-            x + radius >
-                state.world.width -
-                72 ||
+}
 
-            y + radius >
-                state.world.height -
-                72
+function useClassAbility() {
 
-        ) {
+const player =
+state.player;
 
-            return false;
-        }
+const character =
+currentCharacter();
 
+if (
+character.id ===
+"lirael"
+) {
 
-        for (
-            const obstacle of
-            state.world.obstacles
-        ) {
+if (
+player.magic < 14
+) {
 
-            if (
-                obstacle.treeId
-            ) {
+showToast(
+"Magia insuficiente."
+);
 
-                const tree =
-                    state.world
-                        .trees
-                        .find(
-                            item =>
-                                item.id ===
-                                obstacle.treeId
-                        );
+return;
 
+}
 
-                if (
-                    !tree?.alive
-                ) {
+player.magic -=
+14;
 
-                    continue;
-                }
-            }
+player.hp =
+Math.min(
+player.maxHp,
+player.hp +
+45
+);
 
+spawnParticles(
+player.x,
+player.y,
+character.color,
+16
+);
 
-            if (
-                circleRectCollision(
-                    x,
-                    y,
-                    radius,
-                    obstacle
-                )
-            ) {
+showToast(
+"Lirael usou Luz Vital."
+);
 
-                return false;
-            }
+return;
 
-        }
+}
 
+if (
+character.id ===
+"zephyr"
+) {
 
-        return true;
-    }
+if (
+player.magic < 12
+) {
 
+showToast(
+"Magia insuficiente."
+);
 
-    function getHouseRoom() {
+return;
 
-        const building =
-            state.currentHouse;
+}
 
+player.magic -=
+12;
 
-        return {
+if (
+!player.adaptiveBuff
+) {
 
-            x:
-                180,
+player.adaptiveBuff =
+true;
 
-            y:
-                140,
+player.speed +=
+22;
 
-            w:
-                Math.max(
-                    320,
-                    (
-                        building?.w ||
-                        430
-                    ) -
-                    80
-                ),
+player.damage +=
+5;
 
-            h:
-                Math.max(
-                    210,
-                    (
-                        building?.h ||
-                        270
-                    ) -
-                    70
-                )
+setTimeout(
+() => {
 
-        };
-    }
+if (
+state.player?.adaptiveBuff
+) {
 
+state.player.speed -=
+22;
 
-    /* =====================================================
-       MOVIMENTO
-    ====================================================== */
+state.player.damage -=
+5;
 
-    function updateMovement(dt) {
+state.player.adaptiveBuff =
+false;
 
-        if (
-            state.paused ||
-            !state.player
-        ) {
+}
 
-            return;
-        }
+},
+6500
+);
 
+}
 
-        let dx =
-            0;
+spawnParticles(
+player.x,
+player.y,
+character.color,
+16
+);
 
-        let dy =
-            0;
+showToast(
+"Zephyr usou Forma Adaptativa."
+);
 
+return;
 
-        if (
-            state.keys.has("w") ||
-            state.keys.has("arrowup")
-        ) {
+}
 
-            dy--;
-        }
+if (
+player.magic < 10
+) {
 
+showToast(
+"Magia insuficiente."
+);
 
-        if (
-            state.keys.has("s") ||
-            state.keys.has("arrowdown")
-        ) {
+return;
 
-            dy++;
-        }
+}
 
+player.magic -=
+10;
 
-        if (
-            state.keys.has("a") ||
-            state.keys.has("arrowleft")
-        ) {
+spawnParticles(
+player.x,
+player.y,
+character.color,
+14
+);
 
-            dx--;
-        }
+showToast(
+`${character.skill}.`
+);
 
+}
 
-        if (
-            state.keys.has("d") ||
-            state.keys.has("arrowright")
-        ) {
+function attackEnemy(
+enemy,
+damage
+) {
 
-            dx++;
-        }
+if (
+!enemy ||
+enemy.dead
+) {
 
+return;
 
-        if (
-            !dx &&
-            !dy
-        ) {
+}
 
-            return;
-        }
+enemy.accepted =
+true;
 
+enemy.aggressive =
+true;
 
-        const length =
-            Math.hypot(
-                dx,
-                dy
-            ) ||
-            1;
+enemy.state =
+"chasing";
 
+enemy.hp =
+Math.max(
+0,
+enemy.hp -
+damage
+);
 
-        dx /=
-            length;
+enemy.hitFlash =
+.18;
 
-        dy /=
-            length;
+spawnParticles(
+enemy.x,
+enemy.y,
+"#ffffff",
+8
+);
 
+if (
+enemy.hp <= 0
+) {
 
-        let speed =
-            state.houseMode
-                ? 130
-                : state.player.speed;
+defeatEnemy(
+enemy
+);
 
+}
 
-        if (
-            !state.houseMode &&
-            state.player.hunger <= 20
-        ) {
+}
 
-            speed *=
-                0.72;
-        }
+function defeatEnemy(enemy) {
 
+if (
+enemy.dead
+) {
 
-        if (
-            !state.houseMode &&
-            state.player.fatigue <= 20
-        ) {
+return;
 
-            speed *=
-                0.72;
-        }
+}
 
+enemy.dead =
+true;
 
-        const step =
-            speed *
-            dt;
+enemy.state =
+"dead";
 
+const xp =
 
-        const nextX =
-            state.player.x +
-            dx *
-            step;
+enemy.type ===
+"progression"
+? 180
 
+: enemy.type ===
+"resourceBoss"
+? 120
 
-        if (
-            canPlayerMoveTo(
-                nextX,
-                state.player.y,
-                state.player.radius
-            )
-        ) {
+: enemy.type ===
+"hell"
+? 60
 
-            state.player.x =
-                nextX;
-        }
+: enemy.type ===
+"final"
+? 600
 
+: 30;
 
-        const nextY =
-            state.player.y +
-            dy *
-            step;
+const money =
 
+enemy.type ===
+"progression"
+? 80
 
-        if (
-            canPlayerMoveTo(
-                state.player.x,
-                nextY,
-                state.player.radius
-            )
-        ) {
+: enemy.type ===
+"resourceBoss"
+? 45
 
-            state.player.y =
-                nextY;
-        }
-    }
+: 12;
 
+state.player.xp +=
+xp;
 
-    /* =====================================================
-       SOBREVIVÊNCIA
-    ====================================================== */
+state.player.money +=
+money;
 
-    function updateSurvival(dt) {
+if (
+enemy.drop &&
+ITEMS[enemy.drop]
+) {
 
-        if (
-            state.houseMode ||
-            state.paused
-        ) {
+addItem(
+enemy.drop,
+enemy.dropAmount ||
+1
+);
 
-            return;
-        }
+state.world.drops.push({
 
+x: enemy.x,
 
-        const player =
-            state.player;
+y: enemy.y,
 
+type: enemy.drop,
 
-        player.hunger =
-            clamp(
-                player.hunger -
-                0.25 *
-                dt,
-                0,
-                100
-            );
+amount:
+enemy.dropAmount ||
+1,
 
+life: 18
 
-        player.fatigue =
-            clamp(
-                player.fatigue -
-                0.2 *
-                dt,
-                0,
-                100
-            );
+});
 
+}
 
-        player.magic =
-            clamp(
-                player.magic +
-                1.7 *
-                dt,
-                0,
-                player.maxMagic
-            );
+if (
+enemy.type ===
+"resourceBoss"
+) {
 
+enemy.respawnTimer =
+enemy.respawnTime ||
+60;
 
-        player.energy =
-            clamp(
-                player.energy +
-                3 *
-                dt,
-                0,
-                player.maxEnergy
-            );
+}
 
+if (
+enemy.type ===
+"hell" &&
+enemy.hellType !==
+undefined
+) {
 
-        if (
-            player.hunger <= 0 ||
-            player.fatigue <= 0
-        ) {
+state.player.hellTypesDefeated[
+String(
+enemy.hellType
+)
+] = true;
 
-            player.hp =
-                clamp(
-                    player.hp -
-                    0.12 *
-                    dt,
-                    1,
-                    player.maxHp
-                );
-        }
+}
 
+if (
+enemy.type ===
+"progression"
+) {
 
-        const now =
-            performance.now();
+if (
+!state.player.defeatedBosses.includes(
+enemy.id
+)
+) {
 
+state.player.defeatedBosses.push(
+enemy.id
+);
 
-        if (
-            now -
-            state.warnedNeedAt >
-            7000
-        ) {
+}
 
-            if (
-                player.hunger < 18
-            ) {
+if (
+!state.player.discoveredBosses.includes(
+enemy.id
+)
+) {
 
-                showToast(
-                    "Você está ficando com fome."
-                );
+state.player.discoveredBosses.push(
+enemy.id
+);
 
+}
 
-                state.warnedNeedAt =
-                    now;
+if (
+enemy.unlock &&
+!state.player.unlockedAreas.includes(
+enemy.unlock
+)
+) {
 
-            } else if (
-                player.fatigue < 18
-            ) {
+state.player.unlockedAreas.push(
+enemy.unlock
+);
 
-                showToast(
-                    "Você está cansado."
-                );
+}
 
+}
 
-                state.warnedNeedAt =
-                    now;
+if (
+enemy.type ===
+"final"
+) {
 
-            }
+state.player.finalDefeated =
+true;
 
-        }
-    }
+showEnding(
+"Você enfrentou a Quietude e preservou sua própria memória."
+);
 
+}
 
-    /* =====================================================
-       IA DOS INIMIGOS
-    ====================================================== */
+checkLevelUp();
 
-    function updateEnemies(dt) {
+saveGame(
+false
+);
 
-        if (
-            state.houseMode ||
-            state.paused
-        ) {
+showToast(
+`${enemy.name} derrotado! +${xp} XP`
+);
 
-            return;
-        }
+}
 
+/* =====================================================
+NÍVEL
+====================================================== */
 
-        for (
-            const enemy of
-            state.world.enemies
-        ) {
+function checkLevelUp() {
 
-            if (
-                enemy.dead
-            ) {
+const player =
+state.player;
 
-                if (
-                    enemy.type ===
-                    "resourceBoss"
-                ) {
+while (
+player.xp >=
+player.xpToNext
+) {
 
-                    enemy.respawnTimer -=
-                        dt;
+player.xp -=
+player.xpToNext;
 
+player.level++;
 
-                    if (
-                        enemy.respawnTimer <= 0
-                    ) {
+player.xpToNext =
+Math.floor(
+player.xpToNext *
+1.42
+);
 
-                        enemy.dead =
-                            false;
+player.maxHp +=
+12;
 
+player.maxMagic +=
+8;
 
-                        enemy.hp =
-                            enemy.maxHp;
+player.maxEnergy +=
+8;
 
+player.hp =
+player.maxHp;
 
-                        enemy.aggressive =
-                            false;
+player.magic =
+player.maxMagic;
 
+player.energy =
+player.maxEnergy;
 
-                        enemy.accepted =
-                            false;
+player.memory =
+Math.min(
+100,
+player.memory +
+8
+);
 
+showToast(
+`Você chegou ao nível ${player.level}!`
+);
 
-                        enemy.state =
-                            "idle";
+}
 
+}
 
-                        showToast(
-                            `${enemy.name} retornou à região.`
-                        );
-                    }
+/* =====================================================
+ITENS
+====================================================== */
 
-                }
+function addItem(
+id,
+amount
+) {
 
+if (
+!ITEMS[id] ||
+!state.player
+) {
 
-                continue;
-            }
+return false;
 
+}
 
-            enemy.attackTimer =
-                Math.max(
-                    0,
-                    enemy.attackTimer -
-                    dt
-                );
+const safeAmount =
+Math.max(
+0,
+Math.floor(
+amount
+)
+);
 
+if (
+!safeAmount
+) {
 
-            enemy.hitFlash =
-                Math.max(
-                    0,
-                    enemy.hitFlash -
-                    dt
-                );
+return false;
 
+}
 
-            const d =
-                distance(
-                    enemy,
-                    state.player
-                );
+if (
+state.player.inventory[id] ===
+undefined
+) {
 
+state.player.inventory[id] =
+0;
 
-            if (
-                enemy.type ===
-                    "final" &&
-                !state.player
-                    .finalChoice
-            ) {
+}
 
-                if (
-                    d < 130 &&
-                    !state.finalChoiceShown
-                ) {
+state.player.inventory[id] +=
+safeAmount;
 
-                    openFinalChoice();
-                }
+return true;
 
+}
 
-                continue;
-            }
+function removeItem(
+id,
+amount
+) {
 
+const safeAmount =
+Math.max(
+0,
+Math.floor(
+amount
+)
+);
 
-            /*
-             * Guardiões de progressão
-             * não atacam até o jogador
-             * aceitar a batalha.
-             */
+if (
+!safeAmount
+) {
 
-            if (
-                enemy.type ===
-                    "progression" &&
-                !enemy.accepted
-            ) {
+return false;
 
-                continue;
-            }
+}
 
+const current =
+state.player?.inventory?.[id] ||
+0;
 
-            /*
-             * IA DE VISÃO.
-             */
+if (
+current <
+safeAmount
+) {
 
-            if (
-                !enemy.aggressive &&
-                d <= enemy.vision
-            ) {
+return false;
 
-                enemy.aggressive =
-                    true;
+}
 
+state.player.inventory[id] =
+current -
+safeAmount;
 
-                enemy.state =
-                    "chasing";
+return true;
 
+}
 
-                showToast(
-                    `${enemy.name} percebeu você!`
-                );
+/* =====================================================
+COLETA
+====================================================== */
 
-            }
+function harvestTree(tree) {
 
+if (
+!tree?.alive
+) {
 
-            if (
-                !enemy.aggressive
-            ) {
+return;
 
-                continue;
-            }
+}
 
+const cost =
+4;
 
-            /*
-             * Sai da perseguição
-             * se jogador fugir bastante.
-             */
+if (
+state.player.magic <
+cost
+) {
 
-            if (
+showToast(
+"Magia insuficiente para cortar a árvore."
+);
 
-                d >
-                enemy.vision *
-                1.9 &&
+return;
 
-                enemy.type !==
-                    "hell" &&
+}
 
-                enemy.type !==
-                    "final"
+state.player.magic -=
+cost;
 
-            ) {
+state.player.hunger =
+Math.max(
+0,
+state.player.hunger -
+1
+);
 
-                enemy.aggressive =
-                    false;
+state.player.fatigue =
+Math.max(
+0,
+state.player.fatigue -
+2
+);
 
+tree.alive =
+false;
 
-                enemy.state =
-                    "idle";
+tree.respawn =
+random(
+12,
+24
+);
 
+addItem(
+"madeira",
+tree.amount
+);
 
-                continue;
-            }
+const key =
+`tree:${state.area}`;
 
+const count =
+state.player.collected[key] ||
+0;
 
-            /*
-             * PERSEGUIÇÃO.
-             */
+state.player.collected[key] =
+count +
+1;
 
-            if (
-                d >
-                enemy.attackRange
-            ) {
+state.player.xp +=
+Math.max(
+2,
+7 -
+Math.floor(
+count / 4
+)
+);
 
-                const length =
-                    d || 1;
+spawnParticles(
+tree.x,
+tree.y,
+"#9b7345",
+12
+);
 
+checkLevelUp();
 
-                const vx =
-                    (
-                        (
-                            state.player.x -
-                            enemy.x
-                        ) /
-                        length
-                    ) *
-                    enemy.speed *
-                    dt;
+showToast(
+`Madeira coletada: x${tree.amount}`
+);
 
+}
 
-                const vy =
-                    (
-                        (
-                            state.player.y -
-                            enemy.y
-                        ) /
-                        length
-                    ) *
-                    enemy.speed *
-                    dt;
+function collectResource(resource) {
 
+if (
+!resource?.alive
+) {
 
-                if (
-                    canEnemyMoveTo(
-                        enemy.x +
-                        vx,
-                        enemy.y,
-                        enemy.radius
-                    )
-                ) {
+return;
 
-                    enemy.x +=
-                        vx;
+}
 
-                }
+const costs = {
 
+carvao: 7,
 
-                if (
-                    canEnemyMoveTo(
-                        enemy.x,
-                        enemy.y +
-                        vy,
-                        enemy.radius
-                    )
-                ) {
+ferro: 13,
 
-                    enemy.y +=
-                        vy;
+ouro: 24,
 
-                }
+rubi: 35,
 
-            }
+cristal: 18
 
-            /*
-             * ATAQUE.
-             */
+};
 
-            else if (
-                enemy.attackTimer <=
-                0
-            ) {
+const cost =
+costs[
+resource.type
+] ||
+7;
 
-                damagePlayer(
-                    enemy.damage
-                );
+if (
+state.player.magic <
+cost
+) {
 
+showToast(
+"Magia insuficiente para coletar este recurso."
+);
 
-                enemy.attackTimer =
-                    1.15;
+return;
 
-            }
+}
 
+state.player.magic -=
+cost;
 
-            if (
-                enemy.type ===
-                "final"
-            ) {
+state.player.hunger =
+Math.max(
+0,
+state.player.hunger -
+1
+);
 
-                updateFinalBoss(
-                    enemy,
-                    dt
-                );
-            }
+state.player.fatigue =
+Math.max(
+0,
+state.player.fatigue -
+2
+);
 
-        }
-    }
+resource.alive =
+false;
 
+resource.respawn =
+random(
+16,
+32
+);
 
-    function updateFinalBoss(
-        enemy,
-        dt
-    ) {
+addItem(
+resource.type,
+resource.amount
+);
 
-        const ratio =
-            enemy.hp /
-            enemy.maxHp;
+const key =
+`resource:${state.area}:${resource.type}`;
 
+const count =
+state.player.collected[key] ||
+0;
 
-        const newPhase =
+state.player.collected[key] =
+count +
+1;
 
-            ratio > 0.75
-                ? 1
+state.player.xp +=
+Math.max(
+2,
+8 -
+Math.floor(
+count / 4
+)
+);
 
-                : ratio > 0.5
-                    ? 2
+state.player.memory =
+Math.min(
+100,
+state.player.memory +
+1
+);
 
-                    : ratio > 0.25
-                        ? 3
+checkLevelUp();
 
-                        : 4;
+showToast(
+`${ITEMS[resource.type].name} coletado: x${resource.amount}`
+);
 
+}
 
-        if (
-            newPhase !==
-            enemy.phase
-        ) {
+function updateResources(dt) {
 
-            enemy.phase =
-                newPhase;
+for (
+const tree of
+state.world.trees
+) {
 
+if (
+tree.alive
+) {
 
-            showToast(
-                `O Outro Eu mudou de comportamento. Fase ${newPhase}.`
-            );
+continue;
 
-        }
+}
 
+tree.respawn -=
+dt;
 
-        if (
-            Math.random() <
-            dt *
-            0.18 *
-            newPhase
-        ) {
+if (
+tree.respawn <= 0
+) {
 
-            state.world
-                .effects
-                .push({
+respawnTree(
+tree
+);
 
-                    type:
-                        "dangerOrb",
+}
 
-                    x:
-                        enemy.x +
-                        random(
-                            -50,
-                            50
-                        ),
+}
 
-                    y:
-                        enemy.y +
-                        random(
-                            -50,
-                            50
-                        ),
+for (
+const resource of
+state.world.resources
+) {
 
-                    life:
-                        1.5
+if (
+resource.alive
+) {
 
-                });
+continue;
 
+}
 
-            if (
-                newPhase === 4 &&
-                distance(
-                    enemy,
-                    state.player
-                ) < 260
-            ) {
+resource.respawn -=
+dt;
 
-                damagePlayer(
-                    10
-                );
+if (
+resource.respawn <= 0
+) {
 
-            }
+resource.alive =
+true;
 
-        }
-    }
+}
 
+}
 
-    /* =====================================================
-       DANO / MORTE
-    ====================================================== */
+state.world.drops.forEach(
+drop => {
 
-    function damagePlayer(amount) {
+drop.life -=
+dt;
 
-        const player =
-            state.player;
+}
+);
 
+state.world.drops =
+state.world.drops.filter(
+drop =>
+drop.life > 0
+);
 
-        if (
-            !player ||
-            player.invincible > 0 ||
-            player.dead
-        ) {
+}
 
-            return;
-        }
+function respawnTree(tree) {
 
+let tries =
+0;
 
-        const armorDefense =
-            ITEMS[
-                player.equipment
-                    .armor
-            ]?.defense ||
-            0;
+let x =
+tree.x;
 
+let y =
+tree.y;
 
-        const finalDamage =
-            Math.max(
-                1,
-                Math.round(
-                    amount -
-                    (
-                        player.defense +
-                        armorDefense
-                    ) *
-                    0.35
-                )
-            );
+do {
 
+x =
+randomInt(
+120,
+state.world.width -
+120
+);
 
-        player.hp =
-            Math.max(
-                0,
-                player.hp -
-                finalDamage
-            );
+y =
+randomInt(
+120,
+state.world.height -
+120
+);
 
+tries++;
 
-        player.invincible =
-            0.65;
+}
 
+while (
 
-        showToast(
-            `Você sofreu ${finalDamage} de dano.`
-        );
+tries < 60 &&
 
+!canPlayerMoveTo(
+x,
+y,
+35
+)
 
-        if (
-            player.hp <= 0
-        ) {
+);
 
-            playerDeath();
+tree.x =
+x;
 
-        }
-    }
+tree.y =
+y;
 
+tree.alive =
+true;
 
-    function playerDeath() {
+tree.amount =
+randomInt(
+2,
+5
+);
 
-        state.player.dead =
-            true;
+const obstacle =
+state.world.obstacles.find(
+item =>
+item.treeId ===
+tree.id
+);
 
+if (
+obstacle
+) {
 
-        state.paused =
-            true;
+obstacle.x =
+x - 30;
 
+obstacle.y =
+y - 38;
 
-        must(
-            "deathPanel"
-        ).classList
-            .remove(
-                "hidden"
-            );
-    }
+}
 
+}
 
-    function respawnPlayer() {
+/* =====================================================
+INTERAÇÃO
+====================================================== */
 
-        const checkpoint =
-            state.player
-                .checkpoint ||
-            {
-                area:
-                    "village",
-                x:
-                    480,
-                y:
-                    610
-            };
+function getInteraction() {
 
+if (
+!state.player
+) {
 
-        state.area =
-            REGIONS[
-                checkpoint.area
-            ]
-                ? checkpoint.area
-                : "village";
+return null;
 
+}
 
-        state.houseMode =
-            false;
+if (
+state.houseMode
+) {
 
+let nearest =
+null;
 
-        state.currentHouse =
-            null;
+let best =
+Infinity;
 
+getInteriorNPCs().forEach(
+npc => {
 
-        state.houseReturn =
-            null;
+const d =
+distance(
+state.player,
+npc
+);
 
+if (
+d <= 78 &&
+d < best
+) {
 
-        buildWorld();
+nearest =
+npc;
 
+best =
+d;
 
-        state.player.x =
-            checkpoint.x;
+}
 
+}
+);
 
-        state.player.y =
-            checkpoint.y;
+if (
+nearest
+) {
 
+return {
 
-        state.player.hp =
-            Math.max(
-                1,
-                Math.floor(
-                    state.player
-                        .maxHp *
-                    0.7
-                )
-            );
+type: "npc",
 
+object: nearest
 
-        state.player.magic =
-            Math.max(
-                1,
-                Math.floor(
-                    state.player
-                        .maxMagic *
-                    0.7
-                )
-            );
+};
 
+}
 
-        state.player.energy =
-            Math.max(
-                1,
-                Math.floor(
-                    state.player
-                        .maxEnergy *
-                    0.7
-                )
-            );
+return {
 
+type: "exitHouse",
 
-        state.player.money =
-            Math.floor(
-                state.player.money *
-                0.9
-            );
+object:
+state.currentHouse
 
+};
 
-        state.player.dead =
-            false;
+}
 
+let best =
+null;
 
-        state.player.invincible =
-            1;
+let bestDistance =
+Infinity;
 
+const test = (
+type,
+object,
+limit
+) => {
 
-        state.paused =
-            false;
+const d =
+distance(
+state.player,
+object
+);
 
+if (
+d <= limit &&
+d < bestDistance
+) {
 
-        must(
-            "deathPanel"
-        ).classList
-            .add(
-                "hidden"
-            );
+best = {
 
+type,
 
-        showToast(
-            "Você retornou ao último ponto seguro."
-        );
-    }
+object
 
+};
 
-    /* =====================================================
-       COMBATE
-    ====================================================== */
+bestDistance =
+d;
 
-    function findNearestEnemy(
-        range
-    ) {
+}
 
-        let best =
-            null;
+};
 
+state.world.npcs.forEach(
+npc =>
+test(
+"npc",
+npc,
+70
+)
+);
 
-        let bestDistance =
-            Infinity;
+state.world.trees
+.filter(
+tree =>
+tree.alive
+)
+.forEach(
+tree =>
+test(
+"tree",
+tree,
+72
+)
+);
 
+state.world.resources
+.filter(
+resource =>
+resource.alive
+)
+.forEach(
+resource =>
+test(
+"resource",
+resource,
+72
+)
+);
 
-        for (
-            const enemy of
-            state.world.enemies
-        ) {
+state.world.enemies
+.filter(
+enemy =>
+!enemy.dead
+)
+.forEach(
+enemy =>
+test(
 
-            if (
-                enemy.dead
-            ) {
+enemy.type ===
+"progression"
+? "boss"
+: "enemy",
 
-                continue;
-            }
+enemy,
 
+110
 
-            const d =
-                distance(
-                    enemy,
-                    state.player
-                );
+)
+);
 
+for (
+const building of
+state.world.buildings
+) {
 
-            if (
-                d <= range &&
-                d < bestDistance
-            ) {
+const door = {
 
-                best =
-                    enemy;
+x:
+building.x +
+building.w / 2,
 
+y:
+building.y +
+building.h +
+18
 
-                bestDistance =
-                    d;
-            }
+};
 
-        }
+const d =
+distance(
+state.player,
+door
+);
 
+if (
+d <= 90 &&
+d < bestDistance
+) {
 
-        return best;
-    }
+best = {
 
+type: "house",
 
-    function performAttack() {
+object: building
 
-        const player =
-            state.player;
+};
 
+bestDistance =
+d;
 
-        if (
+}
 
-            !player ||
+}
 
-            state.paused ||
+return best;
 
-            state.dialogue ||
+}
 
-            state.travel ||
+function playerAction() {
 
-            state.battle ||
+if (
+!state.player
+) {
 
-            player.dead
+return;
 
-        ) {
+}
 
-            return;
-        }
+if (
+state.dialogue
+) {
 
+advanceDialogue();
 
-        if (
-            player.attackCooldown >
-            0
-        ) {
+return;
 
-            return;
-        }
+}
 
+if (
+state.paused
+) {
 
-        if (
-            player.energy < 8
-        ) {
+return;
 
-            showToast(
-                "Energia insuficiente."
-            );
+}
 
-            return;
-        }
+const interaction =
+getInteraction();
 
+if (
+!interaction
+) {
 
-        player.energy -=
-            8;
+performAttack();
 
+return;
 
-        player.attackCooldown =
-            0.45;
+}
 
+if (
+interaction.type ===
+"npc"
+) {
 
-        player.hunger =
-            Math.max(
-                0,
-                player.hunger -
-                0.6
-            );
+if (
+interaction.object.merchant
+) {
 
+openShop(
+interaction.object
+);
 
-        player.fatigue =
-            Math.max(
-                0,
-                player.fatigue -
-                0.9
-            );
+}
 
+else if (
+interaction.object.questId
+) {
 
-        const character =
-            currentCharacter();
+openQuest(
+interaction.object
+);
 
+}
 
-        const attackRange =
+else {
 
-            character.id ===
-                "kaelion" ||
+startDialogue(
+interaction.object
+);
 
-            character.id ===
-                "lirael"
+}
 
-                ? 250
-                : 125;
+return;
 
+}
 
-        const target =
-            findNearestEnemy(
-                attackRange
-            );
+if (
+interaction.type ===
+"tree"
+) {
 
+harvestTree(
+interaction.object
+);
 
-        if (
-            !target
-        ) {
+return;
 
-            useClassAbility();
+}
 
-            return;
-        }
+if (
+interaction.type ===
+"resource"
+) {
 
+collectResource(
+interaction.object
+);
 
-        if (
-            target.type ===
-                "progression" &&
-            !target.accepted
-        ) {
+return;
 
-            openBattle(
-                target
-            );
+}
 
-            return;
-        }
+if (
+interaction.type ===
+"boss"
+) {
 
+if (
+!interaction.object.accepted
+) {
 
-        let damage =
-            player.damage +
-            (
-                ITEMS[
-                    player.equipment
-                        .weapon
-                ]?.damage ||
-                0
-            );
+openBattle(
+interaction.object
+);
 
+}
 
-        if (
-            character.id ===
-            "grumgar"
-        ) {
+else {
 
-            damage +=
-                10;
-        }
+performAttack();
 
+}
 
-        if (
-            character.id ===
-            "kaelion"
-        ) {
+return;
 
-            damage +=
-                5;
-        }
+}
 
+if (
+interaction.type ===
+"enemy"
+) {
 
-        if (
-            character.id ===
-            "theron"
-        ) {
+performAttack();
 
-            damage +=
-                5;
-        }
+}
 
+}
 
-        attackEnemy(
-            target,
-            damage
-        );
-    }
+/* =====================================================
+CASAS
+====================================================== */
 
+function handleZ() {
 
-    function useClassAbility() {
+if (
+state.dialogue
+) {
 
-        const player =
-            state.player;
+advanceDialogue();
 
+return;
 
-        const character =
-            currentCharacter();
+}
 
+if (
+state.paused
+) {
 
-        if (
-            character.id ===
-            "lirael"
-        ) {
+return;
 
-            if (
-                player.magic < 14
-            ) {
+}
 
-                showToast(
-                    "Magia insuficiente."
-                );
+if (
+state.houseMode
+) {
 
-                return;
-            }
+exitHouse();
 
+return;
 
-            player.magic -=
-                14;
+}
 
+enterNearestHouse();
 
-            player.hp =
-                Math.min(
-                    player.maxHp,
-                    player.hp +
-                    45
-                );
+}
 
+function enterNearestHouse() {
 
-            spawnParticles(
-                player.x,
-                player.y,
-                character.color,
-                16
-            );
+if (
+!state.world.buildings.length
+) {
 
+showToast(
+"Não há construção para entrar aqui."
+);
 
-            showToast(
-                "Lirael usou Luz Vital."
-            );
+return;
 
+}
 
-            return;
-        }
+let closest =
+null;
 
+let best =
+Infinity;
 
-        if (
-            character.id ===
-            "zephyr"
-        ) {
+for (
+const building of
+state.world.buildings
+) {
 
-            if (
-                player.magic < 12
-            ) {
+const door = {
 
-                showToast(
-                    "Magia insuficiente."
-                );
+x:
+building.x +
+building.w / 2,
 
-                return;
-            }
+y:
+building.y +
+building.h +
+18
 
+};
 
-            player.magic -=
-                12;
+const d =
+distance(
+state.player,
+door
+);
 
+if (
+d < 90 &&
+d < best
+) {
 
-            if (
-                !player.adaptiveBuff
-            ) {
+best =
+d;
 
-                player.adaptiveBuff =
-                    true;
+closest =
+building;
 
+}
 
-                player.speed +=
-                    22;
+}
 
+if (
+!closest
+) {
 
-                player.damage +=
-                    5;
+showToast(
+"Aproxime-se da porta."
+);
 
+return;
 
-                setTimeout(
-                    () => {
+}
 
-                        if (
-                            state.player
-                                ?.adaptiveBuff
-                        ) {
+state.houseReturn = {
 
-                            state.player
-                                .speed -=
-                                22;
+x:
+closest.x +
+closest.w / 2,
 
+y:
+closest.y +
+closest.h +
+58
 
-                            state.player
-                                .damage -=
-                                5;
+};
 
+state.currentHouse =
+closest;
 
-                            state.player
-                                .adaptiveBuff =
-                                false;
+state.houseMode =
+true;
 
-                        }
+placePlayerInsideHouse();
 
-                    },
-                    6500
-                );
+showToast(
+`Você entrou em ${closest.name}.`
+);
 
-            }
+}
 
+function exitHouse() {
 
-            spawnParticles(
-                player.x,
-                player.y,
-                character.color,
-                16
-            );
+if (
+!state.houseMode
+) {
 
+return;
 
-            showToast(
-                "Zephyr usou Forma Adaptativa."
-            );
+}
 
+const returnPoint =
+state.houseReturn ||
+{
 
-            return;
-        }
+x: 480,
 
+y: 610
 
-        if (
-            player.magic < 10
-        ) {
+};
 
-            showToast(
-                "Magia insuficiente."
-            );
+state.houseMode =
+false;
 
-            return;
-        }
+state.currentHouse =
+null;
 
+state.player.x =
+returnPoint.x;
 
-        player.magic -=
-            10;
+state.player.y =
+returnPoint.y;
 
+state.houseReturn =
+null;
 
-        spawnParticles(
-            player.x,
-            player.y,
-            character.color,
-            14
-        );
+state.keys.clear();
 
+showToast(
+"Você saiu da construção."
+);
 
-        showToast(
-            `${character.skill}.`
-        );
-    }
+}
 
+/* =====================================================
+DIÁLOGOS
+====================================================== */
 
-    function attackEnemy(
-        enemy,
-        damage
-    ) {
+function startDialogue(npc) {
 
-        if (
-            !enemy ||
-            enemy.dead
-        ) {
+state.dialogue = {
 
-            return;
-        }
+npc,
 
+lines:
+npc.lines.slice(),
 
-        enemy.accepted =
-            true;
+index: 0,
 
+typing: false,
 
-        enemy.aggressive =
-            true;
+charIndex: 0,
 
+timer: null
 
-        enemy.state =
-            "chasing";
+};
 
+must("dialogueBox")
+.classList.remove(
+"hidden"
+);
 
-        enemy.hp =
-            Math.max(
-                0,
-                enemy.hp -
-                damage
-            );
+typeDialogue();
 
+}
 
-        enemy.hitFlash =
-            0.18;
+function typeDialogue() {
 
+const dialogue =
+state.dialogue;
 
-        spawnParticles(
-            enemy.x,
-            enemy.y,
-            "#ffffff",
-            8
-        );
+if (
+!dialogue
+) {
 
+return;
 
-        if (
-            enemy.hp <= 0
-        ) {
+}
 
-            defeatEnemy(
-                enemy
-            );
+clearInterval(
+dialogue.timer
+);
 
-        }
-    }
+const line =
+dialogue.lines[
+dialogue.index
+];
 
+dialogue.charIndex =
+0;
 
-    function defeatEnemy(enemy) {
+dialogue.typing =
+true;
 
-        if (
-            enemy.dead
-        ) {
+must("dialogueSpeaker").textContent =
+dialogue.npc.name;
 
-            return;
-        }
+must("dialogueText").textContent =
+"";
 
+dialogue.timer =
+setInterval(
+() => {
 
-        enemy.dead =
-            true;
+dialogue.charIndex++;
 
+must("dialogueText").textContent =
+line.slice(
+0,
+dialogue.charIndex
+);
 
-        enemy.state =
-            "dead";
+if (
+dialogue.charIndex >=
+line.length
+) {
 
+clearInterval(
+dialogue.timer
+);
 
-        const xp =
+dialogue.typing =
+false;
 
-            enemy.type ===
-                "progression"
-                ? 180
+}
 
-                : enemy.type ===
-                    "resourceBoss"
-                    ? 120
+},
+16
+);
 
-                    : enemy.type ===
-                        "hell"
-                        ? 60
+}
 
-                        : enemy.type ===
-                            "final"
-                            ? 600
+function advanceDialogue() {
 
-                            : 30;
+const dialogue =
+state.dialogue;
 
+if (
+!dialogue
+) {
 
-        const money =
+return;
 
-            enemy.type ===
-                "progression"
-                ? 80
+}
 
-                : enemy.type ===
-                    "resourceBoss"
-                    ? 45
+if (
+dialogue.typing
+) {
 
-                    : 12;
+clearInterval(
+dialogue.timer
+);
 
+must("dialogueText").textContent =
+dialogue.lines[
+dialogue.index
+];
 
-        state.player.xp +=
-            xp;
+dialogue.typing =
+false;
 
+return;
 
-        state.player.money +=
-            money;
+}
 
+dialogue.index++;
 
-        if (
-            enemy.drop &&
-            ITEMS[
-                enemy.drop
-            ]
-        ) {
+if (
+dialogue.index >=
+dialogue.lines.length
+) {
 
-            addItem(
-                enemy.drop,
-                enemy.dropAmount ||
-                1
-            );
+closeDialogue();
 
+return;
 
-            state.world
-                .drops
-                .push({
+}
 
-                    x:
-                        enemy.x,
+typeDialogue();
 
-                    y:
-                        enemy.y,
+}
 
-                    type:
-                        enemy.drop,
+function closeDialogue() {
 
-                    amount:
-                        enemy.dropAmount ||
-                        1,
+if (
+state.dialogue?.timer
+) {
 
-                    life:
-                        18
+clearInterval(
+state.dialogue.timer
+);
 
-                });
+}
 
-        }
+state.dialogue =
+null;
 
+must("dialogueBox")
+.classList.add(
+"hidden"
+);
 
-        if (
-            enemy.type ===
-            "resourceBoss"
-        ) {
+}
 
-            enemy.respawnTimer =
-                enemy.respawnTime ||
-                60;
+/* =====================================================
+MISSÕES
+====================================================== */
 
-        }
+function openQuest(npc) {
 
+state.questNPC =
+npc;
 
-        if (
-            enemy.type ===
-                "hell" &&
-            enemy.hellType !==
-                undefined
-        ) {
+const quest =
+state.player.quest[
+npc.questId
+];
 
-            state.player
-                .hellTypesDefeated[
-                    String(
-                        enemy.hellType
-                    )
-                ] = true;
+if (
+!quest
+) {
 
-        }
+return;
 
+}
 
-        if (
-            enemy.type ===
-            "progression"
-        ) {
+const isWood =
+npc.questId ===
+"wood";
 
-            if (
-                !state.player
-                    .defeatedBosses
-                    .includes(
-                        enemy.id
-                    )
-            ) {
+const item =
+isWood
+? "madeira"
+: "carvao";
 
-                state.player
-                    .defeatedBosses
-                    .push(
-                        enemy.id
-                    );
+const current =
+state.player.inventory[item] ||
+0;
 
-            }
+must("questTitle").textContent =
+isWood
+? "Madeira para a Vila"
+: "Carvão para a Forja";
 
+must("questText").textContent =
+isWood
+? "Bran precisa de 10 madeiras para reforçar construções da vila."
+: "Borin precisa de 8 carvões para manter a forja funcionando.";
 
-            if (
-                !state.player
-                    .discoveredBosses
-                    .includes(
-                        enemy.id
-                    )
-            ) {
+must("questStatus").textContent =
+`Progresso: ${Math.min(
+current,
+quest.need
+)} / ${quest.need}`;
 
-                state.player
-                    .discoveredBosses
-                    .push(
-                        enemy.id
-                    );
+const button =
+must("questActionBtn");
 
-            }
+button.disabled =
+quest.state ===
+"completed";
 
+button.textContent =
+quest.state ===
+"none"
+? "ACEITAR"
+: quest.state ===
+"accepted"
+? "ENTREGAR"
+: "CONCLUÍDA";
 
-            if (
-                enemy.unlock &&
-                !state.player
-                    .unlockedAreas
-                    .includes(
-                        enemy.unlock
-                    )
-            ) {
+must("questPanel")
+.classList.remove(
+"hidden"
+);
 
-                state.player
-                    .unlockedAreas
-                    .push(
-                        enemy.unlock
-                    );
+}
 
-            }
+function executeQuestAction() {
 
-        }
+const npc =
+state.questNPC;
 
+if (
+!npc
+) {
 
-        if (
-            enemy.type ===
-            "final"
-        ) {
+return;
 
-            state.player
-                .finalDefeated =
-                true;
+}
 
+const quest =
+state.player.quest[
+npc.questId
+];
 
-            showEnding(
-                "Você enfrentou a Quietude e preservou sua própria memória."
-            );
+const item =
+npc.questId ===
+"wood"
+? "madeira"
+: "carvao";
 
-        }
+if (
+quest.state ===
+"none"
+) {
 
+quest.state =
+"accepted";
 
-        checkLevelUp();
+showToast(
+"Missão aceita."
+);
 
+openQuest(
+npc
+);
 
-        saveGame(
-            false
-        );
+return;
 
+}
 
-        showToast(
-            `${enemy.name} derrotado! +${xp} XP`
-        );
-    }
+if (
+quest.state ===
+"accepted"
+) {
 
+if (
+(
+state.player.inventory[item] ||
+0
+) <
+quest.need
+) {
 
-    /* =====================================================
-       NÍVEL
-    ====================================================== */
+showToast(
+"Você ainda não possui os materiais necessários."
+);
 
-    function checkLevelUp() {
+openQuest(
+npc
+);
 
-        const player =
-            state.player;
+return;
 
+}
 
-        while (
-            player.xp >=
-            player.xpToNext
-        ) {
+if (
+!removeItem(
+item,
+quest.need
+)
+) {
 
-            player.xp -=
-                player.xpToNext;
+return;
 
+}
 
-            player.level++;
+quest.state =
+"completed";
 
+state.player.xp +=
+quest.rewardXP;
 
-            player.xpToNext =
-                Math.floor(
-                    player.xpToNext *
-                    1.42
-                );
+state.player.money +=
+quest.rewardMoney;
 
+checkLevelUp();
 
-            player.maxHp +=
-                12;
+saveGame(
+false
+);
 
+showToast(
+"Missão concluída e recompensa recebida."
+);
 
-            player.maxMagic +=
-                8;
+openQuest(
+npc
+);
 
+}
 
-            player.maxEnergy +=
-                8;
+}
 
+/* =====================================================
+BATALHAS DE PROGRESSÃO
+====================================================== */
 
-            player.hp =
-                player.maxHp;
+function openBattle(enemy) {
 
+state.battle =
+enemy;
 
-            player.magic =
-                player.maxMagic;
+state.paused =
+true;
 
+must("battleIcon").textContent =
+enemy.icon;
 
-            player.energy =
-                player.maxEnergy;
+must("battleTitle").textContent =
+enemy.name;
 
+must("battleText").textContent =
+"Esta criatura guarda o caminho. Ela só ficará agressiva se você aceitar o desafio.";
 
-            player.memory =
-                Math.min(
-                    100,
-                    player.memory +
-                    8
-                );
+must("battlePanel")
+.classList.remove(
+"hidden"
+);
 
+}
 
-            showToast(
-                `Você chegou ao nível ${player.level}!`
-            );
+function acceptBattle() {
 
-        }
-    }
+if (
+!state.battle
+) {
 
+return;
 
-    /* =====================================================
-       ITENS
-    ====================================================== */
+}
 
-    function addItem(
-        id,
-        amount
-    ) {
+state.battle.accepted =
+true;
 
-        if (
-            !ITEMS[id] ||
-            !state.player
-        ) {
+state.battle.aggressive =
+true;
 
-            return false;
-        }
+state.battle.state =
+"chasing";
 
+state.battle =
+null;
 
-        const safeAmount =
-            Math.max(
-                0,
-                Math.floor(
-                    amount
-                )
-            );
+state.paused =
+false;
 
+must("battlePanel")
+.classList.add(
+"hidden"
+);
 
-        if (
-            !safeAmount
-        ) {
+showToast(
+"A batalha começou."
+);
 
-            return false;
-        }
+}
 
+function declineBattle() {
 
-        if (
-            state.player
-                .inventory[id] ===
-            undefined
-        ) {
+state.battle =
+null;
 
-            state.player
-                .inventory[id] =
-                0;
-        }
+state.paused =
+false;
 
+must("battlePanel")
+.classList.add(
+"hidden"
+);
 
-        state.player
-            .inventory[id] +=
-            safeAmount;
+}
 
+/* =====================================================
+PORTAIS
+====================================================== */
 
-        return true;
-    }
+function checkPortals() {
 
+if (
+!state.player ||
+state.paused ||
+state.houseMode ||
+state.portalCooldown > 0
+) {
 
-    function removeItem(
-        id,
-        amount
-    ) {
+return;
 
-        const safeAmount =
-            Math.max(
-                0,
-                Math.floor(
-                    amount
-                )
-            );
+}
 
+for (
+const portal of
+state.world.portals
+) {
 
-        if (
-            !safeAmount
-        ) {
+const inside =
 
-            return false;
-        }
+state.player.x >=
+portal.x &&
 
+state.player.x <=
+portal.x +
+portal.w &&
 
-        const current =
-            state.player
-                ?.inventory
-                ?.[id] ||
-            0;
+state.player.y >=
+portal.y &&
 
+state.player.y <=
+portal.y +
+portal.h;
 
-        if (
-            current <
-            safeAmount
-        ) {
+if (
+!inside
+) {
 
-            return false;
-        }
+continue;
 
+}
 
-        state.player
-            .inventory[id] =
-            current -
-            safeAmount;
+const unlocked =
 
+typeof portal.requirement ===
+"function"
 
-        return true;
-    }
+? portal.requirement()
 
+: true;
 
-    /* =====================================================
-       ÁRVORE / COLETA
-    ====================================================== */
+if (
+!unlocked
+) {
 
-    function harvestTree(tree) {
+showToast(
+"Este caminho ainda está bloqueado."
+);
 
-        if (
-            !tree?.alive
-        ) {
+state.player.x =
+Math.max(
+85,
+portal.x -
+55
+);
 
-            return;
-        }
+state.portalCooldown =
+1.2;
 
+return;
 
-        const cost =
-            4;
+}
 
+openTravel(
+portal
+);
 
-        if (
-            state.player.magic <
-            cost
-        ) {
+return;
 
-            showToast(
-                "Magia insuficiente para cortar a árvore."
-            );
+}
 
-            return;
-        }
+}
 
+function openTravel(portal) {
 
-        state.player.magic -=
-            cost;
+if (
+state.travel
+) {
 
+return;
 
-        state.player.hunger =
-            Math.max(
-                0,
-                state.player.hunger -
-                1
-            );
+}
 
+state.travel =
+portal;
 
-        state.player.fatigue =
-            Math.max(
-                0,
-                state.player.fatigue -
-                2
-            );
+state.paused =
+true;
 
+must("travelText").textContent =
+`Você encontrou um caminho para ${portal.title}. Deseja continuar?`;
 
-        tree.alive =
-            false;
+must("travelPanel")
+.classList.remove(
+"hidden"
+);
 
+}
 
-        tree.respawn =
-            random(
-                12,
-                24
-            );
+function confirmTravel() {
 
+if (
+!state.travel
+) {
 
-        addItem(
-            "madeira",
-            tree.amount
-        );
+return;
 
+}
 
-        const key =
-            `tree:${state.area}`;
+const target =
+state.travel.target;
 
+state.travel =
+null;
 
-        const count =
-            state.player
-                .collected[key] ||
-            0;
+must("travelPanel")
+.classList.add(
+"hidden"
+);
 
+transitionTo(
+target
+);
 
-        state.player
-            .collected[key] =
-            count +
-            1;
+}
 
+function cancelTravel() {
 
-        state.player.xp +=
-            Math.max(
-                2,
-                7 -
-                Math.floor(
-                    count / 4
-                )
-            );
+state.travel =
+null;
 
+state.paused =
+false;
 
-        spawnParticles(
-            tree.x,
-            tree.y,
-            "#9b7345",
-            12
-        );
+state.portalCooldown =
+1.2;
 
+must("travelPanel")
+.classList.add(
+"hidden"
+);
 
-        checkLevelUp();
+}
 
+function transitionTo(target) {
 
-        showToast(
-            `Madeira coletada: x${tree.amount}`
-        );
-    }
+if (
+!REGIONS[target]
+) {
 
+return;
 
-    function collectResource(
-        resource
-    ) {
+}
 
-        if (
-            !resource?.alive
-        ) {
+state.paused =
+true;
 
-            return;
-        }
+must("transitionMessage").textContent =
+REGIONS[target].name;
 
+must("transitionScreen")
+.classList.remove(
+"hidden"
+);
 
-        const costs = {
-            carvao: 7,
-            ferro: 13,
-            ouro: 24,
-            rubi: 35,
-            cristal: 18
-        };
+setTimeout(
+() => {
 
+state.area =
+target;
 
-        const cost =
-            costs[
-                resource.type
-            ] ||
-            7;
+state.houseMode =
+false;
 
+state.currentHouse =
+null;
 
-        if (
-            state.player.magic <
-            cost
-        ) {
+state.houseReturn =
+null;
 
-            showToast(
-                "Magia insuficiente para coletar este recurso."
-            );
+state.finalChoiceShown =
+false;
 
-            return;
-        }
+buildWorld();
 
+state.player.x =
+145;
 
-        state.player.magic -=
-            cost;
+state.player.y =
+state.world.height /
+2;
 
+state.player.checkpoint = {
 
-        state.player.hunger =
-            Math.max(
-                0,
-                state.player.hunger -
-                1
-            );
+area: target,
 
+x:
+state.player.x,
 
-        state.player.fatigue =
-            Math.max(
-                0,
-                state.player.fatigue -
-                2
-            );
+y:
+state.player.y
 
+};
 
-        resource.alive =
-            false;
+state.player.magic =
+state.player.maxMagic;
 
+state.player.energy =
+state.player.maxEnergy;
 
-        resource.respawn =
-            random(
-                16,
-                32
-            );
+if (
+!state.player.unlockedAreas.includes(
+target
+)
+) {
 
+state.player.unlockedAreas.push(
+target
+);
 
-        addItem(
-            resource.type,
-            resource.amount
-        );
+}
 
+state.portalCooldown =
+1.4;
 
-        const key =
-            `resource:${state.area}:${resource.type}`;
+state.paused =
+false;
 
+must("transitionScreen")
+.classList.add(
+"hidden"
+);
 
-        const count =
-            state.player
-                .collected[key] ||
-            0;
+saveGame(
+false
+);
 
+showToast(
+`Você chegou a ${REGIONS[target].name}.`
+);
 
-        state.player
-            .collected[key] =
-            count +
-            1;
+},
+650
+);
 
+}
 
-        state.player.xp +=
-            Math.max(
-                2,
-                8 -
-                Math.floor(
-                    count / 4
-                )
-            );
+/* =====================================================
+INVENTÁRIO
+====================================================== */
 
+function updateInventory() {
 
-        state.player.memory =
-            Math.min(
-                100,
-                state.player.memory +
-                1
-            );
+const grid =
+must("inventoryGrid");
 
+grid.innerHTML =
+"";
 
-        checkLevelUp();
+Object.entries(
+state.player.inventory
+)
+.forEach(
+(
+[
+id,
+amount
+]
+) => {
 
+if (
+amount <= 0
+) {
 
-        showToast(
-            `${ITEMS[resource.type].name} coletado: x${resource.amount}`
-        );
-    }
+return;
 
+}
 
-    function updateResources(dt) {
+const item =
+ITEMS[id];
 
-        for (
-            const tree of
-            state.world.trees
-        ) {
+if (
+!item
+) {
 
-            if (
-                tree.alive
-            ) {
+return;
 
-                continue;
-            }
+}
 
+if (
+state.inventoryCategory !==
+"all" &&
+item.category !==
+state.inventoryCategory
+) {
 
-            tree.respawn -=
-                dt;
+return;
 
+}
 
-            if (
-                tree.respawn <= 0
-            ) {
+const slot =
+document.createElement(
+"button"
+);
 
-                respawnTree(
-                    tree
-                );
+slot.type =
+"button";
 
-            }
+slot.className =
+"inventory-item";
 
-        }
+slot.innerHTML = `
 
+<span class="icon">
+${item.icon}
+</span>
 
-        for (
-            const resource of
-            state.world.resources
-        ) {
+<span class="name">
+${item.name}
+</span>
 
-            if (
-                resource.alive
-            ) {
+<span class="count">
+x${amount}
+</span>
 
-                continue;
-            }
+`;
 
+slot.addEventListener(
+"click",
+() =>
+useItem(
+id
+)
+);
 
-            resource.respawn -=
-                dt;
+grid.appendChild(
+slot
+);
 
+}
+);
 
-            if (
-                resource.respawn <=
-                0
-            ) {
+if (
+!grid.children.length
+) {
 
-                resource.alive =
-                    true;
+const empty =
+document.createElement(
+"div"
+);
 
-            }
+empty.className =
+"muted";
 
-        }
+empty.style.gridColumn =
+"1 / -1";
 
+empty.style.textAlign =
+"center";
 
-        state.world
-            .drops
-            .forEach(
-                drop => {
+empty.style.padding =
+"25px";
 
-                    drop.life -=
-                        dt;
+empty.textContent =
+"Nenhum item nesta categoria.";
 
-                }
-            );
+grid.appendChild(
+empty
+);
 
+}
 
-        state.world.drops =
-            state.world
-                .drops
-                .filter(
-                    drop =>
-                        drop.life >
-                        0
-                );
-    }
+let weight =
+0;
 
+Object.entries(
+state.player.inventory
+)
+.forEach(
+(
+[
+id,
+amount
+]
+) => {
 
-    function respawnTree(tree) {
+weight +=
 
-        let tries =
-            0;
+(
+ITEMS[id]?.weight ||
+0
+) *
+amount;
 
+}
+);
 
-        let x =
-            tree.x;
+must("weightText").textContent =
+`${weight}/100`;
 
+updateEquipment();
 
-        let y =
-            tree.y;
+}
 
+function useItem(id) {
 
-        do {
+const item =
+ITEMS[id];
 
-            x =
-                randomInt(
-                    120,
-                    state.world.width -
-                    120
-                );
+if (
+!item
+) {
 
+return;
 
-            y =
-                randomInt(
-                    120,
-                    state.world.height -
-                    120
-                );
+}
 
+if (
+item.heal
+) {
 
-            tries++;
+if (
+!removeItem(
+id,
+1
+)
+) {
 
-        }
-        while (
+return;
 
-            tries <
-                60 &&
+}
 
-            !canPlayerMoveTo(
-                x,
-                y,
-                35
-            )
+state.player.hp =
+Math.min(
+state.player.maxHp,
+state.player.hp +
+item.heal
+);
 
-        );
+showToast(
+"Poção de cura usada."
+);
 
+}
 
-        tree.x =
-            x;
+else if (
+item.energy
+) {
 
+if (
+!removeItem(
+id,
+1
+)
+) {
 
-        tree.y =
-            y;
+return;
 
+}
 
-        tree.alive =
-            true;
+state.player.energy =
+Math.min(
+state.player.maxEnergy,
+state.player.energy +
+item.energy
+);
 
+showToast(
+"Elixir de energia usado."
+);
 
-        tree.amount =
-            randomInt(
-                2,
-                5
-            );
+}
 
+else if (
+item.damage
+) {
 
-        const obstacle =
-            state.world
-                .obstacles
-                .find(
-                    item =>
-                        item.treeId ===
-                        tree.id
-                );
+state.player.equipment.weapon =
+id;
 
+showToast(
+`${item.name} equipada.`
+);
 
-        if (
-            obstacle
-        ) {
+}
 
-            obstacle.x =
-                x - 30;
+else if (
+item.defense
+) {
 
+state.player.equipment.armor =
+id;
 
-            obstacle.y =
-                y - 38;
+showToast(
+`${item.name} equipada.`
+);
 
-        }
-    }
+}
 
+updateInventory();
 
-    /* =====================================================
-       INTERAÇÃO
-    ====================================================== */
+updateHUD();
 
-    function getInteraction() {
+}
 
-        if (
-            !state.player
-        ) {
+function updateEquipment() {
 
-            return null;
-        }
+const grid =
+must("equipmentGrid");
 
+const weapon =
+ITEMS[
+state.player.equipment.weapon
+]?.name ||
+"Nenhuma";
 
-        if (
-            state.houseMode
-        ) {
+const armor =
+ITEMS[
+state.player.equipment.armor
+]?.name ||
+"Nenhuma";
 
-            return {
-                type:
-                    "exitHouse",
-                object:
-                    state.currentHouse
-            };
-        }
+const tool =
+ITEMS[
+state.player.equipment.tool
+]?.name ||
+"Nenhuma";
 
+grid.innerHTML = `
 
-        let best =
-            null;
+<div class="equipment-slot">
 
+Arma
 
-        let bestDistance =
-            Infinity;
+<strong>
+${weapon}
+</strong>
 
+${
+state.player.equipment.weapon
+? `
 
-        const test = (
-            type,
-            object,
-            limit
-        ) => {
+<button
+type="button"
+data-unequip="weapon"
+>
+Desequipar
+</button>
 
-            const d =
-                distance(
-                    state.player,
-                    object
-                );
+`
+: ""
+}
 
+</div>
 
-            if (
-                d <= limit &&
-                d < bestDistance
-            ) {
+<div class="equipment-slot">
 
-                best = {
-                    type,
-                    object
-                };
+Armadura
 
+<strong>
+${armor}
+</strong>
 
-                bestDistance =
-                    d;
+${
+state.player.equipment.armor
+? `
 
-            }
+<button
+type="button"
+data-unequip="armor"
+>
+Desequipar
+</button>
 
-        };
+`
+: ""
+}
 
+</div>
 
-        state.world
-            .npcs
-            .forEach(
-                npc =>
-                    test(
-                        "npc",
-                        npc,
-                        70
-                    )
-            );
+<div class="equipment-slot">
 
+Ferramenta
 
-        state.world
-            .trees
-            .filter(
-                tree =>
-                    tree.alive
-            )
-            .forEach(
-                tree =>
-                    test(
-                        "tree",
-                        tree,
-                        72
-                    )
-            );
+<strong>
+${tool}
+</strong>
 
+</div>
 
-        state.world
-            .resources
-            .filter(
-                resource =>
-                    resource.alive
-            )
-            .forEach(
-                resource =>
-                    test(
-                        "resource",
-                        resource,
-                        72
-                    )
-            );
+`;
 
+grid
+.querySelectorAll(
+"[data-unequip]"
+)
+.forEach(
+button => {
 
-        state.world
-            .enemies
-            .filter(
-                enemy =>
-                    !enemy.dead
-            )
-            .forEach(
-                enemy =>
-                    test(
-                        enemy.type ===
-                            "progression"
-                            ? "boss"
-                            : "enemy",
-                        enemy,
-                        110
-                    )
-            );
+button.addEventListener(
+"click",
+() => {
 
+state.player.equipment[
+button.dataset.unequip
+] =
+null;
 
-        for (
-            const building of
-            state.world.buildings
-        ) {
+updateInventory();
 
-            const door = {
+}
+);
 
-                x:
-                    building.x +
-                    building.w / 2,
+}
+);
 
-                y:
-                    building.y +
-                    building.h +
-                    18
+}
 
-            };
+/* =====================================================
+MAPA
+====================================================== */
 
+function drawLargeMap() {
 
-            const d =
-                distance(
-                    state.player,
-                    door
-                );
+const width =
+mapCanvas.width;
 
+const height =
+mapCanvas.height;
 
-            if (
-                d <= 90 &&
-                d < bestDistance
-            ) {
+mapCtx.clearRect(
+0,
+0,
+width,
+height
+);
 
-                best = {
-                    type:
-                        "house",
-                    object:
-                        building
-                };
+mapCtx.fillStyle =
+"#18231a";
 
+mapCtx.fillRect(
+0,
+0,
+width,
+height
+);
 
-                bestDistance =
-                    d;
+const sx =
+width /
+state.world.width;
 
-            }
+const sy =
+height /
+state.world.height;
 
-        }
+mapCtx.fillStyle =
+"#87664b";
 
+state.world.buildings.forEach(
+building => {
 
-        return best;
-    }
+mapCtx.fillRect(
+building.x * sx,
+building.y * sy,
+building.w * sx,
+building.h * sy
+);
 
+}
+);
 
-    function playerAction() {
+mapCtx.fillStyle =
+"#e0bf70";
 
-        if (
-            !state.player
-        ) {
+state.world.npcs.forEach(
+npc => {
 
-            return;
-        }
+mapCtx.fillRect(
+npc.x * sx - 3,
+npc.y * sy - 3,
+6,
+6
+);
 
+}
+);
 
-        if (
-            state.dialogue
-        ) {
+state.world.enemies.forEach(
+enemy => {
 
-            advanceDialogue();
+if (
+enemy.dead
+) {
 
-            return;
-        }
+return;
 
+}
 
-        if (
-            state.paused
-        ) {
+mapCtx.fillStyle =
 
-            return;
-        }
+enemy.type ===
+"progression" ||
 
+enemy.type ===
+"final"
 
-        const interaction =
-            getInteraction();
+? "#ef554d"
+: "#d38764";
 
+mapCtx.beginPath();
 
-        if (
-            !interaction
-        ) {
+mapCtx.arc(
+enemy.x * sx,
+enemy.y * sy,
 
-            performAttack();
+enemy.type ===
+"progression" ||
+enemy.type ===
+"final"
 
-            return;
-        }
+? 7
+: 4,
 
+0,
+Math.PI * 2
+);
 
-        if (
-            interaction.type ===
-            "npc"
-        ) {
+mapCtx.fill();
 
-            if (
-                interaction.object
-                    .merchant
-            ) {
+}
+);
 
-                openShop(
-                    interaction.object
-                );
+mapCtx.fillStyle =
+"#65a9df";
 
-            }
+state.world.portals.forEach(
+portal => {
 
-            else if (
-                interaction.object
-                    .questId
-            ) {
+mapCtx.fillRect(
+portal.x * sx,
+portal.y * sy,
+Math.max(
+4,
+portal.w * sx
+),
+Math.max(
+4,
+portal.h * sy
+)
+);
 
-                openQuest(
-                    interaction.object
-                );
+}
+);
 
-            }
+mapCtx.fillStyle =
+"#ffffff";
 
-            else {
+mapCtx.beginPath();
 
-                startDialogue(
-                    interaction.object
-                );
+mapCtx.arc(
+state.player.x * sx,
+state.player.y * sy,
+7,
+0,
+Math.PI * 2
+);
 
-            }
+mapCtx.fill();
 
+}
 
-            return;
-        }
+function drawMinimap() {
 
+if (
+!state.player
+) {
 
-        if (
-            interaction.type ===
-            "tree"
-        ) {
+return;
 
-            harvestTree(
-                interaction.object
-            );
+}
 
-            return;
-        }
+miniCtx.clearRect(
+0,
+0,
+miniCanvas.width,
+miniCanvas.height
+);
 
+miniCtx.fillStyle =
+"#19241b";
 
-        if (
-            interaction.type ===
-            "resource"
-        ) {
+miniCtx.fillRect(
+0,
+0,
+miniCanvas.width,
+miniCanvas.height
+);
 
-            collectResource(
-                interaction.object
-            );
+const sx =
+miniCanvas.width /
+state.world.width;
 
-            return;
-        }
+const sy =
+miniCanvas.height /
+state.world.height;
 
+miniCtx.fillStyle =
+"#82654c";
 
-        if (
-            interaction.type ===
-            "boss"
-        ) {
+state.world.buildings.forEach(
+building => {
 
-            if (
-                !interaction.object
-                    .accepted
-            ) {
+miniCtx.fillRect(
+building.x * sx,
+building.y * sy,
+building.w * sx,
+building.h * sy
+);
 
-                openBattle(
-                    interaction.object
-                );
+}
+);
 
-            }
+miniCtx.fillStyle =
+"#e0bf70";
 
-            else {
+state.world.npcs.forEach(
+npc => {
 
-                performAttack();
+miniCtx.fillRect(
+npc.x * sx - 2,
+npc.y * sy - 2,
+4,
+4
+);
 
-            }
+}
+);
 
+state.world.enemies.forEach(
+enemy => {
 
-            return;
-        }
+if (
+enemy.dead
+) {
 
+return;
 
-        if (
-            interaction.type ===
-            "enemy"
-        ) {
+}
 
-            performAttack();
+miniCtx.fillStyle =
 
-        }
-    }
+enemy.type ===
+"progression" ||
 
+enemy.type ===
+"final"
 
-    /* =====================================================
-       CASAS — Z
-    ====================================================== */
+? "#ef554d"
+: "#d38764";
 
-    function handleZ() {
+miniCtx.beginPath();
 
-        if (
-            state.dialogue
-        ) {
+miniCtx.arc(
+enemy.x * sx,
+enemy.y * sy,
 
-            advanceDialogue();
+enemy.type ===
+"progression" ||
+enemy.type ===
+"final"
 
-            return;
-        }
+? 4
+: 2.5,
 
+0,
+Math.PI * 2
+);
 
-        if (
-            state.paused
-        ) {
+miniCtx.fill();
 
-            return;
-        }
+}
+);
 
+miniCtx.fillStyle =
+"#65a9df";
 
-        if (
-            state.houseMode
-        ) {
+state.world.portals.forEach(
+portal => {
 
-            exitHouse();
+miniCtx.fillRect(
+portal.x * sx,
+portal.y * sy,
+Math.max(
+2,
+portal.w * sx
+),
+Math.max(
+2,
+portal.h * sy
+)
+);
 
-            return;
-        }
+}
+);
 
+miniCtx.fillStyle =
+"#ffffff";
 
-        enterNearestHouse();
-    }
+miniCtx.beginPath();
 
+miniCtx.arc(
+state.player.x * sx,
+state.player.y * sy,
+4,
+0,
+Math.PI * 2
+);
 
-    function enterNearestHouse() {
+miniCtx.fill();
 
-        if (
-            !state.world
-                .buildings
-                .length
-        ) {
+}
 
-            showToast(
-                "Não há construção para entrar aqui."
-            );
+/* =====================================================
+LIVRO
+====================================================== */
 
-            return;
-        }
+const BOSS_REGISTRY = [
 
+[
+"forest_guardian",
+"GUARDIÃO DA ESTRADA",
+"👺"
+],
 
-        let closest =
-            null;
+[
+"grove_guardian",
+"GUARDIÃO DA FLORESTA",
+"🌳"
+],
 
+[
+"mountain_guardian",
+"GUARDIÃO DO BOSQUE",
+"🌲"
+],
 
-        let best =
-            Infinity;
+[
+"iron_guardian",
+"SENTINELA DAS MONTANHAS",
+"🗿"
+],
 
+[
+"ruby_guardian",
+"GUARDIÃO DE FERRO",
+"⚙️"
+],
 
-        for (
-            const building of
-            state.world.buildings
-        ) {
+[
+"shadow_guardian",
+"GUARDIÃO RUBI",
+"🔴"
+],
 
-            const door = {
+[
+"fairy_guardian",
+"GUARDIÃO SOMBRIO",
+"🌑"
+],
 
-                x:
-                    building.x +
-                    building.w / 2,
+[
+"sky_guardian",
+"GUARDIÃ DOS FIOS",
+"🧚"
+],
 
-                y:
-                    building.y +
-                    building.h +
-                    18
+[
+"hell_guardian",
+"SERAFIM DA QUIETUDE",
+"☀️"
+],
 
-            };
+[
+"final_gate_guardian",
+"SENHOR DA QUIETUDE",
+"👿"
+],
 
+[
+"other_self",
+"O OUTRO EU",
+"☯"
+]
 
-            const d =
-                distance(
-                    state.player,
-                    door
-                );
+];
 
+function renderBook() {
 
-            if (
-                d < 90 &&
-                d < best
-            ) {
+const book =
+must("bossBook");
 
-                best =
-                    d;
+book.innerHTML =
+"";
 
+BOSS_REGISTRY.forEach(
+(
+[
+id,
+name,
+icon
+]
+) => {
 
-                closest =
-                    building;
+const defeated =
 
-            }
+state.player.defeatedBosses.includes(
+id
+) ||
 
-        }
+(
+id ===
+"other_self" &&
+state.player.finalDefeated
+);
 
+const discovered =
 
-        if (
-            !closest
-        ) {
+defeated ||
 
-            showToast(
-                "Aproxime-se da porta."
-            );
+state.player.discoveredBosses.includes(
+id
+);
 
-            return;
-        }
+const entry =
+document.createElement(
+"div"
+);
 
+entry.className =
+"boss-entry";
 
-        state.houseReturn = {
+entry.innerHTML =
 
-            x:
-                closest.x +
-                closest.w / 2,
+discovered
 
-            y:
-                closest.y +
-                closest.h +
-                58
+? `
 
-        };
+<div class="symbol">
+${icon}
+</div>
 
+<strong>
+${name}
+</strong>
 
-        state.currentHouse =
-            closest;
+<p>
+${
+defeated
+? "Derrotado."
+: "Registro descoberto."
+}
+</p>
 
+<p>
+“Uma memória registrada
+não desaparece tão facilmente.”
+</p>
 
-        state.houseMode =
-            true;
+`
 
+: `
 
-        state.player.x =
-            380;
+<div class="symbol">
+?
+</div>
 
+<strong>
+DESCONHECIDO
+</strong>
 
-        state.player.y =
-            260;
+<p>
+Explore Veyra para descobrir
+este registro.
+</p>
 
+`;
 
-        state.keys.clear();
+book.appendChild(
+entry
+);
 
+}
+);
 
-        showToast(
-            `Você entrou em ${closest.name}.`
-        );
-    }
+}
 
+/* =====================================================
+LOJA
+====================================================== */
 
-    function exitHouse() {
+function openShop(npc) {
 
-        if (
-            !state.houseMode
-        ) {
+state.shopNPC =
+npc;
 
-            return;
-        }
+state.shopMode =
+"buy";
 
+document
+.querySelectorAll(
+"#shopTabs .tab"
+)
+.forEach(
+tab => {
 
-        const returnPoint =
-            state.houseReturn ||
-            {
-                x: 480,
-                y: 610
-            };
+tab.classList.toggle(
+"active",
+tab.dataset.shop ===
+"buy"
+);
 
+}
+);
 
-        state.houseMode =
-            false;
+must("shopTitle").textContent =
+`LOJA DE ${npc.name}`;
 
+renderShop();
 
-        state.currentHouse =
-            null;
+must("shopPanel")
+.classList.remove(
+"hidden"
+);
 
+}
 
-        state.player.x =
-            returnPoint.x;
+function renderShop() {
 
+const grid =
+must("shopGrid");
 
-        state.player.y =
-            returnPoint.y;
+grid.innerHTML =
+"";
 
+if (
+state.shopMode ===
+"buy"
+) {
 
-        state.houseReturn =
-            null;
+[
+"pocao",
+"elixir",
+"espadaFerro",
+"armaduraCouro"
+]
+.forEach(
+id => {
 
+const item =
+ITEMS[id];
 
-        state.keys.clear();
+const row =
+createShopRow(
+item,
+`Comprar por ${item.value}`,
+() => {
 
+if (
+state.player.money <
+item.value
+) {
 
-        showToast(
-            "Você saiu da construção."
-        );
-    }
+showToast(
+"Dinheiro insuficiente."
+);
 
+return;
 
-    /* =====================================================
-       DIÁLOGOS
-    ====================================================== */
+}
 
-    function startDialogue(npc) {
+state.player.money -=
+item.value;
 
-        state.dialogue = {
+addItem(
+id,
+1
+);
 
-            npc,
+showToast(
+`${item.name} comprado.`
+);
 
-            lines:
-                npc.lines.slice(),
+renderShop();
 
-            index:
-                0,
+updateHUD();
 
-            typing:
-                false,
+}
+);
 
-            charIndex:
-                0,
+grid.appendChild(
+row
+);
 
-            timer:
-                null
+}
+);
 
-        };
+return;
 
+}
 
-        must(
-            "dialogueBox"
-        ).classList
-            .remove(
-                "hidden"
-            );
+Object.entries(
+state.player.inventory
+)
+.forEach(
+(
+[
+id,
+amount
+]
+) => {
 
+if (
+amount <= 0 ||
+!ITEMS[id]
+) {
 
-        typeDialogue();
-    }
+return;
 
+}
 
-    function typeDialogue() {
+const item =
+ITEMS[id];
 
-        const dialogue =
-            state.dialogue;
+const price =
+Math.max(
+1,
+Math.floor(
+item.value *
+.7
+)
+);
 
+const row =
+createShopRow(
+item,
+`Vender por ${price} • x${amount}`,
+() => {
 
-        if (
-            !dialogue
-        ) {
+if (
+!removeItem(
+id,
+1
+)
+) {
 
-            return;
-        }
+return;
 
+}
 
-        clearInterval(
-            dialogue.timer
-        );
+state.player.money +=
+price;
 
+showToast(
+`${item.name} vendido.`
+);
 
-        const line =
-            dialogue.lines[
-                dialogue.index
-            ];
+renderShop();
 
+updateHUD();
 
-        dialogue.charIndex =
-            0;
+}
+);
 
+grid.appendChild(
+row
+);
 
-        dialogue.typing =
-            true;
+}
+);
 
+if (
+!grid.children.length
+) {
 
-        must(
-            "dialogueSpeaker"
-        ).textContent =
-            dialogue.npc.name;
+const empty =
+document.createElement(
+"p"
+);
 
+empty.className =
+"muted";
 
-        must(
-            "dialogueText"
-        ).textContent =
-            "";
+empty.textContent =
+"Você não possui itens para vender.";
 
+grid.appendChild(
+empty
+);
 
-        dialogue.timer =
-            setInterval(
-                () => {
+}
 
-                    dialogue.charIndex++;
+}
 
+function createShopRow(
+item,
+actionText,
+onClick
+) {
 
-                    must(
-                        "dialogueText"
-                    ).textContent =
-                        line.slice(
-                            0,
-                            dialogue.charIndex
-                        );
+const row =
+document.createElement(
+"div"
+);
 
+row.className =
+"shop-row";
 
-                    if (
-                        dialogue.charIndex >=
-                        line.length
-                    ) {
+row.innerHTML = `
 
-                        clearInterval(
-                            dialogue.timer
-                        );
+<div class="shop-icon">
+${item.icon}
+</div>
 
+<div class="shop-info">
 
-                        dialogue.typing =
-                            false;
+<strong>
+${item.name}
+</strong>
 
-                    }
+<small>
+Peso ${item.weight}
+•
+Valor base ${item.value}
+</small>
 
-                },
-                16
-            );
-    }
+</div>
 
+<div class="shop-price">
+${actionText}
+</div>
 
-    function advanceDialogue() {
+<button
+class="primary-btn"
+type="button"
+>
+OK
+</button>
 
-        const dialogue =
-            state.dialogue;
+`;
 
+row
+.querySelector(
+"button"
+)
+.addEventListener(
+"click",
+onClick
+);
 
-        if (
-            !dialogue
-        ) {
+return row;
 
-            return;
-        }
+}
 
+/* =====================================================
+FINAL
+====================================================== */
 
-        if (
-            dialogue.typing
-        ) {
+function openFinalChoice() {
 
-            clearInterval(
-                dialogue.timer
-            );
+state.finalChoiceShown =
+true;
 
+state.paused =
+true;
 
-            must(
-                "dialogueText"
-            ).textContent =
-                dialogue.lines[
-                    dialogue.index
-                ];
+const choice =
+window.confirm(
 
+"Uma figura idêntica a você oferece uma escolha: aceitar a Quietude Absoluta.\n\nOK = aceitar.\nCancelar = lutar."
 
-            dialogue.typing =
-                false;
+);
 
+state.player.finalChoice =
+choice
+? "join"
+: "fight";
 
-            return;
-        }
+state.paused =
+false;
 
+if (
+choice
+) {
 
-        dialogue.index++;
+showEnding(
+"Você escolheu a Quietude Absoluta. Veyra finalmente ficou em silêncio."
+);
 
+return;
 
-        if (
-            dialogue.index >=
-            dialogue.lines.length
-        ) {
+}
 
-            closeDialogue();
+const boss =
+state.world.enemies.find(
+enemy =>
+enemy.id ===
+"other_self"
+);
 
-            return;
-        }
+if (
+boss
+) {
 
+boss.accepted =
+true;
 
-        typeDialogue();
-    }
+boss.aggressive =
+true;
 
+boss.state =
+"chasing";
 
-    function closeDialogue() {
+}
 
-        if (
-            state.dialogue
-                ?.timer
-        ) {
+showToast(
+"A batalha final começou."
+);
 
-            clearInterval(
-                state.dialogue.timer
-            );
+}
 
-        }
+function showEnding(message) {
 
+state.running =
+false;
 
-        state.dialogue =
-            null;
+state.paused =
+true;
 
+saveGame(
+false
+);
 
-        must(
-            "dialogueBox"
-        ).classList
-            .add(
-                "hidden"
-            );
-    }
+must("transitionMessage").textContent =
+message;
 
+must("transitionScreen")
+.classList.remove(
+"hidden"
+);
 
-    /* =====================================================
-       MISSÕES
-    ====================================================== */
+setTimeout(
+() => {
 
-    function openQuest(npc) {
+must("transitionScreen")
+.classList.add(
+"hidden"
+);
 
-        state.questNPC =
-            npc;
+showScreen(
+"menu"
+);
 
+updateContinueButton();
 
-        const quest =
-            state.player
-                .quest[
-                    npc.questId
-                ];
+},
+2600
+);
 
+}
 
-        if (
-            !quest
-        ) {
+/* =====================================================
+PARTÍCULAS
+====================================================== */
 
-            return;
-        }
+function updateVisualEffects(dt) {
 
+state.world.particles =
+state.world.particles.filter(
+particle => {
 
-        const isWood =
-            npc.questId ===
-            "wood";
+particle.x +=
+particle.vx *
+dt;
 
+particle.y +=
+particle.vy *
+dt;
 
-        const item =
-            isWood
-                ? "madeira"
-                : "carvao";
+particle.vy +=
+35 *
+dt;
 
+particle.life -=
+dt;
 
-        const current =
-            state.player
-                .inventory[item] ||
-            0;
+return (
+particle.life >
+0
+);
 
+}
+);
 
-        must(
-            "questTitle"
-        ).textContent =
-            isWood
-                ? "Madeira para a Vila"
-                : "Carvão para a Forja";
+state.world.effects =
+state.world.effects.filter(
+effect => {
 
+if (
+effect.type ===
+"dangerOrb"
+) {
 
-        must(
-            "questText"
-        ).textContent =
-            isWood
+effect.life -=
+dt;
 
-                ? "Bran precisa de 10 madeiras para reforçar construções da vila."
+return (
+effect.life >
+0
+);
 
-                : "Borin precisa de 8 carvões para manter a forja funcionando.";
+}
 
+return true;
 
-        must(
-            "questStatus"
-        ).textContent =
-            `Progresso: ${Math.min(
-                current,
-                quest.need
-            )} / ${quest.need}`;
+}
+);
 
+}
 
-        const button =
-            must(
-                "questActionBtn"
-            );
+function spawnParticles(
+x,
+y,
+color,
+amount
+) {
 
+for (
+let i = 0;
+i < amount;
+i++
+) {
 
-        button.disabled =
-            quest.state ===
-            "completed";
+const angle =
+random(
+0,
+Math.PI * 2
+);
 
+const speed =
+random(
+25,
+90
+);
 
-        button.textContent =
+state.world.particles.push({
 
-            quest.state ===
-                "none"
-                ? "ACEITAR"
+x,
 
-                : quest.state ===
-                    "accepted"
-                    ? "ENTREGAR"
+y,
 
-                    : "CONCLUÍDA";
+vx:
+Math.cos(
+angle
+) *
+speed,
 
+vy:
+Math.sin(
+angle
+) *
+speed,
 
-        must(
-            "questPanel"
-        ).classList
-            .remove(
-                "hidden"
-            );
-    }
+life:
+random(
+.35,
+.8
+),
 
+color
 
-    function executeQuestAction() {
+});
 
-        const npc =
-            state.questNPC;
+}
 
+}
 
-        if (
-            !npc
-        ) {
+/* =====================================================
+CÂMERA
+====================================================== */
 
-            return;
-        }
+function updateCamera() {
 
+if (
+!state.player
+) {
 
-        const quest =
-            state.player
-                .quest[
-                    npc.questId
-                ];
+return;
 
+}
 
-        const item =
-            npc.questId ===
-                "wood"
-                ? "madeira"
-                : "carvao";
+const viewW =
+window.innerWidth;
 
+const viewH =
+window.innerHeight;
 
-        if (
-            quest.state ===
-            "none"
-        ) {
+if (
+state.houseMode
+) {
 
-            quest.state =
-                "accepted";
+const room =
+getHouseRoom();
 
+state.camera.x =
+clamp(
 
-            showToast(
-                "Missão aceita."
-            );
+room.x +
+room.w / 2 -
+viewW / 2,
 
+0,
 
-            openQuest(
-                npc
-            );
+Math.max(
+0,
+state.world.width -
+viewW
+)
 
+);
 
-            return;
-        }
+state.camera.y =
+clamp(
 
+room.y +
+room.h / 2 -
+viewH / 2,
 
-        if (
-            quest.state ===
-            "accepted"
-        ) {
+0,
 
-            if (
-                (
-                    state.player
-                        .inventory[item] ||
-                    0
-                ) <
-                quest.need
-            ) {
+Math.max(
+0,
+state.world.height -
+viewH
+)
 
-                showToast(
-                    "Você ainda não possui os materiais necessários."
-                );
+);
 
+return;
 
-                openQuest(
-                    npc
-                );
+}
 
+state.camera.x =
+clamp(
 
-                return;
-            }
+state.player.x -
+viewW / 2,
 
+0,
 
-            if (
-                !removeItem(
-                    item,
-                    quest.need
-                )
-            ) {
+Math.max(
+0,
+state.world.width -
+viewW
+)
 
-                return;
-            }
+);
 
+state.camera.y =
+clamp(
 
-            quest.state =
-                "completed";
+state.player.y -
+viewH / 2,
 
+0,
 
-            state.player.xp +=
-                quest.rewardXP;
+Math.max(
+0,
+state.world.height -
+viewH
+)
 
+);
 
-            state.player.money +=
-                quest.rewardMoney;
+}
 
+/* =====================================================
+HUD
+====================================================== */
 
-            checkLevelUp();
+function updateHUD() {
 
+const player =
+state.player;
 
-            saveGame(
-                false
-            );
+if (
+!player
+) {
 
+return;
 
-            showToast(
-                "Missão concluída e recompensa recebida."
-            );
+}
 
+must("hudAvatar").textContent =
+player.icon;
 
-            openQuest(
-                npc
-            );
+must("hudClass").textContent =
+player.className;
 
-        }
-    }
+must("hudName").textContent =
+player.name;
 
+must("moneyText").textContent =
+player.money;
 
-    /* =====================================================
-       BATALHA DE PROGRESSÃO
-    ====================================================== */
+must("levelText").textContent =
+player.level;
 
-    function openBattle(enemy) {
+must("xpText").textContent =
+`${player.xp} / ${player.xpToNext}`;
 
-        state.battle =
-            enemy;
+must("hpText").textContent =
+`${Math.ceil(player.hp)}/${player.maxHp}`;
 
+must("magicText").textContent =
+`${Math.ceil(player.magic)}/${Math.ceil(player.maxMagic)}`;
 
-        state.paused =
-            true;
+must("energyText").textContent =
+`${Math.ceil(player.energy)}/${player.maxEnergy}`;
 
+must("hungerText").textContent =
+Math.ceil(
+player.hunger
+);
 
-        must(
-            "battleIcon"
-        ).textContent =
-            enemy.icon;
+must("fatigueText").textContent =
+Math.ceil(
+player.fatigue
+);
 
+setBar(
+"hpBar",
+player.hp,
+player.maxHp
+);
 
-        must(
-            "battleTitle"
-        ).textContent =
-            enemy.name;
+setBar(
+"magicBar",
+player.magic,
+player.maxMagic
+);
 
+setBar(
+"energyBar",
+player.energy,
+player.maxEnergy
+);
 
-        must(
-            "battleText"
-        ).textContent =
-            "Esta criatura guarda o caminho. Ela só ficará agressiva se você aceitar o desafio.";
+updateInteractionHint();
 
+}
 
-        must(
-            "battlePanel"
-        ).classList
-            .remove(
-                "hidden"
-            );
-    }
+function setBar(
+id,
+value,
+max
+) {
 
+const percentage =
 
-    function acceptBattle() {
+max > 0
 
-        if (
-            !state.battle
-        ) {
+? clamp(
+(
+value /
+max
+) *
+100,
+0,
+100
+)
 
-            return;
-        }
+: 0;
 
+must(id).style.width =
+`${percentage}%`;
 
-        state.battle.accepted =
-            true;
+}
 
+function updateInteractionHint() {
 
-        state.battle.aggressive =
-            true;
+const hint =
+must("interactionHint");
 
+if (
+!state.player ||
+state.paused ||
+state.dialogue ||
+state.travel ||
+state.battle
+) {
 
-        state.battle.state =
-            "chasing";
+hint.classList.add(
+"hidden"
+);
 
+return;
 
-        state.battle =
-            null;
+}
 
+const interaction =
+getInteraction();
 
-        state.paused =
-            false;
+if (
+!interaction
+) {
 
+hint.classList.add(
+"hidden"
+);
 
-        must(
-            "battlePanel"
-        ).classList
-            .add(
-                "hidden"
-            );
+return;
 
+}
 
-        showToast(
-            "A batalha começou."
-        );
-    }
+hint.classList.remove(
+"hidden"
+);
 
+if (
+interaction.type ===
+"house"
+) {
 
-    function declineBattle() {
+must("interactionKey").textContent =
+"Z";
 
-        state.battle =
-            null;
+must("interactionText").textContent =
+"Entrar";
 
+return;
 
-        state.paused =
-            false;
+}
 
+if (
+interaction.type ===
+"exitHouse"
+) {
 
-        must(
-            "battlePanel"
-        ).classList
-            .add(
-                "hidden"
-            );
-    }
+must("interactionKey").textContent =
+"Z";
 
+must("interactionText").textContent =
+"Sair";
 
-    /* =====================================================
-       PORTAIS
-    ====================================================== */
+return;
 
-    function checkPortals() {
+}
 
-        if (
+must("interactionKey").textContent =
+"E";
 
-            !state.player ||
+const labels = {
 
-            state.paused ||
+npc:
 
-            state.houseMode ||
+interaction.object.merchant
 
-            state.portalCooldown >
-            0
+? "Abrir loja"
 
-        ) {
+: interaction.object.questId
 
-            return;
-        }
+? "Ver missão"
 
+: "Conversar",
 
-        for (
-            const portal of
-            state.world.portals
-        ) {
+tree:
+"Cortar árvore",
 
-            const inside =
+resource:
+`Coletar ${
+ITEMS[
+interaction.object.type
+]?.name ||
+"recurso"
+}`,
 
-                state.player.x >=
-                    portal.x &&
+boss:
 
-                state.player.x <=
-                    portal.x +
-                    portal.w &&
+interaction.object.accepted
 
-                state.player.y >=
-                    portal.y &&
+? "Atacar"
 
-                state.player.y <=
-                    portal.y +
-                    portal.h;
+: "Aceitar batalha",
 
+enemy:
+"Atacar"
 
-            if (
-                !inside
-            ) {
+};
 
-                continue;
-            }
+must("interactionText").textContent =
+labels[
+interaction.type
+] ||
+"Interagir";
 
+}
 
-            const unlocked =
+/* =====================================================
+UPDATE
+====================================================== */
 
-                typeof portal
-                    .requirement ===
-                    "function"
+function update(dt) {
 
-                    ? portal
-                        .requirement()
+if (
+!state.player
+) {
 
-                    : true;
+return;
 
+}
 
-            if (
-                !unlocked
-            ) {
+state.portalCooldown =
+Math.max(
+0,
+state.portalCooldown -
+dt
+);
 
-                showToast(
-                    "Este caminho ainda está bloqueado."
-                );
+state.player.invincible =
+Math.max(
+0,
+state.player.invincible -
+dt
+);
 
+state.player.attackCooldown =
+Math.max(
+0,
+state.player.attackCooldown -
+dt
+);
 
-                state.player.x =
-                    Math.max(
-                        85,
-                        portal.x -
-                        55
-                    );
+updateMovement(
+dt
+);
 
+updateSurvival(
+dt
+);
 
-                state.portalCooldown =
-                    1.2;
+updateEnemies(
+dt
+);
 
+updateResources(
+dt
+);
 
-                return;
-            }
+updateVisualEffects(
+dt
+);
 
+checkPortals();
 
-            openTravel(
-                portal
-            );
+updateCamera();
 
+updateHUD();
 
-            return;
+if (
+!must("mapPanel")
+.classList.contains(
+"hidden"
+)
+) {
 
-        }
-    }
+drawLargeMap();
 
+}
 
-    function openTravel(portal) {
+}
 
-        if (
-            state.travel
-        ) {
+function gameLoop(timestamp) {
 
-            return;
-        }
+if (
+!state.running
+) {
 
+return;
 
-        state.travel =
-            portal;
+}
 
+const dt =
+Math.min(
 
-        state.paused =
-            true;
+(
+timestamp -
+state.lastTime
+) /
+1000,
 
+.05
 
-        must(
-            "travelText"
-        ).textContent =
-            `Você encontrou um caminho para ${portal.title}. Deseja continuar?`;
+);
 
+state.lastTime =
+timestamp;
 
-        must(
-            "travelPanel"
-        ).classList
-            .remove(
-                "hidden"
-            );
-    }
+state.time +=
+dt;
 
+update(
+dt
+);
 
-    function confirmTravel() {
+draw();
 
-        if (
-            !state.travel
-        ) {
+requestAnimationFrame(
+gameLoop
+);
 
-            return;
-        }
+}
 
+/* =====================================================
+DESENHO
+====================================================== */
 
-        const target =
-            state.travel.target;
+function draw() {
 
+ctx.clearRect(
+0,
+0,
+window.innerWidth,
+window.innerHeight
+);
 
-        state.travel =
-            null;
+ctx.save();
 
+ctx.translate(
+-state.camera.x,
+-state.camera.y
+);
 
-        must(
-            "travelPanel"
-        ).classList
-            .add(
-                "hidden"
-            );
+if (
+state.houseMode
+) {
 
+drawHouseInterior();
 
-        transitionTo(
-            target
-        );
-    }
+drawPlayer();
 
+drawParticles();
 
-    function cancelTravel() {
+}
 
-        state.travel =
-            null;
+else {
 
+drawGround();
 
-        state.paused =
-            false;
+drawPaths();
 
+drawAmbientDetails();
 
-        state.portalCooldown =
-            1.2;
+drawBuildings();
 
+drawTrees();
 
-        must(
-            "travelPanel"
-        ).classList
-            .add(
-                "hidden"
-            );
-    }
+drawResources();
 
+drawObstacles();
 
-    function transitionTo(target) {
+drawPortals();
 
-        if (
-            !REGIONS[target]
-        ) {
+drawDrops();
 
-            return;
-        }
+drawEffects();
 
+drawNPCs();
 
-        state.paused =
-            true;
+drawEnemies();
 
+drawPlayer();
 
-        must(
-            "transitionMessage"
-        ).textContent =
-            REGIONS[
-                target
-            ].name;
+drawWorldLabels();
 
+drawParticles();
 
-        must(
-            "transitionScreen"
-        ).classList
-            .remove(
-                "hidden"
-            );
+}
 
+ctx.restore();
 
-        setTimeout(
-            () => {
+drawMinimap();
 
-                state.area =
-                    target;
+}
 
+function drawGround() {
 
-                state.houseMode =
-                    false;
+const visual =
+REGIONS[
+state.area
+].visual;
 
+const colors = {
 
-                state.currentHouse =
-                    null;
+village: "#536b4b",
 
+forest: "#3e6141",
 
-                state.houseReturn =
-                    null;
+grove: "#34583a",
 
+mountains: "#92999b",
 
-                state.finalChoiceShown =
-                    false;
+iron: "#292e31",
 
+ruby: "#48252b",
 
-                buildWorld();
+shadow: "#171d2e",
 
+fairy: "#56436b",
 
-                state.player.x =
-                    145;
+sky: "#92b0c7",
 
+hell: "#45201f",
 
-                state.player.y =
-                    state.world.height /
-                    2;
+final: "#18171b"
 
+};
 
-                state.player.checkpoint = {
-                    area: target,
-                    x: state.player.x,
-                    y: state.player.y
-                };
+ctx.fillStyle =
+colors[
+visual
+] ||
+"#536b4b";
 
+ctx.fillRect(
+0,
+0,
+state.world.width,
+state.world.height
+);
 
-                state.player.magic =
-                    state.player.maxMagic;
+const tile =
+64;
 
+for (
+let y = 70;
+y < state.world.height - 70;
+y += tile
+) {
 
-                state.player.energy =
-                    state.player.maxEnergy;
+for (
+let x = 70;
+x < state.world.width - 70;
+x += tile
+) {
 
+ctx.fillStyle =
 
-                if (
-                    !state.player
-                        .unlockedAreas
-                        .includes(
-                            target
-                        )
-                ) {
+(
+(
+x / tile +
+y / tile
+) %
+2 === 0
+)
 
-                    state.player
-                        .unlockedAreas
-                        .push(
-                            target
-                        );
+? "rgba(255,255,255,.014)"
 
-                }
+: "rgba(0,0,0,.018)";
 
+ctx.fillRect(
+x,
+y,
+tile,
+tile
+);
 
-                state.portalCooldown =
-                    1.4;
+}
 
+}
 
-                state.paused =
-                    false;
+if (
+state.area ===
+"village"
+) {
 
+ctx.fillStyle =
+"rgba(18,22,18,.24)";
 
-                must(
-                    "transitionScreen"
-                ).classList
-                    .add(
-                        "hidden"
-                    );
+ctx.beginPath();
 
+ctx.ellipse(
+2700,
+1080,
+420,
+340,
+-.1,
+0,
+Math.PI * 2
+);
 
-                saveGame(
-                    false
-                );
+ctx.fill();
 
+}
 
-                showToast(
-                    `Você chegou a ${REGIONS[target].name}.`
-                );
+}
 
-            },
-            650
-        );
-    }
+function drawPaths() {
 
+if (
+state.area !==
+"village"
+) {
 
-    /* =====================================================
-       INVENTÁRIO
-    ====================================================== */
+return;
 
-    function openInventory() {
+}
 
-        if (
-            !state.player
-        ) {
+ctx.fillStyle =
+"#b79a68";
 
-            return;
-        }
+ctx.globalAlpha =
+.7;
 
+ctx.fillRect(
+70,
+1080,
+state.world.width - 140,
+120
+);
 
-        updateInventory();
+ctx.fillRect(
+1540,
+70,
+120,
+state.world.height - 140
+);
 
+ctx.fillRect(
+1700,
+1110,
+1000,
+70
+);
 
-        must(
-            "inventoryPanel"
-        ).classList
-            .remove(
-                "hidden"
-            );
-    }
+ctx.fillRect(
+600,
+1110,
+100,
+600
+);
 
+ctx.globalAlpha =
+1;
 
-    function updateInventory() {
+}
 
-        const grid =
-            must(
-                "inventoryGrid"
-            );
+function drawAmbientDetails() {
 
+const visual =
+REGIONS[
+state.area
+].visual;
 
-        grid.innerHTML =
-            "";
+if (
+[
+"village",
+"forest",
+"grove"
+].includes(
+visual
+)
+) {
 
+ctx.strokeStyle =
+"rgba(30,75,38,.42)";
 
-        Object
-            .entries(
-                state.player
-                    .inventory
-            )
-            .forEach(
-                (
-                    [
-                        id,
-                        amount
-                    ]
-                ) => {
+ctx.lineWidth =
+2;
 
-                    if (
-                        amount <= 0
-                    ) {
+for (
+let y = 100;
+y < state.world.height - 100;
+y += 75
+) {
 
-                        return;
-                    }
+for (
+let x = 100;
+x < state.world.width - 100;
+x += 75
+) {
 
+if (
+(
+x * 7 +
+y * 3
+) %
+13 <
+5
+) {
 
-                    const item =
-                        ITEMS[id];
+ctx.beginPath();
 
+ctx.moveTo(
+x,
+y + 5
+);
 
-                    if (
-                        !item
-                    ) {
+ctx.lineTo(
+x - 4,
+y - 4
+);
 
-                        return;
-                    }
+ctx.moveTo(
+x,
+y + 5
+);
 
+ctx.lineTo(
+x + 5,
+y - 5
+);
 
-                    if (
+ctx.stroke();
 
-                        state.inventoryCategory !==
-                            "all" &&
+}
 
-                        item.category !==
-                            state.inventoryCategory
+}
 
-                    ) {
+}
 
-                        return;
-                    }
+}
 
+if (
+visual ===
+"hell"
+) {
 
-                    const slot =
-                        document
-                            .createElement(
-                                "button"
-                            );
+ctx.fillStyle =
+"rgba(225,70,30,.18)";
 
+for (
+let i = 0;
+i < 24;
+i++
+) {
 
-                    slot.type =
-                        "button";
+const x =
+(
+i * 421
+) %
+state.world.width;
 
+const y =
+(
+i * 257
+) %
+state.world.height;
 
-                    slot.className =
-                        "inventory-item";
+ctx.beginPath();
 
+ctx.arc(
+x,
+y,
+8 +
+(
+i % 5
+),
+0,
+Math.PI * 2
+);
 
-                    slot.innerHTML = `
+ctx.fill();
 
-                        <span class="icon">
-                            ${item.icon}
-                        </span>
+}
 
-                        <span class="name">
-                            ${item.name}
-                        </span>
+}
 
-                        <span class="count">
-                            x${amount}
-                        </span>
-                    `;
+}
 
+/* =====================================================
+CONSTRUÇÕES
+====================================================== */
 
-                    slot.addEventListener(
-                        "click",
-                        () =>
-                            useItem(
-                                id
-                            )
-                    );
+function drawBuildings() {
 
+state.world.buildings.forEach(
+building => {
 
-                    grid.appendChild(
-                        slot
-                    );
+ctx.fillStyle =
+"rgba(0,0,0,.27)";
 
-                }
-            );
+ctx.fillRect(
+building.x + 13,
+building.y + 16,
+building.w,
+building.h
+);
 
+ctx.fillStyle =
+building.color;
 
-        if (
-            !grid.children
-                .length
-        ) {
+ctx.fillRect(
+building.x,
+building.y,
+building.w,
+building.h
+);
 
-            const empty =
-                document
-                    .createElement(
-                        "div"
-                    );
+ctx.strokeStyle =
+"rgba(30,25,20,.45)";
 
+ctx.lineWidth =
+4;
 
-            empty.className =
-                "muted";
+ctx.strokeRect(
+building.x + 3,
+building.y + 3,
+building.w - 6,
+building.h - 6
+);
 
+ctx.fillStyle =
+building.roof;
 
-            empty.style.gridColumn =
-                "1 / -1";
+ctx.beginPath();
 
+ctx.moveTo(
+building.x - 24,
+building.y
+);
 
-            empty.style.textAlign =
-                "center";
+ctx.lineTo(
+building.x +
+building.w / 2,
+building.y -
+95
+);
 
+ctx.lineTo(
+building.x +
+building.w +
+24,
+building.y
+);
 
-            empty.style.padding =
-                "25px";
+ctx.closePath();
 
+ctx.fill();
 
-            empty.textContent =
-                "Nenhum item nesta categoria.";
+ctx.fillStyle =
+"#452d25";
 
+ctx.fillRect(
+building.x +
+building.w / 2 -
+25,
+building.y +
+building.h -
+70,
+50,
+70
+);
 
-            grid.appendChild(
-                empty
-            );
+ctx.fillStyle =
+"#dbc77d";
 
-        }
+ctx.fillRect(
+building.x + 35,
+building.y + 60,
+50,
+42
+);
 
+ctx.fillRect(
+building.x +
+building.w -
+85,
+building.y + 60,
+50,
+42
+);
 
-        let weight =
-            0;
+ctx.font =
+"bold 12px Georgia";
 
+ctx.textAlign =
+"center";
 
-        Object
-            .entries(
-                state.player
-                    .inventory
-            )
-            .forEach(
-                (
-                    [
-                        id,
-                        amount
-                    ]
-                ) => {
+ctx.fillStyle =
+"#f1e0ba";
 
-                    weight +=
-                        (
-                            ITEMS[id]
-                                ?.weight ||
-                            0
-                        ) *
-                        amount;
+ctx.fillText(
+building.name,
+building.x +
+building.w / 2,
+building.y +
+building.h +
+27
+);
 
-                }
-            );
+}
+);
 
+}
 
-        must(
-            "weightText"
-        ).textContent =
-            `${weight}/100`;
+/* =====================================================
+INTERIORES
+====================================================== */
 
+function drawHouseInterior() {
 
-        updateEquipment();
-    }
+const building =
+state.currentHouse;
 
+const room =
+getHouseRoom();
 
-    function useItem(id) {
+const theme =
+getHouseTheme();
 
-        const item =
-            ITEMS[id];
+const id =
+building?.id ||
+"home";
 
+ctx.fillStyle =
+"#141210";
 
-        if (
-            !item
-        ) {
+ctx.fillRect(
+0,
+0,
+state.world.width,
+state.world.height
+);
 
-            return;
-        }
+ctx.fillStyle =
+theme.wall;
 
+ctx.fillRect(
+room.x - 24,
+room.y - 24,
+room.w + 48,
+room.h + 48
+);
 
-        if (
-            item.heal
-        ) {
+ctx.fillStyle =
+theme.floor;
 
-            if (
-                !removeItem(
-                    id,
-                    1
-                )
-            ) {
+ctx.fillRect(
+room.x,
+room.y,
+room.w,
+room.h
+);
 
-                return;
-            }
+ctx.strokeStyle =
+"rgba(45,28,20,.22)";
 
+ctx.lineWidth =
+1;
 
-            state.player.hp =
-                Math.min(
-                    state.player.maxHp,
-                    state.player.hp +
-                    item.heal
-                );
+for (
+let y =
+room.y + 28;
+y <
+room.y + room.h;
+y += 28
+) {
 
+ctx.beginPath();
 
-            showToast(
-                "Poção de cura usada."
-            );
+ctx.moveTo(
+room.x,
+y
+);
 
-        }
+ctx.lineTo(
+room.x + room.w,
+y
+);
 
+ctx.stroke();
 
-        else if (
-            item.energy
-        ) {
+}
 
-            if (
-                !removeItem(
-                    id,
-                    1
-                )
-            ) {
+ctx.strokeStyle =
+theme.trim;
 
-                return;
-            }
+ctx.lineWidth =
+6;
 
+ctx.strokeRect(
+room.x,
+room.y,
+room.w,
+room.h
+);
 
-            state.player.energy =
-                Math.min(
-                    state.player
-                        .maxEnergy,
-                    state.player
-                        .energy +
-                    item.energy
-                );
+/* CASA DO JOGADOR */
 
+if (
+id ===
+"home"
+) {
 
-            showToast(
-                "Elixir de energia usado."
-            );
+ctx.fillStyle =
+"#4b3026";
 
-        }
+ctx.fillRect(
+room.x + 48,
+room.y + 55,
+150,
+92
+);
 
+ctx.fillStyle =
+"#d9c8a4";
 
-        else if (
-            item.damage
-        ) {
+ctx.fillRect(
+room.x + 58,
+room.y + 64,
+130,
+70
+);
 
-            state.player
-                .equipment
-                .weapon =
-                id;
+ctx.fillStyle =
+"#783d36";
 
+ctx.fillRect(
+room.x +
+room.w / 2 -
+100,
+room.y +
+room.h / 2 -
+55,
+200,
+110
+);
 
-            showToast(
-                `${item.name} equipada.`
-            );
+ctx.fillStyle =
+"#563824";
 
-        }
+ctx.fillRect(
+room.x +
+room.w / 2 -
+65,
+room.y +
+room.h / 2 -
+24,
+130,
+48
+);
 
+ctx.fillStyle =
+"#44322d";
 
-        else if (
-            item.defense
-        ) {
+ctx.fillRect(
+room.x +
+room.w -
+140,
+room.y + 45,
+88,
+105
+);
 
-            state.player
-                .equipment
-                .armor =
-                id;
+ctx.fillStyle =
+"#f48a42";
 
+ctx.beginPath();
 
-            showToast(
-                `${item.name} equipada.`
-            );
+ctx.arc(
+room.x +
+room.w -
+96,
+room.y +
+112,
+20,
+0,
+Math.PI * 2
+);
 
-        }
+ctx.fill();
 
+}
 
-        updateInventory();
+/* CASA DE ELIAN */
 
-        updateHUD();
-    }
+else if (
+id ===
+"elianHome"
+) {
 
+ctx.fillStyle =
+"#49372f";
 
-    function updateEquipment() {
+ctx.fillRect(
+room.x + 45,
+room.y + 55,
+130,
+82
+);
 
-        const grid =
-            must(
-                "equipmentGrid"
-            );
+ctx.fillStyle =
+"#b9aa91";
 
+ctx.fillRect(
+room.x + 55,
+room.y + 65,
+110,
+62
+);
 
-        const weapon =
-            ITEMS[
-                state.player
-                    .equipment
-                    .weapon
-            ]?.name ||
-            "Nenhuma";
+ctx.fillStyle =
+"#4c3326";
 
+ctx.fillRect(
+room.x +
+room.w -
+160,
+room.y + 45,
+112,
+155
+);
 
-        const armor =
-            ITEMS[
-                state.player
-                    .equipment
-                    .armor
-            ]?.name ||
-            "Nenhuma";
+ctx.fillStyle =
+"#c0a36b";
 
+for (
+let i = 0;
+i < 4;
+i++
+) {
 
-        const tool =
-            ITEMS[
-                state.player
-                    .equipment
-                    .tool
-            ]?.name ||
-            "Nenhuma";
+ctx.fillRect(
+room.x +
+room.w -
+150,
+room.y +
+64 +
+i * 34,
+92,
+5
+);
 
+}
 
-        grid.innerHTML = `
+ctx.fillStyle =
+"#5a402d";
 
-            <div class="equipment-slot">
+ctx.fillRect(
+room.x +
+room.w / 2 -
+85,
+room.y +
+room.h / 2 -
+35,
+170,
+70
+);
 
-                Arma
+ctx.fillStyle =
+"#eadcae";
 
-                <strong>
-                    ${weapon}
-                </strong>
+ctx.fillRect(
+room.x +
+room.w / 2 -
+34,
+room.y +
+room.h / 2 -
+18,
+68,
+34
+);
 
-                ${
-                    state.player
-                        .equipment
-                        .weapon
-                        ? `
-                            <button
-                                type="button"
-                                data-unequip="weapon"
-                            >
-                                Desequipar
-                            </button>
-                        `
-                        : ""
-                }
+}
 
-            </div>
+/* FORJA */
 
+else if (
+id ===
+"forge"
+) {
 
-            <div class="equipment-slot">
+ctx.fillStyle =
+"#2f2f31";
 
-                Armadura
+ctx.fillRect(
+room.x + 48,
+room.y + 50,
+150,
+145
+);
 
-                <strong>
-                    ${armor}
-                </strong>
+ctx.fillStyle =
+"#ff7846";
 
-                ${
-                    state.player
-                        .equipment
-                        .armor
-                        ? `
-                            <button
-                                type="button"
-                                data-unequip="armor"
-                            >
-                                Desequipar
-                            </button>
-                        `
-                        : ""
-                }
+ctx.beginPath();
 
-            </div>
+ctx.arc(
+room.x + 123,
+room.y + 135,
+38,
+0,
+Math.PI * 2
+);
 
+ctx.fill();
 
-            <div class="equipment-slot">
+ctx.fillStyle =
+"#ffd06a";
 
-                Ferramenta
+ctx.beginPath();
 
-                <strong>
-                    ${tool}
-                </strong>
+ctx.arc(
+room.x + 123,
+room.y + 135,
+19,
+0,
+Math.PI * 2
+);
 
-            </div>
+ctx.fill();
 
-        `;
+ctx.fillStyle =
+"#24282c";
 
+ctx.fillRect(
+room.x +
+room.w / 2 -
+55,
+room.y +
+room.h / 2 -
+16,
+110,
+32
+);
 
-        grid
-            .querySelectorAll(
-                "[data-unequip]"
-            )
-            .forEach(
-                button => {
+ctx.fillRect(
+room.x +
+room.w / 2 -
+18,
+room.y +
+room.h / 2 +
+16,
+36,
+58
+);
 
-                    button.addEventListener(
-                        "click",
-                        () => {
+}
 
-                            state.player
-                                .equipment[
-                                    button.dataset
-                                        .unequip
-                                ] =
-                                null;
+/* LOJA */
 
+else if (
+id ===
+"shop"
+) {
 
-                            updateInventory();
+ctx.fillStyle =
+"#4c3225";
 
-                        }
-                    );
+ctx.fillRect(
+room.x + 42,
+room.y + 42,
+150,
+155
+);
 
-                }
-            );
-    }
+ctx.fillRect(
+room.x +
+room.w -
+192,
+room.y + 42,
+150,
+155
+);
 
+ctx.fillStyle =
+"#caa463";
 
-    /* =====================================================
-       MAPA
-    ====================================================== */
+for (
+let i = 0;
+i < 4;
+i++
+) {
 
-    function openMap() {
+ctx.fillRect(
+room.x + 52,
+room.y +
+62 +
+i * 34,
+130,
+5
+);
 
-        if (
-            !state.player
-        ) {
+ctx.fillRect(
+room.x +
+room.w -
+182,
+room.y +
+62 +
+i * 34,
+130,
+5
+);
 
-            return;
-        }
+}
 
+ctx.fillStyle =
+"#5f3d29";
 
-        drawLargeMap();
+ctx.fillRect(
+room.x +
+room.w * .47,
+room.y +
+room.h * .48,
+room.w * .45,
+62
+);
 
+ctx.strokeStyle =
+theme.accent;
 
-        must(
-            "mapPanel"
-        ).classList
-            .remove(
-                "hidden"
-            );
-    }
+ctx.lineWidth =
+3;
 
+ctx.strokeRect(
+room.x +
+room.w * .47,
+room.y +
+room.h * .48,
+room.w * .45,
+62
+);
 
-    function drawLargeMap() {
+ctx.font =
+"20px Arial";
 
-        const width =
-            mapCanvas.width;
+ctx.textAlign =
+"center";
 
+[
+"🧪",
+"💙",
+"⚔️",
+"🥋"
+].forEach(
+(
+icon,
+index
+) => {
 
-        const height =
-            mapCanvas.height;
+ctx.fillText(
+icon,
+room.x +
+75 +
+(
+index % 2
+) *
+72,
+room.y +
+90 +
+Math.floor(
+index / 2
+) *
+70
+);
 
+}
+);
 
-        mapCtx.clearRect(
-            0,
-            0,
-            width,
-            height
-        );
+}
 
+/* CARPINTARIA */
 
-        mapCtx.fillStyle =
-            "#18231a";
+else if (
+id ===
+"woodshop"
+) {
 
+for (
+let i = 0;
+i < 4;
+i++
+) {
 
-        mapCtx.fillRect(
-            0,
-            0,
-            width,
-            height
-        );
+ctx.fillStyle =
+i % 2
+? "#6d472b"
+: "#7c5130";
 
+ctx.fillRect(
+room.x + 50,
+room.y +
+55 +
+i * 34,
+165,
+24
+);
 
-        const sx =
-            width /
-            state.world.width;
+}
 
+ctx.fillStyle =
+"#5b3c27";
 
-        const sy =
-            height /
-            state.world.height;
+ctx.fillRect(
+room.x +
+room.w / 2 -
+100,
+room.y +
+room.h / 2 -
+35,
+200,
+70
+);
 
+ctx.font =
+"30px Arial";
 
-        mapCtx.fillStyle =
-            "#87664b";
+ctx.textAlign =
+"center";
 
+ctx.fillText(
+"🪓",
+room.x +
+room.w / 2,
+room.y +
+room.h / 2 +
+14
+);
 
-        state.world
-            .buildings
-            .forEach(
-                building => {
+ctx.fillStyle =
+"#b07e4d";
 
-                    mapCtx.fillRect(
-                        building.x *
-                        sx,
-                        building.y *
-                        sy,
-                        building.w *
-                        sx,
-                        building.h *
-                        sy
-                    );
+for (
+let i = 0;
+i < 5;
+i++
+) {
 
-                }
-            );
+ctx.fillRect(
+room.x +
+room.w -
+185,
+room.y +
+65 +
+i * 28,
+135,
+16
+);
 
+}
 
-        mapCtx.fillStyle =
-            "#e0bf70";
+}
 
+ctx.fillStyle =
+"#3b241c";
 
-        state.world
-            .npcs
-            .forEach(
-                npc => {
+ctx.fillRect(
+room.x +
+room.w / 2 -
+34,
+room.y +
+room.h -
+16,
+68,
+22
+);
 
-                    mapCtx.fillRect(
-                        npc.x *
-                        sx -
-                        3,
-                        npc.y *
-                        sy -
-                        3,
-                        6,
-                        6
-                    );
+ctx.fillStyle =
+"#ead9b5";
 
-                }
-            );
+ctx.font =
+"bold 19px Georgia";
 
+ctx.textAlign =
+"center";
 
-        state.world
-            .enemies
-            .forEach(
-                enemy => {
+ctx.fillText(
+building?.name ||
+"INTERIOR",
+room.x +
+room.w / 2,
+room.y -
+42
+);
 
-                    if (
-                        enemy.dead
-                    ) {
+ctx.font =
+"11px Arial";
 
-                        return;
-                    }
+ctx.fillText(
+"[Z] SAIR",
+room.x +
+room.w / 2,
+room.y +
+room.h +
+35
+);
 
+drawInteriorNPCs();
 
-                    mapCtx.fillStyle =
+}
 
-                        enemy.type ===
-                            "progression" ||
+function drawInteriorNPCs() {
 
-                        enemy.type ===
-                            "final"
+getInteriorNPCs().forEach(
+npc => {
 
-                            ? "#ef554d"
-                            : "#d38764";
+ctx.fillStyle =
+"rgba(0,0,0,.25)";
 
+ctx.beginPath();
 
-                    mapCtx.beginPath();
+ctx.ellipse(
+npc.x,
+npc.y + 20,
+19,
+7,
+0,
+0,
+Math.PI * 2
+);
 
+ctx.fill();
 
-                    mapCtx.arc(
-                        enemy.x *
-                        sx,
-                        enemy.y *
-                        sy,
+ctx.fillStyle =
+npc.color ||
+"#c9ae82";
 
-                        enemy.type ===
-                            "progression" ||
+ctx.beginPath();
 
-                        enemy.type ===
-                            "final"
+ctx.arc(
+npc.x,
+npc.y,
+17,
+0,
+Math.PI * 2
+);
 
-                            ? 7
-                            : 4,
+ctx.fill();
 
-                        0,
-                        Math.PI *
-                        2
-                    );
+ctx.fillStyle =
+"#29272a";
 
+ctx.beginPath();
 
-                    mapCtx.fill();
+ctx.arc(
+npc.x,
+npc.y - 8,
+9,
+0,
+Math.PI * 2
+);
 
-                }
-            );
+ctx.fill();
 
+ctx.textAlign =
+"center";
 
-        mapCtx.fillStyle =
-            "#65a9df";
+ctx.font =
+"bold 12px Arial";
 
+ctx.fillStyle =
+"#f5e5be";
 
-        state.world
-            .portals
-            .forEach(
-                portal => {
+ctx.fillText(
+npc.name,
+npc.x,
+npc.y - 31
+);
 
-                    mapCtx.fillRect(
-                        portal.x *
-                        sx,
-                        portal.y *
-                        sy,
-                        Math.max(
-                            4,
-                            portal.w *
-                            sx
-                        ),
-                        Math.max(
-                            4,
-                            portal.h *
-                            sy
-                        )
-                    );
+ctx.font =
+"10px Arial";
 
-                }
-            );
+ctx.fillStyle =
+"#d1c5af";
 
+ctx.fillText(
+npc.role,
+npc.x,
+npc.y + 37
+);
 
-        mapCtx.fillStyle =
-            "#ffffff";
+}
+);
 
+}
 
-        mapCtx.beginPath();
+/* =====================================================
+ÁRVORES
+====================================================== */
 
+function drawTrees() {
 
-        mapCtx.arc(
-            state.player.x *
-            sx,
-            state.player.y *
-            sy,
-            7,
-            0,
-            Math.PI *
-            2
-        );
+state.world.trees.forEach(
+tree => {
 
+if (
+!tree.alive
+) {
 
-        mapCtx.fill();
-    }
+return;
 
+}
 
-    function drawMinimap() {
+const sway =
+Math.sin(
+state.time *
+1.7 +
+tree.x
+) *
+2;
 
-        if (
-            !state.player
-        ) {
+ctx.fillStyle =
+"rgba(0,0,0,.22)";
 
-            return;
-        }
+ctx.beginPath();
 
+ctx.ellipse(
+tree.x,
+tree.y + 28,
+34,
+11,
+0,
+0,
+Math.PI * 2
+);
 
-        miniCtx.clearRect(
-            0,
-            0,
-            miniCanvas.width,
-            miniCanvas.height
-        );
+ctx.fill();
 
+ctx.fillStyle =
+"#684a30";
 
-        miniCtx.fillStyle =
-            "#19241b";
+ctx.fillRect(
+tree.x - 9,
+tree.y,
+18,
+42
+);
 
+ctx.fillStyle =
+"#305c36";
 
-        miniCtx.fillRect(
-            0,
-            0,
-            miniCanvas.width,
-            miniCanvas.height
-        );
+ctx.beginPath();
 
+ctx.arc(
+tree.x + sway,
+tree.y - 14,
+34,
+0,
+Math.PI * 2
+);
 
-        const sx =
-            miniCanvas.width /
-            state.world.width;
+ctx.fill();
 
+ctx.fillStyle =
+"#447a45";
 
-        const sy =
-            miniCanvas.height /
-            state.world.height;
+ctx.beginPath();
 
+ctx.arc(
+tree.x - 14 + sway,
+tree.y - 27,
+24,
+0,
+Math.PI * 2
+);
 
-        miniCtx.fillStyle =
-            "#82654c";
+ctx.arc(
+tree.x + 14 + sway,
+tree.y - 27,
+25,
+0,
+Math.PI * 2
+);
 
+ctx.fill();
 
-        state.world
-            .buildings
-            .forEach(
-                building => {
+if (
+distance(
+tree,
+state.player
+) <
+85
+) {
 
-                    miniCtx.fillRect(
-                        building.x *
-                        sx,
-                        building.y *
-                        sy,
-                        building.w *
-                        sx,
-                        building.h *
-                        sy
-                    );
+ctx.strokeStyle =
+"#d8bc73";
 
-                }
-            );
+ctx.lineWidth =
+2;
 
+ctx.beginPath();
 
-        miniCtx.fillStyle =
-            "#e0bf70";
+ctx.arc(
+tree.x,
+tree.y - 10,
+40,
+0,
+Math.PI * 2
+);
 
+ctx.stroke();
 
-        state.world
-            .npcs
-            .forEach(
-                npc => {
+}
 
-                    miniCtx.fillRect(
-                        npc.x *
-                        sx -
-                        2,
-                        npc.y *
-                        sy -
-                        2,
-                        4,
-                        4
-                    );
+}
+);
 
-                }
-            );
+}
 
+/* =====================================================
+RECURSOS
+====================================================== */
 
-        state.world
-            .enemies
-            .forEach(
-                enemy => {
+function drawResources() {
 
-                    if (
-                        enemy.dead
-                    ) {
+const icons = {
 
-                        return;
-                    }
+ferro: "⛓️",
 
+rubi: "♦",
 
-                    miniCtx.fillStyle =
+cristal: "💎",
 
-                        enemy.type ===
-                            "progression" ||
+ouro: "🪙",
 
-                        enemy.type ===
-                            "final"
+carvao: "⬛"
 
-                            ? "#ef554d"
-                            : "#d38764";
+};
 
+state.world.resources.forEach(
+resource => {
 
-                    miniCtx.beginPath();
+if (
+!resource.alive
+) {
 
+return;
 
-                    miniCtx.arc(
-                        enemy.x *
-                        sx,
-                        enemy.y *
-                        sy,
+}
 
-                        enemy.type ===
-                            "progression" ||
+ctx.font =
+"20px Arial";
 
-                        enemy.type ===
-                            "final"
+ctx.textAlign =
+"center";
 
-                            ? 4
-                            : 2.5,
+ctx.fillText(
+icons[
+resource.type
+] ||
+"✦",
+resource.x,
+resource.y + 7
+);
 
-                        0,
-                        Math.PI *
-                        2
-                    );
+}
+);
 
+}
 
-                    miniCtx.fill();
+/* =====================================================
+OBSTÁCULOS
+====================================================== */
 
-                }
-            );
+function drawObstacles() {
 
+state.world.obstacles.forEach(
+obstacle => {
 
-        miniCtx.fillStyle =
-            "#65a9df";
+if (
+obstacle.type ===
+"building" ||
+obstacle.type ===
+"tree"
+) {
 
+return;
 
-        state.world
-            .portals
-            .forEach(
-                portal => {
+}
 
-                    miniCtx.fillRect(
-                        portal.x *
-                        sx,
-                        portal.y *
-                        sy,
-                        Math.max(
-                            2,
-                            portal.w *
-                            sx
-                        ),
-                        Math.max(
-                            2,
-                            portal.h *
-                            sy
-                        )
-                    );
+if (
+obstacle.type ===
+"wall"
+) {
 
-                }
-            );
+ctx.fillStyle =
+"#424a46";
 
+ctx.fillRect(
+obstacle.x,
+obstacle.y,
+obstacle.w,
+obstacle.h
+);
 
-        miniCtx.fillStyle =
-            "#ffffff";
+return;
 
+}
 
-        miniCtx.beginPath();
+if (
+obstacle.type ===
+"fountain"
+) {
 
+ctx.fillStyle =
+"#89877c";
 
-        miniCtx.arc(
-            state.player.x *
-            sx,
-            state.player.y *
-            sy,
-            4,
-            0,
-            Math.PI *
-            2
-        );
+ctx.beginPath();
 
+ctx.ellipse(
+obstacle.x +
+obstacle.w / 2,
+obstacle.y +
+obstacle.h / 2,
+obstacle.w / 2,
+obstacle.h / 2,
+0,
+0,
+Math.PI * 2
+);
 
-        miniCtx.fill();
-    }
+ctx.fill();
 
+ctx.fillStyle =
+"#5b98aa";
 
-    /* =====================================================
-       LIVRO
-    ====================================================== */
+ctx.beginPath();
 
-    function openBook() {
+ctx.ellipse(
+obstacle.x +
+obstacle.w / 2,
+obstacle.y +
+obstacle.h / 2,
+obstacle.w / 2 -
+22,
+obstacle.h / 2 -
+22,
+0,
+0,
+Math.PI * 2
+);
 
-        if (
-            !state.player
-        ) {
+ctx.fill();
 
-            return;
-        }
+return;
 
+}
 
-        renderBook();
+const colors = {
 
+rock: "#737771",
 
-        must(
-            "bookPanel"
-        ).classList
-            .remove(
-                "hidden"
-            );
-    }
+snowrock: "#bec5c7",
 
+ironrock: "#666c6f",
 
-    const BOSS_REGISTRY = [
+rubyrock: "#73384b",
 
-        [
-            "forest_guardian",
-            "GUARDIÃO DA ESTRADA",
-            "👺"
-        ],
+darkrock: "#34364e",
 
-        [
-            "grove_guardian",
-            "GUARDIÃO DA FLORESTA",
-            "🌳"
-        ],
+basalt: "#443437"
 
-        [
-            "mountain_guardian",
-            "GUARDIÃO DO BOSQUE",
-            "🌲"
-        ],
+};
 
-        [
-            "iron_guardian",
-            "SENTINELA DAS MONTANHAS",
-            "🗿"
-        ],
+ctx.fillStyle =
+colors[
+obstacle.type
+] ||
+"#737771";
 
-        [
-            "ruby_guardian",
-            "GUARDIÃO DE FERRO",
-            "⚙️"
-        ],
+ctx.beginPath();
 
-        [
-            "shadow_guardian",
-            "GUARDIÃO RUBI",
-            "🔴"
-        ],
+ctx.ellipse(
+obstacle.x +
+obstacle.w / 2,
+obstacle.y +
+obstacle.h / 2,
+obstacle.w / 2,
+obstacle.h / 2,
+-.12,
+0,
+Math.PI * 2
+);
 
-        [
-            "fairy_guardian",
-            "GUARDIÃO SOMBRIO",
-            "🌑"
-        ],
+ctx.fill();
 
-        [
-            "sky_guardian",
-            "GUARDIÃ DOS FIOS",
-            "🧚"
-        ],
+}
+);
 
-        [
-            "hell_guardian",
-            "SERAFIM DA QUIETUDE",
-            "☀️"
-        ],
+}
 
-        [
-            "final_gate_guardian",
-            "SENHOR DA QUIETUDE",
-            "👿"
-        ],
+/* =====================================================
+NPCs
+====================================================== */
 
-        [
-            "other_self",
-            "O OUTRO EU",
-            "☯"
-        ]
+function drawNPCs() {
 
-    ];
+state.world.npcs.forEach(
+npc => {
 
+ctx.fillStyle =
+"rgba(0,0,0,.23)";
 
-    function renderBook() {
+ctx.beginPath();
 
-        const book =
-            must(
-                "bossBook"
-            );
+ctx.ellipse(
+npc.x,
+npc.y + 19,
+18,
+7,
+0,
+0,
+Math.PI * 2
+);
 
+ctx.fill();
 
-        book.innerHTML =
-            "";
+ctx.fillStyle =
+npc.color;
 
+ctx.beginPath();
 
-        BOSS_REGISTRY
-            .forEach(
-                (
-                    [
-                        id,
-                        name,
-                        icon
-                    ]
-                ) => {
+ctx.arc(
+npc.x,
+npc.y,
+17,
+0,
+Math.PI * 2
+);
 
-                    const defeated =
+ctx.fill();
 
-                        state.player
-                            .defeatedBosses
-                            .includes(id) ||
+ctx.fillStyle =
+"#28272b";
 
-                        (
-                            id ===
-                                "other_self" &&
-                            state.player
-                                .finalDefeated
-                        );
+ctx.beginPath();
 
+ctx.arc(
+npc.x,
+npc.y - 8,
+9,
+0,
+Math.PI * 2
+);
 
-                    const discovered =
+ctx.fill();
 
-                        defeated ||
+ctx.textAlign =
+"center";
 
-                        state.player
-                            .discoveredBosses
-                            .includes(id);
+ctx.font =
+"bold 12px Arial";
 
+ctx.fillStyle =
+"#f0dfb8";
 
-                    const entry =
-                        document
-                            .createElement(
-                                "div"
-                            );
+ctx.fillText(
+npc.name,
+npc.x,
+npc.y - 30
+);
 
+ctx.font =
+"10px Arial";
 
-                    entry.className =
-                        "boss-entry";
+ctx.fillStyle =
+"#cac3b0";
 
+ctx.fillText(
+npc.role,
+npc.x,
+npc.y + 36
+);
 
-                    entry.innerHTML =
+}
+);
 
-                        discovered
+}
 
-                            ? `
-                                <div class="symbol">
-                                    ${icon}
-                                </div>
+/* =====================================================
+INIMIGOS
+====================================================== */
 
-                                <strong>
-                                    ${name}
-                                </strong>
+function drawEnemies() {
 
-                                <p>
-                                    ${
-                                        defeated
-                                            ? "Derrotado."
-                                            : "Registro descoberto."
-                                    }
-                                </p>
+state.world.enemies.forEach(
+enemy => {
 
-                                <p>
-                                    “Uma memória registrada
-                                    não desaparece tão facilmente.”
-                                </p>
-                            `
+if (
+enemy.dead
+) {
 
-                            : `
-                                <div class="symbol">
-                                    ?
-                                </div>
+return;
 
-                                <strong>
-                                    DESCONHECIDO
-                                </strong>
+}
 
-                                <p>
-                                    Explore Veyra para descobrir
-                                    este registro.
-                                </p>
-                            `;
+if (
+enemy.aggressive
+) {
 
+ctx.strokeStyle =
+"rgba(220,60,55,.11)";
 
-                    book.appendChild(
-                        entry
-                    );
+ctx.lineWidth =
+2;
 
-                }
-            );
-    }
+ctx.beginPath();
 
+ctx.arc(
+enemy.x,
+enemy.y,
+enemy.vision,
+0,
+Math.PI * 2
+);
 
-    /* =====================================================
-       LOJA
-    ====================================================== */
+ctx.stroke();
 
-    function openShop(npc) {
+}
 
-        state.shopNPC =
-            npc;
+ctx.fillStyle =
+"rgba(0,0,0,.3)";
 
+ctx.beginPath();
 
-        state.shopMode =
-            "buy";
+ctx.ellipse(
+enemy.x,
+enemy.y +
+enemy.radius,
+enemy.radius *
+1.1,
+enemy.radius *
+.42,
+0,
+0,
+Math.PI * 2
+);
 
+ctx.fill();
 
-        document
-            .querySelectorAll(
-                "#shopTabs .tab"
-            )
-            .forEach(
-                tab => {
+ctx.fillStyle =
+enemy.hitFlash > 0
+? "#fff"
+: enemy.color;
 
-                    tab.classList.toggle(
-                        "active",
-                        tab.dataset.shop ===
-                        "buy"
-                    );
+ctx.beginPath();
 
-                }
-            );
+if (
+enemy.type ===
+"progression" ||
+enemy.type ===
+"final"
+) {
 
+ctx.moveTo(
+enemy.x,
+enemy.y -
+enemy.radius
+);
 
-        must(
-            "shopTitle"
-        ).textContent =
-            `LOJA DE ${npc.name}`;
+ctx.lineTo(
+enemy.x +
+enemy.radius,
+enemy.y
+);
 
+ctx.lineTo(
+enemy.x,
+enemy.y +
+enemy.radius
+);
 
-        renderShop();
+ctx.lineTo(
+enemy.x -
+enemy.radius,
+enemy.y
+);
 
+ctx.closePath();
 
-        must(
-            "shopPanel"
-        ).classList
-            .remove(
-                "hidden"
-            );
-    }
+}
 
+else {
 
-    function renderShop() {
+ctx.arc(
+enemy.x,
+enemy.y,
+enemy.radius,
+0,
+Math.PI * 2
+);
 
-        const grid =
-            must(
-                "shopGrid"
-            );
+}
 
+ctx.fill();
 
-        grid.innerHTML =
-            "";
+ctx.strokeStyle =
 
+enemy.type ===
+"progression" ||
 
-        if (
-            state.shopMode ===
-            "buy"
-        ) {
+enemy.type ===
+"final"
 
-            [
-                "pocao",
-                "elixir",
-                "espadaFerro",
-                "armaduraCouro"
-            ].forEach(
-                id => {
+? "#e0ae63"
+: "#d0bd78";
 
-                    const item =
-                        ITEMS[id];
+ctx.lineWidth =
 
+enemy.type ===
+"progression" ||
 
-                    const row =
-                        createShopRow(
-                            item,
-                            `Comprar por ${item.value}`,
-                            () => {
+enemy.type ===
+"final"
 
-                                if (
-                                    state.player.money <
-                                    item.value
-                                ) {
+? 3
+: 1.5;
 
-                                    showToast(
-                                        "Dinheiro insuficiente."
-                                    );
+ctx.stroke();
 
-                                    return;
-                                }
+ctx.font =
 
+enemy.type ===
+"progression" ||
 
-                                state.player.money -=
-                                    item.value;
+enemy.type ===
+"final"
 
+? "24px Arial"
+: "19px Arial";
 
-                                addItem(
-                                    id,
-                                    1
-                                );
+ctx.textAlign =
+"center";
 
+ctx.fillText(
+enemy.icon,
+enemy.x,
+enemy.y + 7
+);
 
-                                showToast(
-                                    `${item.name} comprado.`
-                                );
+ctx.font =
+"bold 11px Arial";
 
+ctx.fillStyle =
 
-                                renderShop();
+enemy.type ===
+"progression" ||
 
-                                updateHUD();
+enemy.type ===
+"final"
 
-                            }
-                        );
+? "#ffcc8a"
+: "#ede2c2";
 
+ctx.fillText(
+enemy.name,
+enemy.x,
+enemy.y +
+enemy.radius +
+17
+);
 
-                    grid.appendChild(
-                        row
-                    );
+const barWidth =
+enemy.radius *
+2.5;
 
-                }
-            );
+ctx.fillStyle =
+"#211f1d";
 
+ctx.fillRect(
+enemy.x -
+barWidth / 2,
+enemy.y -
+enemy.radius -
+13,
+barWidth,
+5
+);
 
-            return;
-        }
+ctx.fillStyle =
+"#b84e48";
 
+ctx.fillRect(
+enemy.x -
+barWidth / 2,
+enemy.y -
+enemy.radius -
+13,
+barWidth *
+clamp(
+enemy.hp /
+enemy.maxHp,
+0,
+1
+),
+5
+);
 
-        Object
-            .entries(
-                state.player.inventory
-            )
-            .forEach(
-                (
-                    [
-                        id,
-                        amount
-                    ]
-                ) => {
+}
+);
 
-                    if (
-                        amount <= 0 ||
-                        !ITEMS[id]
-                    ) {
+}
 
-                        return;
-                    }
+/* =====================================================
+PORTAIS
+====================================================== */
 
+function drawPortals() {
 
-                    const item =
-                        ITEMS[id];
+state.world.portals.forEach(
+portal => {
 
+const unlocked =
 
-                    const price =
-                        Math.max(
-                            1,
-                            Math.floor(
-                                item.value *
-                                0.7
-                            )
-                        );
+typeof portal.requirement ===
+"function"
 
+? portal.requirement()
 
-                    const row =
-                        createShopRow(
-                            item,
-                            `Vender por ${price} • x${amount}`,
-                            () => {
+: true;
 
-                                if (
-                                    !removeItem(
-                                        id,
-                                        1
-                                    )
-                                ) {
+ctx.fillStyle =
+unlocked
+? "rgba(76,150,198,.20)"
+: "rgba(80,80,80,.15)";
 
-                                    return;
-                                }
+ctx.fillRect(
+portal.x,
+portal.y,
+portal.w,
+portal.h
+);
 
+ctx.strokeStyle =
+unlocked
+? "#8fbcd0"
+: "#686963";
 
-                                state.player.money +=
-                                    price;
+ctx.lineWidth =
+2;
 
+ctx.strokeRect(
+portal.x,
+portal.y,
+portal.w,
+portal.h
+);
 
-                                showToast(
-                                    `${item.name} vendido.`
-                                );
+ctx.textAlign =
+"center";
 
+ctx.font =
+"bold 12px Georgia";
 
-                                renderShop();
+ctx.fillStyle =
+unlocked
+? "#e3d19f"
+: "#94948b";
 
-                                updateHUD();
+ctx.fillText(
+unlocked
+? "CONTINUAR"
+: "BLOQUEADO",
+portal.x +
+portal.w / 2,
+portal.y -
+10
+);
 
-                            }
-                        );
+}
+);
 
+}
 
-                    grid.appendChild(
-                        row
-                    );
+/* =====================================================
+DROPS / EFEITOS
+====================================================== */
 
-                }
-            );
+function drawDrops() {
 
+const icons = {
 
-        if (
-            !grid.children
-                .length
-        ) {
+madeira: "🪵",
 
-            const empty =
-                document
-                    .createElement(
-                        "p"
-                    );
+carvao: "⬛",
 
+ferro: "⛓️",
 
-            empty.className =
-                "muted";
+ouro: "🪙",
 
+rubi: "♦",
 
-            empty.textContent =
-                "Você não possui itens para vender.";
+cristal: "💎",
 
+essencia: "✦"
 
-            grid.appendChild(
-                empty
-            );
+};
 
-        }
-    }
+state.world.drops.forEach(
+drop => {
 
+ctx.font =
+"19px Arial";
 
-    function createShopRow(
-        item,
-        actionText,
-        onClick
-    ) {
+ctx.textAlign =
+"center";
 
-        const row =
-            document
-                .createElement(
-                    "div"
-                );
+ctx.fillText(
+icons[
+drop.type
+] ||
+"✦",
+drop.x,
+drop.y
+);
 
+}
+);
 
-        row.className =
-            "shop-row";
+}
 
+function drawEffects() {
 
-        row.innerHTML = `
+state.world.effects.forEach(
+effect => {
 
-            <div class="shop-icon">
-                ${item.icon}
-            </div>
+if (
+effect.type ===
+"flower"
+) {
 
-            <div class="shop-info">
+const alpha =
+.4 +
+(
+Math.sin(
+state.time *
+2 +
+effect.phase
+) +
+1
+) *
+.16;
 
-                <strong>
-                    ${item.name}
-                </strong>
+ctx.fillStyle =
+`rgba(236,187,255,${alpha})`;
 
-                <small>
-                    Peso ${item.weight}
-                    •
-                    Valor base ${item.value}
-                </small>
+ctx.beginPath();
 
-            </div>
+ctx.arc(
+effect.x,
+effect.y,
+4,
+0,
+Math.PI * 2
+);
 
-            <div class="shop-price">
-                ${actionText}
-            </div>
+ctx.fill();
 
-            <button
-                class="primary-btn"
-                type="button"
-            >
-                OK
-            </button>
+}
 
-        `;
+else if (
+effect.type ===
+"dangerOrb"
+) {
 
+ctx.fillStyle =
+"rgba(220,150,255,.8)";
 
-        row
-            .querySelector(
-                "button"
-            )
-            .addEventListener(
-                "click",
-                onClick
-            );
+ctx.beginPath();
 
+ctx.arc(
+effect.x,
+effect.y,
+7,
+0,
+Math.PI * 2
+);
 
-        return row;
-    }
+ctx.fill();
 
+}
 
-    /* =====================================================
-       FINAL
-    ====================================================== */
+}
+);
 
-    function openFinalChoice() {
+}
 
-        state.finalChoiceShown =
-            true;
+/* =====================================================
+JOGADOR
+====================================================== */
 
+function drawPlayer() {
 
-        state.paused =
-            true;
+const player =
+state.player;
 
+if (
+!player
+) {
 
-        const choice =
-            window.confirm(
-                "Uma figura idêntica a você oferece uma escolha: aceitar a Quietude Absoluta.\n\nOK = aceitar.\nCancelar = lutar."
-            );
+return;
 
+}
 
-        state.player.finalChoice =
-            choice
-                ? "join"
-                : "fight";
+if (
 
+player.invincible >
+0 &&
 
-        state.paused =
-            false;
+Math.floor(
+player.invincible *
+10
+) %
+2 === 0
 
+) {
 
-        if (
-            choice
-        ) {
+return;
 
-            showEnding(
-                "Você escolheu a Quietude Absoluta. Veyra finalmente ficou em silêncio."
-            );
+}
 
+ctx.fillStyle =
+"rgba(0,0,0,.28)";
 
-            return;
-        }
+ctx.beginPath();
 
+ctx.ellipse(
+player.x,
+player.y + 20,
+21,
+8,
+0,
+0,
+Math.PI * 2
+);
 
-        const boss =
-            state.world
-                .enemies
-                .find(
-                    enemy =>
-                        enemy.id ===
-                        "other_self"
-                );
+ctx.fill();
 
+ctx.fillStyle =
+player.color;
 
-        if (
-            boss
-        ) {
+ctx.beginPath();
 
-            boss.accepted =
-                true;
+ctx.arc(
+player.x,
+player.y,
+player.radius,
+0,
+Math.PI * 2
+);
 
+ctx.fill();
 
-            boss.aggressive =
-                true;
+ctx.fillStyle =
+"#e5c3a2";
 
+ctx.beginPath();
 
-            boss.state =
-                "chasing";
+ctx.arc(
+player.x,
+player.y - 12,
+10,
+0,
+Math.PI * 2
+);
 
-        }
+ctx.fill();
 
+ctx.fillStyle =
+"#2d241f";
 
-        showToast(
-            "A batalha final começou."
-        );
-    }
+ctx.beginPath();
 
+ctx.arc(
+player.x,
+player.y - 16,
+10,
+Math.PI,
+Math.PI * 2
+);
 
-    function showEnding(message) {
+ctx.fill();
 
-        state.running =
-            false;
+ctx.textAlign =
+"center";
 
+ctx.font =
+"bold 13px Arial";
 
-        state.paused =
-            true;
+ctx.fillStyle =
+"#fff0c8";
 
+ctx.fillText(
+player.name,
+player.x,
+player.y - 40
+);
 
-        saveGame(
-            false
-        );
+}
 
+function drawWorldLabels() {
 
-        must(
-            "transitionMessage"
-        ).textContent =
-            message;
+if (
+state.area ===
+"village"
+) {
 
+ctx.textAlign =
+"center";
 
-        must(
-            "transitionScreen"
-        ).classList
-            .remove(
-                "hidden"
-            );
+ctx.font =
+"bold 22px Georgia";
 
+ctx.fillStyle =
+"rgba(255,229,172,.78)";
 
-        setTimeout(
-            () => {
+ctx.fillText(
+"PRAÇA DA VILA",
+1600,
+840
+);
 
-                must(
-                    "transitionScreen"
-                ).classList
-                    .add(
-                        "hidden"
-                    );
+ctx.font =
+"14px Georgia";
 
+ctx.fillStyle =
+"rgba(255,255,255,.58)";
 
-                showScreen(
-                    "menu"
-                );
+ctx.fillText(
+"A Quietude ainda não alcançou este lugar por completo...",
+1600,
+865
+);
 
+ctx.font =
+"bold 14px Georgia";
 
-                updateContinueButton();
+ctx.fillStyle =
+"rgba(220,210,190,.55)";
 
-            },
-            2600
-        );
-    }
+ctx.fillText(
+"TERRAS TOCADAS PELO VAZIO",
+2700,
+1040
+);
 
+}
 
-    /* =====================================================
-       PARTÍCULAS
-    ====================================================== */
+}
 
-    function updateVisualEffects(dt) {
+function drawParticles() {
 
-        state.world.particles =
-            state.world
-                .particles
-                .filter(
-                    particle => {
+state.world.particles.forEach(
+particle => {
 
-                        particle.x +=
-                            particle.vx *
-                            dt;
+ctx.globalAlpha =
+clamp(
+particle.life /
+.8,
+0,
+1
+);
 
+ctx.fillStyle =
+particle.color;
 
-                        particle.y +=
-                            particle.vy *
-                            dt;
+ctx.fillRect(
+particle.x,
+particle.y,
+4,
+4
+);
 
+}
+);
 
-                        particle.vy +=
-                            35 *
-                            dt;
+ctx.globalAlpha =
+1;
 
+}
 
-                        particle.life -=
-                            dt;
+/* =====================================================
+SALVAMENTO
+====================================================== */
 
+function saveGame(
+showMessage = true
+) {
 
-                        return (
-                            particle.life >
-                            0
-                        );
+if (
+!state.player
+) {
 
-                    }
-                );
+return;
 
+}
 
-        state.world.effects =
-            state.world
-                .effects
-                .filter(
-                    effect => {
+try {
 
-                        if (
-                            effect.type ===
-                            "dangerOrb"
-                        ) {
+const save = {
 
-                            effect.life -=
-                                dt;
+version: 14,
 
+area:
+state.area,
 
-                            return (
-                                effect.life >
-                                0
-                            );
+player:
+state.player,
 
-                        }
+houseMode:
+state.houseMode,
 
+currentHouseId:
+state.currentHouse?.id ||
+null,
 
-                        return true;
+houseReturn:
+state.houseReturn,
 
-                    }
-                );
-    }
+savedAt:
+new Date().toISOString()
 
+};
 
-    function spawnParticles(
-        x,
-        y,
-        color,
-        amount
-    ) {
+localStorage.setItem(
+SAVE_KEY,
+JSON.stringify(
+save
+)
+);
 
-        for (
-            let i = 0;
-            i < amount;
-            i++
-        ) {
+if (
+showMessage
+) {
 
-            const angle =
-                random(
-                    0,
-                    Math.PI * 2
-                );
+showToast(
+"Jogo salvo com sucesso."
+);
 
+}
 
-            const speed =
-                random(
-                    25,
-                    90
-                );
+updateContinueButton();
 
+}
 
-            state.world
-                .particles
-                .push({
+catch (
+error
+) {
 
-                    x,
+console.error(
+"Erro ao salvar:",
+error
+);
 
-                    y,
+if (
+showMessage
+) {
 
-                    vx:
-                        Math.cos(
-                            angle
-                        ) *
-                        speed,
+showToast(
+"Não foi possível salvar o jogo."
+);
 
-                    vy:
-                        Math.sin(
-                            angle
-                        ) *
-                        speed,
+}
 
-                    life:
-                        random(
-                            0.35,
-                            0.8
-                        ),
+}
 
-                    color
+}
 
-                });
+function loadGame() {
 
-        }
-    }
+try {
 
+const raw =
+localStorage.getItem(
+SAVE_KEY
+);
 
-    /* =====================================================
-       CÂMERA
-    ====================================================== */
+if (
+!raw
+) {
 
-    function updateCamera() {
+return false;
 
-        if (
-            !state.player
-        ) {
+}
 
-            return;
-        }
+const save =
+JSON.parse(
+raw
+);
 
+if (
+!save?.player
+) {
 
-        const viewW =
-            window.innerWidth;
+return false;
 
+}
 
-        const viewH =
-            window.innerHeight;
+const character =
+CHARACTERS.find(
+item =>
+item.id ===
+save.player.characterId
+);
 
+if (
+!character
+) {
 
-        state.camera.x =
-            clamp(
-                state.player.x -
-                viewW / 2,
-                0,
-                Math.max(
-                    0,
-                    state.world.width -
-                    viewW
-                )
-            );
+return false;
 
+}
 
-        state.camera.y =
-            clamp(
-                state.player.y -
-                viewH / 2,
-                0,
-                Math.max(
-                    0,
-                    state.world.height -
-                    viewH
-                )
-            );
-    }
+state.player =
+save.player;
 
+state.area =
+REGIONS[
+save.area
+]
+? save.area
+: "village";
 
-    /* =====================================================
-       HUD
-    ====================================================== */
+repairLoadedPlayer(
+character
+);
 
-    function updateHUD() {
+state.houseMode =
+false;
 
-        const player =
-            state.player;
+state.currentHouse =
+null;
 
+state.houseReturn =
+null;
 
-        if (
-            !player
-        ) {
+state.dialogue =
+null;
 
-            return;
-        }
+state.travel =
+null;
 
+state.battle =
+null;
 
-        must(
-            "hudAvatar"
-        ).textContent =
-            player.icon;
+state.finalChoiceShown =
+Boolean(
+state.player.finalChoice
+);
 
+buildWorld();
 
-        must(
-            "hudClass"
-        ).textContent =
-            player.className;
+if (
 
+save.houseMode &&
 
-        must(
-            "hudName"
-        ).textContent =
-            player.name;
+state.area ===
+"village" &&
 
+save.currentHouseId
 
-        must(
-            "moneyText"
-        ).textContent =
-            player.money;
+) {
 
+const savedHouse =
+state.world.buildings.find(
+building =>
+building.id ===
+save.currentHouseId
+);
 
-        must(
-            "levelText"
-        ).textContent =
-            player.level;
+if (
+savedHouse
+) {
 
+state.houseMode =
+true;
 
-        must(
-            "xpText"
-        ).textContent =
-            `${player.xp} / ${player.xpToNext}`;
+state.currentHouse =
+savedHouse;
 
+state.houseReturn =
+save.houseReturn ||
+{
 
-        must(
-            "hpText"
-        ).textContent =
-            `${Math.ceil(player.hp)}/${player.maxHp}`;
+x:
+savedHouse.x +
+savedHouse.w / 2,
 
+y:
+savedHouse.y +
+savedHouse.h +
+58
 
-        must(
-            "magicText"
-        ).textContent =
-            `${Math.ceil(player.magic)}/${Math.ceil(player.maxMagic)}`;
+};
 
+placePlayerInsideHouse();
 
-        must(
-            "energyText"
-        ).textContent =
-            `${Math.ceil(player.energy)}/${player.maxEnergy}`;
+}
 
+}
 
-        must(
-            "hungerText"
-        ).textContent =
-            Math.ceil(
-                player.hunger
-            );
+if (
+!state.houseMode
+) {
 
+state.player.x =
+clamp(
+Number(
+state.player.x
+) ||
+480,
+90,
+state.world.width -
+90
+);
 
-        must(
-            "fatigueText"
-        ).textContent =
-            Math.ceil(
-                player.fatigue
-            );
+state.player.y =
+clamp(
+Number(
+state.player.y
+) ||
+610,
+90,
+state.world.height -
+90
+);
 
+}
 
-        setBar(
-            "hpBar",
-            player.hp,
-            player.maxHp
-        );
+updateHUD();
 
+showScreen(
+"game"
+);
 
-        setBar(
-            "magicBar",
-            player.magic,
-            player.maxMagic
-        );
+state.running =
+true;
 
+state.paused =
+false;
 
-        setBar(
-            "energyBar",
-            player.energy,
-            player.maxEnergy
-        );
+state.lastTime =
+performance.now();
 
+requestAnimationFrame(
+gameLoop
+);
 
-        updateInteractionHint();
-    }
+showToast(
+"Jogo carregado."
+);
 
+return true;
 
-    function setBar(
-        id,
-        value,
-        max
-    ) {
+}
 
-        const percentage =
+catch (
+error
+) {
 
-            max > 0
+console.error(
+"Save inválido:",
+error
+);
 
-                ? clamp(
-                    (
-                        value /
-                        max
-                    ) *
-                    100,
-                    0,
-                    100
-                )
+try {
 
-                : 0;
+localStorage.removeItem(
+SAVE_KEY
+);
 
+}
 
-        must(
-            id
-        ).style.width =
-            `${percentage}%`;
-    }
+catch {
 
+}
 
-    function updateInteractionHint() {
+return false;
 
-        const hint =
-            must(
-                "interactionHint"
-            );
+}
 
+}
 
-        if (
+function repairLoadedPlayer(character) {
 
-            !state.player ||
+const player =
+state.player;
 
-            state.paused ||
+player.inventory =
+player.inventory ||
+{};
 
-            state.dialogue ||
+Object.keys(
+ITEMS
+)
+.forEach(
+id => {
 
-            state.travel ||
+const value =
+Number(
+player.inventory[id]
+);
 
-            state.battle
+player.inventory[id] =
 
-        ) {
+Number.isFinite(
+value
+) &&
+value >= 0
 
-            hint.classList
-                .add(
-                    "hidden"
-                );
+? Math.floor(
+value
+)
 
+: 0;
 
-            return;
-        }
+}
+);
 
+player.equipment =
+player.equipment ||
+{
 
-        const interaction =
-            getInteraction();
+weapon: null,
 
+armor: null,
 
-        if (
-            !interaction
-        ) {
+tool: "machado"
 
-            hint.classList
-                .add(
-                    "hidden"
-                );
+};
 
+player.quest =
+player.quest ||
+{};
 
-            return;
-        }
+player.quest.wood =
+player.quest.wood ||
+{
 
+state: "none",
 
-        hint.classList
-            .remove(
-                "hidden"
-            );
+need: 10,
 
+rewardXP: 100,
 
-        if (
-            interaction.type ===
-            "house"
-        ) {
+rewardMoney: 80
 
-            must(
-                "interactionKey"
-            ).textContent =
-                "Z";
+};
 
+player.quest.coal =
+player.quest.coal ||
+{
 
-            must(
-                "interactionText"
-            ).textContent =
-                "Entrar";
+state: "none",
 
+need: 8,
 
-            return;
-        }
+rewardXP: 130,
 
+rewardMoney: 110
 
-        if (
-            interaction.type ===
-            "exitHouse"
-        ) {
+};
 
-            must(
-                "interactionKey"
-            ).textContent =
-                "Z";
+player.defeatedBosses =
 
+Array.isArray(
+player.defeatedBosses
+)
 
-            must(
-                "interactionText"
-            ).textContent =
-                "Sair";
+? player.defeatedBosses
 
+: [];
 
-            return;
-        }
+player.discoveredBosses =
 
+Array.isArray(
+player.discoveredBosses
+)
 
-        must(
-            "interactionKey"
-        ).textContent =
-            "E";
+? player.discoveredBosses
 
+: [];
 
-        const labels = {
+player.unlockedAreas =
 
-            npc:
-                interaction.object
-                    .merchant
+Array.isArray(
+player.unlockedAreas
+)
 
-                    ? "Abrir loja"
+? player.unlockedAreas
 
-                    : interaction.object
-                        .questId
+: [
+"village"
+];
 
-                        ? "Ver missão"
+player.collected =
+player.collected ||
+{};
 
-                        : "Conversar",
+player.hellTypesDefeated =
+player.hellTypesDefeated ||
+{};
 
-            tree:
-                "Cortar árvore",
+player.checkpoint =
+player.checkpoint ||
+{
 
-            resource:
-                `Coletar ${
-                    ITEMS[
-                        interaction.object
-                            .type
-                    ]?.name ||
-                    "recurso"
-                }`,
+area: "village",
 
-            boss:
-                interaction.object
-                    .accepted
-                    ? "Atacar"
-                    : "Aceitar batalha",
+x: 480,
 
-            enemy:
-                "Atacar"
+y: 610
 
-        };
+};
 
+player.maxHp =
+Math.max(
+1,
+Number(
+player.maxHp
+) ||
+character.hp
+);
 
-        must(
-            "interactionText"
-        ).textContent =
-            labels[
-                interaction.type
-            ] ||
-            "Interagir";
-    }
+player.hp =
+clamp(
+Number(
+player.hp
+) ||
+player.maxHp,
+0,
+player.maxHp
+);
 
+player.maxMagic =
+Math.max(
+1,
+Number(
+player.maxMagic
+) ||
+character.magic
+);
 
-    /* =====================================================
-       UPDATE
-    ====================================================== */
+player.magic =
+clamp(
+Number(
+player.magic
+) ||
+player.maxMagic,
+0,
+player.maxMagic
+);
 
-    function update(dt) {
+player.maxEnergy =
+Math.max(
+1,
+Number(
+player.maxEnergy
+) ||
+character.energy
+);
 
-        if (
-            !state.player
-        ) {
+player.energy =
+clamp(
+Number(
+player.energy
+) ||
+player.maxEnergy,
+0,
+player.maxEnergy
+);
 
-            return;
-        }
+player.hunger =
+clamp(
+Number(
+player.hunger
+) ||
+100,
+0,
+100
+);
 
+player.fatigue =
+clamp(
+Number(
+player.fatigue
+) ||
+100,
+0,
+100
+);
 
-        state.portalCooldown =
-            Math.max(
-                0,
-                state.portalCooldown -
-                dt
-            );
+player.money =
+Math.max(
+0,
+Math.floor(
+Number(
+player.money
+) ||
+0
+)
+);
 
+player.level =
+Math.max(
+1,
+Math.floor(
+Number(
+player.level
+) ||
+1
+)
+);
 
-        state.player.invincible =
-            Math.max(
-                0,
-                state.player.invincible -
-                dt
-            );
+player.xp =
+Math.max(
+0,
+Math.floor(
+Number(
+player.xp
+) ||
+0
+)
+);
 
+player.xpToNext =
+Math.max(
+1,
+Math.floor(
+Number(
+player.xpToNext
+) ||
+100
+)
+);
 
-        state.player.attackCooldown =
-            Math.max(
-                0,
-                state.player.attackCooldown -
-                dt
-            );
+player.radius =
+18;
 
+player.invincible =
+0;
 
-        updateMovement(
-            dt
-        );
+player.attackCooldown =
+0;
 
+player.dead =
+false;
 
-        updateSurvival(
-            dt
-        );
+player.adaptiveBuff =
+false;
 
+}
 
-        updateEnemies(
-            dt
-        );
+function hasSave() {
 
+try {
 
-        updateResources(
-            dt
-        );
+return Boolean(
+localStorage.getItem(
+SAVE_KEY
+)
+);
 
+}
 
-        updateVisualEffects(
-            dt
-        );
+catch {
 
+return false;
 
-        checkPortals();
+}
 
+}
 
-        updateCamera();
+function updateContinueButton() {
 
+const available =
+hasSave();
 
-        updateHUD();
+must("continueBtn").disabled =
+!available;
 
+must("continueHint").textContent =
+available
+? "Existe um jogo salvo neste navegador."
+: "Nenhum jogo salvo encontrado.";
 
-        if (
-            !must(
-                "mapPanel"
-            ).classList
-                .contains(
-                    "hidden"
-                )
-        ) {
+}
 
-            drawLargeMap();
+/* =====================================================
+PAINÉIS
+====================================================== */
 
-        }
-    }
+function closeAllPanels() {
 
+document
+.querySelectorAll(
+".modal"
+)
+.forEach(
+modal =>
+modal.classList.add(
+"hidden"
+)
+);
 
-    function gameLoop(timestamp) {
+closeDialogue();
 
-        if (
-            !state.running
-        ) {
+state.travel =
+null;
 
-            return;
-        }
+state.battle =
+null;
 
+state.questNPC =
+null;
 
-        const dt =
-            Math.min(
-                (
-                    timestamp -
-                    state.lastTime
-                ) /
-                1000,
-                0.05
-            );
+state.shopNPC =
+null;
 
+state.paused =
+false;
 
-        state.lastTime =
-            timestamp;
+}
 
+function returnToMenu() {
 
-        state.time +=
-            dt;
+if (
+state.player
+) {
 
+saveGame(
+false
+);
 
-        update(
-            dt
-        );
+}
 
+state.running =
+false;
 
-        draw();
+state.paused =
+false;
 
+state.keys.clear();
 
-        requestAnimationFrame(
-            gameLoop
-        );
-    }
+closeAllPanels();
 
+showScreen(
+"menu"
+);
 
-    /* =====================================================
-       DRAW
-    ====================================================== */
+updateContinueButton();
 
-    function draw() {
+}
 
-        ctx.clearRect(
-            0,
-            0,
-            window.innerWidth,
-            window.innerHeight
-        );
+function togglePanel(
+panelId,
+onOpen
+) {
 
+const panel =
+must(
+panelId
+);
 
-        ctx.save();
+const opening =
+panel.classList.contains(
+"hidden"
+);
 
+closeOverlayPanelsExcept(
+panelId
+);
 
-        ctx.translate(
-            -state.camera.x,
-            -state.camera.y
-        );
+if (
+opening
+) {
 
+if (
+onOpen
+) {
 
-        if (
-            state.houseMode
-        ) {
+onOpen();
 
-            drawHouseInterior();
+}
 
-            drawPlayer();
+panel.classList.remove(
+"hidden"
+);
 
-            drawParticles();
+}
 
-        }
+else {
 
-        else {
+panel.classList.add(
+"hidden"
+);
 
-            drawGround();
+}
 
-            drawPaths();
+}
 
-            drawAmbientDetails();
+function closeOverlayPanelsExcept(
+exceptionId = null
+) {
 
-            drawBuildings();
+[
+"inventoryPanel",
+"mapPanel",
+"bookPanel",
+"shopPanel",
+"questPanel"
+]
+.forEach(
+id => {
 
-            drawTrees();
+if (
+id !==
+exceptionId
+) {
 
-            drawResources();
+must(id)
+.classList.add(
+"hidden"
+);
 
-            drawObstacles();
+}
 
-            drawPortals();
+}
+);
 
-            drawDrops();
+}
 
-            drawEffects();
+/* =====================================================
+TECLADO
+====================================================== */
 
-            drawNPCs();
+function handleKeyDown(event) {
 
-            drawEnemies();
+const key =
+event.key.toLowerCase();
 
-            drawPlayer();
+const movementKeys = [
 
-            drawWorldLabels();
+"w",
+"a",
+"s",
+"d",
+"arrowup",
+"arrowdown",
+"arrowleft",
+"arrowright"
 
-            drawParticles();
+];
 
-        }
+if (
+movementKeys.includes(
+key
+)
+) {
 
+event.preventDefault();
 
-        ctx.restore();
+state.keys.add(
+key
+);
 
+return;
 
-        drawMinimap();
-    }
+}
 
+if (
+event.repeat
+) {
 
-    function drawGround() {
+return;
 
-        const visual =
-            REGIONS[
-                state.area
-            ].visual;
+}
 
+if (
+event.key ===
+"Enter" &&
+state.dialogue
+) {
 
-        const colors = {
+event.preventDefault();
 
-            village:
-                "#536b4b",
+advanceDialogue();
 
-            forest:
-                "#3e6141",
+return;
 
-            grove:
-                "#34583a",
+}
 
-            mountains:
-                "#92999b",
+if (
+key ===
+"e"
+) {
 
-            iron:
-                "#292e31",
+event.preventDefault();
 
-            ruby:
-                "#48252b",
+playerAction();
 
-            shadow:
-                "#171d2e",
+return;
 
-            fairy:
-                "#56436b",
+}
 
-            sky:
-                "#92b0c7",
+if (
+key ===
+"z"
+) {
 
-            hell:
-                "#45201f",
+event.preventDefault();
 
-            final:
-                "#18171b"
+handleZ();
 
-        };
+return;
 
+}
 
-        ctx.fillStyle =
-            colors[
-                visual
-            ] ||
-            "#536b4b";
+if (
+key ===
+"i" &&
+screens.game.classList.contains(
+"active"
+)
+) {
 
+event.preventDefault();
 
-        ctx.fillRect(
-            0,
-            0,
-            state.world.width,
-            state.world.height
-        );
+togglePanel(
+"inventoryPanel",
+updateInventory
+);
 
+return;
 
-        const tile =
-            64;
+}
 
+if (
+key ===
+"m" &&
+screens.game.classList.contains(
+"active"
+)
+) {
 
-        for (
-            let y = 70;
-            y <
-            state.world.height -
-                70;
-            y += tile
-        ) {
+event.preventDefault();
 
-            for (
-                let x = 70;
-                x <
-                state.world.width -
-                    70;
-                x += tile
-            ) {
+togglePanel(
+"mapPanel",
+drawLargeMap
+);
 
-                ctx.fillStyle =
+return;
 
-                    (
-                        (
-                            x / tile +
-                            y / tile
-                        ) %
-                        2 === 0
-                    )
+}
 
-                        ? "rgba(255,255,255,.014)"
+if (
+key ===
+"l" &&
+screens.game.classList.contains(
+"active"
+)
+) {
 
-                        : "rgba(0,0,0,.018)";
+event.preventDefault();
 
+togglePanel(
+"bookPanel",
+renderBook
+);
 
-                ctx.fillRect(
-                    x,
-                    y,
-                    tile,
-                    tile
-                );
+return;
 
-            }
+}
 
-        }
+if (
+key ===
+"1" &&
+state.player
+) {
 
+event.preventDefault();
 
-        if (
-            state.area ===
-            "village"
-        ) {
+useItem(
+"pocao"
+);
 
-            ctx.fillStyle =
-                "rgba(18,22,18,.24)";
+return;
 
+}
 
-            ctx.beginPath();
+if (
+key ===
+"2" &&
+state.player
+) {
 
+event.preventDefault();
 
-            ctx.ellipse(
-                2700,
-                1080,
-                420,
-                340,
-                -0.1,
-                0,
-                Math.PI * 2
-            );
+useItem(
+"elixir"
+);
 
+return;
 
-            ctx.fill();
+}
 
-        }
-    }
+if (
+key ===
+"escape"
+) {
 
+if (
+state.dialogue
+) {
 
-    function drawPaths() {
+closeDialogue();
 
-        if (
-            state.area !==
-            "village"
-        ) {
+return;
 
-            return;
-        }
+}
 
+if (
+state.travel
+) {
 
-        ctx.fillStyle =
-            "#b79a68";
+cancelTravel();
 
+return;
 
-        ctx.globalAlpha =
-            0.7;
+}
 
+if (
+state.battle
+) {
 
-        ctx.fillRect(
-            70,
-            1080,
-            state.world.width -
-            140,
-            120
-        );
+declineBattle();
 
+return;
 
-        ctx.fillRect(
-            1540,
-            70,
-            120,
-            state.world.height -
-            140
-        );
+}
 
+const openPanel =
 
-        ctx.fillRect(
-            1700,
-            1110,
-            1000,
-            70
-        );
+[
+"inventoryPanel",
+"mapPanel",
+"bookPanel",
+"shopPanel",
+"questPanel"
+]
 
+.map(
+id =>
+must(id)
+)
 
-        ctx.fillRect(
-            600,
-            1110,
-            100,
-            600
-        );
+.find(
+panel =>
+!panel.classList.contains(
+"hidden"
+)
+);
 
+if (
+openPanel
+) {
 
-        ctx.globalAlpha =
-            1;
-    }
+openPanel.classList.add(
+"hidden"
+);
 
+return;
 
-    function drawAmbientDetails() {
+}
 
-        const visual =
-            REGIONS[
-                state.area
-            ].visual;
+if (
+screens.game.classList.contains(
+"active"
+)
+) {
 
+returnToMenu();
 
-        if (
-            [
-                "village",
-                "forest",
-                "grove"
-            ].includes(
-                visual
-            )
-        ) {
+}
 
-            ctx.strokeStyle =
-                "rgba(30,75,38,.42)";
+}
 
+}
 
-            ctx.lineWidth =
-                2;
+/* =====================================================
+BOTÕES
+====================================================== */
 
+function bindClick(
+id,
+handler
+) {
 
-            for (
-                let y = 100;
-                y <
-                state.world.height -
-                    100;
-                y += 75
-            ) {
+must(id).addEventListener(
+"click",
+handler
+);
 
-                for (
-                    let x = 100;
-                    x <
-                    state.world.width -
-                        100;
-                    x += 75
-                ) {
+}
 
-                    if (
-                        (
-                            x * 7 +
-                            y * 3
-                        ) %
-                        13 < 5
-                    ) {
+function bindEvents() {
 
-                        ctx.beginPath();
+bindClick(
+"newGameBtn",
+startNewGame
+);
 
+bindClick(
+"continueBtn",
+() => {
 
-                        ctx.moveTo(
-                            x,
-                            y + 5
-                        );
+if (
+!loadGame()
+) {
 
+updateContinueButton();
 
-                        ctx.lineTo(
-                            x - 4,
-                            y - 4
-                        );
+}
 
+}
+);
 
-                        ctx.moveTo(
-                            x,
-                            y + 5
-                        );
+bindClick(
+"howToBtn",
+() =>
+showScreen(
+"how"
+)
+);
 
+bindClick(
+"creditsBtn",
+() =>
+showScreen(
+"credits"
+)
+);
 
-                        ctx.lineTo(
-                            x + 5,
-                            y - 5
-                        );
+bindClick(
+"closeHowBtn",
+() =>
+showScreen(
+"menu"
+)
+);
 
+bindClick(
+"closeCreditsBtn",
+() =>
+showScreen(
+"menu"
+)
+);
 
-                        ctx.stroke();
+bindClick(
+"backMenuBtn",
+() =>
+showScreen(
+"menu"
+)
+);
 
-                    }
+bindClick(
+"startGameBtn",
+startGame
+);
 
-                }
+bindClick(
+"saveBtn",
+() =>
+saveGame(
+true
+)
+);
 
-            }
+bindClick(
+"menuBtn",
+returnToMenu
+);
 
-        }
+bindClick(
+"inventoryBtn",
+() =>
+togglePanel(
+"inventoryPanel",
+updateInventory
+)
+);
 
+bindClick(
+"mapBtn",
+() =>
+togglePanel(
+"mapPanel",
+drawLargeMap
+)
+);
 
-        if (
-            visual ===
-            "hell"
-        ) {
+bindClick(
+"bookBtn",
+() =>
+togglePanel(
+"bookPanel",
+renderBook
+)
+);
 
-            ctx.fillStyle =
-                "rgba(225,70,30,.18)";
+bindClick(
+"travelYes",
+confirmTravel
+);
 
+bindClick(
+"travelNo",
+cancelTravel
+);
 
-            for (
-                let i = 0;
-                i < 24;
-                i++
-            ) {
+bindClick(
+"battleAccept",
+acceptBattle
+);
 
-                const x =
-                    (
-                        i *
-                        421
-                    ) %
-                    state.world.width;
+bindClick(
+"battleDecline",
+declineBattle
+);
 
+bindClick(
+"respawnBtn",
+respawnPlayer
+);
 
-                const y =
-                    (
-                        i *
-                        257
-                    ) %
-                    state.world.height;
+bindClick(
+"questActionBtn",
+executeQuestAction
+);
 
+must("playerName")
+.addEventListener(
+"keydown",
+event => {
 
-                ctx.beginPath();
+if (
+event.key ===
+"Enter"
+) {
 
+startGame();
 
-                ctx.arc(
-                    x,
-                    y,
-                    8 +
-                    (
-                        i % 5
-                    ),
-                    0,
-                    Math.PI *
-                    2
-                );
+}
 
+}
+);
 
-                ctx.fill();
+document
+.querySelectorAll(
+"[data-close]"
+)
+.forEach(
+button => {
 
-            }
+button.addEventListener(
+"click",
+() => {
 
-        }
-    }
+const target =
+button.dataset.close;
 
+if (
+$(target)
+) {
 
-    function drawBuildings() {
+$(target)
+.classList.add(
+"hidden"
+);
 
-        state.world
-            .buildings
-            .forEach(
-                building => {
+}
 
-                    ctx.fillStyle =
-                        "rgba(0,0,0,.27)";
+}
+);
 
+}
+);
 
-                    ctx.fillRect(
-                        building.x +
-                        13,
-                        building.y +
-                        16,
-                        building.w,
-                        building.h
-                    );
+document
+.querySelectorAll(
+"#inventoryTabs .tab"
+)
+.forEach(
+tab => {
 
+tab.addEventListener(
+"click",
+() => {
 
-                    ctx.fillStyle =
-                        building.color;
+document
+.querySelectorAll(
+"#inventoryTabs .tab"
+)
+.forEach(
+item =>
+item.classList.remove(
+"active"
+)
+);
 
+tab.classList.add(
+"active"
+);
 
-                    ctx.fillRect(
-                        building.x,
-                        building.y,
-                        building.w,
-                        building.h
-                    );
+state.inventoryCategory =
+tab.dataset.cat;
 
+updateInventory();
 
-                    ctx.strokeStyle =
-                        "rgba(30,25,20,.45)";
+}
+);
 
+}
+);
 
-                    ctx.lineWidth =
-                        4;
+document
+.querySelectorAll(
+"#shopTabs .tab"
+)
+.forEach(
+tab => {
 
+tab.addEventListener(
+"click",
+() => {
 
-                    ctx.strokeRect(
-                        building.x +
-                        3,
-                        building.y +
-                        3,
-                        building.w -
-                        6,
-                        building.h -
-                        6
-                    );
+document
+.querySelectorAll(
+"#shopTabs .tab"
+)
+.forEach(
+item =>
+item.classList.remove(
+"active"
+)
+);
 
+tab.classList.add(
+"active"
+);
 
-                    ctx.fillStyle =
-                        building.roof;
+state.shopMode =
+tab.dataset.shop;
 
+renderShop();
 
-                    ctx.beginPath();
+}
+);
 
+}
+);
 
-                    ctx.moveTo(
-                        building.x -
-                        24,
-                        building.y
-                    );
+window.addEventListener(
+"keydown",
+handleKeyDown
+);
 
+window.addEventListener(
+"keyup",
+event =>
+state.keys.delete(
+event.key.toLowerCase()
+)
+);
 
-                    ctx.lineTo(
-                        building.x +
-                        building.w /
-                        2,
-                        building.y -
-                        95
-                    );
+window.addEventListener(
+"blur",
+() =>
+state.keys.clear()
+);
 
+window.addEventListener(
+"resize",
+resizeCanvas
+);
 
-                    ctx.lineTo(
-                        building.x +
-                        building.w +
-                        24,
-                        building.y
-                    );
+}
 
+/* =====================================================
+INICIALIZAÇÃO
+====================================================== */
 
-                    ctx.closePath();
+function initialize() {
 
+createCharacterCards();
 
-                    ctx.fill();
+resizeCanvas();
 
+bindEvents();
 
-                    ctx.fillStyle =
-                        "#452d25";
+updateContinueButton();
 
+}
 
-                    ctx.fillRect(
-                        building.x +
-                        building.w /
-                        2 -
-                        25,
-                        building.y +
-                        building.h -
-                        70,
-                        50,
-                        70
-                    );
-
-
-                    ctx.fillStyle =
-                        "#dbc77d";
-
-
-                    ctx.fillRect(
-                        building.x +
-                        35,
-                        building.y +
-                        60,
-                        50,
-                        42
-                    );
-
-
-                    ctx.fillRect(
-                        building.x +
-                        building.w -
-                        85,
-                        building.y +
-                        60,
-                        50,
-                        42
-                    );
-
-
-                    ctx.font =
-                        "bold 12px Georgia";
-
-
-                    ctx.textAlign =
-                        "center";
-
-
-                    ctx.fillStyle =
-                        "#f1e0ba";
-
-
-                    ctx.fillText(
-                        building.name,
-                        building.x +
-                        building.w /
-                        2,
-                        building.y +
-                        building.h +
-                        27
-                    );
-
-                }
-            );
-    }
-
-
-    function drawHouseInterior() {
-
-        const building =
-            state.currentHouse;
-
-
-        const room =
-            getHouseRoom();
-
-
-        ctx.fillStyle =
-            "#614736";
-
-
-        ctx.fillRect(
-            0,
-            0,
-            state.world.width,
-            state.world.height
-        );
-
-
-        ctx.fillStyle =
-            "#9b7855";
-
-
-        ctx.fillRect(
-            room.x,
-            room.y,
-            room.w,
-            room.h
-        );
-
-
-        ctx.strokeStyle =
-            "#d2b477";
-
-
-        ctx.lineWidth =
-            5;
-
-
-        ctx.strokeRect(
-            room.x,
-            room.y,
-            room.w,
-            room.h
-        );
-
-
-        ctx.fillStyle =
-            "#4e3024";
-
-
-        ctx.fillRect(
-            room.x +
-            80,
-            room.y +
-            115,
-            150,
-            70
-        );
-
-
-        ctx.fillStyle =
-            "#c39765";
-
-
-        ctx.fillRect(
-            room.x +
-            105,
-            room.y +
-            135,
-            100,
-            12
-        );
-
-
-        ctx.fillStyle =
-            "#785a42";
-
-
-        ctx.fillRect(
-            room.x +
-            room.w -
-            120,
-            room.y +
-            90,
-            78,
-            110
-        );
-
-
-        ctx.fillStyle =
-            "#e8d8b3";
-
-
-        ctx.font =
-            "bold 18px Georgia";
-
-
-        ctx.textAlign =
-            "center";
-
-
-        ctx.fillText(
-            building?.name ||
-            "INTERIOR",
-            room.x +
-            room.w /
-            2,
-            room.y -
-            25
-        );
-
-
-        ctx.font =
-            "11px Arial";
-
-
-        ctx.fillText(
-            "[Z] SAIR",
-            room.x +
-            room.w /
-            2,
-            room.y +
-            room.h +
-            30
-        );
-    }
-
-
-    function drawTrees() {
-
-        state.world
-            .trees
-            .forEach(
-                tree => {
-
-                    if (
-                        !tree.alive
-                    ) {
-
-                        return;
-                    }
-
-
-                    const sway =
-                        Math.sin(
-                            state.time *
-                            1.7 +
-                            tree.x
-                        ) *
-                        2;
-
-
-                    ctx.fillStyle =
-                        "rgba(0,0,0,.22)";
-
-
-                    ctx.beginPath();
-
-
-                    ctx.ellipse(
-                        tree.x,
-                        tree.y +
-                        28,
-                        34,
-                        11,
-                        0,
-                        0,
-                        Math.PI *
-                        2
-                    );
-
-
-                    ctx.fill();
-
-
-                    ctx.fillStyle =
-                        "#684a30";
-
-
-                    ctx.fillRect(
-                        tree.x -
-                        9,
-                        tree.y,
-                        18,
-                        42
-                    );
-
-
-                    ctx.fillStyle =
-                        "#305c36";
-
-
-                    ctx.beginPath();
-
-
-                    ctx.arc(
-                        tree.x +
-                        sway,
-                        tree.y -
-                        14,
-                        34,
-                        0,
-                        Math.PI *
-                        2
-                    );
-
-
-                    ctx.fill();
-
-
-                    ctx.fillStyle =
-                        "#447a45";
-
-
-                    ctx.beginPath();
-
-
-                    ctx.arc(
-                        tree.x -
-                        14 +
-                        sway,
-                        tree.y -
-                        27,
-                        24,
-                        0,
-                        Math.PI *
-                        2
-                    );
-
-
-                    ctx.arc(
-                        tree.x +
-                        14 +
-                        sway,
-                        tree.y -
-                        27,
-                        25,
-                        0,
-                        Math.PI *
-                        2
-                    );
-
-
-                    ctx.fill();
-
-
-                    if (
-                        distance(
-                            tree,
-                            state.player
-                        ) <
-                        85
-                    ) {
-
-                        ctx.strokeStyle =
-                            "#d8bc73";
-
-
-                        ctx.lineWidth =
-                            2;
-
-
-                        ctx.beginPath();
-
-
-                        ctx.arc(
-                            tree.x,
-                            tree.y -
-                            10,
-                            40,
-                            0,
-                            Math.PI *
-                            2
-                        );
-
-
-                        ctx.stroke();
-
-                    }
-
-                }
-            );
-    }
-
-
-    function drawResources() {
-
-        const icons = {
-            ferro: "⛓️",
-            rubi: "♦",
-            cristal: "💎",
-            ouro: "🪙",
-            carvao: "⬛"
-        };
-
-
-        state.world
-            .resources
-            .forEach(
-                resource => {
-
-                    if (
-                        !resource.alive
-                    ) {
-
-                        return;
-                    }
-
-
-                    ctx.font =
-                        "20px Arial";
-
-
-                    ctx.textAlign =
-                        "center";
-
-
-                    ctx.fillText(
-                        icons[
-                            resource.type
-                        ] ||
-                        "✦",
-                        resource.x,
-                        resource.y +
-                        7
-                    );
-
-                }
-            );
-    }
-
-
-    function drawObstacles() {
-
-        state.world
-            .obstacles
-            .forEach(
-                obstacle => {
-
-                    if (
-                        obstacle.type ===
-                            "building" ||
-                        obstacle.type ===
-                            "tree"
-                    ) {
-
-                        return;
-                    }
-
-
-                    if (
-                        obstacle.type ===
-                        "wall"
-                    ) {
-
-                        ctx.fillStyle =
-                            "#424a46";
-
-
-                        ctx.fillRect(
-                            obstacle.x,
-                            obstacle.y,
-                            obstacle.w,
-                            obstacle.h
-                        );
-
-
-                        return;
-                    }
-
-
-                    if (
-                        obstacle.type ===
-                        "fountain"
-                    ) {
-
-                        ctx.fillStyle =
-                            "#89877c";
-
-
-                        ctx.beginPath();
-
-
-                        ctx.ellipse(
-                            obstacle.x +
-                            obstacle.w /
-                            2,
-                            obstacle.y +
-                            obstacle.h /
-                            2,
-                            obstacle.w /
-                            2,
-                            obstacle.h /
-                            2,
-                            0,
-                            0,
-                            Math.PI *
-                            2
-                        );
-
-
-                        ctx.fill();
-
-
-                        ctx.fillStyle =
-                            "#5b98aa";
-
-
-                        ctx.beginPath();
-
-
-                        ctx.ellipse(
-                            obstacle.x +
-                            obstacle.w /
-                            2,
-                            obstacle.y +
-                            obstacle.h /
-                            2,
-                            obstacle.w /
-                            2 -
-                            22,
-                            obstacle.h /
-                            2 -
-                            22,
-                            0,
-                            0,
-                            Math.PI *
-                            2
-                        );
-
-
-                        ctx.fill();
-
-
-                        return;
-                    }
-
-
-                    const colors = {
-
-                        rock:
-                            "#737771",
-
-                        snowrock:
-                            "#bec5c7",
-
-                        ironrock:
-                            "#666c6f",
-
-                        rubyrock:
-                            "#73384b",
-
-                        darkrock:
-                            "#34364e",
-
-                        basalt:
-                            "#443437"
-
-                    };
-
-
-                    ctx.fillStyle =
-                        colors[
-                            obstacle.type
-                        ] ||
-                        "#737771";
-
-
-                    ctx.beginPath();
-
-
-                    ctx.ellipse(
-                        obstacle.x +
-                        obstacle.w /
-                        2,
-                        obstacle.y +
-                        obstacle.h /
-                        2,
-                        obstacle.w /
-                        2,
-                        obstacle.h /
-                        2,
-                        -0.12,
-                        0,
-                        Math.PI *
-                        2
-                    );
-
-
-                    ctx.fill();
-
-                }
-            );
-    }
-
-
-    function drawNPCs() {
-
-        state.world
-            .npcs
-            .forEach(
-                npc => {
-
-                    ctx.fillStyle =
-                        "rgba(0,0,0,.23)";
-
-
-                    ctx.beginPath();
-
-
-                    ctx.ellipse(
-                        npc.x,
-                        npc.y +
-                        19,
-                        18,
-                        7,
-                        0,
-                        0,
-                        Math.PI *
-                        2
-                    );
-
-
-                    ctx.fill();
-
-
-                    ctx.fillStyle =
-                        npc.color;
-
-
-                    ctx.beginPath();
-
-
-                    ctx.arc(
-                        npc.x,
-                        npc.y,
-                        17,
-                        0,
-                        Math.PI *
-                        2
-                    );
-
-
-                    ctx.fill();
-
-
-                    ctx.fillStyle =
-                        "#28272b";
-
-
-                    ctx.beginPath();
-
-
-                    ctx.arc(
-                        npc.x,
-                        npc.y -
-                        8,
-                        9,
-                        0,
-                        Math.PI *
-                        2
-                    );
-
-
-                    ctx.fill();
-
-
-                    ctx.textAlign =
-                        "center";
-
-
-                    ctx.font =
-                        "bold 12px Arial";
-
-
-                    ctx.fillStyle =
-                        "#f0dfb8";
-
-
-                    ctx.fillText(
-                        npc.name,
-                        npc.x,
-                        npc.y -
-                        30
-                    );
-
-
-                    ctx.font =
-                        "10px Arial";
-
-
-                    ctx.fillStyle =
-                        "#cac3b0";
-
-
-                    ctx.fillText(
-                        npc.role,
-                        npc.x,
-                        npc.y +
-                        36
-                    );
-
-                }
-            );
-    }
-
-
-    function drawEnemies() {
-
-        state.world
-            .enemies
-            .forEach(
-                enemy => {
-
-                    if (
-                        enemy.dead
-                    ) {
-
-                        return;
-                    }
-
-
-                    if (
-                        enemy.aggressive
-                    ) {
-
-                        ctx.strokeStyle =
-                            "rgba(220,60,55,.11)";
-
-
-                        ctx.lineWidth =
-                            2;
-
-
-                        ctx.beginPath();
-
-
-                        ctx.arc(
-                            enemy.x,
-                            enemy.y,
-                            enemy.vision,
-                            0,
-                            Math.PI *
-                            2
-                        );
-
-
-                        ctx.stroke();
-
-                    }
-
-
-                    ctx.fillStyle =
-                        "rgba(0,0,0,.3)";
-
-
-                    ctx.beginPath();
-
-
-                    ctx.ellipse(
-                        enemy.x,
-                        enemy.y +
-                        enemy.radius,
-                        enemy.radius *
-                        1.1,
-                        enemy.radius *
-                        0.42,
-                        0,
-                        0,
-                        Math.PI *
-                        2
-                    );
-
-
-                    ctx.fill();
-
-
-                    ctx.fillStyle =
-                        enemy.hitFlash >
-                        0
-                            ? "#fff"
-                            : enemy.color;
-
-
-                    ctx.beginPath();
-
-
-                    if (
-
-                        enemy.type ===
-                            "progression" ||
-
-                        enemy.type ===
-                            "final"
-
-                    ) {
-
-                        ctx.moveTo(
-                            enemy.x,
-                            enemy.y -
-                            enemy.radius
-                        );
-
-
-                        ctx.lineTo(
-                            enemy.x +
-                            enemy.radius,
-                            enemy.y
-                        );
-
-
-                        ctx.lineTo(
-                            enemy.x,
-                            enemy.y +
-                            enemy.radius
-                        );
-
-
-                        ctx.lineTo(
-                            enemy.x -
-                            enemy.radius,
-                            enemy.y
-                        );
-
-
-                        ctx.closePath();
-
-                    }
-
-                    else {
-
-                        ctx.arc(
-                            enemy.x,
-                            enemy.y,
-                            enemy.radius,
-                            0,
-                            Math.PI *
-                            2
-                        );
-
-                    }
-
-
-                    ctx.fill();
-
-
-                    ctx.strokeStyle =
-
-                        enemy.type ===
-                            "progression" ||
-
-                        enemy.type ===
-                            "final"
-
-                            ? "#e0ae63"
-                            : "#d0bd78";
-
-
-                    ctx.lineWidth =
-
-                        enemy.type ===
-                            "progression" ||
-
-                        enemy.type ===
-                            "final"
-
-                            ? 3
-                            : 1.5;
-
-
-                    ctx.stroke();
-
-
-                    ctx.font =
-
-                        enemy.type ===
-                            "progression" ||
-
-                        enemy.type ===
-                            "final"
-
-                            ? "24px Arial"
-                            : "19px Arial";
-
-
-                    ctx.textAlign =
-                        "center";
-
-
-                    ctx.fillText(
-                        enemy.icon,
-                        enemy.x,
-                        enemy.y +
-                        7
-                    );
-
-
-                    ctx.font =
-                        "bold 11px Arial";
-
-
-                    ctx.fillStyle =
-
-                        enemy.type ===
-                            "progression" ||
-
-                        enemy.type ===
-                            "final"
-
-                            ? "#ffcc8a"
-                            : "#ede2c2";
-
-
-                    ctx.fillText(
-                        enemy.name,
-                        enemy.x,
-                        enemy.y +
-                        enemy.radius +
-                        17
-                    );
-
-
-                    const barWidth =
-                        enemy.radius *
-                        2.5;
-
-
-                    ctx.fillStyle =
-                        "#211f1d";
-
-
-                    ctx.fillRect(
-                        enemy.x -
-                        barWidth /
-                        2,
-                        enemy.y -
-                        enemy.radius -
-                        13,
-                        barWidth,
-                        5
-                    );
-
-
-                    ctx.fillStyle =
-                        "#b84e48";
-
-
-                    ctx.fillRect(
-                        enemy.x -
-                        barWidth /
-                        2,
-                        enemy.y -
-                        enemy.radius -
-                        13,
-                        barWidth *
-                        clamp(
-                            enemy.hp /
-                            enemy.maxHp,
-                            0,
-                            1
-                        ),
-                        5
-                    );
-
-                }
-            );
-    }
-
-
-    function drawPortals() {
-
-        state.world
-            .portals
-            .forEach(
-                portal => {
-
-                    const unlocked =
-
-                        typeof portal
-                            .requirement ===
-                            "function"
-
-                            ? portal
-                                .requirement()
-
-                            : true;
-
-
-                    ctx.fillStyle =
-                        unlocked
-
-                            ? "rgba(76,150,198,.20)"
-
-                            : "rgba(80,80,80,.15)";
-
-
-                    ctx.fillRect(
-                        portal.x,
-                        portal.y,
-                        portal.w,
-                        portal.h
-                    );
-
-
-                    ctx.strokeStyle =
-                        unlocked
-
-                            ? "#8fbcd0"
-
-                            : "#686963";
-
-
-                    ctx.lineWidth =
-                        2;
-
-
-                    ctx.strokeRect(
-                        portal.x,
-                        portal.y,
-                        portal.w,
-                        portal.h
-                    );
-
-
-                    ctx.textAlign =
-                        "center";
-
-
-                    ctx.font =
-                        "bold 12px Georgia";
-
-
-                    ctx.fillStyle =
-                        unlocked
-
-                            ? "#e3d19f"
-
-                            : "#94948b";
-
-
-                    ctx.fillText(
-                        unlocked
-                            ? "CONTINUAR"
-                            : "BLOQUEADO",
-                        portal.x +
-                        portal.w /
-                        2,
-                        portal.y -
-                        10
-                    );
-
-                }
-            );
-    }
-
-
-    function drawDrops() {
-
-        const icons = {
-
-            madeira:
-                "🪵",
-
-            carvao:
-                "⬛",
-
-            ferro:
-                "⛓️",
-
-            ouro:
-                "🪙",
-
-            rubi:
-                "♦",
-
-            cristal:
-                "💎",
-
-            essencia:
-                "✦"
-
-        };
-
-
-        state.world
-            .drops
-            .forEach(
-                drop => {
-
-                    ctx.font =
-                        "19px Arial";
-
-
-                    ctx.textAlign =
-                        "center";
-
-
-                    ctx.fillText(
-                        icons[
-                            drop.type
-                        ] ||
-                        "✦",
-                        drop.x,
-                        drop.y
-                    );
-
-                }
-            );
-    }
-
-
-    function drawEffects() {
-
-        state.world
-            .effects
-            .forEach(
-                effect => {
-
-                    if (
-                        effect.type ===
-                        "flower"
-                    ) {
-
-                        const alpha =
-
-                            0.4 +
-
-                            (
-                                Math.sin(
-                                    state.time *
-                                    2 +
-                                    effect.phase
-                                ) +
-                                1
-                            ) *
-                            0.16;
-
-
-                        ctx.fillStyle =
-                            `rgba(236,187,255,${alpha})`;
-
-
-                        ctx.beginPath();
-
-
-                        ctx.arc(
-                            effect.x,
-                            effect.y,
-                            4,
-                            0,
-                            Math.PI *
-                            2
-                        );
-
-
-                        ctx.fill();
-
-                    }
-
-                    else if (
-                        effect.type ===
-                        "dangerOrb"
-                    ) {
-
-                        ctx.fillStyle =
-                            "rgba(220,150,255,.8)";
-
-
-                        ctx.beginPath();
-
-
-                        ctx.arc(
-                            effect.x,
-                            effect.y,
-                            7,
-                            0,
-                            Math.PI *
-                            2
-                        );
-
-
-                        ctx.fill();
-
-                    }
-
-                }
-            );
-    }
-
-
-    function drawPlayer() {
-
-        const player =
-            state.player;
-
-
-        if (
-            !player
-        ) {
-
-            return;
-        }
-
-
-        if (
-
-            player.invincible >
-                0 &&
-
-            Math.floor(
-                player.invincible *
-                10
-            ) %
-            2 === 0
-
-        ) {
-
-            return;
-        }
-
-
-        ctx.fillStyle =
-            "rgba(0,0,0,.28)";
-
-
-        ctx.beginPath();
-
-
-        ctx.ellipse(
-            player.x,
-            player.y +
-            20,
-            21,
-            8,
-            0,
-            0,
-            Math.PI *
-            2
-        );
-
-
-        ctx.fill();
-
-
-        ctx.fillStyle =
-            player.color;
-
-
-        ctx.beginPath();
-
-
-        ctx.arc(
-            player.x,
-            player.y,
-            player.radius,
-            0,
-            Math.PI *
-            2
-        );
-
-
-        ctx.fill();
-
-
-        ctx.fillStyle =
-            "#e5c3a2";
-
-
-        ctx.beginPath();
-
-
-        ctx.arc(
-            player.x,
-            player.y -
-            12,
-            10,
-            0,
-            Math.PI *
-            2
-        );
-
-
-        ctx.fill();
-
-
-        ctx.fillStyle =
-            "#2d241f";
-
-
-        ctx.beginPath();
-
-
-        ctx.arc(
-            player.x,
-            player.y -
-            16,
-            10,
-            Math.PI,
-            Math.PI *
-            2
-        );
-
-
-        ctx.fill();
-
-
-        ctx.textAlign =
-            "center";
-
-
-        ctx.font =
-            "bold 13px Arial";
-
-
-        ctx.fillStyle =
-            "#fff0c8";
-
-
-        ctx.fillText(
-            player.name,
-            player.x,
-            player.y -
-            40
-        );
-    }
-
-
-    function drawWorldLabels() {
-
-        if (
-            state.area ===
-            "village"
-        ) {
-
-            ctx.textAlign =
-                "center";
-
-
-            ctx.font =
-                "bold 22px Georgia";
-
-
-            ctx.fillStyle =
-                "rgba(255,229,172,.78)";
-
-
-            ctx.fillText(
-                "PRAÇA DA VILA",
-                1600,
-                840
-            );
-
-
-            ctx.font =
-                "14px Georgia";
-
-
-            ctx.fillStyle =
-                "rgba(255,255,255,.58)";
-
-
-            ctx.fillText(
-                "A Quietude ainda não alcançou este lugar por completo...",
-                1600,
-                865
-            );
-
-
-            ctx.font =
-                "bold 14px Georgia";
-
-
-            ctx.fillStyle =
-                "rgba(220,210,190,.55)";
-
-
-            ctx.fillText(
-                "TERRAS TOCADAS PELO VAZIO",
-                2700,
-                1040
-            );
-
-        }
-    }
-
-
-    function drawParticles() {
-
-        state.world
-            .particles
-            .forEach(
-                particle => {
-
-                    ctx.globalAlpha =
-                        clamp(
-                            particle.life /
-                            0.8,
-                            0,
-                            1
-                        );
-
-
-                    ctx.fillStyle =
-                        particle.color;
-
-
-                    ctx.fillRect(
-                        particle.x,
-                        particle.y,
-                        4,
-                        4
-                    );
-
-                }
-            );
-
-
-        ctx.globalAlpha =
-            1;
-    }
-
-
-    /* =====================================================
-       SALVAMENTO
-    ====================================================== */
-
-    function saveGame(
-        showMessage = true
-    ) {
-
-        if (
-            !state.player
-        ) {
-
-            return;
-        }
-
-
-        try {
-
-            const save = {
-
-                version:
-                    14,
-
-                area:
-                    state.area,
-
-                player:
-                    state.player,
-
-                houseMode:
-                    state.houseMode,
-
-                currentHouseId:
-                    state.currentHouse
-                        ?.id ||
-                    null,
-
-                houseReturn:
-                    state.houseReturn,
-
-                savedAt:
-                    new Date()
-                        .toISOString()
-
-            };
-
-
-            localStorage.setItem(
-                SAVE_KEY,
-                JSON.stringify(
-                    save
-                )
-            );
-
-
-            if (
-                showMessage
-            ) {
-
-                showToast(
-                    "Jogo salvo com sucesso."
-                );
-
-            }
-
-
-            updateContinueButton();
-
-        }
-
-        catch (
-            error
-        ) {
-
-            console.error(
-                "Erro ao salvar:",
-                error
-            );
-
-
-            if (
-                showMessage
-            ) {
-
-                showToast(
-                    "Não foi possível salvar o jogo."
-                );
-
-            }
-
-        }
-    }
-
-
-    function loadGame() {
-
-        try {
-
-            const raw =
-                localStorage
-                    .getItem(
-                        SAVE_KEY
-                    );
-
-
-            if (
-                !raw
-            ) {
-
-                return false;
-            }
-
-
-            const save =
-                JSON.parse(
-                    raw
-                );
-
-
-            if (
-                !save?.player
-            ) {
-
-                return false;
-            }
-
-
-            const character =
-                CHARACTERS
-                    .find(
-                        item =>
-                            item.id ===
-                            save.player
-                                .characterId
-                    );
-
-
-            if (
-                !character
-            ) {
-
-                return false;
-            }
-
-
-            state.player =
-                save.player;
-
-
-            state.area =
-                REGIONS[
-                    save.area
-                ]
-
-                    ? save.area
-
-                    : "village";
-
-
-            repairLoadedPlayer(
-                character
-            );
-
-
-            state.houseMode =
-                false;
-
-
-            state.currentHouse =
-                null;
-
-
-            state.houseReturn =
-                null;
-
-
-            state.dialogue =
-                null;
-
-
-            state.travel =
-                null;
-
-
-            state.battle =
-                null;
-
-
-            state.finalChoiceShown =
-                Boolean(
-                    state.player
-                        .finalChoice
-                );
-
-
-            buildWorld();
-
-
-            /*
-             * Se o jogador salvou dentro
-             * de uma casa, restaura o interior.
-             */
-
-            if (
-
-                save.houseMode &&
-
-                state.area ===
-                    "village" &&
-
-                save.currentHouseId
-
-            ) {
-
-                const savedHouse =
-                    state.world
-                        .buildings
-                        .find(
-                            building =>
-                                building.id ===
-                                save.currentHouseId
-                        );
-
-
-                if (
-                    savedHouse
-                ) {
-
-                    state.houseMode =
-                        true;
-
-
-                    state.currentHouse =
-                        savedHouse;
-
-
-                    state.houseReturn =
-
-                        save.houseReturn ||
-
-                        {
-                            x:
-                                savedHouse.x +
-                                savedHouse.w /
-                                2,
-
-                            y:
-                                savedHouse.y +
-                                savedHouse.h +
-                                58
-                        };
-
-
-                    state.player.x =
-                        clamp(
-                            Number(
-                                state.player.x
-                            ) ||
-                            380,
-                            205,
-                            650
-                        );
-
-
-                    state.player.y =
-                        clamp(
-                            Number(
-                                state.player.y
-                            ) ||
-                            260,
-                            165,
-                            430
-                        );
-
-                }
-
-            }
-
-
-            if (
-                !state.houseMode
-            ) {
-
-                state.player.x =
-                    clamp(
-                        Number(
-                            state.player.x
-                        ) ||
-                        480,
-                        90,
-                        state.world.width -
-                        90
-                    );
-
-
-                state.player.y =
-                    clamp(
-                        Number(
-                            state.player.y
-                        ) ||
-                        610,
-                        90,
-                        state.world.height -
-                        90
-                    );
-
-            }
-
-
-            updateHUD();
-
-
-            showScreen(
-                "game"
-            );
-
-
-            state.running =
-                true;
-
-
-            state.paused =
-                false;
-
-
-            state.lastTime =
-                performance.now();
-
-
-            requestAnimationFrame(
-                gameLoop
-            );
-
-
-            showToast(
-                "Jogo carregado."
-            );
-
-
-            return true;
-
-        }
-
-        catch (
-            error
-        ) {
-
-            console.error(
-                "Save inválido:",
-                error
-            );
-
-
-            try {
-
-                localStorage
-                    .removeItem(
-                        SAVE_KEY
-                    );
-
-            }
-            catch {
-
-                /* armazenamento indisponível */
-
-            }
-
-
-            return false;
-        }
-    }
-
-
-    function repairLoadedPlayer(
-        character
-    ) {
-
-        const player =
-            state.player;
-
-
-        player.inventory =
-            player.inventory ||
-            {};
-
-
-        Object
-            .keys(
-                ITEMS
-            )
-            .forEach(
-                id => {
-
-                    const value =
-                        Number(
-                            player.inventory[
-                                id
-                            ]
-                        );
-
-
-                    player.inventory[
-                        id
-                    ] =
-
-                        Number.isFinite(
-                            value
-                        ) &&
-                        value >= 0
-
-                            ? Math.floor(
-                                value
-                            )
-
-                            : 0;
-
-                }
-            );
-
-
-        player.equipment =
-            player.equipment ||
-            {
-                weapon: null,
-                armor: null,
-                tool: "machado"
-            };
-
-
-        player.quest =
-            player.quest ||
-            {};
-
-
-        player.quest.wood =
-            player.quest.wood ||
-            {
-                state: "none",
-                need: 10,
-                rewardXP: 100,
-                rewardMoney: 80
-            };
-
-
-        player.quest.coal =
-            player.quest.coal ||
-            {
-                state: "none",
-                need: 8,
-                rewardXP: 130,
-                rewardMoney: 110
-            };
-
-
-        player.defeatedBosses =
-            Array.isArray(
-                player.defeatedBosses
-            )
-                ? player.defeatedBosses
-                : [];
-
-
-        player.discoveredBosses =
-            Array.isArray(
-                player.discoveredBosses
-            )
-                ? player.discoveredBosses
-                : [];
-
-
-        player.unlockedAreas =
-            Array.isArray(
-                player.unlockedAreas
-            )
-                ? player.unlockedAreas
-                : ["village"];
-
-
-        player.collected =
-            player.collected ||
-            {};
-
-
-        player.hellTypesDefeated =
-            player.hellTypesDefeated ||
-            {};
-
-
-        player.checkpoint =
-            player.checkpoint ||
-            {
-                area: "village",
-                x: 480,
-                y: 610
-            };
-
-
-        player.maxHp =
-            Math.max(
-                1,
-                Number(
-                    player.maxHp
-                ) ||
-                character.hp
-            );
-
-
-        player.hp =
-            clamp(
-                Number(
-                    player.hp
-                ) ||
-                player.maxHp,
-                0,
-                player.maxHp
-            );
-
-
-        player.maxMagic =
-            Math.max(
-                1,
-                Number(
-                    player.maxMagic
-                ) ||
-                character.magic
-            );
-
-
-        player.magic =
-            clamp(
-                Number(
-                    player.magic
-                ) ||
-                player.maxMagic,
-                0,
-                player.maxMagic
-            );
-
-
-        player.maxEnergy =
-            Math.max(
-                1,
-                Number(
-                    player.maxEnergy
-                ) ||
-                character.energy
-            );
-
-
-        player.energy =
-            clamp(
-                Number(
-                    player.energy
-                ) ||
-                player.maxEnergy,
-                0,
-                player.maxEnergy
-            );
-
-
-        player.hunger =
-            clamp(
-                Number(
-                    player.hunger
-                ) ||
-                100,
-                0,
-                100
-            );
-
-
-        player.fatigue =
-            clamp(
-                Number(
-                    player.fatigue
-                ) ||
-                100,
-                0,
-                100
-            );
-
-
-        player.money =
-            Math.max(
-                0,
-                Math.floor(
-                    Number(
-                        player.money
-                    ) ||
-                    0
-                )
-            );
-
-
-        player.level =
-            Math.max(
-                1,
-                Math.floor(
-                    Number(
-                        player.level
-                    ) ||
-                    1
-                )
-            );
-
-
-        player.xp =
-            Math.max(
-                0,
-                Math.floor(
-                    Number(
-                        player.xp
-                    ) ||
-                    0
-                )
-            );
-
-
-        player.xpToNext =
-            Math.max(
-                1,
-                Math.floor(
-                    Number(
-                        player.xpToNext
-                    ) ||
-                    100
-                )
-            );
-
-
-        player.radius =
-            18;
-
-
-        player.invincible =
-            0;
-
-
-        player.attackCooldown =
-            0;
-
-
-        player.dead =
-            false;
-
-
-        player.adaptiveBuff =
-            false;
-    }
-
-
-    function hasSave() {
-
-        try {
-
-            return Boolean(
-                localStorage
-                    .getItem(
-                        SAVE_KEY
-                    )
-            );
-
-        }
-
-        catch {
-
-            return false;
-        }
-    }
-
-
-    function updateContinueButton() {
-
-        const available =
-            hasSave();
-
-
-        must(
-            "continueBtn"
-        ).disabled =
-            !available;
-
-
-        must(
-            "continueHint"
-        ).textContent =
-
-            available
-
-                ? "Existe um jogo salvo neste navegador."
-
-                : "Nenhum jogo salvo encontrado.";
-    }
-
-
-    /* =====================================================
-       MENU E PAINÉIS
-    ====================================================== */
-
-    function closeAllPanels() {
-
-        document
-            .querySelectorAll(
-                ".modal"
-            )
-            .forEach(
-                modal =>
-                    modal.classList
-                        .add(
-                            "hidden"
-                        )
-            );
-
-
-        closeDialogue();
-
-
-        state.travel =
-            null;
-
-
-        state.battle =
-            null;
-
-
-        state.questNPC =
-            null;
-
-
-        state.shopNPC =
-            null;
-
-
-        state.paused =
-            false;
-    }
-
-
-    function returnToMenu() {
-
-        if (
-            state.player
-        ) {
-
-            saveGame(
-                false
-            );
-
-        }
-
-
-        state.running =
-            false;
-
-
-        state.paused =
-            false;
-
-
-        state.keys.clear();
-
-
-        closeAllPanels();
-
-
-        showScreen(
-            "menu"
-        );
-
-
-        updateContinueButton();
-    }
-
-
-    function togglePanel(
-        panelId,
-        onOpen
-    ) {
-
-        const panel =
-            must(
-                panelId
-            );
-
-
-        const opening =
-            panel.classList
-                .contains(
-                    "hidden"
-                );
-
-
-        closeOverlayPanelsExcept(
-            panelId
-        );
-
-
-        if (
-            opening
-        ) {
-
-            if (
-                onOpen
-            ) {
-
-                onOpen();
-
-            }
-
-
-            panel.classList
-                .remove(
-                    "hidden"
-                );
-
-        }
-
-        else {
-
-            panel.classList
-                .add(
-                    "hidden"
-                );
-
-        }
-    }
-
-
-    function closeOverlayPanelsExcept(
-        exceptionId = null
-    ) {
-
-        [
-            "inventoryPanel",
-            "mapPanel",
-            "bookPanel",
-            "shopPanel",
-            "questPanel"
-
-        ].forEach(
-            id => {
-
-                if (
-                    id !==
-                    exceptionId
-                ) {
-
-                    must(
-                        id
-                    ).classList
-                        .add(
-                            "hidden"
-                        );
-
-                }
-
-            }
-        );
-    }
-
-
-    /* =====================================================
-       TECLAS
-    ====================================================== */
-
-    function handleKeyDown(event) {
-
-        const key =
-            event.key
-                .toLowerCase();
-
-
-        const movementKeys = [
-
-            "w",
-            "a",
-            "s",
-            "d",
-            "arrowup",
-            "arrowdown",
-            "arrowleft",
-            "arrowright"
-
-        ];
-
-
-        if (
-            movementKeys.includes(
-                key
-            )
-        ) {
-
-            event.preventDefault();
-
-
-            state.keys.add(
-                key
-            );
-
-
-            return;
-        }
-
-
-        if (
-            event.repeat
-        ) {
-
-            return;
-        }
-
-
-        if (
-            event.key ===
-                "Enter" &&
-            state.dialogue
-        ) {
-
-            event.preventDefault();
-
-
-            advanceDialogue();
-
-
-            return;
-        }
-
-
-        if (
-            key ===
-            "e"
-        ) {
-
-            event.preventDefault();
-
-
-            playerAction();
-
-
-            return;
-        }
-
-
-        if (
-            key ===
-            "z"
-        ) {
-
-            event.preventDefault();
-
-
-            handleZ();
-
-
-            return;
-        }
-
-
-        if (
-
-            key ===
-                "i" &&
-
-            screens.game
-                .classList
-                .contains(
-                    "active"
-                )
-
-        ) {
-
-            event.preventDefault();
-
-
-            togglePanel(
-                "inventoryPanel",
-                updateInventory
-            );
-
-
-            return;
-        }
-
-
-        if (
-
-            key ===
-                "m" &&
-
-            screens.game
-                .classList
-                .contains(
-                    "active"
-                )
-
-        ) {
-
-            event.preventDefault();
-
-
-            togglePanel(
-                "mapPanel",
-                drawLargeMap
-            );
-
-
-            return;
-        }
-
-
-        if (
-
-            key ===
-                "l" &&
-
-            screens.game
-                .classList
-                .contains(
-                    "active"
-                )
-
-        ) {
-
-            event.preventDefault();
-
-
-            togglePanel(
-                "bookPanel",
-                renderBook
-            );
-
-
-            return;
-        }
-
-
-        if (
-            key ===
-                "1" &&
-            state.player
-        ) {
-
-            event.preventDefault();
-
-
-            useItem(
-                "pocao"
-            );
-
-
-            return;
-        }
-
-
-        if (
-            key ===
-                "2" &&
-            state.player
-        ) {
-
-            event.preventDefault();
-
-
-            useItem(
-                "elixir"
-            );
-
-
-            return;
-        }
-
-
-        if (
-            key ===
-            "escape"
-        ) {
-
-            if (
-                state.dialogue
-            ) {
-
-                closeDialogue();
-
-                return;
-            }
-
-
-            if (
-                state.travel
-            ) {
-
-                cancelTravel();
-
-                return;
-            }
-
-
-            if (
-                state.battle
-            ) {
-
-                declineBattle();
-
-                return;
-            }
-
-
-            const openPanel =
-
-                [
-                    "inventoryPanel",
-                    "mapPanel",
-                    "bookPanel",
-                    "shopPanel",
-                    "questPanel"
-                ]
-
-                    .map(
-                        id =>
-                            must(id)
-                    )
-
-                    .find(
-                        panel =>
-                            !panel.classList
-                                .contains(
-                                    "hidden"
-                                )
-                    );
-
-
-            if (
-                openPanel
-            ) {
-
-                openPanel.classList
-                    .add(
-                        "hidden"
-                    );
-
-
-                return;
-            }
-
-
-            if (
-                screens.game
-                    .classList
-                    .contains(
-                        "active"
-                    )
-            ) {
-
-                returnToMenu();
-
-            }
-
-        }
-    }
-
-
-    /* =====================================================
-       BOTÕES
-    ====================================================== */
-
-    function bindClick(
-        id,
-        handler
-    ) {
-
-        must(
-            id
-        ).addEventListener(
-            "click",
-            handler
-        );
-    }
-
-
-    function bindEvents() {
-
-        bindClick(
-            "newGameBtn",
-            startNewGame
-        );
-
-
-        bindClick(
-            "continueBtn",
-            () => {
-
-                if (
-                    !loadGame()
-                ) {
-
-                    updateContinueButton();
-
-                }
-
-            }
-        );
-
-
-        bindClick(
-            "howToBtn",
-            () =>
-                showScreen(
-                    "how"
-                )
-        );
-
-
-        bindClick(
-            "creditsBtn",
-            () =>
-                showScreen(
-                    "credits"
-                )
-        );
-
-
-        bindClick(
-            "closeHowBtn",
-            () =>
-                showScreen(
-                    "menu"
-                )
-        );
-
-
-        bindClick(
-            "closeCreditsBtn",
-            () =>
-                showScreen(
-                    "menu"
-                )
-        );
-
-
-        bindClick(
-            "backMenuBtn",
-            () =>
-                showScreen(
-                    "menu"
-                )
-        );
-
-
-        bindClick(
-            "startGameBtn",
-            startGame
-        );
-
-
-        bindClick(
-            "saveBtn",
-            () =>
-                saveGame(
-                    true
-                )
-        );
-
-
-        bindClick(
-            "menuBtn",
-            returnToMenu
-        );
-
-
-        bindClick(
-            "inventoryBtn",
-            () =>
-                togglePanel(
-                    "inventoryPanel",
-                    updateInventory
-                )
-        );
-
-
-        bindClick(
-            "mapBtn",
-            () =>
-                togglePanel(
-                    "mapPanel",
-                    drawLargeMap
-                )
-        );
-
-
-        bindClick(
-            "bookBtn",
-            () =>
-                togglePanel(
-                    "bookPanel",
-                    renderBook
-                )
-        );
-
-
-        bindClick(
-            "travelYes",
-            confirmTravel
-        );
-
-
-        bindClick(
-            "travelNo",
-            cancelTravel
-        );
-
-
-        bindClick(
-            "battleAccept",
-            acceptBattle
-        );
-
-
-        bindClick(
-            "battleDecline",
-            declineBattle
-        );
-
-
-        bindClick(
-            "respawnBtn",
-            respawnPlayer
-        );
-
-
-        bindClick(
-            "questActionBtn",
-            executeQuestAction
-        );
-
-
-        must(
-            "playerName"
-        ).addEventListener(
-            "keydown",
-            event => {
-
-                if (
-                    event.key ===
-                    "Enter"
-                ) {
-
-                    startGame();
-
-                }
-
-            }
-        );
-
-
-        /*
-         * Botões X das janelas.
-         */
-
-        document
-            .querySelectorAll(
-                "[data-close]"
-            )
-            .forEach(
-                button => {
-
-                    button.addEventListener(
-                        "click",
-                        () => {
-
-                            const target =
-                                button.dataset
-                                    .close;
-
-
-                            if (
-                                $(target)
-                            ) {
-
-                                $(target)
-                                    .classList
-                                    .add(
-                                        "hidden"
-                                    );
-
-                            }
-
-                        }
-                    );
-
-                }
-            );
-
-
-        /*
-         * Abas do inventário.
-         */
-
-        document
-            .querySelectorAll(
-                "#inventoryTabs .tab"
-            )
-            .forEach(
-                tab => {
-
-                    tab.addEventListener(
-                        "click",
-                        () => {
-
-                            document
-                                .querySelectorAll(
-                                    "#inventoryTabs .tab"
-                                )
-                                .forEach(
-                                    item =>
-                                        item.classList
-                                            .remove(
-                                                "active"
-                                            )
-                                );
-
-
-                            tab.classList
-                                .add(
-                                    "active"
-                                );
-
-
-                            state.inventoryCategory =
-                                tab.dataset
-                                    .cat;
-
-
-                            updateInventory();
-
-                        }
-                    );
-
-                }
-            );
-
-
-        /*
-         * Abas da loja.
-         */
-
-        document
-            .querySelectorAll(
-                "#shopTabs .tab"
-            )
-            .forEach(
-                tab => {
-
-                    tab.addEventListener(
-                        "click",
-                        () => {
-
-                            document
-                                .querySelectorAll(
-                                    "#shopTabs .tab"
-                                )
-                                .forEach(
-                                    item =>
-                                        item.classList
-                                            .remove(
-                                                "active"
-                                            )
-                                );
-
-
-                            tab.classList
-                                .add(
-                                    "active"
-                                );
-
-
-                            state.shopMode =
-                                tab.dataset
-                                    .shop;
-
-
-                            renderShop();
-
-                        }
-                    );
-
-                }
-            );
-
-
-        window.addEventListener(
-            "keydown",
-            handleKeyDown
-        );
-
-
-        window.addEventListener(
-            "keyup",
-            event =>
-                state.keys.delete(
-                    event.key
-                        .toLowerCase()
-                )
-        );
-
-
-        window.addEventListener(
-            "blur",
-            () =>
-                state.keys.clear()
-        );
-
-
-        window.addEventListener(
-            "resize",
-            resizeCanvas
-        );
-    }
-
-
-    /* =====================================================
-       INICIALIZAÇÃO
-    ====================================================== */
-
-    function initialize() {
-
-        createCharacterCards();
-
-        resizeCanvas();
-
-        bindEvents();
-
-        updateContinueButton();
-    }
-
-
-    initialize();
+initialize();
 
 })();

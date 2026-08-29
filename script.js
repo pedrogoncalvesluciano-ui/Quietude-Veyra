@@ -47179,16 +47179,30 @@
         }
 
 
-        target.classList.add(
-            "active"
-        );
+      target.classList.add(
+    "active"
+);
 
+state.currentScreen =
+    screenName;
 
-        state.currentScreen =
-            screenName;
+/*
+    CORREÇÃO DO CANVAS:
+    a tela do jogo inicia escondida,
+    então o canvas era criado com 1x1.
+*/
+if (
+    screenName ===
+    "game"
+) {
+    requestAnimationFrame(
+        () => {
+            resizeGameCanvas();
+        }
+    );
+}
 
-
-        return true;
+return true;
     }
 
 

@@ -47595,18 +47595,38 @@
             );
 
 
-        /*
-            NOVO JOGO:
-            SPAWN NA FRENTE DA CASA.
-        */
-        loadWorld(
-            "village",
-            "home"
-        );
+/*
+    NOVO JOGO:
+    COMEÇA DENTRO DA CASA DO JOGADOR.
+*/
+state.houseMode = true;
+state.currentHouse = "home";
 
+state.world = createHouseWorld(
+    "home"
+);
 
-        repairPlayerWorldPosition();
+if (!state.world) {
+    console.error(
+        "VEYRA — não foi possível carregar o interior da casa do jogador."
+    );
 
+    return false;
+}
+
+const homeSpawn =
+    state.world.spawnPoints?.default || {
+        x: 540,
+        y: 515
+    };
+
+state.player.x =
+    homeSpawn.x;
+
+state.player.y =
+    homeSpawn.y;
+
+repairPlayerWorldPosition();
 
         state.camera.x =
             state.player.x;

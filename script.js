@@ -47576,11 +47576,11 @@
         resetRuntimeStateForNewGame();
 
 
-        state.player =
-            createPlayer(
-                characterId,
-                name
-            );
+     state.player =
+    createNewPlayer(
+        name,
+        characterId
+    );
 
 
         /*
@@ -49003,14 +49003,14 @@ repairPlayerWorldPosition();
                 : "kaelion";
 
 
-        const fresh =
-            createPlayer(
-                characterId,
-                savedPlayer.name ||
-                CHARACTERS[
-                    characterId
-                ].name
-            );
+      const fresh =
+    createNewPlayer(
+        savedPlayer.name ||
+        CHARACTERS[
+            characterId
+        ].name,
+        characterId
+    );
 
 
         /*

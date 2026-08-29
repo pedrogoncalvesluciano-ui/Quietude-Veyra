@@ -47599,32 +47599,15 @@
     NOVO JOGO:
     COMEÇA DENTRO DA CASA DO JOGADOR.
 */
-state.houseMode = true;
-state.currentHouse = "home";
-
-state.world = createHouseWorld(
+loadWorld(
+    "village",
     "home"
 );
 
-if (!state.world) {
-    console.error(
-        "VEYRA — não foi possível carregar o interior da casa do jogador."
-    );
-
-    return false;
-}
-
-const homeSpawn =
-    state.world.spawnPoints?.default || {
-        x: 540,
-        y: 515
-    };
-
-state.player.x =
-    homeSpawn.x;
-
-state.player.y =
-    homeSpawn.y;
+enterHouse(
+    "home",
+    "home"
+);
 
 repairPlayerWorldPosition();
 
@@ -47670,11 +47653,11 @@ repairPlayerWorldPosition();
 
 
         pushNotification(
-            "VILA DO CREPÚSCULO",
-            "Sua jornada começa diante de sua casa.",
-            "location",
-            3
-        );
+    "CASA DO AVENTUREIRO",
+    "Sua jornada começa aqui.",
+    "location",
+    3
+);
 
 
         return true;

@@ -14642,40 +14642,69 @@
         }
 
 
-        for (
-            const building of
-            safeArray(
-                world.buildings
-            )
-        ) {
+   for (
+    const building of
+    safeArray(
+        world.buildings
+    )
+) {
 
-            if (
+    /*
+        Espaço lateral.
+    */
+    const sideMargin =
+        145;
 
-                x >=
-                    building.x -
-                    55 &&
 
-                x <=
-                    building.x +
-                    building.w +
-                    55 &&
+    /*
+        Espaço atrás da casa.
+    */
+    const backMargin =
+        115;
 
-                y >=
-                    building.y -
-                    55 &&
 
-                y <=
-                    building.y +
-                    building.h +
-                    55
+    /*
+        FRENTE DA CASA.
 
-            ) {
+        Como todas as casas da vila
+        possuem entrada inferior,
+        deixamos uma grande área livre
+        para caminho, porta e visão.
+    */
+    const frontMargin =
+        building.doorSide ===
+        "bottom"
+            ? 270
+            : 170;
 
-                return true;
 
-            }
+    if (
 
-        }
+        x >=
+            building.x -
+            sideMargin &&
+
+        x <=
+            building.x +
+            building.w +
+            sideMargin &&
+
+        y >=
+            building.y -
+            backMargin &&
+
+        y <=
+            building.y +
+            building.h +
+            frontMargin
+
+    ) {
+
+        return true;
+
+    }
+
+}
 
 
         for (
@@ -14745,7 +14774,7 @@
                     boss.x,
                     boss.y
                 ) <
-                220
+                320
             ) {
 
                 return true;
@@ -15945,6 +15974,49 @@
 
         }
 
+       /*
+    LIMITE REAL DO INTERIOR.
+
+    O jogador pode chegar até a porta,
+    mas não pode sair andando para o
+    vazio fora do cômodo.
+
+    Para sair continua sendo Z.
+*/
+if (
+    world.interior &&
+    world.room
+) {
+    const room =
+        world.room;
+
+    const inset =
+        8;
+
+
+    if (
+        x - radius <
+            room.x +
+                inset ||
+
+        x + radius >
+            room.x +
+                room.w -
+                inset ||
+
+        y - radius <
+            room.y +
+                inset ||
+
+        y + radius >
+            room.y +
+                room.h -
+                inset
+    ) {
+        return true;
+    }
+}
+
 
         if (
 
@@ -16063,6 +16135,63 @@ if (
     }
 }
 
+       /*
+    PORTAS DO LADO DE FORA.
+
+    Evita o personagem ficar em cima
+    da entrada/folha da porta.
+
+    Entrar continua sendo com Z.
+*/
+if (
+    !world.interior
+) {
+    for (
+        const door of
+        safeArray(
+            world.doors
+        )
+    ) {
+        if (
+            !door.buildingId
+        ) {
+            continue;
+        }
+
+
+        const blocker = {
+
+            x:
+                door.x -
+                    12,
+
+            y:
+                door.y -
+                    8,
+
+            w:
+                door.w +
+                    24,
+
+            h:
+                door.h +
+                    50
+
+        };
+
+
+        if (
+            V.circleRectCollision(
+                x,
+                y,
+                radius,
+                blocker
+            )
+        ) {
+            return true;
+        }
+    }
+}
 
 return false;
 
@@ -18490,11 +18619,29 @@ world.staticObstacles.push(
             config.bossId
         ) {
 
-            const bossNode =
-                route[
-                    route.length -
-                        2
-                ];
+        /*
+    Na primeira estrada,
+    o boss aparece um pouco antes.
+
+    Nas outras regiões,
+    mantém a posição normal.
+*/
+const bossIndex =
+    config.areaId ===
+    "road"
+        ? Math.max(
+            1,
+            route.length -
+                3
+        )
+        : route.length -
+            2;
+
+
+const bossNode =
+    route[
+        bossIndex
+    ];
 
 
             boss =
@@ -43635,6 +43782,436 @@ function drawWorldBackground(
         }
     }
 
+   /* ============================================================
+   ENTRADAS DAS CASAS
+   ============================================================ */
+
+function drawDoorwayOpenings(
+    ctx
+) {
+    const world =
+        state.world;
+
+
+    /*
+        Só do lado de fora.
+    */
+    if (
+        !world ||
+        world.interior
+    ) {
+        return;
+    }
+
+
+    for (
+        const door of
+        safeArray(
+            world.doors
+        )
+    ) {
+        /*
+            Só portas ligadas a prédios.
+        */
+        if (
+            !door.buildingId
+        ) {
+            continue;
+        }
+
+
+        const screen =
+            worldToScreen(
+                door.x,
+                door.y
+            );
+
+
+        ctx.save();
+
+
+        /*
+            VÃO PRETO.
+
+            Quando a porta abre,
+            fica parecendo a entrada
+            escura da casa.
+        */
+        ctx.fillStyle =
+            "#0c0a09";
+
+
+        roundRectPath(
+            ctx,
+            screen.x - 8,
+            screen.y - 10,
+            door.w + 16,
+            door.h + 22,
+            5
+        );
+
+
+        ctx.fill();
+
+
+        /*
+            SOLEIRA NA FRENTE.
+        */
+        ctx.fillStyle =
+            "rgba(35,24,18,0.92)";
+
+
+        roundRectPath(
+            ctx,
+            screen.x + 7,
+            screen.y +
+                door.h -
+                1,
+            Math.max(
+                18,
+                door.w -
+                    14
+            ),
+            24,
+            4
+        );
+
+
+        ctx.fill();
+
+
+        ctx.restore();
+    }
+}
+
+
+/* ============================================================
+   PORTÕES DA VILA
+   ============================================================ */
+
+function drawGates(
+    ctx
+) {
+    const world =
+        state.world;
+
+    if (!world) {
+        return;
+    }
+
+
+    for (
+        const gate of
+        safeArray(
+            world.gates
+        )
+    ) {
+        drawGate(
+            ctx,
+            gate
+        );
+    }
+}
+
+
+function drawGate(
+    ctx,
+    gate
+) {
+    if (
+        !gate ||
+        !isRectVisible(
+            gate,
+            180
+        )
+    ) {
+        return;
+    }
+
+
+    const screen =
+        worldToScreen(
+            gate.x,
+            gate.y
+        );
+
+
+    const locked =
+        gate.locked !==
+        false;
+
+
+    ctx.save();
+
+
+    ctx.fillStyle =
+        "#4c443b";
+
+    ctx.strokeStyle =
+        "#211d1a";
+
+    ctx.lineWidth =
+        4;
+
+
+    /*
+        PORTÃO HORIZONTAL.
+    */
+    if (
+        gate.orientation ===
+        "horizontal"
+    ) {
+        const postW =
+            34;
+
+
+        /*
+            PILAR ESQUERDO.
+        */
+        ctx.fillRect(
+            screen.x,
+            screen.y - 22,
+            postW,
+            gate.h + 44
+        );
+
+        ctx.strokeRect(
+            screen.x,
+            screen.y - 22,
+            postW,
+            gate.h + 44
+        );
+
+
+        /*
+            PILAR DIREITO.
+        */
+        ctx.fillRect(
+            screen.x +
+                gate.w -
+                postW,
+            screen.y - 22,
+            postW,
+            gate.h + 44
+        );
+
+        ctx.strokeRect(
+            screen.x +
+                gate.w -
+                postW,
+            screen.y - 22,
+            postW,
+            gate.h + 44
+        );
+
+
+        /*
+            PARTE SUPERIOR.
+        */
+        ctx.fillStyle =
+            "#5c4e40";
+
+        ctx.fillRect(
+            screen.x +
+                postW -
+                4,
+            screen.y - 10,
+            gate.w -
+                postW * 2 +
+                8,
+            24
+        );
+
+
+        /*
+            GRADES SE ESTIVER FECHADO.
+        */
+        if (
+            locked
+        ) {
+            ctx.fillStyle =
+                "#2d2927";
+
+
+            for (
+                let px =
+                    postW + 18;
+
+                px <
+                    gate.w -
+                    postW -
+                    8;
+
+                px += 28
+            ) {
+                ctx.fillRect(
+                    screen.x +
+                        px,
+                    screen.y +
+                        12,
+                    8,
+                    gate.h -
+                        12
+                );
+            }
+        }
+    }
+
+
+    /*
+        PORTÃO VERTICAL.
+    */
+    else {
+        const postH =
+            34;
+
+
+        /*
+            PILAR DE CIMA.
+        */
+        ctx.fillRect(
+            screen.x - 22,
+            screen.y,
+            gate.w + 44,
+            postH
+        );
+
+        ctx.strokeRect(
+            screen.x - 22,
+            screen.y,
+            gate.w + 44,
+            postH
+        );
+
+
+        /*
+            PILAR DE BAIXO.
+        */
+        ctx.fillRect(
+            screen.x - 22,
+            screen.y +
+                gate.h -
+                postH,
+            gate.w + 44,
+            postH
+        );
+
+        ctx.strokeRect(
+            screen.x - 22,
+            screen.y +
+                gate.h -
+                postH,
+            gate.w + 44,
+            postH
+        );
+
+
+        /*
+            LATERAL.
+        */
+        ctx.fillStyle =
+            "#5c4e40";
+
+        ctx.fillRect(
+            screen.x - 10,
+            screen.y +
+                postH -
+                4,
+            24,
+            gate.h -
+                postH * 2 +
+                8
+        );
+
+
+        /*
+            GRADES.
+        */
+        if (
+            locked
+        ) {
+            ctx.fillStyle =
+                "#2d2927";
+
+
+            for (
+                let py =
+                    postH + 18;
+
+                py <
+                    gate.h -
+                    postH -
+                    8;
+
+                py += 28
+            ) {
+                ctx.fillRect(
+                    screen.x +
+                        12,
+                    screen.y +
+                        py,
+                    gate.w -
+                        12,
+                    8
+                );
+            }
+        }
+    }
+
+
+    /*
+        NOME DO CAMINHO.
+    */
+    const center =
+        worldToScreen(
+            gate.x +
+                gate.w / 2,
+            gate.y +
+                gate.h / 2
+        );
+
+
+    ctx.font =
+        "700 11px serif";
+
+    ctx.textAlign =
+        "center";
+
+    ctx.fillStyle =
+        "#ddd0b6";
+
+
+    ctx.fillText(
+        gate.label ||
+            "PORTÃO",
+        center.x,
+        center.y -
+            gate.h / 2 -
+            16
+    );
+
+
+    if (
+        !locked
+    ) {
+        ctx.font =
+            "600 9px sans-serif";
+
+        ctx.fillStyle =
+            "rgba(220,210,188,0.72)";
+
+        ctx.fillText(
+            "ABERTO",
+            center.x,
+            center.y -
+                gate.h / 2 -
+                3
+        );
+    }
+
+
+    ctx.restore();
+}
 
     /* ============================================================
        PORTAS
@@ -53367,80 +53944,369 @@ function drawMagicSparkEffect(
        INTERAÇÃO
        ============================================================ */
 
-    function drawInteractionHUD(
-        ctx
+   function drawInteractionHUD(
+    ctx
+) {
+    const prompt =
+        getInteractionPrompt();
+
+    const player =
+        state.player;
+
+    if (
+        !prompt ||
+        !player
     ) {
-        const prompt =
-            getInteractionPrompt();
-
-        if (!prompt) {
-            return;
-        }
-
-        const text =
-            `${prompt.key}  ${prompt.text}`;
-
-        ctx.save();
-
-        ctx.font =
-            "600 12px sans-serif";
-
-        const width =
-            Math.min(
-                renderRuntime.width -
-                    40,
-
-                ctx.measureText(
-                    text
-                ).width +
-                    40
-            );
-
-        const x =
-            renderRuntime.width /
-                2 -
-            width /
-                2;
-
-        const y =
-            renderRuntime.height -
-                122;
-
-        ctx.fillStyle =
-            "rgba(13,12,16,0.78)";
-
-        roundRectPath(
-            ctx,
-            x,
-            y,
-            width,
-            34,
-            10
-        );
-
-        ctx.fill();
-
-        ctx.strokeStyle =
-            "rgba(190,170,126,0.28)";
-
-        ctx.stroke();
-
-        ctx.fillStyle =
-            "#d9ccb2";
-
-        ctx.textAlign =
-            "center";
-
-        ctx.fillText(
-            text,
-            renderRuntime.width /
-                2,
-            y +
-                22
-        );
-
-        ctx.restore();
+        return;
     }
+
+
+    const playerScreen =
+        worldToScreen(
+            player.x,
+            player.y
+        );
+
+
+    const keyText =
+        String(
+            prompt.key ||
+            "E"
+        );
+
+    const actionText =
+        String(
+            prompt.text ||
+            "INTERAGIR"
+        );
+
+
+    ctx.save();
+
+
+    /*
+        TAMANHO.
+    */
+    ctx.font =
+        "700 12px sans-serif";
+
+    const keyWidth =
+        Math.max(
+            34,
+            ctx.measureText(
+                keyText
+            ).width +
+                18
+        );
+
+
+    ctx.font =
+        "600 11px sans-serif";
+
+    const actionWidth =
+        ctx.measureText(
+            actionText
+        ).width +
+        24;
+
+
+    const totalWidth =
+        Math.min(
+            renderRuntime.width -
+                30,
+            keyWidth +
+                actionWidth +
+                8
+        );
+
+
+    /*
+        Em cima do personagem.
+    */
+    const x =
+        clamp(
+            playerScreen.x -
+                totalWidth / 2,
+            15,
+            renderRuntime.width -
+                totalWidth -
+                15
+        );
+
+
+    const y =
+        clamp(
+            playerScreen.y -
+                92,
+            70,
+            renderRuntime.height -
+                180
+        );
+
+
+    /*
+        FUNDO.
+    */
+    ctx.fillStyle =
+        "rgba(10,9,12,0.94)";
+
+    roundRectPath(
+        ctx,
+        x,
+        y,
+        totalWidth,
+        38,
+        8
+    );
+
+    ctx.fill();
+
+
+    ctx.strokeStyle =
+        "rgba(191,164,104,0.52)";
+
+    ctx.lineWidth =
+        1.5;
+
+    ctx.stroke();
+
+
+    /*
+        TECLA.
+    */
+    ctx.fillStyle =
+        "#c0a868";
+
+    roundRectPath(
+        ctx,
+        x + 5,
+        y + 5,
+        keyWidth,
+        28,
+        6
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle =
+        "#17130f";
+
+    ctx.font =
+        "800 11px sans-serif";
+
+    ctx.textAlign =
+        "center";
+
+    ctx.textBaseline =
+        "middle";
+
+    ctx.fillText(
+        keyText,
+        x +
+            5 +
+            keyWidth / 2,
+        y + 19
+    );
+
+
+    /*
+        TEXTO.
+    */
+    ctx.fillStyle =
+        "#e0d6c2";
+
+    ctx.font =
+        "600 11px sans-serif";
+
+    ctx.textAlign =
+        "left";
+
+    ctx.fillText(
+        actionText,
+        x +
+            keyWidth +
+            17,
+        y + 19
+    );
+
+
+    ctx.restore();
+}
+
+
+function drawHoldHUD(
+    ctx
+) {
+    const progress =
+        getHoldActionProgress();
+
+    const action =
+        state.holdAction;
+
+    const player =
+        state.player;
+
+
+    if (
+        progress === null ||
+        !action ||
+        !player
+    ) {
+        return;
+    }
+
+
+    const playerScreen =
+        worldToScreen(
+            player.x,
+            player.y
+        );
+
+
+    const width =
+        220;
+
+    const height =
+        10;
+
+
+    const x =
+        clamp(
+            playerScreen.x -
+                width / 2,
+            20,
+            renderRuntime.width -
+                width -
+                20
+        );
+
+
+    const y =
+        clamp(
+            playerScreen.y -
+                138,
+            26,
+            renderRuntime.height -
+                220
+        );
+
+
+    let label =
+        "INTERAGINDO";
+
+
+    if (
+        action.type ===
+        "tree"
+    ) {
+        label =
+            "QUEBRANDO MADEIRA";
+    }
+
+    else if (
+        action.type ===
+        "resource"
+    ) {
+        label =
+            "COLETANDO RECURSO";
+    }
+
+    else if (
+        action.type ===
+        "darkKey"
+    ) {
+        label =
+            "COLETANDO CHAVE";
+    }
+
+
+    ctx.save();
+
+
+    /*
+        TEXTO DA BARRA.
+    */
+    ctx.font =
+        "700 10px sans-serif";
+
+    ctx.textAlign =
+        "center";
+
+    ctx.fillStyle =
+        "#e2d7bf";
+
+
+    ctx.fillText(
+        `${label} ${Math.floor(
+            progress * 100
+        )}%`,
+        x +
+            width / 2,
+        y - 8
+    );
+
+
+    /*
+        FUNDO.
+    */
+    ctx.fillStyle =
+        "rgba(7,7,9,0.9)";
+
+    roundRectPath(
+        ctx,
+        x,
+        y,
+        width,
+        height,
+        5
+    );
+
+    ctx.fill();
+
+
+    /*
+        PROGRESSO.
+    */
+    ctx.fillStyle =
+        "#bda15f";
+
+    roundRectPath(
+        ctx,
+        x,
+        y,
+        Math.max(
+            2,
+            width *
+                progress
+        ),
+        height,
+        5
+    );
+
+    ctx.fill();
+
+
+    ctx.strokeStyle =
+        "rgba(238,220,178,0.4)";
+
+    ctx.lineWidth =
+        1;
+
+    roundRectPath(
+        ctx,
+        x,
+        y,
+        width,
+        height,
+        5
+    );
+
+    ctx.stroke();
+
+
+    ctx.restore();
+}
 
 
     function drawHoldHUD(
@@ -54574,17 +55440,31 @@ function drawMagicSparkEffect(
             Objetos fixos que precisam ficar
             atrás de entidades.
         */
-        drawBuildings(
-            ctx
-        );
+drawBuildings(
+    ctx
+);
 
-        drawWalls(
-            ctx
-        );
+/*
+    Entrada escura das casas.
+*/
+drawDoorwayOpenings(
+    ctx
+);
 
-        drawStaticDecorations(
-            ctx
-        );
+drawWalls(
+    ctx
+);
+
+/*
+    Portões da vila.
+*/
+drawGates(
+    ctx
+);
+
+drawStaticDecorations(
+    ctx
+);
 
         drawResources(
             ctx

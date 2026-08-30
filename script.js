@@ -3234,8 +3234,8 @@
         name:
             "Elixir de Energia",
 
-        icon:
-            "🔷",
+       icon:
+    "🧪",
 
         category:
             "potions",
@@ -3274,9 +3274,8 @@
         name:
             "Poção de Domínio",
 
-        icon:
-            "🔴",
-
+       icon:
+    "🧪",
         category:
             "potions",
 
@@ -3314,8 +3313,8 @@
         name:
             "Poção de Resistência",
 
-        icon:
-            "🟤",
+       icon:
+    "🧪",
 
         category:
             "potions",
@@ -3354,8 +3353,8 @@
         name:
             "Poção de Velocidade",
 
-        icon:
-            "🟢",
+      icon:
+    "🧪",
 
         category:
             "potions",
@@ -17328,21 +17327,25 @@ world.staticObstacles.push(
 
             world.decorations.push(
 
-                {
+              {
+    type:
+        "counter",
 
-                    type:
-                        "counter",
+    x:
+        550,
 
-                    x:
-                        550,
+    y:
+        285,
 
-                    y:
-                        285,
+    w:
+        430,
 
-                    w:
-                        430
+    h:
+        58,
 
-                },
+    depthSorted:
+        true
+},
 
 
                 {
@@ -50678,17 +50681,29 @@ ctx.scale(
                 );
                 break;
 
-            case "table":
-            case "archiveTable":
-            case "workbench":
-                drawTable(
-                    ctx,
-                    decoration
-                );
-                break;
+         case "table":
+case "archiveTable":
+case "workbench":
+    drawTable(
+        ctx,
+        decoration
+    );
+    break;
 
-            case "bookshelf":
-            case "shelves":
+
+/*
+    BALCÃO DA LOJA.
+*/
+case "counter":
+    drawShopCounter(
+        ctx,
+        decoration
+    );
+    break;
+
+
+case "bookshelf":
+case "shelves":
                 drawShelf(
                     ctx,
                     decoration
@@ -51040,7 +51055,290 @@ ctx.scale(
         );
     }
 
+function drawShopCounter(
+    ctx,
+    counter
+) {
+    const screen =
+        worldToScreen(
+            counter.x,
+            counter.y
+        );
 
+
+    const w =
+        counter.w ||
+        430;
+
+
+    const h =
+        counter.h ||
+        58;
+
+
+    ctx.save();
+
+
+    /*
+        SOMBRA.
+    */
+    ctx.fillStyle =
+        "rgba(0,0,0,0.25)";
+
+
+    roundRectPath(
+        ctx,
+
+        screen.x -
+            w / 2 +
+            7,
+
+        screen.y -
+            h / 2 +
+            10,
+
+        w,
+        h,
+
+        8
+    );
+
+
+    ctx.fill();
+
+
+    /*
+        CORPO.
+    */
+    ctx.fillStyle =
+        "#543b2b";
+
+
+    roundRectPath(
+        ctx,
+
+        screen.x -
+            w / 2,
+
+        screen.y -
+            h / 2,
+
+        w,
+        h,
+
+        7
+    );
+
+
+    ctx.fill();
+
+
+    /*
+        FRENTE ESCURA.
+    */
+    ctx.fillStyle =
+        "#3f2b21";
+
+
+    roundRectPath(
+        ctx,
+
+        screen.x -
+            w / 2 +
+            8,
+
+        screen.y -
+            h / 2 +
+            17,
+
+        w - 16,
+
+        h - 24,
+
+        4
+    );
+
+
+    ctx.fill();
+
+
+    /*
+        TAMPO.
+    */
+    ctx.fillStyle =
+        "#79543a";
+
+
+    roundRectPath(
+        ctx,
+
+        screen.x -
+            w / 2 -
+            8,
+
+        screen.y -
+            h / 2 -
+            8,
+
+        w + 16,
+
+        20,
+
+        5
+    );
+
+
+    ctx.fill();
+
+
+    ctx.strokeStyle =
+        "#2b1d17";
+
+
+    ctx.lineWidth =
+        3;
+
+
+    roundRectPath(
+        ctx,
+
+        screen.x -
+            w / 2 -
+            8,
+
+        screen.y -
+            h / 2 -
+            8,
+
+        w + 16,
+
+        20,
+
+        5
+    );
+
+
+    ctx.stroke();
+
+
+    /*
+        PAINÉIS DA MADEIRA.
+    */
+    ctx.strokeStyle =
+        "rgba(170,121,79,0.42)";
+
+
+    ctx.lineWidth =
+        2;
+
+
+    for (
+        let index = 1;
+        index < 5;
+        index += 1
+    ) {
+        const x =
+            screen.x -
+            w / 2 +
+            (
+                w /
+                5
+            ) *
+            index;
+
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+            x,
+            screen.y -
+                h / 2 +
+                21
+        );
+
+
+        ctx.lineTo(
+            x,
+            screen.y +
+                h / 2 -
+                7
+        );
+
+
+        ctx.stroke();
+    }
+
+
+    /*
+        MOEDAS NO BALCÃO.
+    */
+    ctx.fillStyle =
+        "#c8a453";
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        screen.x -
+            75,
+        screen.y -
+            h / 2 -
+            11,
+        6,
+        0,
+        Math.PI *
+            2
+    );
+
+    ctx.fill();
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        screen.x -
+            62,
+        screen.y -
+            h / 2 -
+            10,
+        5,
+        0,
+        Math.PI *
+            2
+    );
+
+    ctx.fill();
+
+
+    /*
+        FRASCO SOBRE O BALCÃO.
+    */
+    ctx.font =
+        "19px sans-serif";
+
+
+    ctx.textAlign =
+        "center";
+
+
+    ctx.textBaseline =
+        "middle";
+
+
+    ctx.fillText(
+        "🧪",
+        screen.x +
+            76,
+        screen.y -
+            h / 2 -
+            10
+    );
+
+
+    ctx.restore();
+}
+   
     function drawShelf(
         ctx,
         shelf
@@ -60884,23 +61182,15 @@ drawDoors(
         );
 
 
-     setText(
+   setText(
     "moneyText",
 
-    state.dev
-        ?.unlocked &&
-    state.dev
-        ?.cheats
-        ?.infiniteMoney
-
-        ? "∞"
-
-        : Math.floor(
-            finite(
-                player.money,
-                0
-            )
+    Math.floor(
+        finite(
+            player.money,
+            0
         )
+    )
 );
 
         setText(
@@ -64723,10 +65013,19 @@ function createDevRuntime() {
         latched:
             new Set(),
 
-        panel:
-            null,
+       panel:
+    null,
 
-        privacy:
+
+/*
+    Guarda o dinheiro normal
+    antes de ativar X+7.
+*/
+moneyBeforeInfinite:
+    null,
+
+
+privacy:
             devStorageGet(
                 DEV_STORAGE
                     .privacy
@@ -65876,6 +66175,74 @@ function toggleDevCheat(
     );
 }
 
+/*
+    X + 7
+    DINHEIRO "INFINITO".
+
+    Agora usa dinheiro REAL:
+    9.999.999 moedas.
+
+    Isso faz loja, ferreiro e
+    qualquer outro sistema reconhecerem.
+*/
+if (
+    id ===
+        "infiniteMoney" &&
+    state.player
+) {
+    if (
+        dev.cheats
+            .infiniteMoney
+    ) {
+        /*
+            Guarda quanto tinha antes.
+        */
+        if (
+            dev.moneyBeforeInfinite ===
+            null
+        ) {
+            dev.moneyBeforeInfinite =
+                finite(
+                    state.player.money,
+                    0
+                );
+        }
+
+
+        state.player.money =
+            9999999;
+    }
+
+    else {
+        /*
+            Desativou X+7:
+            recupera o dinheiro anterior.
+        */
+        if (
+            dev.moneyBeforeInfinite !==
+            null
+        ) {
+            state.player.money =
+                Math.max(
+                    0,
+                    finite(
+                        dev.moneyBeforeInfinite,
+                        0
+                    )
+                );
+        }
+
+
+        dev.moneyBeforeInfinite =
+            null;
+    }
+
+
+    updateHTMLHUD(
+        true
+    );
+}
+   
     updateDevPanelStatus();
 
 
@@ -66292,6 +66659,21 @@ function maintainDevRuntime() {
         player.exhaustion =
             0;
     }
+
+   /*
+    X + 7
+
+    Mantém o valor REAL em
+    9.999.999 mesmo se alguma
+    loja tentar descontar.
+*/
+if (
+    dev.cheats
+        .infiniteMoney
+) {
+    player.money =
+        9999999;
+}
 
 
     /*

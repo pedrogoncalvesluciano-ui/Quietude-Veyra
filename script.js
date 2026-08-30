@@ -49590,99 +49590,183 @@ function resizeRenderer() {
 
             ctx.globalAlpha =
                 alpha;
+switch (
+    effect.type
+) {
+    case "dashV1Trail":
+    case "dashV1Start":
+    case "dashV1End":
+        drawDashEffect(
+            ctx,
+            screen,
+            effect,
+            progress,
+            false
+        );
+        break;
 
-            switch (
-                effect.type
-            ) {
-                case "dashV1Trail":
-                case "dashV1Start":
-                case "dashV1End":
-                    drawDashEffect(
-                        ctx,
-                        screen,
-                        effect,
-                        progress,
-                        false
-                    );
-                    break;
 
-                case "dashV2Trail":
-                case "dashV2Start":
-                case "dashV2End":
-                case "dashV2Unlock":
-                    drawDashEffect(
-                        ctx,
-                        screen,
-                        effect,
-                        progress,
-                        true
-                    );
-                    break;
+    case "dashV2Trail":
+    case "dashV2Start":
+    case "dashV2End":
+    case "dashV2Unlock":
+        drawDashEffect(
+            ctx,
+            screen,
+            effect,
+            progress,
+            true
+        );
+        break;
 
-                case "hitSpark":
-                case "playerHit":
-                case "voidHit":
-                case "projectileImpact":
-                    drawHitEffect(
-                        ctx,
-                        screen,
-                        effect,
-                        progress
-                    );
-                    break;
 
-                case "groundImpact":
-                case "earthBreaker":
-                case "stoneRoar":
-                case "hazardActivate":
-                    drawRingEffect(
-                        ctx,
-                        screen,
-                        effect,
-                        progress
-                    );
-                    break;
+    case "hitSpark":
+    case "playerHit":
+    case "voidHit":
+    case "projectileImpact":
+        drawHitEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
 
-                case "monarchCrack":
-                case "monarchStaggerBreak":
-                case "monarchRecover":
-                    drawMonarchEffect(
-                        ctx,
-                        screen,
-                        effect,
-                        progress
-                    );
-                    break;
 
-                case "monarchDissolve":
-                case "altarSoulAbsorb":
-                    drawMonarchDeathEffect(
-                        ctx,
-                        screen,
-                        effect,
-                        progress
-                    );
-                    break;
+    case "groundImpact":
+    case "hazardActivate":
+        drawRingEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
 
-                case "pathBossFade":
-                case "enemyDeath":
-                    drawDeathParticles(
-                        ctx,
-                        screen,
-                        effect,
-                        progress
-                    );
-                    break;
 
-                default:
-                    drawGenericEffect(
-                        ctx,
-                        screen,
-                        effect,
-                        progress
-                    );
-                    break;
-            }
+    /*
+        ATAQUE BÁSICO.
+
+        Theron = espada.
+        Grumgar = impacto no chão.
+        Zephyr = corte de fenda.
+        Kaelion/Lirael = partículas.
+    */
+    case "basicAttack":
+        drawBasicAttackEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+
+    /*
+        THERON / ZEPHYR.
+    */
+    case "guardianStrike":
+    case "guardianCharge":
+    case "adaptiveCut":
+    case "riftStep":
+        drawSkillSlashEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+
+    /*
+        GRUMGAR.
+    */
+    case "crushingBlow":
+    case "stoneRoar":
+    case "earthBreaker":
+        drawGroundCrackSkillEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+
+    /*
+        BUFFS.
+    */
+    case "ironStance":
+    case "adaptiveForm":
+        drawSkillAuraEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+
+    /*
+        KAELION / LIRAEL.
+    */
+    case "kaelionRay":
+    case "arcaneCircle":
+    case "memoryExplosion":
+    case "vitalLight":
+    case "fairyBlast":
+    case "lightRain":
+        drawMagicSparkEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+
+    case "monarchCrack":
+    case "monarchStaggerBreak":
+    case "monarchRecover":
+        drawMonarchEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+
+    case "monarchDissolve":
+    case "altarSoulAbsorb":
+        drawMonarchDeathEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+
+    case "pathBossFade":
+    case "enemyDeath":
+        drawDeathParticles(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+    default:
+        drawHitEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+}
 
             ctx.restore();
         }
@@ -50079,6 +50163,723 @@ function resizeRenderer() {
         }
     }
 
+   function getEffectFacingAngle(
+    effect
+) {
+    const aimX =
+        Number(
+            effect?.aimX
+        );
+
+    const aimY =
+        Number(
+            effect?.aimY
+        );
+
+
+    if (
+        Number.isFinite(
+            aimX
+        ) &&
+        Number.isFinite(
+            aimY
+        ) &&
+        (
+            Math.abs(
+                aimX
+            ) +
+            Math.abs(
+                aimY
+            )
+        ) >
+            0.001
+    ) {
+        return Math.atan2(
+            aimY,
+            aimX
+        );
+    }
+
+
+    switch (
+        state.player
+            ?.facing
+    ) {
+        case "left":
+            return Math.PI;
+
+        case "up":
+            return -Math.PI /
+                2;
+
+        case "down":
+            return Math.PI /
+                2;
+
+        case "right":
+        default:
+            return 0;
+    }
+}
+
+
+function drawBasicAttackEffect(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const characterId =
+        effect.characterId ||
+        state.player
+            ?.characterId;
+
+
+    /*
+        CAVALEIRO.
+    */
+    if (
+        characterId ===
+        "theron"
+    ) {
+        drawSkillSlashEffect(
+            ctx,
+            screen,
+            {
+                ...effect,
+                characterId:
+                    "theron"
+            },
+            progress
+        );
+
+        return;
+    }
+
+
+    /*
+        TROLL.
+    */
+    if (
+        characterId ===
+        "grumgar"
+    ) {
+        drawGroundCrackSkillEffect(
+            ctx,
+            screen,
+            {
+                ...effect,
+                radius:
+                    70
+            },
+            progress
+        );
+
+        return;
+    }
+
+
+    /*
+        TRANSMORFO.
+    */
+    if (
+        characterId ===
+        "zephyr"
+    ) {
+        drawSkillSlashEffect(
+            ctx,
+            screen,
+            {
+                ...effect,
+                characterId:
+                    "zephyr"
+            },
+            progress
+        );
+
+        return;
+    }
+
+
+    /*
+        MAGO / FADA.
+    */
+    const color =
+        characterId ===
+        "lirael"
+            ? "#f0a4d2"
+            : "#ed8a3f";
+
+
+    ctx.strokeStyle =
+        colorWithAlpha(
+            color,
+            0.85 *
+            (
+                1 -
+                progress
+            )
+        );
+
+    ctx.lineWidth =
+        2.2;
+
+
+    const angle =
+        getEffectFacingAngle(
+            effect
+        );
+
+
+    for (
+        let index = -2;
+        index <= 2;
+        index += 1
+    ) {
+        const spread =
+            angle +
+            index *
+                0.15;
+
+        const start =
+            14 +
+            progress *
+                7;
+
+        const end =
+            28 +
+            progress *
+                28;
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screen.x +
+                Math.cos(
+                    spread
+                ) *
+                start,
+
+            screen.y +
+                Math.sin(
+                    spread
+                ) *
+                start
+        );
+
+        ctx.lineTo(
+            screen.x +
+                Math.cos(
+                    spread
+                ) *
+                end,
+
+            screen.y +
+                Math.sin(
+                    spread
+                ) *
+                end
+        );
+
+        ctx.stroke();
+    }
+}
+
+
+function drawSkillSlashEffect(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const voidStyle =
+        effect.type ===
+            "adaptiveCut" ||
+        effect.type ===
+            "riftStep" ||
+        effect.characterId ===
+            "zephyr";
+
+
+    const color =
+        voidStyle
+            ? "#a17bd0"
+            : "#d7dbdc";
+
+
+    const angle =
+        getEffectFacingAngle(
+            effect
+        );
+
+
+    ctx.save();
+
+    ctx.translate(
+        screen.x,
+        screen.y
+    );
+
+    ctx.rotate(
+        angle
+    );
+
+
+    ctx.strokeStyle =
+        colorWithAlpha(
+            color,
+            0.9 *
+            (
+                1 -
+                progress
+            )
+        );
+
+    ctx.lineCap =
+        "round";
+
+
+    for (
+        let index = 0;
+        index < 3;
+        index += 1
+    ) {
+        ctx.lineWidth =
+            Math.max(
+                1,
+                5 -
+                index
+            ) *
+            (
+                1 -
+                progress *
+                    0.55
+            );
+
+
+        const radius =
+            35 +
+            index *
+                8 +
+            progress *
+                25;
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            radius,
+            -0.92,
+            0.92
+        );
+
+        ctx.stroke();
+    }
+
+
+    if (
+        voidStyle
+    ) {
+        ctx.strokeStyle =
+            `rgba(91,55,119,${
+                0.55 *
+                (
+                    1 -
+                    progress
+                )
+            })`;
+
+        ctx.lineWidth =
+            2;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            20,
+            -22
+        );
+
+        ctx.lineTo(
+            65 +
+                progress *
+                    20,
+            3
+        );
+
+        ctx.stroke();
+    }
+
+
+    ctx.restore();
+}
+
+
+function drawGroundCrackSkillEffect(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const radius =
+        Number(
+            effect.radius
+        ) ||
+        100;
+
+
+    const currentRadius =
+        radius *
+        (
+            0.25 +
+            progress *
+                0.75
+        );
+
+
+    ctx.strokeStyle =
+        `rgba(151,143,105,${
+            0.85 *
+            (
+                1 -
+                progress
+            )
+        })`;
+
+
+    ctx.lineWidth =
+        Math.max(
+            1,
+            4 -
+            progress *
+                2.5
+        );
+
+
+    for (
+        let index = 0;
+        index < 9;
+        index += 1
+    ) {
+        const angle =
+            (
+                index /
+                9
+            ) *
+            Math.PI *
+            2;
+
+
+        const middle =
+            currentRadius *
+            0.55;
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screen.x,
+            screen.y
+        );
+
+
+        ctx.lineTo(
+            screen.x +
+                Math.cos(
+                    angle +
+                    0.14
+                ) *
+                middle,
+
+            screen.y +
+                Math.sin(
+                    angle +
+                    0.14
+                ) *
+                middle *
+                0.62
+        );
+
+
+        ctx.lineTo(
+            screen.x +
+                Math.cos(
+                    angle
+                ) *
+                currentRadius,
+
+            screen.y +
+                Math.sin(
+                    angle
+                ) *
+                currentRadius *
+                0.62
+        );
+
+
+        ctx.stroke();
+    }
+
+
+    /*
+        Poeira curta.
+    */
+    for (
+        let index = 0;
+        index < 6;
+        index += 1
+    ) {
+        const angle =
+            (
+                index /
+                6
+            ) *
+            Math.PI *
+            2;
+
+        const distanceAmount =
+            progress *
+            currentRadius *
+            0.7;
+
+
+        ctx.fillStyle =
+            `rgba(132,119,88,${
+                0.32 *
+                (
+                    1 -
+                    progress
+                )
+            })`;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screen.x +
+                Math.cos(
+                    angle
+                ) *
+                distanceAmount,
+
+            screen.y +
+                Math.sin(
+                    angle
+                ) *
+                distanceAmount *
+                0.45,
+
+            3,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+    }
+}
+
+
+function drawSkillAuraEffect(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const voidStyle =
+        effect.type ===
+        "adaptiveForm";
+
+
+    const color =
+        voidStyle
+            ? "#9b79bd"
+            : "#cbd3d5";
+
+
+    ctx.strokeStyle =
+        colorWithAlpha(
+            color,
+            0.75 *
+            (
+                1 -
+                progress
+            )
+        );
+
+
+    ctx.lineWidth =
+        3;
+
+
+    const height =
+        44 +
+        progress *
+            18;
+
+
+    /*
+        Três arcos verticais,
+        não uma bola.
+    */
+    for (
+        let index = -1;
+        index <= 1;
+        index += 1
+    ) {
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screen.x +
+                index *
+                    14,
+            screen.y +
+                24
+        );
+
+        ctx.quadraticCurveTo(
+            screen.x +
+                index *
+                    22,
+            screen.y -
+                height *
+                    0.45,
+
+            screen.x +
+                index *
+                    10,
+            screen.y -
+                height
+        );
+
+        ctx.stroke();
+    }
+}
+
+
+function drawMagicSparkEffect(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const colors = {
+        kaelionRay:
+            "#f29a4f",
+
+        arcaneCircle:
+            "#ed9350",
+
+        memoryExplosion:
+            "#ffb16a",
+
+        vitalLight:
+            "#f2b3dc",
+
+        fairyBlast:
+            "#f2a6db",
+
+        lightRain:
+            "#f2a7d8"
+    };
+
+
+    const color =
+        colors[
+            effect.type
+        ] ||
+        effect.color ||
+        "#dfcfb6";
+
+
+    const radius =
+        Number(
+            effect.radius
+        ) ||
+        80;
+
+
+    ctx.strokeStyle =
+        colorWithAlpha(
+            color,
+            0.82 *
+            (
+                1 -
+                progress
+            )
+        );
+
+
+    ctx.lineWidth =
+        2;
+
+
+    for (
+        let index = 0;
+        index < 12;
+        index += 1
+    ) {
+        const angle =
+            (
+                index /
+                12
+            ) *
+            Math.PI *
+            2;
+
+
+        const start =
+            8 +
+            progress *
+                radius *
+                0.2;
+
+
+        const end =
+            18 +
+            progress *
+                radius *
+                0.75;
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screen.x +
+                Math.cos(
+                    angle
+                ) *
+                start,
+
+            screen.y +
+                Math.sin(
+                    angle
+                ) *
+                start *
+                0.7
+        );
+
+
+        ctx.lineTo(
+            screen.x +
+                Math.cos(
+                    angle
+                ) *
+                end,
+
+            screen.y +
+                Math.sin(
+                    angle
+                ) *
+                end *
+                0.7
+        );
+
+
+        ctx.stroke();
+    }
+}
 
     function drawGenericEffect(
         ctx,

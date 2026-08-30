@@ -42229,17 +42229,19 @@
         return true;
     }
 
+function resizeRenderer() {
+    const canvas =
+        renderRuntime.canvas;
 
-    function resizeRenderer() {
-        const canvas =
-            renderRuntime.canvas;
+    const ctx =
+        renderRuntime.ctx;
 
-        if (!canvas) {
-            return false;
-        }
+    if (!canvas || !ctx) {
+        return false;
+    }
 
-        const rect =
-            canvas.getBoundingClientRect();
+    const rect =
+        canvas.getBoundingClientRect();
 
         const dpr =
             clamp(

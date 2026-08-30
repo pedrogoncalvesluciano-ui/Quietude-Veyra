@@ -19658,29 +19658,34 @@ if (
                 "O Colosso de Ferro ainda protege a passagem.",
 
 
-            nature: {
+       nature: {
 
-                salt:
-                    "iron_nature",
+    salt:
+        "iron_nature",
 
-                treeCount:
-                    30,
 
-                rockCount:
-                    105,
+    /*
+        Região de mineração.
 
-                grassCount:
-                    120,
+        Sem floresta e sem
+        vegetação verde.
+    */
+    treeCount:
+        0,
 
-                flowerCount:
-                    4,
 
-                treeVariants: [
-                    "dead",
-                    "pine"
-                ]
+    rockCount:
+        125,
 
-            },
+
+    grassCount:
+        0,
+
+
+    flowerCount:
+        0
+
+},
 
 
             enemies: [
@@ -19768,34 +19773,36 @@ if (
                     "A Quimera de Rubi ainda guarda a passagem.",
 
 
-                nature: {
+              nature: {
 
-                    salt:
-                        "ruby_nature",
+    salt:
+        "ruby_nature",
 
-                    treeCount:
-                        38,
 
-                    rockCount:
-                        86,
+    /*
+        VALE MINERAL.
 
-                    grassCount:
-                        120,
+        Sem árvores/grama.
 
-                    flowerCount:
-                        10,
+        O vermelho vem das pedras,
+        cristais e do solo.
+    */
+    treeCount:
+        0,
 
-                    treeVariants: [
-                        "dead",
-                        "ruby"
-                    ],
 
-                    flowerColors: [
-                        "#be6a7b",
-                        "#894b59"
-                    ]
+    rockCount:
+        110,
 
-                },
+
+    grassCount:
+        0,
+
+
+    flowerCount:
+        0
+
+},
 
 
                 enemies: [
@@ -43972,10 +43979,10 @@ function drawWorldBackground(
     /*
         MUNDO EXTERNO NORMAL.
     */
-    const style =
-        getBiomeStyle(
-            world.biome
-        );
+  const style =
+    getBiomeStyle(
+        world.id
+    );
 
     ctx.fillStyle =
         style.ground;
@@ -44124,6 +44131,460 @@ function drawWorldBackground(
        cada bioma mantém seu próprio caminho.
        ============================================================ */
 
+   function drawMiningGroundDetails(
+    ctx
+) {
+    const world =
+        state.world;
+
+
+    /*
+        Só Ferro e Rubi.
+    */
+    if (
+        !world ||
+        (
+            world.id !==
+                "ironRegion" &&
+            world.id !==
+                "rubyRegion"
+        )
+    ) {
+        return;
+    }
+
+
+    const isRuby =
+        world.id ===
+        "rubyRegion";
+
+
+    const spacing =
+        isRuby
+            ? 170
+            : 210;
+
+
+    const visible =
+        renderRuntime
+            .visibleWorldRect;
+
+
+    const startX =
+        Math.floor(
+            visible.x /
+            spacing
+        ) *
+        spacing;
+
+
+    const startY =
+        Math.floor(
+            visible.y /
+            spacing
+        ) *
+        spacing;
+
+
+    const endX =
+        visible.x +
+        visible.w +
+        spacing;
+
+
+    const endY =
+        visible.y +
+        visible.h +
+        spacing;
+
+
+    /*
+        Pseudoaleatório fixo.
+
+        Assim o desenho não muda
+        de posição a cada frame.
+    */
+    function groundHash(
+        x,
+        y,
+        salt = 0
+    ) {
+        const value =
+            Math.sin(
+                x *
+                    12.9898 +
+                y *
+                    78.233 +
+                salt *
+                    37.719
+            ) *
+            43758.5453;
+
+
+        return (
+            value -
+            Math.floor(
+                value
+            )
+        );
+    }
+
+
+    for (
+        let gx = startX;
+        gx <= endX;
+        gx += spacing
+    ) {
+        for (
+            let gy = startY;
+            gy <= endY;
+            gy += spacing
+        ) {
+            /*
+                Nem todo quadrado
+                recebe decoração.
+            */
+            if (
+                groundHash(
+                    gx,
+                    gy,
+                    1
+                ) <
+                0.44
+            ) {
+                continue;
+            }
+
+
+            const wx =
+                gx +
+                (
+                    groundHash(
+                        gx,
+                        gy,
+                        2
+                    ) -
+                    0.5
+                ) *
+                spacing *
+                0.68;
+
+
+            const wy =
+                gy +
+                (
+                    groundHash(
+                        gx,
+                        gy,
+                        3
+                    ) -
+                    0.5
+                ) *
+                spacing *
+                0.68;
+
+
+            const screen =
+                worldToScreen(
+                    wx,
+                    wy
+                );
+
+
+            ctx.save();
+
+
+            ctx.translate(
+                screen.x,
+                screen.y
+            );
+
+
+            ctx.rotate(
+                (
+                    groundHash(
+                        gx,
+                        gy,
+                        4
+                    ) -
+                    0.5
+                ) *
+                1.45
+            );
+
+
+            if (
+                isRuby
+            ) {
+                /*
+                    RUBI DECORATIVO.
+
+                    NÃO é resource.
+                    NÃO possui E.
+                    NÃO pode coletar.
+                */
+
+                /*
+                    Pequena sombra
+                    no terreno.
+                */
+                ctx.fillStyle =
+                    "rgba(42,17,21,0.35)";
+
+
+                ctx.beginPath();
+
+                ctx.ellipse(
+                    1,
+                    6,
+                    19,
+                    8,
+                    0,
+                    0,
+                    Math.PI *
+                        2
+                );
+
+                ctx.fill();
+
+
+                /*
+                    CRISTAL PRINCIPAL.
+                */
+                ctx.fillStyle =
+                    "#812d42";
+
+
+                ctx.strokeStyle =
+                    "#491b28";
+
+
+                ctx.lineWidth =
+                    2;
+
+
+                ctx.beginPath();
+
+
+                ctx.moveTo(
+                    0,
+                    -16
+                );
+
+
+                ctx.lineTo(
+                    8,
+                    -4
+                );
+
+
+                ctx.lineTo(
+                    4,
+                    12
+                );
+
+
+                ctx.lineTo(
+                    -5,
+                    8
+                );
+
+
+                ctx.lineTo(
+                    -8,
+                    -3
+                );
+
+
+                ctx.closePath();
+
+                ctx.fill();
+
+                ctx.stroke();
+
+
+                /*
+                    RUBI MENOR.
+                */
+                ctx.fillStyle =
+                    "#b74760";
+
+
+                ctx.beginPath();
+
+
+                ctx.moveTo(
+                    11,
+                    -9
+                );
+
+
+                ctx.lineTo(
+                    18,
+                    -1
+                );
+
+
+                ctx.lineTo(
+                    13,
+                    10
+                );
+
+
+                ctx.lineTo(
+                    7,
+                    4
+                );
+
+
+                ctx.closePath();
+
+                ctx.fill();
+
+
+                /*
+                    TERCEIRO PEDAÇO.
+                */
+                ctx.fillStyle =
+                    "#682535";
+
+
+                ctx.beginPath();
+
+
+                ctx.moveTo(
+                    -13,
+                    -3
+                );
+
+
+                ctx.lineTo(
+                    -8,
+                    -10
+                );
+
+
+                ctx.lineTo(
+                    -2,
+                    3
+                );
+
+
+                ctx.lineTo(
+                    -10,
+                    8
+                );
+
+
+                ctx.closePath();
+
+                ctx.fill();
+
+
+                /*
+                    BRILHO.
+                */
+                ctx.fillStyle =
+                    "rgba(250,151,171,0.62)";
+
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    1,
+                    -9,
+                    2.2,
+                    0,
+                    Math.PI *
+                        2
+                );
+
+                ctx.fill();
+            }
+
+            else {
+                /*
+                    MINÉRIO/VEIO DE FERRO
+                    DECORATIVO.
+                */
+                ctx.fillStyle =
+                    "rgba(35,36,38,0.35)";
+
+
+                ctx.beginPath();
+
+                ctx.ellipse(
+                    0,
+                    5,
+                    16,
+                    7,
+                    0,
+                    0,
+                    Math.PI *
+                        2
+                );
+
+                ctx.fill();
+
+
+                ctx.fillStyle =
+                    "#3b3c3e";
+
+
+                ctx.beginPath();
+
+                ctx.ellipse(
+                    0,
+                    0,
+                    12,
+                    7,
+                    0,
+                    0,
+                    Math.PI *
+                        2
+                );
+
+                ctx.fill();
+
+
+                ctx.fillStyle =
+                    "#77797b";
+
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    -4,
+                    -2,
+                    2.7,
+                    0,
+                    Math.PI *
+                        2
+                );
+
+                ctx.fill();
+
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    5,
+                    1,
+                    2.2,
+                    0,
+                    Math.PI *
+                        2
+                );
+
+                ctx.fill();
+            }
+
+
+            ctx.restore();
+        }
+    }
+}
+
     function drawWorldPaths(
         ctx
     ) {
@@ -44163,12 +44624,12 @@ function drawWorldBackground(
         path,
         world
     ) {
-        const style =
-            getPathStyle(
-                path.style ||
-                world.pathStyle ||
-                world.biome
-            );
+      const style =
+    getPathStyle(
+        path.style ||
+        world.pathStyle ||
+        world.id
+    );
 
         const screen =
             worldToScreen(
@@ -44359,10 +44820,10 @@ function drawWorldBackground(
                     wall.y
                 );
 
-            const style =
-                getBiomeStyle(
-                    world.biome
-                );
+        const style =
+    getBiomeStyle(
+        world.id
+    );
 
             ctx.save();
 
@@ -44671,6 +45132,159 @@ function drawWorldBackground(
         }
     }
 
+function drawBuildingRoofsOverlay(
+    ctx
+) {
+    const world =
+        state.world;
+
+
+    if (
+        !world ||
+        world.interior
+    ) {
+        return;
+    }
+
+
+    for (
+        const building of
+        safeArray(
+            world.buildings
+        )
+    ) {
+        if (
+            !isRectVisible(
+                building,
+                180
+            )
+        ) {
+            continue;
+        }
+
+
+        const screen =
+            worldToScreen(
+                building.x,
+                building.y
+            );
+
+
+        const style =
+            building.style ||
+            {};
+
+
+        ctx.save();
+
+
+        /*
+            TELHADO DESENHADO DE NOVO
+            POR CIMA DO PLAYER/NPCS.
+
+            Parede continua atrás.
+        */
+        ctx.fillStyle =
+            style.roof ||
+            "#40383b";
+
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+            screen.x - 18,
+            screen.y + 18
+        );
+
+
+        ctx.lineTo(
+            screen.x +
+                building.w / 2,
+            screen.y - 50
+        );
+
+
+        ctx.lineTo(
+            screen.x +
+                building.w +
+                18,
+            screen.y + 18
+        );
+
+
+        ctx.lineTo(
+            screen.x +
+                building.w -
+                6,
+            screen.y +
+                building.h *
+                    0.42
+        );
+
+
+        ctx.lineTo(
+            screen.x + 6,
+            screen.y +
+                building.h *
+                    0.42
+        );
+
+
+        ctx.closePath();
+
+        ctx.fill();
+
+
+        /*
+            TEXTURA DO TELHADO.
+        */
+        ctx.globalAlpha =
+            0.18;
+
+
+        ctx.strokeStyle =
+            "#efe4cf";
+
+
+        ctx.lineWidth =
+            2;
+
+
+        for (
+            let x = 15;
+            x <
+                building.w -
+                    10;
+            x += 30
+        ) {
+            ctx.beginPath();
+
+
+            ctx.moveTo(
+                screen.x + x,
+                screen.y + 5
+            );
+
+
+            ctx.lineTo(
+                screen.x +
+                    x +
+                    10,
+                screen.y +
+                    building.h *
+                        0.31
+            );
+
+
+            ctx.stroke();
+        }
+
+
+        ctx.restore();
+    }
+}
+   
    /* ============================================================
    ENTRADAS DAS CASAS
    ============================================================ */
@@ -57263,17 +57877,26 @@ drawStaticDecorations(
         /*
             Y-SORT REAL.
         */
-        drawDepthSortedEntities(
-            ctx
-        );
+     drawDepthSortedEntities(
+    ctx
+);
 
-        /*
-            Portas por cima das paredes/casas,
-            mas mantendo folha real.
-        */
-        drawDoors(
-            ctx
-        );
+
+/*
+    TELHADOS POR CIMA
+    DO PLAYER, NPCS E INIMIGOS.
+*/
+drawBuildingRoofsOverlay(
+    ctx
+);
+
+
+/*
+    Porta continua na frente.
+*/
+drawDoors(
+    ctx
+);
 
         /*
             Ataques e drops.
@@ -63508,14 +64131,26 @@ drawStaticDecorations(
                             .shopBuy;
 
 
-                    firstAvailableCall(
-                        [
-                            "buyShopItem",
-                            "buyItem"
-                        ],
-                        itemId,
-                        state.shopNPC
-                    );
+                 const vendorId =
+    typeof state.shopNPC ===
+    "string"
+        ? state.shopNPC
+        : (
+            state.shopNPC
+                ?.vendor ||
+            state.shopNPC
+                ?.id
+        );
+
+
+firstAvailableCall(
+    [
+        "buyShopItem",
+        "buyItem"
+    ],
+    vendorId,
+    itemId
+);
 
 
                     renderShop();

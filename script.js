@@ -16579,6 +16579,41 @@
 
             });
 
+           /*
+    HITBOX FÍSICA DA CAMA.
+*/
+world.staticObstacles.push(
+    createSolidObstacle({
+
+        id:
+            "home_bed_hitbox",
+
+        type:
+            "bed",
+
+        x:
+            195,
+
+        y:
+            137.5,
+
+        w:
+            120,
+
+        h:
+            175,
+
+        blocksLight:
+            false,
+
+        solid:
+            true,
+
+        depthY:
+            312
+
+    })
+);
 
             world.interactables.push({
 
@@ -55152,34 +55187,33 @@ function resizeRenderer() {
     }
 
 
-    function getCharacterSymbol(
-        id
-    ) {
-        const symbols = {
-            kaelion:
-                "✦",
+  function getCharacterSymbol(
+    id
+) {
+    const symbols = {
+        kaelion:
+            "🔥",
 
-            theron:
-                "◇",
+        theron:
+            "⚔️",
 
-            grumgar:
-                "◆",
+        grumgar:
+            "🪨",
 
-            lirael:
-                "✧",
+        lirael:
+            "✨",
 
-            zephyr:
-                "◈"
-        };
+        zephyr:
+            "🌀"
+    };
 
-        return (
-            symbols[
-                id
-            ] ||
-            "◇"
-        );
-    }
-
+    return (
+        symbols[
+            id
+        ] ||
+        "◇"
+    );
+}
 
     function getCharacterRole(
         id
@@ -61320,15 +61354,14 @@ if (
         }
 
 
-        if (
-            typeof V.updateGameplaySystems !==
-            "function"
-        ) {
-            console.warn(
-                "VEYRA — updateGameplaySystems não exportado; fallback da Parte 5 será usado."
-            );
-        }
-
+    if (
+    typeof V.updateGameplay !==
+    "function"
+) {
+    console.warn(
+        "VEYRA — updateGameplay não exportado; fallback da Parte 5 será usado."
+    );
+}
 
         const domErrors =
             validateRequiredDOM();

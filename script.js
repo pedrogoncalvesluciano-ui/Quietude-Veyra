@@ -61614,7 +61614,7 @@
                 mas mantém console claro
                 para acharmos o problema.
             */
-            return;
+          // return;
         }
 
 

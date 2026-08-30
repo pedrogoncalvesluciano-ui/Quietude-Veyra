@@ -15644,6 +15644,151 @@
 
     }
 
+   function getDecorationCollisionObstacle(
+    decoration
+) {
+    if (
+        !decoration ||
+        decoration.solid ===
+            false
+    ) {
+        return null;
+    }
+
+
+    /*
+        Hitbox aproximada de cada
+        móvel/objeto interno.
+
+        NÃO colocamos cama aqui,
+        porque a cama já possui
+        hitbox própria.
+    */
+    const sizes = {
+
+        chest:
+            [76, 56],
+
+        smallTable:
+            [100, 62],
+
+        table:
+            [100, 62],
+
+        archiveTable:
+            [120, 65],
+
+        herbTable:
+            [120, 65],
+
+        chair:
+            [42, 42],
+
+        bookshelf:
+            [78, 108],
+
+        shelves:
+            [82, 108],
+
+        plantShelf:
+            [82, 105],
+
+        counter:
+            [145, 66],
+
+        crates:
+            [95, 68],
+
+        forgeFire:
+            [100, 72],
+
+        anvil:
+            [74, 52],
+
+        weaponRack:
+            [100, 55],
+
+        coalPile:
+            [92, 62],
+
+        workbench:
+            [135, 72],
+
+        woodStack:
+            [105, 64],
+
+        bowRack:
+            [95, 52],
+
+        plantPot:
+            [45, 45]
+
+    };
+
+
+    const size =
+        sizes[
+            decoration.type
+        ];
+
+
+    /*
+        Decoração sem tamanho definido
+        continua sendo apenas visual.
+    */
+    if (
+        !size
+    ) {
+        return null;
+    }
+
+
+    const w =
+        decoration.w ||
+        size[0];
+
+
+    const h =
+        decoration.h ||
+        size[1];
+
+
+    return createSolidObstacle({
+
+        id:
+            `${decoration.id || decoration.type}_hitbox`,
+
+        type:
+            decoration.type,
+
+        /*
+            A maior parte das decorations
+            usa x/y como CENTRO.
+        */
+        x:
+            decoration.x -
+            w / 2,
+
+        y:
+            decoration.y -
+            h / 2,
+
+        w,
+
+        h,
+
+        solid:
+            true,
+
+        blocksLight:
+            false,
+
+        depthY:
+            decoration.y +
+            h / 2
+
+    });
+}
 
     /* ============================================================
        OBSTÁCULOS
@@ -15666,7 +15811,6 @@
         const obstacles =
             [];
 
-
         for (
             const obstacle of
             safeArray(
@@ -15679,6 +15823,31 @@
             );
 
         }
+
+       /*
+    HITBOX DOS MÓVEIS / DECORAÇÕES
+    INTERNAS DAS CASAS.
+*/
+for (
+    const decoration of
+    safeArray(
+        world.decorations
+    )
+) {
+    const obstacle =
+        getDecorationCollisionObstacle(
+            decoration
+        );
+
+
+    if (
+        obstacle
+    ) {
+        obstacles.push(
+            obstacle
+        );
+    }
+}
 
 
         for (

@@ -13312,17 +13312,17 @@
             "bottom";
 
 
-        const doorWidth =
-            clamp(
-                building.w *
-                    0.18,
-                66,
-                92
-            );
+     const doorWidth =
+    clamp(
+        building.w *
+            0.24,
+        96,
+        126
+    );
 
 
-        const depth =
-            26;
+const depth =
+    42;
 
 
         if (

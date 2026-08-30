@@ -15578,80 +15578,93 @@ const depth =
         }
 
 
-        const barrier =
-            orientation ===
-            "horizontal"
+      const barrier =
+    orientation ===
+    "horizontal"
 
-                ? {
+        ? {
 
-                    id:
-                        `${bossId}_passage_barrier`,
+            id:
+                `${bossId}_passage_barrier`,
 
-                    type:
-                        "bossBarrier",
+            type:
+                "bossBarrier",
 
-                    bossId,
+            bossId,
 
-                    x:
-                        x -
-                        180,
 
-                    y:
-                        y -
-                        25,
+            /*
+                BARREIRA HORIZONTAL.
 
-                    w:
-                        360,
+                Vai da esquerda até
+                a direita do mapa inteiro.
+            */
+            x:
+                0,
 
-                    h:
-                        50,
+            y:
+                y -
+                25,
 
-                    shape:
-                        "rect",
+            w:
+                world.width,
 
-                    solid:
-                        true,
+            h:
+                50,
 
-                    blocksLight:
-                        false
 
-                }
+            shape:
+                "rect",
 
-                : {
+            solid:
+                true,
 
-                    id:
-                        `${bossId}_passage_barrier`,
+            blocksLight:
+                false
 
-                    type:
-                        "bossBarrier",
+        }
 
-                    bossId,
+        : {
 
-                    x:
-                        x -
-                        25,
+            id:
+                `${bossId}_passage_barrier`,
 
-                    y:
-                        y -
-                        180,
+            type:
+                "bossBarrier",
 
-                    w:
-                        50,
+            bossId,
 
-                    h:
-                        360,
 
-                    shape:
-                        "rect",
+            /*
+                BARREIRA VERTICAL.
 
-                    solid:
-                        true,
+                Vai de cima até
+                embaixo do mapa inteiro.
+            */
+            x:
+                x -
+                25,
 
-                    blocksLight:
-                        false
+            y:
+                0,
 
-                };
+            w:
+                50,
 
+            h:
+                world.height,
+
+
+            shape:
+                "rect",
+
+            solid:
+                true,
+
+            blocksLight:
+                false
+
+        };
 
         world.bossBarriers.push(
             barrier
@@ -26530,11 +26543,19 @@ if (
 
         deathSafeSnapshot: null,
 
-        transientEffects: [],
+       transientEffects: [],
 
-        bossRunes: [],
 
-        lastWorldRef: null,
+/*
+    Manchas temporárias
+    deixadas por inimigos.
+*/
+bloodMarks: [],
+
+
+bossRunes: [],
+
+lastWorldRef: null,
 
         monarch: {
             awakened: false,
@@ -26719,6 +26740,167 @@ if (
                         0
                 );
     }
+
+   function addBloodMark(
+    x,
+    y,
+    options = {}
+) {
+    /*
+        Garante que o array existe.
+    */
+    if (
+        !Array.isArray(
+            gameplayRuntime
+                .bloodMarks
+        )
+    ) {
+        gameplayRuntime
+            .bloodMarks =
+            [];
+    }
+
+
+    const duration =
+        Math.max(
+            0.5,
+            finiteNumber(
+                options.duration,
+                random(
+                    7,
+                    11
+                )
+            )
+        );
+
+
+    const mark = {
+
+        x:
+            finiteNumber(
+                x,
+                0
+            ),
+
+        y:
+            finiteNumber(
+                y,
+                0
+            ),
+
+        size:
+            Math.max(
+                2,
+                finiteNumber(
+                    options.size,
+                    random(
+                        16,
+                        28
+                    )
+                )
+            ),
+
+        rotation:
+            random(
+                0,
+                Math.PI *
+                    2
+            ),
+
+        color:
+            options.color ||
+            "#681d1d",
+
+        timer:
+            duration,
+
+        maxTimer:
+            duration
+
+    };
+
+
+    gameplayRuntime
+        .bloodMarks
+        .push(
+            mark
+        );
+
+
+    /*
+        Não deixa acumular
+        centenas de manchas.
+    */
+    const maxMarks =
+        28;
+
+
+    if (
+        gameplayRuntime
+            .bloodMarks
+            .length >
+        maxMarks
+    ) {
+        gameplayRuntime
+            .bloodMarks
+            .splice(
+                0,
+                gameplayRuntime
+                    .bloodMarks
+                    .length -
+                    maxMarks
+            );
+    }
+
+
+    return mark;
+}
+
+
+function updateBloodMarks(
+    dt
+) {
+    if (
+        !Array.isArray(
+            gameplayRuntime
+                .bloodMarks
+        )
+    ) {
+        gameplayRuntime
+            .bloodMarks =
+            [];
+
+        return;
+    }
+
+
+    for (
+        const mark of
+        gameplayRuntime
+            .bloodMarks
+    ) {
+        mark.timer =
+            Math.max(
+                0,
+                finiteNumber(
+                    mark.timer,
+                    0
+                ) -
+                dt
+            );
+    }
+
+
+    gameplayRuntime
+        .bloodMarks =
+        gameplayRuntime
+            .bloodMarks
+            .filter(
+                mark =>
+                    mark.timer >
+                    0
+            );
+}
 
 
     /* ============================================================
@@ -36162,13 +36344,94 @@ const damage =
                 continue;
             }
 
-            state.bossBarTarget =
-                boss;
+          state.bossBarTarget =
+    boss;
 
-            updatePathBossAI(
-                boss,
-                dt
-            );
+
+/*
+    POSIÇÃO ANTES DO MOVIMENTO.
+*/
+const oldBossX =
+    boss.x;
+
+
+const oldBossY =
+    boss.y;
+
+
+/*
+    Pequeno intervalo entre
+    cada marca do rastro.
+*/
+boss.trailCooldown =
+    Math.max(
+        0,
+        finiteNumber(
+            boss.trailCooldown,
+            0
+        ) -
+        dt
+    );
+
+
+/*
+    IA NORMAL DO BOSS.
+*/
+updatePathBossAI(
+    boss,
+    dt
+);
+
+
+/*
+    QUANTO O BOSS ANDOU.
+*/
+const bossMoved =
+    distance(
+        oldBossX,
+        oldBossY,
+        boss.x,
+        boss.y
+    );
+
+
+/*
+    GERA O RASTRO.
+*/
+if (
+    bossMoved >
+        2 &&
+    boss.trailCooldown <=
+        0
+) {
+    spawnTransientEffect(
+        "bossTrail",
+
+        oldBossX,
+        oldBossY,
+
+        {
+            duration:
+                0.62,
+
+            radius:
+                boss.radius *
+                0.9,
+
+            color:
+                boss.definition
+                    ?.aura ||
+                BOSS_REGISTRY[
+                    boss.id
+                ]?.aura ||
+                "#89699b"
+        }
+    );
+
+
+    boss.trailCooldown =
+        0.075;
+}
         }
     }
 
@@ -36507,6 +36770,107 @@ const damage =
                     enemy.speciesId
             }
         );
+
+       /*
+    COR DO SANGUE.
+
+    Criaturas normais:
+    vermelho escuro.
+
+    Criaturas do Vazio:
+    sangue arroxeado.
+*/
+const bloodColor =
+    (
+        enemy.speciesId ===
+            "voidSpider" ||
+        enemy.speciesId ===
+            "voidGoblin"
+    )
+        ? "#432246"
+        : "#6b1d1d";
+
+
+/*
+    POÇA PRINCIPAL.
+*/
+addBloodMark(
+    enemy.x,
+    enemy.y,
+    {
+        size:
+            Math.max(
+                15,
+                enemy.radius *
+                    1.05
+            ),
+
+        color:
+            bloodColor,
+
+        duration:
+            random(
+                8,
+                13
+            )
+    }
+);
+
+
+/*
+    RESPINGOS AO REDOR.
+*/
+for (
+    let bloodIndex = 0;
+    bloodIndex < 4;
+    bloodIndex += 1
+) {
+    const angle =
+        Math.random() *
+        Math.PI *
+        2;
+
+
+    const bloodDistance =
+        random(
+            12,
+            42
+        );
+
+
+    addBloodMark(
+
+        enemy.x +
+            Math.cos(
+                angle
+            ) *
+            bloodDistance,
+
+        enemy.y +
+            Math.sin(
+                angle
+            ) *
+            bloodDistance,
+
+        {
+            size:
+                random(
+                    4,
+                    10
+                ),
+
+            color:
+                bloodColor,
+
+            duration:
+                random(
+                    5,
+                    10
+                )
+        }
+
+    );
+}
 
         if (
             state.area ===
@@ -41961,6 +42325,16 @@ if (
             .lastWorldRef =
             state.world;
 
+       /*
+    Sangue pertence somente
+    ao cenário onde foi criado.
+
+    Entrou em outro mapa =
+    limpa as manchas antigas.
+*/
+gameplayRuntime.bloodMarks =
+    [];
+
         if (
             !state.world
         ) {
@@ -42242,13 +42616,23 @@ if (
             safeDt
         );
 
-        updateTransientEffects(
-            safeDt
-        );
+     updateTransientEffects(
+    safeDt
+);
 
-        updateRuntimeTransition(
-            safeDt
-        );
+
+/*
+    Faz as manchas de sangue
+    envelhecerem e desaparecerem.
+*/
+updateBloodMarks(
+    safeDt
+);
+
+
+updateRuntimeTransition(
+    safeDt
+);
 
         updatePlayerVisualTimers(
             safeDt
@@ -47729,19 +48113,27 @@ else {
         ctx,
         enemy
     ) {
-        const facing =
-            state.player
-                ? Math.atan2(
-                    state.player.y -
-                        enemy.y,
-                    state.player.x -
-                        enemy.x
-                )
-                : 0;
+       const facingLeft =
+    Boolean(
+        state.player &&
+        state.player.x <
+            enemy.x
+    );
 
-        ctx.rotate(
-            facing
-        );
+
+/*
+    Só vira horizontalmente.
+
+    Nunca gira 180 graus,
+    então não fica de
+    cabeça para baixo.
+*/
+ctx.scale(
+    facingLeft
+        ? -1
+        : 1,
+    1
+);
 
         ctx.fillStyle =
             enemy.color ||
@@ -47837,6 +48229,20 @@ else {
         ctx,
         enemy
     ) {
+       const facingLeft =
+    Boolean(
+        state.player &&
+        state.player.x <
+            enemy.x
+    );
+
+
+ctx.scale(
+    facingLeft
+        ? -1
+        : 1,
+    1
+);
         ctx.fillStyle =
             enemy.color ||
             "#674e3e";
@@ -50754,6 +51160,205 @@ else {
             break;
     }
 }
+function drawBloodMarks(
+    ctx
+) {
+    const marks =
+        safeArray(
+            gameplayRuntime
+                .bloodMarks
+        );
+
+
+    for (
+        const mark of
+        marks
+    ) {
+        if (
+            !isPointVisible(
+                mark.x,
+                mark.y,
+                90
+            )
+        ) {
+            continue;
+        }
+
+
+        const screen =
+            worldToScreen(
+                mark.x,
+                mark.y
+            );
+
+
+        /*
+            Nos últimos segundos,
+            a mancha vai desaparecendo.
+        */
+        const lifeRatio =
+            clamp(
+                mark.timer /
+                    Math.max(
+                        0.01,
+                        mark.maxTimer
+                    ),
+                0,
+                1
+            );
+
+
+        const alpha =
+            lifeRatio <
+            0.35
+                ? lifeRatio /
+                    0.35
+                : 1;
+
+
+        ctx.save();
+
+
+        ctx.globalAlpha =
+            0.68 *
+            alpha;
+
+
+        ctx.translate(
+            screen.x,
+            screen.y
+        );
+
+
+        ctx.rotate(
+            finiteNumber(
+                mark.rotation,
+                0
+            )
+        );
+
+
+        /*
+            MANCHA PRINCIPAL.
+        */
+        ctx.fillStyle =
+            mark.color ||
+            "#681d1d";
+
+
+        ctx.beginPath();
+
+
+        ctx.ellipse(
+            0,
+            0,
+
+            mark.size,
+
+            mark.size *
+                0.46,
+
+            0,
+
+            0,
+            Math.PI *
+                2
+        );
+
+
+        ctx.fill();
+
+
+        /*
+            RESPINGO 1.
+        */
+        ctx.beginPath();
+
+
+        ctx.ellipse(
+            mark.size *
+                0.68,
+
+            mark.size *
+                0.08,
+
+            mark.size *
+                0.26,
+
+            mark.size *
+                0.17,
+
+            0,
+
+            0,
+            Math.PI *
+                2
+        );
+
+
+        ctx.fill();
+
+
+        /*
+            RESPINGO 2.
+        */
+        ctx.beginPath();
+
+
+        ctx.arc(
+            -mark.size *
+                0.72,
+
+            mark.size *
+                0.24,
+
+            Math.max(
+                2,
+                mark.size *
+                    0.13
+            ),
+
+            0,
+            Math.PI *
+                2
+        );
+
+
+        ctx.fill();
+
+
+        /*
+            RESPINGO 3.
+        */
+        ctx.beginPath();
+
+
+        ctx.arc(
+            mark.size *
+                0.25,
+
+            -mark.size *
+                0.52,
+
+            Math.max(
+                2,
+                mark.size *
+                    0.09
+            ),
+
+            0,
+            Math.PI *
+                2
+        );
+
+
+        ctx.fill();
+
+
+        ctx.restore();
+    }
+}
+   
     function buildDepthEntries() {
         const world =
             state.world;
@@ -51076,10 +51681,9 @@ for (
        DROPS
        ============================================================ */
 
-  function drawWorldDrops(
+ function drawWorldDrops(
     ctx,
-    onlyDrop =
-        null
+    onlyDrop = null
 ) {
     const world =
         state.world;
@@ -51106,124 +51710,128 @@ for (
         const drop of
         drops
     ) {
-        const world =
-            state.world;
-
-        if (!world) {
-            return;
-        }
-
-        for (
-            const drop of
-            safeArray(
-                world.droppedItems
+        if (
+            drop.picked ||
+            !isPointVisible(
+                drop.x,
+                drop.y,
+                70
             )
         ) {
-            if (
-                drop.picked ||
-                !isPointVisible(
-                    drop.x,
-                    drop.y,
-                    70
-                )
-            ) {
-                continue;
-            }
+            continue;
+        }
 
-            const screen =
-                worldToScreen(
-                    drop.x,
-                    drop.y
-                );
 
-            const bob =
-                Math.sin(
-                    finiteNumber(
-                        drop.bobTime,
-                        0
-                    )
-                ) *
-                4;
-
-            const item =
-                ITEMS[
-                    drop.itemId
-                ];
-
-            ctx.save();
-
-            ctx.translate(
-                screen.x,
-                screen.y +
-                    bob
+        const screen =
+            worldToScreen(
+                drop.x,
+                drop.y
             );
 
-            ctx.shadowBlur =
-                drop.questDrop
-                    ? 16
-                    : 8;
 
-            ctx.shadowColor =
-                drop.questDrop
-                    ? "#73518b"
-                    : "rgba(220,210,180,0.5)";
-
-          ctx.font =
-    "25px sans-serif";
-
-ctx.textAlign =
-    "center";
-
-ctx.textBaseline =
-    "middle";
-
-ctx.fillStyle =
-    "#ffffff";
+        const bob =
+            Math.sin(
+                finiteNumber(
+                    drop.bobTime,
+                    0
+                )
+            ) *
+            4;
 
 
-ctx.fillText(
-    item?.icon ||
-        "◆",
-    0,
-    0
-);
+        const item =
+            ITEMS[
+                drop.itemId
+            ];
 
-            ctx.shadowBlur =
-                0;
 
-            if (
-                item &&
-                distance(
-                    state.player
-                        ?.x ||
-                        0,
-                    state.player
-                        ?.y ||
-                        0,
-                    drop.x,
-                    drop.y
-                ) <
-                130
-            ) {
-                ctx.font =
-                    "10px serif";
+        ctx.save();
 
-                ctx.textAlign =
-                    "center";
 
-                ctx.fillStyle =
-                    "rgba(240,233,218,0.84)";
+        ctx.translate(
+            screen.x,
+            screen.y +
+                bob
+        );
 
-                ctx.fillText(
-                    `${item.name} x${drop.amount}`,
+
+        ctx.shadowBlur =
+            drop.questDrop
+                ? 16
+                : 8;
+
+
+        ctx.shadowColor =
+            drop.questDrop
+                ? "#73518b"
+                : "rgba(220,210,180,0.5)";
+
+
+        ctx.font =
+            "25px sans-serif";
+
+
+        ctx.textAlign =
+            "center";
+
+
+        ctx.textBaseline =
+            "middle";
+
+
+        ctx.fillStyle =
+            "#ffffff";
+
+
+        ctx.fillText(
+            item?.icon ||
+                "◆",
+            0,
+            0
+        );
+
+
+        ctx.shadowBlur =
+            0;
+
+
+        if (
+            item &&
+            distance(
+                state.player
+                    ?.x ||
                     0,
-                    -19
-                );
-            }
+                state.player
+                    ?.y ||
+                    0,
+                drop.x,
+                drop.y
+            ) <
+                130
+        ) {
+            ctx.font =
+                "10px serif";
 
-            ctx.restore();
+
+            ctx.textAlign =
+                "center";
+
+
+            ctx.fillStyle =
+                "rgba(240,233,218,0.84)";
+
+
+            ctx.fillText(
+                `${item.name} x${drop.amount}`,
+                0,
+                -19
+            );
         }
+
+
+        ctx.restore();
     }
+}
 
 
     function getItemWorldColor(
@@ -51830,6 +52438,93 @@ case "bossTrail":
         ctx.stroke();
     }
 
+   function drawBossTrailEffect(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const radius =
+        finiteNumber(
+            effect.radius,
+            38
+        );
+
+
+    const color =
+        effect.color ||
+        "#89699b";
+
+
+    const fade =
+        1 -
+        progress;
+
+
+    ctx.save();
+
+
+    /*
+        Mancha/aura deixada
+        pelo movimento do boss.
+    */
+    ctx.fillStyle =
+        colorWithAlpha(
+            color,
+            0.20 *
+                fade
+        );
+
+
+    ctx.beginPath();
+
+
+    ctx.ellipse(
+        screen.x,
+        screen.y +
+            radius *
+                0.28,
+
+        radius *
+            (
+                0.95 -
+                progress *
+                    0.2
+            ),
+
+        radius *
+            0.40,
+
+        0,
+        0,
+        Math.PI *
+            2
+    );
+
+
+    ctx.fill();
+
+
+    /*
+        Borda do rastro.
+    */
+    ctx.strokeStyle =
+        colorWithAlpha(
+            color,
+            0.38 *
+                fade
+        );
+
+
+    ctx.lineWidth =
+        2;
+
+
+    ctx.stroke();
+
+
+    ctx.restore();
+}
 
     function drawHitEffect(
         ctx,
@@ -56481,13 +57176,22 @@ function drawHoldHUD(
             ctx
         );
 
-        drawMushrooms(
-            ctx
-        );
+       drawMushrooms(
+    ctx
+);
 
-        drawRocks(
-            ctx
-        );
+
+/*
+    SANGUE NO SOLO.
+*/
+drawBloodMarks(
+    ctx
+);
+
+
+drawRocks(
+    ctx
+);
 
         /*
             Objetos fixos que precisam ficar
@@ -63813,50 +64517,6 @@ function getDevPanel() {
 
         }
     );
-   
-            for (
-                const key of
-                Object.keys(
-                    dev.cheats
-                )
-            ) {
-                dev.cheats[
-                    key
-                ] =
-                    false;
-            }
-
-
-            /*
-                Fecha e bloqueia.
-            */
-            dev.unlocked =
-                false;
-
-
-            devStorageSet(
-                DEV_STORAGE.remember,
-                "0"
-            );
-
-
-            clearDevHeldKeys();
-
-
-            panel.style.display =
-                "none";
-        }
-    );
-
-   panel
-    .querySelector(
-        "#veyraDevChangePassword"
-    )
-    ?.addEventListener(
-        "click",
-        changeDevPassword
-    );
-
 
     panel
         .querySelector(

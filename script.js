@@ -53879,3 +53879,7763 @@
         validatePart4Data();
 
 })();
+/* ============================================================
+   VEYRA: A QUIETUDE
+   SCRIPT.JS — PARTE 5/5
+
+   INTEGRAÇÃO FINAL
+   HTML / INPUT / PAINÉIS / SAVE / LOAD / LOOP
+
+   REQUER:
+   - PARTE 1/5
+   - PARTE 2/5
+   - PARTE 3/5
+   - PARTE 4/5
+   ============================================================ */
+
+(() => {
+    "use strict";
+
+
+    const V =
+        window.VEYRA;
+
+
+    if (
+        !V ||
+        !V.__part1Loaded ||
+        !V.__part2Loaded ||
+        !V.__part3Loaded ||
+        !V.__part4Loaded
+    ) {
+        throw new Error(
+            "VEYRA — carregue as Partes 1/5, 2/5, 3/5 e 4/5 antes da Parte 5/5."
+        );
+    }
+
+
+    if (
+        V.__part5Loaded
+    ) {
+        console.warn(
+            "VEYRA — Parte 5 já foi carregada; ignorando duplicação."
+        );
+
+        return;
+    }
+
+
+    /* ============================================================
+       REFERÊNCIAS BÁSICAS
+       ============================================================ */
+
+    const state =
+        V.state;
+
+
+    const renderRuntime =
+        V.renderRuntime;
+
+
+    const UI_RUNTIME = {
+        initialized:
+            false,
+
+        loopStarted:
+            false,
+
+        lastFrame:
+            0,
+
+        hudAccumulator:
+            0,
+
+        minimapAccumulator:
+            0,
+
+        autosaveAccumulator:
+            0,
+
+        selectedCharacter:
+            "kaelion",
+
+        activeInventoryCategory:
+            "all",
+
+        pointerInsideCanvas:
+            false,
+
+        deathGiveUpButton:
+            null,
+
+        titleCard:
+            null,
+
+        lastDialogueToken:
+            null,
+
+        lastBattleToken:
+            null,
+
+        lastTravelToken:
+            null,
+
+        lastShopSignature:
+            null,
+
+        sessionNumber:
+            0
+    };
+
+
+    /* ============================================================
+       HELPERS
+       ============================================================ */
+
+    function byId(
+        id
+    ) {
+        return document
+            .getElementById(
+                id
+            );
+    }
+
+
+    function hasFunction(
+        name
+    ) {
+        return (
+            typeof V[
+                name
+            ] ===
+            "function"
+        );
+    }
+
+
+    function safeCall(
+        name,
+        ...args
+    ) {
+        if (
+            !hasFunction(
+                name
+            )
+        ) {
+            return undefined;
+        }
+
+        try {
+            return V[
+                name
+            ](
+                ...args
+            );
+        } catch (
+            error
+        ) {
+            console.error(
+                `VEYRA — erro em ${name}:`,
+                error
+            );
+
+            return undefined;
+        }
+    }
+
+
+    function firstAvailableCall(
+        names,
+        ...args
+    ) {
+        for (
+            const name of
+            names
+        ) {
+            if (
+                hasFunction(
+                    name
+                )
+            ) {
+                return safeCall(
+                    name,
+                    ...args
+                );
+            }
+        }
+
+        return undefined;
+    }
+
+
+    function safeArray(
+        value
+    ) {
+        return Array.isArray(
+            value
+        )
+            ? value
+            : [];
+    }
+
+
+    function finite(
+        value,
+        fallback = 0
+    ) {
+        const number =
+            Number(
+                value
+            );
+
+        return Number.isFinite(
+            number
+        )
+            ? number
+            : fallback;
+    }
+
+
+    function clamp(
+        value,
+        min,
+        max
+    ) {
+        if (
+            typeof V.clamp ===
+            "function"
+        ) {
+            return V.clamp(
+                value,
+                min,
+                max
+            );
+        }
+
+        return Math.max(
+            min,
+            Math.min(
+                max,
+                value
+            )
+        );
+    }
+
+
+    function escapeHTML(
+        value
+    ) {
+        return String(
+            value ??
+            ""
+        )
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+    }
+
+
+    function setText(
+        id,
+        value
+    ) {
+        const element =
+            byId(
+                id
+            );
+
+        if (
+            element
+        ) {
+            element.textContent =
+                String(
+                    value ??
+                    ""
+                );
+        }
+    }
+
+
+    function setHTML(
+        id,
+        html
+    ) {
+        const element =
+            byId(
+                id
+            );
+
+        if (
+            element
+        ) {
+            element.innerHTML =
+                html;
+        }
+    }
+
+
+    function setVisible(
+        element,
+        visible
+    ) {
+        if (
+            !element
+        ) {
+            return;
+        }
+
+        element.classList
+            .toggle(
+                "hidden",
+                !visible
+            );
+    }
+
+
+    function isVisible(
+        element
+    ) {
+        return Boolean(
+            element &&
+            !element.classList
+                .contains(
+                    "hidden"
+                )
+        );
+    }
+
+
+    function setBarPercent(
+        id,
+        current,
+        maximum
+    ) {
+        const element =
+            byId(
+                id
+            );
+
+        if (
+            !element
+        ) {
+            return;
+        }
+
+        const ratio =
+            maximum >
+            0
+                ? clamp(
+                    current /
+                    maximum,
+                    0,
+                    1
+                )
+                : 0;
+
+        element.style.width =
+            `${ratio * 100}%`;
+    }
+
+
+    /* ============================================================
+       DOM
+       ============================================================ */
+
+    const DOM = {
+        screens: {},
+        buttons: {},
+        panels: {},
+        hud: {},
+        canvas: {},
+        inputs: {},
+        misc: {}
+    };
+
+
+    function cacheDOM() {
+        DOM.screens.menu =
+            byId(
+                "menuScreen"
+            );
+
+        DOM.screens.how =
+            byId(
+                "howScreen"
+            );
+
+        DOM.screens.credits =
+            byId(
+                "creditsScreen"
+            );
+
+        DOM.screens.character =
+            byId(
+                "characterScreen"
+            );
+
+        DOM.screens.game =
+            byId(
+                "gameScreen"
+            );
+
+
+        DOM.buttons.newGame =
+            byId(
+                "newGameBtn"
+            );
+
+        DOM.buttons.continueGame =
+            byId(
+                "continueBtn"
+            );
+
+        DOM.buttons.how =
+            byId(
+                "howToBtn"
+            );
+
+        DOM.buttons.credits =
+            byId(
+                "creditsBtn"
+            );
+
+        DOM.buttons.closeHow =
+            byId(
+                "closeHowBtn"
+            );
+
+        DOM.buttons.closeCredits =
+            byId(
+                "closeCreditsBtn"
+            );
+
+        DOM.buttons.backMenu =
+            byId(
+                "backMenuBtn"
+            );
+
+        DOM.buttons.startGame =
+            byId(
+                "startGameBtn"
+            );
+
+
+        DOM.buttons.inventory =
+            byId(
+                "inventoryBtn"
+            );
+
+        DOM.buttons.map =
+            byId(
+                "mapBtn"
+            );
+
+        DOM.buttons.book =
+            byId(
+                "bookBtn"
+            );
+
+        DOM.buttons.status =
+            byId(
+                "statusBtn"
+            );
+
+        DOM.buttons.save =
+            byId(
+                "saveBtn"
+            );
+
+        DOM.buttons.menu =
+            byId(
+                "menuBtn"
+            );
+
+
+        DOM.buttons.closeInventory =
+            byId(
+                "closeInventoryBtn"
+            );
+
+        DOM.buttons.closeMap =
+            byId(
+                "closeMapBtn"
+            );
+
+        DOM.buttons.closeBook =
+            byId(
+                "closeBookBtn"
+            );
+
+        DOM.buttons.closeStatus =
+            byId(
+                "closeStatusBtn"
+            );
+
+        DOM.buttons.closeShop =
+            byId(
+                "closeShopBtn"
+            );
+
+
+        DOM.buttons.shopBuy =
+            byId(
+                "shopBuyBtn"
+            );
+
+        DOM.buttons.shopSell =
+            byId(
+                "shopSellBtn"
+            );
+
+
+        DOM.buttons.battleAccept =
+            byId(
+                "battleAccept"
+            );
+
+        DOM.buttons.battleDecline =
+            byId(
+                "battleDecline"
+            );
+
+
+        DOM.buttons.travelYes =
+            byId(
+                "travelYes"
+            );
+
+        DOM.buttons.travelNo =
+            byId(
+                "travelNo"
+            );
+
+
+        DOM.buttons.respawn =
+            byId(
+                "respawnBtn"
+            );
+
+
+        DOM.buttons.questAction =
+            byId(
+                "questActionBtn"
+            );
+
+
+        DOM.buttons.resumeGame =
+            byId(
+                "resumeGameBtn"
+            );
+
+        DOM.buttons.menuSave =
+            byId(
+                "menuSaveBtn"
+            );
+
+        DOM.buttons.returnMainMenu =
+            byId(
+                "returnMainMenuBtn"
+            );
+
+        DOM.buttons.closeMenu =
+            byId(
+                "closeMenuBtn"
+            );
+
+
+        DOM.panels.dialogue =
+            byId(
+                "dialoguePanel"
+            );
+
+        DOM.panels.battle =
+            byId(
+                "battlePanel"
+            );
+
+        DOM.panels.travel =
+            byId(
+                "travelPanel"
+            );
+
+        DOM.panels.death =
+            byId(
+                "deathPanel"
+            );
+
+        DOM.panels.inventory =
+            byId(
+                "inventoryPanel"
+            );
+
+        DOM.panels.map =
+            byId(
+                "mapPanel"
+            );
+
+        DOM.panels.book =
+            byId(
+                "bookPanel"
+            );
+
+        DOM.panels.status =
+            byId(
+                "statusPanel"
+            );
+
+        DOM.panels.shop =
+            byId(
+                "shopPanel"
+            );
+
+        DOM.panels.quest =
+            byId(
+                "questPanel"
+            );
+
+        DOM.panels.menu =
+            byId(
+                "gameMenuPanel"
+            );
+
+
+        DOM.inputs.playerName =
+            byId(
+                "playerName"
+            );
+
+
+        DOM.canvas.game =
+            byId(
+                "gameCanvas"
+            );
+
+        DOM.canvas.minimap =
+            byId(
+                "miniCanvas"
+            );
+
+        DOM.canvas.worldMap =
+            byId(
+                "worldMapCanvas"
+            );
+
+
+        DOM.hud.avatar =
+            byId(
+                "hudAvatar"
+            );
+
+        DOM.hud.className =
+            byId(
+                "hudClass"
+            );
+
+        DOM.hud.name =
+            byId(
+                "hudName"
+            );
+
+        DOM.hud.level =
+            byId(
+                "levelText"
+            );
+
+        DOM.hud.hpBar =
+            byId(
+                "hpBar"
+            );
+
+        DOM.hud.hpText =
+            byId(
+                "hpText"
+            );
+
+        DOM.hud.magicBar =
+            byId(
+                "magicBar"
+            );
+
+        DOM.hud.magicText =
+            byId(
+                "magicText"
+            );
+
+        DOM.hud.energyBar =
+            byId(
+                "energyBar"
+            );
+
+        DOM.hud.energyText =
+            byId(
+                "energyText"
+            );
+
+        DOM.hud.hunger =
+            byId(
+                "hungerText"
+            );
+
+        DOM.hud.fatigue =
+            byId(
+                "fatigueText"
+            );
+
+        DOM.hud.xp =
+            byId(
+                "xpText"
+            );
+
+        DOM.hud.location =
+            byId(
+                "locationLabel"
+            );
+
+        DOM.hud.money =
+            byId(
+                "moneyText"
+            );
+
+
+        DOM.misc.characterCards =
+            byId(
+                "characterCards"
+            );
+
+        DOM.misc.inventoryGrid =
+            byId(
+                "inventoryGrid"
+            );
+
+        DOM.misc.equipmentGrid =
+            byId(
+                "equipmentGrid"
+            );
+
+        DOM.misc.weightText =
+            byId(
+                "weightText"
+            );
+
+        DOM.misc.statusContent =
+            byId(
+                "statusContent"
+            );
+
+        DOM.misc.bossBook =
+            byId(
+                "bossBook"
+            );
+
+        DOM.misc.shopGrid =
+            byId(
+                "shopGrid"
+            );
+
+        DOM.misc.shopTitle =
+            byId(
+                "shopTitle"
+            );
+
+        DOM.misc.dialogueSpeaker =
+            byId(
+                "dialogueSpeaker"
+            );
+
+        DOM.misc.dialogueText =
+            byId(
+                "dialogueText"
+            );
+
+        DOM.misc.dialogueChoices =
+            byId(
+                "dialogueChoices"
+            );
+
+        DOM.misc.battleName =
+            byId(
+                "battleName"
+            );
+
+        DOM.misc.battleSubtitle =
+            byId(
+                "battleSubtitle"
+            );
+
+        DOM.misc.battleText =
+            byId(
+                "battleText"
+            );
+
+        DOM.misc.travelTitle =
+            byId(
+                "travelTitle"
+            );
+
+        DOM.misc.travelText =
+            byId(
+                "travelText"
+            );
+    }
+
+
+    /* ============================================================
+       CORREÇÃO DO HUD ANTIGO
+       MAGIA -> REMOVIDA
+       FOME + CANSAÇO -> EXAUSTÃO
+       ============================================================ */
+
+    function adaptLegacyHUDToNewStats() {
+        const magicRow =
+            DOM.hud.magicBar
+                ?.closest(
+                    ".hud-resource-row"
+                );
+
+        if (
+            magicRow
+        ) {
+            magicRow.style.display =
+                "none";
+        }
+
+
+        const hungerContainer =
+            DOM.hud.hunger
+                ?.parentElement;
+
+        const fatigueContainer =
+            DOM.hud.fatigue
+                ?.parentElement;
+
+
+        if (
+            hungerContainer
+        ) {
+            const label =
+                hungerContainer
+                    .querySelector(
+                        "span"
+                    );
+
+            if (
+                label
+            ) {
+                label.textContent =
+                    "EXAUSTÃO";
+            }
+        }
+
+
+        if (
+            fatigueContainer
+        ) {
+            fatigueContainer.style.display =
+                "none";
+        }
+
+
+        if (
+            DOM.buttons.respawn
+        ) {
+            DOM.buttons.respawn
+                .textContent =
+                "RENASCER";
+        }
+
+
+        ensureGiveUpButton();
+    }
+
+
+    function ensureGiveUpButton() {
+        if (
+            UI_RUNTIME
+                .deathGiveUpButton
+        ) {
+            return UI_RUNTIME
+                .deathGiveUpButton;
+        }
+
+        let button =
+            byId(
+                "giveUpBtn"
+            );
+
+        if (
+            !button &&
+            DOM.panels.death
+        ) {
+            button =
+                document.createElement(
+                    "button"
+                );
+
+            button.id =
+                "giveUpBtn";
+
+            button.type =
+                "button";
+
+            button.textContent =
+                "DESISTIR";
+
+            button.className =
+                "modal-secondary-btn";
+
+            const actions =
+                DOM.buttons.respawn
+                    ?.parentElement;
+
+            if (
+                actions
+            ) {
+                if (
+                    actions.classList
+                        .contains(
+                            "modal-actions"
+                        )
+                ) {
+                    actions.insertBefore(
+                        button,
+                        DOM.buttons.respawn
+                    );
+                } else {
+                    DOM.buttons.respawn
+                        .insertAdjacentElement(
+                            "afterend",
+                            button
+                        );
+                }
+            } else {
+                DOM.panels.death
+                    .appendChild(
+                        button
+                    );
+            }
+        }
+
+        UI_RUNTIME
+            .deathGiveUpButton =
+            button;
+
+        return button;
+    }
+
+
+    /* ============================================================
+       TELAS
+       ============================================================ */
+
+    function showScreen(
+        target
+    ) {
+        for (
+            const [
+                name,
+                screen
+            ] of
+            Object.entries(
+                DOM.screens
+            )
+        ) {
+            if (
+                !screen
+            ) {
+                continue;
+            }
+
+            screen.classList
+                .toggle(
+                    "active",
+                    name ===
+                        target
+                );
+        }
+
+        state.currentScreen =
+            target;
+
+        if (
+            target ===
+            "game"
+        ) {
+            requestAnimationFrame(
+                () => {
+                    safeCall(
+                        "resizeRenderer"
+                    );
+                }
+            );
+        }
+    }
+
+
+    function returnToMainScreen() {
+        closeAllPanels();
+
+        state.running =
+            false;
+
+        state.currentScreen =
+            "menu";
+
+        showScreen(
+            "menu"
+        );
+
+        refreshContinueButton();
+    }
+
+
+    /* ============================================================
+       SESSÃO PROCEDURAL
+
+       VILA = FIXA
+       OUTROS MAPAS = NOVO LAYOUT A CADA NOVA SESSÃO
+       ============================================================ */
+
+    function beginFreshAdventureSession() {
+        UI_RUNTIME.sessionNumber +=
+            1;
+
+        state.sessionWorldCache =
+            Object.create(
+                null
+            );
+
+        state.sessionExploration =
+            Object.create(
+                null
+            );
+
+
+        /*
+            Se a Parte 1 possuir seu próprio
+            gerenciador de seed, ele tem prioridade.
+        */
+        firstAvailableCall(
+            [
+                "startNewSession",
+                "beginNewSession",
+                "resetSessionSeed",
+                "createNewSession"
+            ]
+        );
+
+
+        /*
+            Fallback para geradores que leiam
+            diretamente um identificador de sessão.
+        */
+        state.sessionSeed =
+            `${Date.now()}_${Math.random()
+                .toString(36)
+                .slice(2)}_${UI_RUNTIME.sessionNumber}`;
+    }
+
+
+    /* ============================================================
+       PERSONAGENS
+       ============================================================ */
+
+    function getCharactersList() {
+        const characters =
+            V.CHARACTERS ||
+            {};
+
+        return [
+            "kaelion",
+            "theron",
+            "grumgar",
+            "lirael",
+            "zephyr"
+        ]
+            .map(
+                id =>
+                    characters[
+                        id
+                    ]
+            )
+            .filter(
+                Boolean
+            );
+    }
+
+
+    function renderCharacterCards() {
+        const container =
+            DOM.misc
+                .characterCards;
+
+        if (
+            !container
+        ) {
+            return;
+        }
+
+        const characters =
+            getCharactersList();
+
+
+        container.innerHTML =
+            characters
+                .map(
+                    character => {
+                        const selected =
+                            character.id ===
+                            UI_RUNTIME
+                                .selectedCharacter;
+
+                        const accent =
+                            character.color ||
+                            character
+                                .visualProfile
+                                ?.accent ||
+                            "#b69a65";
+
+                        return `
+                            <button
+                                type="button"
+                                class="character-card ${selected ? "selected" : ""}"
+                                data-character-id="${escapeHTML(character.id)}"
+                                style="--char-color:${escapeHTML(accent)}"
+                            >
+                                <div class="character-card-top">
+
+                                    <div class="character-symbol">
+                                        ${escapeHTML(
+                                            getCharacterSymbol(
+                                                character.id
+                                            )
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <h3>
+                                            ${escapeHTML(character.name)}
+                                        </h3>
+
+                                        <div class="role">
+                                            ${escapeHTML(
+                                                character.role ||
+                                                character.className ||
+                                                getCharacterRole(
+                                                    character.id
+                                                )
+                                            )}
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <p class="character-description">
+                                    ${escapeHTML(
+                                        character.description ||
+                                        getCharacterDescription(
+                                            character.id
+                                        )
+                                    )}
+                                </p>
+
+                                <div class="character-card-stats">
+
+                                    ${characterStatRow(
+                                        "VIDA",
+                                        character.hp,
+                                        180
+                                    )}
+
+                                    ${characterStatRow(
+                                        "ENERGIA",
+                                        character.energy,
+                                        180
+                                    )}
+
+                                    ${characterStatRow(
+                                        "ATAQUE",
+                                        character.damage,
+                                        45
+                                    )}
+
+                                    ${characterStatRow(
+                                        "DEFESA",
+                                        character.defense,
+                                        35
+                                    )}
+
+                                    ${characterStatRow(
+                                        "VELOCIDADE",
+                                        character.speed,
+                                        200
+                                    )}
+
+                                </div>
+                            </button>
+                        `;
+                    }
+                )
+                .join(
+                    ""
+                );
+
+
+        for (
+            const card of
+            container.querySelectorAll(
+                "[data-character-id]"
+            )
+        ) {
+            card.addEventListener(
+                "click",
+                () => {
+                    UI_RUNTIME
+                        .selectedCharacter =
+                        card.dataset
+                            .characterId;
+
+                    state.selectedCharacter =
+                        UI_RUNTIME
+                            .selectedCharacter;
+
+                    renderCharacterCards();
+                }
+            );
+        }
+    }
+
+
+    function characterStatRow(
+        label,
+        value,
+        maximum
+    ) {
+        const ratio =
+            clamp(
+                finite(
+                    value,
+                    0
+                ) /
+                maximum,
+                0,
+                1
+            );
+
+        return `
+            <div class="character-stat">
+                <span>${label}</span>
+                <div>
+                    <i style="width:${ratio * 100}%"></i>
+                </div>
+            </div>
+        `;
+    }
+
+
+    function getCharacterSymbol(
+        id
+    ) {
+        const symbols = {
+            kaelion:
+                "✦",
+
+            theron:
+                "◇",
+
+            grumgar:
+                "◆",
+
+            lirael:
+                "✧",
+
+            zephyr:
+                "◈"
+        };
+
+        return (
+            symbols[
+                id
+            ] ||
+            "◇"
+        );
+    }
+
+
+    function getCharacterRole(
+        id
+    ) {
+        const roles = {
+            kaelion:
+                "MAGO DAS BRASAS",
+
+            theron:
+                "CAVALEIRO",
+
+            grumgar:
+                "TROLL GUERREIRO",
+
+            lirael:
+                "FADA",
+
+            zephyr:
+                "METAMORFO"
+        };
+
+        return (
+            roles[
+                id
+            ] ||
+            "VIAJANTE"
+        );
+    }
+
+
+    function getCharacterDescription(
+        id
+    ) {
+        const descriptions = {
+            kaelion:
+                "Ataca à distância e domina energia incendiária. Poderoso, porém mais frágil.",
+
+            theron:
+                "Combate de curta distância com espada, escudo e grande resistência.",
+
+            grumgar:
+                "Muito resistente e forte. Mais lento, porém capaz de suportar grandes impactos.",
+
+            lirael:
+                "Extremamente rápida, leve e ligada à energia feérica.",
+
+            zephyr:
+                "Ágil e imprevisível. Dobra pequenas fendas ao redor do próprio corpo."
+        };
+
+        return (
+            descriptions[
+                id
+            ] ||
+            ""
+        );
+    }
+
+
+    /* ============================================================
+       NOVO JOGO
+       ============================================================ */
+
+    function startNewGameFromSelection() {
+        const name =
+            String(
+                DOM.inputs
+                    .playerName
+                    ?.value ||
+                ""
+            )
+                .trim()
+                .slice(
+                    0,
+                    22
+                );
+
+
+        if (
+            !name
+        ) {
+            DOM.inputs
+                .playerName
+                ?.focus();
+
+            showSmallMessage(
+                "Escolha um nome antes de iniciar."
+            );
+
+            return false;
+        }
+
+
+        const characterId =
+            UI_RUNTIME
+                .selectedCharacter ||
+            state.selectedCharacter ||
+            "kaelion";
+
+
+        beginFreshAdventureSession();
+
+
+        state.selectedCharacter =
+            characterId;
+
+
+        let started =
+            false;
+
+
+        if (
+            hasFunction(
+                "beginNewGameFlow"
+            )
+        ) {
+            /*
+                A função original lê o nome
+                do input e state.selectedCharacter.
+            */
+            started =
+                V.beginNewGameFlow() !==
+                false;
+        } else {
+            started =
+                startNewGameFallback(
+                    name,
+                    characterId
+                );
+        }
+
+
+        if (
+            !started
+        ) {
+            return false;
+        }
+
+
+        state.running =
+            true;
+
+
+        showScreen(
+            "game"
+        );
+
+
+        closeAllPanels();
+
+
+        startTitleCard(
+            `CASA DE ${name.toUpperCase()}`,
+            1.8
+        );
+
+
+        safeCall(
+            "saveGame",
+            {
+                silent:
+                    true
+            }
+        );
+
+
+        updateHTMLHUD(
+            true
+        );
+
+
+        return true;
+    }
+
+
+    function startNewGameFallback(
+        name,
+        characterId
+    ) {
+        if (
+            !hasFunction(
+                "createNewPlayer"
+            )
+        ) {
+            console.error(
+                "VEYRA — createNewPlayer não foi exportada."
+            );
+
+            return false;
+        }
+
+
+        state.player =
+            safeCall(
+                "createNewPlayer",
+                name,
+                characterId
+            );
+
+
+        if (
+            !state.player
+        ) {
+            return false;
+        }
+
+
+        safeCall(
+            "loadWorld",
+            "village",
+            "home"
+        );
+
+
+        /*
+            A jornada SEMPRE começa dentro
+            da própria casa.
+        */
+        if (
+            hasFunction(
+                "enterHouse"
+            )
+        ) {
+            safeCall(
+                "enterHouse",
+                "home",
+                "home"
+            );
+        } else if (
+            hasFunction(
+                "loadPlayerHome"
+            )
+        ) {
+            safeCall(
+                "loadPlayerHome"
+            );
+        }
+
+
+        state.running =
+            true;
+
+
+        syncCameraImmediately();
+
+
+        return true;
+    }
+
+
+    /* ============================================================
+       CONTINUAR
+       ============================================================ */
+
+    function continueGame() {
+        /*
+            Cada abertura/continue representa
+            nova sessão procedural.
+        */
+        beginFreshAdventureSession();
+
+
+        let loaded =
+            false;
+
+
+        if (
+            hasFunction(
+                "continueSavedGame"
+            )
+        ) {
+            loaded =
+                V.continueSavedGame() !==
+                false;
+        } else if (
+            hasFunction(
+                "loadGame"
+            )
+        ) {
+            loaded =
+                V.loadGame() !==
+                false;
+        }
+
+
+        if (
+            !loaded
+        ) {
+            showSmallMessage(
+                "Nenhum save válido foi encontrado."
+            );
+
+            refreshContinueButton();
+
+            return false;
+        }
+
+
+        state.running =
+            true;
+
+
+        showScreen(
+            "game"
+        );
+
+
+        closeAllPanels();
+
+
+        syncCameraImmediately();
+
+
+        startTitleCard(
+            getCurrentLocationName(),
+            1.5
+        );
+
+
+        updateHTMLHUD(
+            true
+        );
+
+
+        return true;
+    }
+
+
+    function refreshContinueButton() {
+        const button =
+            DOM.buttons
+                .continueGame;
+
+        if (
+            !button
+        ) {
+            return;
+        }
+
+
+        let available =
+            true;
+
+
+        if (
+            hasFunction(
+                "hasSaveGame"
+            )
+        ) {
+            available =
+                Boolean(
+                    safeCall(
+                        "hasSaveGame"
+                    )
+                );
+        } else if (
+            V.SAVE_KEY
+        ) {
+            try {
+                available =
+                    Boolean(
+                        localStorage.getItem(
+                            V.SAVE_KEY
+                        )
+                    );
+            } catch (
+                error
+            ) {
+                available =
+                    true;
+            }
+        }
+
+
+        button.disabled =
+            !available;
+
+        button.classList
+            .toggle(
+                "disabled",
+                !available
+            );
+    }
+
+
+    /* ============================================================
+       TÍTULO DE REGIÃO
+       ============================================================ */
+
+    function startTitleCard(
+        title,
+        duration = 1.5
+    ) {
+        UI_RUNTIME.titleCard = {
+            title:
+                String(
+                    title ||
+                    ""
+                ),
+
+            timer:
+                0,
+
+            duration:
+                Math.max(
+                    0.3,
+                    duration
+                )
+        };
+    }
+
+
+    function updateTitleCard(
+        dt
+    ) {
+        const card =
+            UI_RUNTIME
+                .titleCard;
+
+        if (
+            !card
+        ) {
+            return;
+        }
+
+
+        card.timer +=
+            dt;
+
+
+        if (
+            card.timer >=
+            card.duration
+        ) {
+            UI_RUNTIME.titleCard =
+                null;
+        }
+    }
+
+
+    function drawTitleCard(
+        ctx
+    ) {
+        const card =
+            UI_RUNTIME
+                .titleCard;
+
+        if (
+            !card ||
+            !ctx
+        ) {
+            return;
+        }
+
+
+        const progress =
+            clamp(
+                card.timer /
+                    card.duration,
+                0,
+                1
+            );
+
+
+        const alpha =
+            progress <
+            0.2
+                ? progress /
+                    0.2
+                : progress >
+                    0.75
+                    ? (
+                        1 -
+                        progress
+                    ) /
+                        0.25
+                    : 1;
+
+
+        ctx.save();
+
+
+        ctx.textAlign =
+            "center";
+
+        ctx.fillStyle =
+            `rgba(223,213,194,${clamp(alpha, 0, 1)})`;
+
+        ctx.font =
+            "700 22px Georgia, serif";
+
+        ctx.fillText(
+            card.title,
+            renderRuntime.width /
+                2,
+            renderRuntime.height *
+                0.22
+        );
+
+
+        ctx.strokeStyle =
+            `rgba(176,151,101,${0.38 * alpha})`;
+
+        ctx.lineWidth =
+            1;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            renderRuntime.width /
+                2 -
+                90,
+            renderRuntime.height *
+                0.22 +
+                13
+        );
+
+        ctx.lineTo(
+            renderRuntime.width /
+                2 +
+                90,
+            renderRuntime.height *
+                0.22 +
+                13
+        );
+
+        ctx.stroke();
+
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       CÂMERA
+       ============================================================ */
+
+    function syncCameraImmediately() {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+
+        state.camera =
+            state.camera ||
+            {};
+
+
+        state.camera.x =
+            player.x;
+
+        state.camera.y =
+            player.y;
+
+        state.camera.targetX =
+            player.x;
+
+        state.camera.targetY =
+            player.y;
+    }
+
+
+    /* ============================================================
+       HUD HTML
+       ============================================================ */
+
+    function getExhaustionData(
+        player
+    ) {
+        /*
+            Modelo definitivo.
+        */
+        if (
+            Number.isFinite(
+                Number(
+                    player.exhaustion
+                )
+            )
+        ) {
+            return {
+                current:
+                    finite(
+                        player.exhaustion,
+                        0
+                    ),
+
+                max:
+                    Math.max(
+                        1,
+                        finite(
+                            player.maxExhaustion,
+                            100
+                        )
+                    ),
+
+                rises:
+                    true
+            };
+        }
+
+
+        /*
+            Compatibilidade temporária com saves
+            antigos de Fome + Cansaço.
+        */
+        const hungerRatio =
+            finite(
+                player.hunger,
+                100
+            ) /
+            Math.max(
+                1,
+                finite(
+                    player.maxHunger,
+                    100
+                )
+            );
+
+
+        const fatigueRatio =
+            finite(
+                player.fatigue,
+                100
+            ) /
+            Math.max(
+                1,
+                finite(
+                    player.maxFatigue,
+                    100
+                )
+            );
+
+
+        const remaining =
+            (
+                clamp(
+                    hungerRatio,
+                    0,
+                    1
+                ) +
+                clamp(
+                    fatigueRatio,
+                    0,
+                    1
+                )
+            ) /
+            2;
+
+
+        return {
+            current:
+                Math.round(
+                    (
+                        1 -
+                        remaining
+                    ) *
+                    100
+                ),
+
+            max:
+                100,
+
+            rises:
+                true
+        };
+    }
+
+
+    function updateHTMLHUD(
+        force = false
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+
+        const character =
+            V.CHARACTERS
+                ?.[
+                    player.characterId
+                ] ||
+            null;
+
+
+        if (
+            DOM.hud.avatar
+        ) {
+            DOM.hud.avatar
+                .textContent =
+                getCharacterSymbol(
+                    player.characterId
+                );
+        }
+
+
+        if (
+            DOM.hud.className
+        ) {
+            DOM.hud.className
+                .textContent =
+                character?.role ||
+                character?.className ||
+                getCharacterRole(
+                    player.characterId
+                );
+        }
+
+
+        if (
+            DOM.hud.name
+        ) {
+            DOM.hud.name
+                .textContent =
+                player.name ||
+                character?.name ||
+                "VIAJANTE";
+        }
+
+
+        setText(
+            "levelText",
+            Math.max(
+                1,
+                Math.floor(
+                    finite(
+                        player.level,
+                        1
+                    )
+                )
+            )
+        );
+
+
+        const hp =
+            Math.max(
+                0,
+                finite(
+                    player.hp,
+                    0
+                )
+            );
+
+        const maxHp =
+            Math.max(
+                1,
+                finite(
+                    player.maxHp,
+                    1
+                )
+            );
+
+
+        setText(
+            "hpText",
+            `${Math.ceil(hp)}/${Math.ceil(maxHp)}`
+        );
+
+        setBarPercent(
+            "hpBar",
+            hp,
+            maxHp
+        );
+
+
+        const energy =
+            Math.max(
+                0,
+                finite(
+                    player.energy,
+                    0
+                )
+            );
+
+        const maxEnergy =
+            Math.max(
+                1,
+                finite(
+                    player.maxEnergy,
+                    1
+                )
+            );
+
+
+        setText(
+            "energyText",
+            `${Math.ceil(energy)}/${Math.ceil(maxEnergy)}`
+        );
+
+        setBarPercent(
+            "energyBar",
+            energy,
+            maxEnergy
+        );
+
+
+        const exhaustion =
+            getExhaustionData(
+                player
+            );
+
+
+        setText(
+            "hungerText",
+            `${Math.ceil(exhaustion.current)}/${Math.ceil(exhaustion.max)}`
+        );
+
+
+        const xpRequired =
+            getXPRequired(
+                player
+            );
+
+
+        setText(
+            "xpText",
+            `${Math.floor(finite(player.xp, 0))} / ${xpRequired}`
+        );
+
+
+        setText(
+            "moneyText",
+            Math.floor(
+                finite(
+                    player.money,
+                    0
+                )
+            )
+        );
+
+
+        setText(
+            "locationLabel",
+            getCurrentLocationName()
+        );
+    }
+
+
+    function getXPRequired(
+        player
+    ) {
+        if (
+            hasFunction(
+                "getXPRequiredForLevel"
+            )
+        ) {
+            return Math.max(
+                1,
+                Math.floor(
+                    finite(
+                        safeCall(
+                            "getXPRequiredForLevel",
+                            player.level
+                        ),
+                        1
+                    )
+                )
+            );
+        }
+
+
+        return Math.max(
+            1,
+            Math.floor(
+                finite(
+                    player.xpToNext,
+                    100
+                )
+            )
+        );
+    }
+
+
+    function getCurrentLocationName() {
+        if (
+            state.houseMode
+        ) {
+            if (
+                state.currentHouse ===
+                "home"
+            ) {
+                return "CASA DO AVENTUREIRO";
+            }
+
+            const interior =
+                V.HOUSE_INTERIORS
+                    ?.[
+                        state.currentHouse
+                    ];
+
+            return (
+                interior?.name ||
+                "INTERIOR"
+            );
+        }
+
+
+        return (
+            V.REGION_META
+                ?.[
+                    state.area
+                ]
+                ?.name ||
+            state.world?.name ||
+            "VEYRA"
+        );
+    }
+
+
+    /* ============================================================
+       PAINÉIS
+       ============================================================ */
+
+    const NORMAL_PANEL_NAMES = [
+        "inventory",
+        "map",
+        "book",
+        "status",
+        "shop",
+        "quest",
+        "menu"
+    ];
+
+
+    function closeNormalPanels() {
+        for (
+            const name of
+            NORMAL_PANEL_NAMES
+        ) {
+            setVisible(
+                DOM.panels[
+                    name
+                ],
+                false
+            );
+        }
+
+
+        if (
+            NORMAL_PANEL_NAMES
+                .includes(
+                    state.activePanel
+                )
+        ) {
+            state.activePanel =
+                null;
+        }
+
+
+        if (
+            !state.dialogue &&
+            !state.battle &&
+            !state.travel &&
+            !state.deathState
+        ) {
+            state.paused =
+                false;
+        }
+    }
+
+
+    function closeAllPanels() {
+        for (
+            const panel of
+            Object.values(
+                DOM.panels
+            )
+        ) {
+            setVisible(
+                panel,
+                false
+            );
+        }
+
+
+        state.activePanel =
+            null;
+
+
+        if (
+            !state.deathState
+        ) {
+            state.paused =
+                false;
+        }
+    }
+
+
+    function openNormalPanel(
+        name
+    ) {
+        if (
+            !state.running ||
+            state.dialogue ||
+            state.battle ||
+            state.travel ||
+            state.deathState ||
+            state.cutscene
+        ) {
+            return false;
+        }
+
+
+        const panel =
+            DOM.panels[
+                name
+            ];
+
+        if (
+            !panel
+        ) {
+            return false;
+        }
+
+
+        const alreadyVisible =
+            isVisible(
+                panel
+            );
+
+
+        closeNormalPanels();
+
+
+        if (
+            alreadyVisible
+        ) {
+            return true;
+        }
+
+
+        setVisible(
+            panel,
+            true
+        );
+
+
+        state.activePanel =
+            name;
+
+        state.paused =
+            true;
+
+
+        switch (
+            name
+        ) {
+            case "inventory":
+                renderInventory();
+                break;
+
+            case "map":
+                renderWorldMap();
+                break;
+
+            case "book":
+                renderBossBook();
+                break;
+
+            case "status":
+                renderStatusPanel();
+                break;
+
+            case "shop":
+                renderShop();
+                break;
+        }
+
+
+        return true;
+    }
+
+
+    /* ============================================================
+       INVENTÁRIO
+       ============================================================ */
+
+    function getInventoryEntries() {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return [];
+        }
+
+
+        return Object
+            .entries(
+                player.inventory ||
+                {}
+            )
+            .filter(
+                (
+                    [
+                        itemId,
+                        amount
+                    ]
+                ) =>
+                    finite(
+                        amount,
+                        0
+                    ) >
+                        0 &&
+                    Boolean(
+                        V.ITEMS
+                            ?.[
+                                itemId
+                            ]
+                    )
+            )
+            .map(
+                (
+                    [
+                        itemId,
+                        amount
+                    ]
+                ) => ({
+                    id:
+                        itemId,
+
+                    amount:
+                        Math.floor(
+                            finite(
+                                amount,
+                                0
+                            )
+                        ),
+
+                    item:
+                        V.ITEMS[
+                            itemId
+                        ]
+                })
+            );
+    }
+
+
+    function renderInventory() {
+        const container =
+            DOM.misc
+                .inventoryGrid;
+
+        if (
+            !container ||
+            !state.player
+        ) {
+            return;
+        }
+
+
+        const entries =
+            getInventoryEntries();
+
+
+        if (
+            entries.length ===
+            0
+        ) {
+            container.innerHTML = `
+                <div class="empty-panel-message">
+                    Sua mochila está vazia.
+                </div>
+            `;
+        } else {
+            container.innerHTML =
+                entries
+                    .map(
+                        entry =>
+                            inventoryItemHTML(
+                                entry
+                            )
+                    )
+                    .join(
+                        ""
+                    );
+        }
+
+
+        bindInventoryActions(
+            container
+        );
+
+
+        renderEquipment();
+
+
+        if (
+            DOM.misc.weightText
+        ) {
+            const weight =
+                hasFunction(
+                    "getInventoryWeight"
+                )
+                    ? finite(
+                        safeCall(
+                            "getInventoryWeight",
+                            state.player
+                        ),
+                        0
+                    )
+                    : calculateInventoryWeight();
+
+
+            const limit =
+                Math.max(
+                    0,
+                    finite(
+                        state.player
+                            .inventoryWeightLimit,
+                        0
+                    )
+                );
+
+
+            DOM.misc.weightText
+                .textContent =
+                limit >
+                0
+                    ? `${weight.toFixed(1)}/${limit.toFixed(0)}`
+                    : weight.toFixed(
+                        1
+                    );
+        }
+    }
+
+
+    function inventoryItemHTML(
+        entry
+    ) {
+        const item =
+            entry.item;
+
+
+        const canUse =
+            Boolean(
+                item.usable ||
+                item.category ===
+                    "food" ||
+                item.category ===
+                    "potion" ||
+                item.type ===
+                    "food" ||
+                item.type ===
+                    "potion"
+            );
+
+
+        const canEquip =
+            Boolean(
+                item.equipSlot ||
+                item.category ===
+                    "armor" ||
+                item.category ===
+                    "weapon" ||
+                item.equipment
+            );
+
+
+        return `
+            <div
+                class="inventory-item"
+                data-item-id="${escapeHTML(entry.id)}"
+            >
+                <div class="inventory-item-icon">
+                    ${escapeHTML(
+                        item.icon ||
+                        getItemSymbol(
+                            entry.id
+                        )
+                    )}
+                </div>
+
+                <div class="inventory-item-info">
+                    <strong>
+                        ${escapeHTML(
+                            item.name ||
+                            entry.id
+                        )}
+                    </strong>
+
+                    <span>
+                        ${escapeHTML(
+                            item.description ||
+                            item.category ||
+                            "ITEM"
+                        )}
+                    </span>
+                </div>
+
+                <div class="inventory-item-count">
+                    x${entry.amount}
+                </div>
+
+                ${
+                    canUse ||
+                    canEquip
+                        ? `
+                            <div class="inventory-item-action">
+
+                                ${
+                                    canUse
+                                        ? `
+                                            <button
+                                                type="button"
+                                                data-use-item="${escapeHTML(entry.id)}"
+                                            >
+                                                USAR
+                                            </button>
+                                        `
+                                        : ""
+                                }
+
+                                ${
+                                    canEquip
+                                        ? `
+                                            <button
+                                                type="button"
+                                                data-equip-item="${escapeHTML(entry.id)}"
+                                            >
+                                                EQUIPAR
+                                            </button>
+                                        `
+                                        : ""
+                                }
+
+                            </div>
+                        `
+                        : ""
+                }
+            </div>
+        `;
+    }
+
+
+    function bindInventoryActions(
+        container
+    ) {
+        for (
+            const button of
+            container.querySelectorAll(
+                "[data-use-item]"
+            )
+        ) {
+            button.addEventListener(
+                "click",
+                () => {
+                    const itemId =
+                        button.dataset
+                            .useItem;
+
+
+                    const result =
+                        firstAvailableCall(
+                            [
+                                "useInventoryItem",
+                                "useItem"
+                            ],
+                            itemId
+                        );
+
+
+                    if (
+                        result ===
+                        false
+                    ) {
+                        return;
+                    }
+
+
+                    renderInventory();
+
+                    updateHTMLHUD(
+                        true
+                    );
+                }
+            );
+        }
+
+
+        for (
+            const button of
+            container.querySelectorAll(
+                "[data-equip-item]"
+            )
+        ) {
+            button.addEventListener(
+                "click",
+                () => {
+                    const itemId =
+                        button.dataset
+                            .equipItem;
+
+
+                    firstAvailableCall(
+                        [
+                            "equipInventoryItem",
+                            "equipItem"
+                        ],
+                        itemId
+                    );
+
+
+                    renderInventory();
+
+                    updateHTMLHUD(
+                        true
+                    );
+                }
+            );
+        }
+    }
+
+
+    function calculateInventoryWeight() {
+        let total =
+            0;
+
+
+        for (
+            const entry of
+            getInventoryEntries()
+        ) {
+            total +=
+                finite(
+                    entry.item
+                        .weight,
+                    0
+                ) *
+                entry.amount;
+        }
+
+
+        return total;
+    }
+
+
+    function getItemSymbol(
+        itemId
+    ) {
+        const symbols = {
+            madeira:
+                "▥",
+
+            pedra:
+                "◆",
+
+            carvao:
+                "●",
+
+            ferro:
+                "◇",
+
+            ouro:
+                "◉",
+
+            diamante:
+                "✧",
+
+            rubi:
+                "♦",
+
+            carne:
+                "◒",
+
+            essenciaSombria:
+                "◈",
+
+            chaveObscura:
+                "⚿",
+
+            fragmentoVazio:
+                "✦",
+
+            minimapa:
+                "⌖",
+
+            lanterna:
+                "✣"
+        };
+
+
+        return (
+            symbols[
+                itemId
+            ] ||
+            "◇"
+        );
+    }
+
+
+    function renderEquipment() {
+        const container =
+            DOM.misc
+                .equipmentGrid;
+
+        const player =
+            state.player;
+
+
+        if (
+            !container ||
+            !player
+        ) {
+            return;
+        }
+
+
+        const equipment =
+            player.equipment ||
+            {};
+
+
+        const weapon =
+            equipment.weapon
+                ? V.ITEMS
+                    ?.[
+                        equipment.weapon
+                    ]
+                : null;
+
+
+        const armor =
+            equipment.armor
+                ? (
+                    V.ARMOR_DATA
+                        ?.[
+                            equipment.armor
+                        ] ||
+                    V.ITEMS
+                        ?.[
+                            equipment.armor
+                        ]
+                )
+                : null;
+
+
+        container.innerHTML = `
+            <div class="equipment-slot">
+                <span>ARMA</span>
+                <strong>
+                    ${escapeHTML(
+                        weapon?.name ||
+                        "Nenhuma"
+                    )}
+                </strong>
+            </div>
+
+            <div class="equipment-slot">
+                <span>ARMADURA</span>
+                <strong>
+                    ${escapeHTML(
+                        armor?.name ||
+                        "Nenhuma"
+                    )}
+                </strong>
+
+                ${
+                    armor
+                        ? `
+                            <small>
+                                +${finite(armor.hp, finite(armor.hpBonus, 0))}
+                                Vida •
+                                +${finite(armor.defense, 0)}
+                                Defesa
+                            </small>
+                        `
+                        : ""
+                }
+            </div>
+        `;
+    }
+
+
+    /* ============================================================
+       STATUS
+       DEFINITIVO:
+       VIDA / DOMÍNIO / ENERGIA / EXAUSTÃO
+       ============================================================ */
+
+    function getStatusEntries() {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return [];
+        }
+
+
+        const stats =
+            player.stats ||
+            {};
+
+
+        const definitions =
+            getDefinitiveStatusDefinitions();
+
+
+        return definitions
+            .map(
+                definition => {
+                    const id =
+                        findExistingStatKey(
+                            definition.keys,
+                            stats,
+                            definition.id
+                        );
+
+
+                    return {
+                        ...definition,
+
+                        runtimeId:
+                            id,
+
+                        value:
+                            clamp(
+                                Math.floor(
+                                    finite(
+                                        stats[
+                                            id
+                                        ],
+                                        0
+                                    )
+                                ),
+                                0,
+                                30
+                            )
+                    };
+                }
+            );
+    }
+
+
+    function getDefinitiveStatusDefinitions() {
+        return [
+            {
+                id:
+                    "vida",
+
+                keys: [
+                    "vida",
+                    "life",
+                    "vitality",
+                    "health"
+                ],
+
+                label:
+                    "VIDA",
+
+                icon:
+                    "♥",
+
+                description:
+                    "Aumenta sua Vida máxima. O bônus se soma à Vida concedida pela armadura."
+            },
+
+            {
+                id:
+                    "dominio",
+
+                keys: [
+                    "dominio",
+                    "domain",
+                    "mastery",
+                    "power"
+                ],
+
+                label:
+                    "DOMÍNIO",
+
+                icon:
+                    "✦",
+
+                description:
+                    "Aumenta o poder do ataque básico e das habilidades Q, R e F."
+            },
+
+            {
+                id:
+                    "energia",
+
+                keys: [
+                    "energia",
+                    "energy"
+                ],
+
+                label:
+                    "ENERGIA",
+
+                icon:
+                    "◇",
+
+                description:
+                    "Aumenta a reserva usada pelas habilidades e pelo Dash."
+            },
+
+            {
+                id:
+                    "exaustao",
+
+                keys: [
+                    "exaustao",
+                    "exhaustion"
+                ],
+
+                label:
+                    "EXAUSTÃO",
+
+                icon:
+                    "◒",
+
+                description:
+                    "Melhora sua tolerância à Exaustão. Comer e dormir reduzem a Exaustão."
+            }
+        ];
+    }
+
+
+    function findExistingStatKey(
+        candidates,
+        stats,
+        fallback
+    ) {
+        for (
+            const key of
+            candidates
+        ) {
+            if (
+                Object.prototype
+                    .hasOwnProperty
+                    .call(
+                        stats,
+                        key
+                    )
+            ) {
+                return key;
+            }
+        }
+
+
+        /*
+            Se STAT_CONFIG já possui o modelo novo,
+            usa o ID configurado.
+        */
+        for (
+            const [
+                key,
+                config
+            ] of
+            Object.entries(
+                V.STAT_CONFIG ||
+                {}
+            )
+        ) {
+            const label =
+                String(
+                    config?.label ||
+                    ""
+                )
+                    .toLowerCase();
+
+
+            if (
+                candidates.some(
+                    candidate =>
+                        label.includes(
+                            candidate
+                                .normalize(
+                                    "NFD"
+                                )
+                                .replace(
+                                    /[\u0300-\u036f]/g,
+                                    ""
+                                )
+                        )
+                )
+            ) {
+                return key;
+            }
+        }
+
+
+        return fallback;
+    }
+
+
+    function renderStatusPanel() {
+        const container =
+            DOM.misc
+                .statusContent;
+
+        const player =
+            state.player;
+
+
+        if (
+            !container ||
+            !player
+        ) {
+            return;
+        }
+
+
+        const stats =
+            getStatusEntries();
+
+
+        container.innerHTML = `
+            <div class="status-redesign">
+
+                <div class="status-points-hero">
+                    <span>
+                        PONTOS DISPONÍVEIS
+                    </span>
+
+                    <strong>
+                        ${Math.max(
+                            0,
+                            Math.floor(
+                                finite(
+                                    player.statPoints,
+                                    0
+                                )
+                            )
+                        )}
+                    </strong>
+
+                    <small>
+                        Cada nível concede exatamente +3 pontos.
+                    </small>
+                </div>
+
+                <div class="status-stat-grid">
+
+                    ${stats
+                        .map(
+                            stat => `
+                                <div class="status-stat-card">
+
+                                    <div class="status-stat-header">
+
+                                        <div class="status-stat-title">
+
+                                            <span class="status-stat-icon">
+                                                ${stat.icon}
+                                            </span>
+
+                                            <div>
+                                                <strong>
+                                                    ${stat.label}
+                                                </strong>
+
+                                                <small>
+                                                    ${stat.description}
+                                                </small>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="status-stat-value">
+                                            ${stat.value}
+                                            <span>/ 30</span>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="status-stat-progress">
+                                        <div
+                                            class="status-stat-progress-fill"
+                                            style="width:${(stat.value / 30) * 100}%"
+                                        ></div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        data-add-stat="${escapeHTML(stat.runtimeId)}"
+                                        ${
+                                            player.statPoints <=
+                                                0 ||
+                                            stat.value >=
+                                                30
+                                                ? "disabled"
+                                                : ""
+                                        }
+                                    >
+                                        + ADICIONAR PONTO
+                                    </button>
+
+                                </div>
+                            `
+                        )
+                        .join("")}
+
+                </div>
+
+                <div class="status-rule-box">
+                    <strong>
+                        LIMITE POR ATRIBUTO: 30
+                    </strong>
+
+                    <p>
+                        Vida, Domínio, Energia e Exaustão são distribuídos manualmente.
+                        Subir de nível concede pontos, mas não distribui atributos sozinho.
+                    </p>
+                </div>
+
+            </div>
+        `;
+
+
+        for (
+            const button of
+            container.querySelectorAll(
+                "[data-add-stat]"
+            )
+        ) {
+            button.addEventListener(
+                "click",
+                () => {
+                    const statId =
+                        button.dataset
+                            .addStat;
+
+
+                    if (
+                        !hasFunction(
+                            "spendStatusPoint"
+                        )
+                    ) {
+                        return;
+                    }
+
+
+                    const changed =
+                        safeCall(
+                            "spendStatusPoint",
+                            statId
+                        );
+
+
+                    if (
+                        changed !==
+                        false
+                    ) {
+                        renderStatusPanel();
+
+                        updateHTMLHUD(
+                            true
+                        );
+                    }
+                }
+            );
+        }
+    }
+
+
+    /* ============================================================
+       LIVRO DE BOSSES
+       ============================================================ */
+
+    function getBossEntries() {
+        if (
+            hasFunction(
+                "getBossBookEntries"
+            )
+        ) {
+            const entries =
+                safeCall(
+                    "getBossBookEntries"
+                );
+
+            if (
+                Array.isArray(
+                    entries
+                )
+            ) {
+                return entries;
+            }
+        }
+
+
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return [];
+        }
+
+
+        const defeated =
+            new Set(
+                safeArray(
+                    player
+                        .defeatedBosses
+                )
+            );
+
+
+        const discovered =
+            new Set([
+                ...safeArray(
+                    player
+                        .discoveredBosses
+                ),
+
+                ...defeated
+            ]);
+
+
+        return Object
+            .values(
+                V.BOSS_REGISTRY ||
+                {}
+            )
+            .map(
+                boss => ({
+                    id:
+                        boss.id,
+
+                    name:
+                        discovered.has(
+                            boss.id
+                        )
+                            ? boss.name
+                            : "DESCONHECIDO",
+
+                    subtitle:
+                        discovered.has(
+                            boss.id
+                        )
+                            ? boss.subtitle ||
+                                ""
+                            : "",
+
+                    icon:
+                        discovered.has(
+                            boss.id
+                        )
+                            ? boss.icon ||
+                                "◇"
+                            : "?",
+
+                    discovered:
+                        discovered.has(
+                            boss.id
+                        ),
+
+                    defeated:
+                        defeated.has(
+                            boss.id
+                        ),
+
+                    description:
+                        defeated.has(
+                            boss.id
+                        )
+                            ? boss.description ||
+                                ""
+                            : ""
+                })
+            );
+    }
+
+
+    function renderBossBook() {
+        const container =
+            DOM.misc
+                .bossBook;
+
+
+        if (
+            !container
+        ) {
+            return;
+        }
+
+
+        const entries =
+            getBossEntries();
+
+
+        container.innerHTML =
+            entries
+                .map(
+                    entry => {
+                        let status =
+                            "NÃO DESCOBERTO";
+
+
+                        if (
+                            entry.discovered
+                        ) {
+                            status =
+                                entry.defeated
+                                    ? "DERROTADO"
+                                    : "ENCONTRADO";
+                        }
+
+
+                        return `
+                            <div
+                                class="boss-book-entry
+                                ${entry.defeated ? "defeated" : ""}
+                                ${!entry.discovered ? "unknown" : ""}"
+                            >
+
+                                <div class="boss-book-icon">
+                                    ${escapeHTML(entry.icon)}
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        ${escapeHTML(entry.name)}
+                                    </strong>
+
+                                    ${
+                                        entry.subtitle
+                                            ? `
+                                                <span>
+                                                    ${escapeHTML(entry.subtitle)}
+                                                </span>
+                                            `
+                                            : ""
+                                    }
+
+                                    <span>
+                                        ${status}
+                                    </span>
+
+                                    ${
+                                        entry.defeated &&
+                                        entry.description
+                                            ? `
+                                                <div class="boss-book-description">
+                                                    ${escapeHTML(entry.description)}
+                                                </div>
+                                            `
+                                            : ""
+                                    }
+
+                                </div>
+
+                            </div>
+                        `;
+                    }
+                )
+                .join(
+                    ""
+                );
+    }
+
+
+    /* ============================================================
+       MINIMAPA HTML CANVAS
+       ============================================================ */
+
+    function renderDOMMinimap() {
+        const canvas =
+            DOM.canvas
+                .minimap;
+
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+
+        if (
+            !canvas ||
+            !player ||
+            !world
+        ) {
+            return;
+        }
+
+
+        const ctx =
+            canvas.getContext(
+                "2d"
+            );
+
+
+        if (
+            !ctx
+        ) {
+            return;
+        }
+
+
+        const width =
+            canvas.width;
+
+        const height =
+            canvas.height;
+
+
+        ctx.clearRect(
+            0,
+            0,
+            width,
+            height
+        );
+
+
+        ctx.fillStyle =
+            "#111318";
+
+        ctx.fillRect(
+            0,
+            0,
+            width,
+            height
+        );
+
+
+        const signal =
+            hasFunction(
+                "isMinimapSignalAvailable"
+            )
+                ? Boolean(
+                    safeCall(
+                        "isMinimapSignalAvailable",
+                        state.area,
+                        player
+                    )
+                )
+                : Boolean(
+                    player.minimapOwned
+                );
+
+
+        if (
+            !signal
+        ) {
+            ctx.textAlign =
+                "center";
+
+            ctx.fillStyle =
+                "#827e78";
+
+            ctx.font =
+                "700 13px Georgia";
+
+            ctx.fillText(
+                "SEM SINAL",
+                width /
+                    2,
+                height /
+                    2 -
+                    3
+            );
+
+
+            ctx.font =
+                "9px Georgia";
+
+            ctx.fillStyle =
+                "#5f5d59";
+
+
+            ctx.fillText(
+                state.area ===
+                    "voidDungeon"
+                    ? "LOCALIZAÇÃO DESCONHECIDA"
+                    : player.minimapOwned
+                        ? "SINAL INDISPONÍVEL"
+                        : "ADQUIRA O MINIMAPA",
+
+                width /
+                    2,
+
+                height /
+                    2 +
+                    15
+            );
+
+            return;
+        }
+
+
+        const worldWidth =
+            Math.max(
+                1,
+                finite(
+                    world.width,
+                    1
+                )
+            );
+
+        const worldHeight =
+            Math.max(
+                1,
+                finite(
+                    world.height,
+                    1
+                )
+            );
+
+
+        const scaleX =
+            width /
+            worldWidth;
+
+        const scaleY =
+            height /
+            worldHeight;
+
+
+        /*
+            Caminhos.
+        */
+        for (
+            const path of
+            safeArray(
+                world.paths
+            )
+        ) {
+            if (
+                state.area ===
+                "monarchMaze"
+            ) {
+                const centerX =
+                    path.x +
+                    path.w /
+                        2;
+
+                const centerY =
+                    path.y +
+                    path.h /
+                        2;
+
+
+                if (
+                    !isMazePositionExplored(
+                        centerX,
+                        centerY
+                    )
+                ) {
+                    continue;
+                }
+            }
+
+
+            ctx.fillStyle =
+                "rgba(151,139,115,.56)";
+
+            ctx.fillRect(
+                path.x *
+                    scaleX,
+
+                path.y *
+                    scaleY,
+
+                Math.max(
+                    1,
+                    path.w *
+                        scaleX
+                ),
+
+                Math.max(
+                    1,
+                    path.h *
+                        scaleY
+                )
+            );
+        }
+
+
+        /*
+            Saídas conhecidas.
+        */
+        for (
+            const exit of
+            safeArray(
+                world.exits
+            )
+        ) {
+            if (
+                exit.hidden &&
+                !exit.discovered
+            ) {
+                continue;
+            }
+
+
+            ctx.fillStyle =
+                "rgba(103,145,169,.8)";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                (
+                    exit.x +
+                    finite(
+                        exit.w,
+                        0
+                    ) /
+                        2
+                ) *
+                    scaleX,
+
+                (
+                    exit.y +
+                    finite(
+                        exit.h,
+                        0
+                    ) /
+                        2
+                ) *
+                    scaleY,
+
+                2.5,
+
+                0,
+
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+
+
+        /*
+            Player.
+        */
+        ctx.fillStyle =
+            "#e3d7b7";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            player.x *
+                scaleX,
+
+            player.y *
+                scaleY,
+
+            3.5,
+
+            0,
+
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+    }
+
+
+    function isMazePositionExplored(
+        x,
+        y
+    ) {
+        if (
+            !hasFunction(
+                "isMapCellExplored"
+            )
+        ) {
+            return true;
+        }
+
+
+        /*
+            Parte 2 usa células de 115
+            no Labirinto.
+        */
+        const cellSize =
+            115;
+
+        const col =
+            Math.floor(
+                x /
+                cellSize
+            );
+
+        const row =
+            Math.floor(
+                y /
+                cellSize
+            );
+
+
+        return Boolean(
+            safeCall(
+                "isMapCellExplored",
+                state.area,
+                col,
+                row
+            )
+        );
+    }
+
+
+    /* ============================================================
+       MAPA GRANDE
+       ============================================================ */
+
+    function renderWorldMap() {
+        const canvas =
+            DOM.canvas
+                .worldMap;
+
+        const player =
+            state.player;
+
+
+        if (
+            !canvas ||
+            !player
+        ) {
+            return;
+        }
+
+
+        const ctx =
+            canvas.getContext(
+                "2d"
+            );
+
+
+        if (
+            !ctx
+        ) {
+            return;
+        }
+
+
+        ctx.clearRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+        const gradient =
+            ctx.createLinearGradient(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+
+        gradient.addColorStop(
+            0,
+            "#151618"
+        );
+
+        gradient.addColorStop(
+            1,
+            "#0b0c0f"
+        );
+
+
+        ctx.fillStyle =
+            gradient;
+
+        ctx.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+        const discovered =
+            new Set(
+                safeArray(
+                    player
+                        .discoveredMapLocations
+                )
+            );
+
+
+        discovered.add(
+            "village"
+        );
+
+
+        const positions =
+            getWorldMapPositions();
+
+
+        /*
+            Linhas entre áreas conhecidas.
+        */
+        const connections = [
+            ["village", "road"],
+            ["road", "forest"],
+            ["forest", "grove"],
+            ["grove", "mountains"],
+            ["mountains", "ironRegion"],
+            ["ironRegion", "rubyRegion"],
+            ["rubyRegion", "monarchMaze"],
+
+            ["village", "gnomeGardens"],
+            ["gnomeGardens", "fairyKingdom"],
+            ["fairyKingdom", "celestialFrontier"],
+            ["celestialFrontier", "celestialStair"],
+            ["celestialStair", "skyOne"]
+        ];
+
+
+        ctx.lineWidth =
+            3;
+
+
+        for (
+            const [
+                from,
+                to
+            ] of
+            connections
+        ) {
+            if (
+                !discovered.has(
+                    from
+                ) ||
+                !discovered.has(
+                    to
+                )
+            ) {
+                continue;
+            }
+
+
+            const a =
+                positions[
+                    from
+                ];
+
+            const b =
+                positions[
+                    to
+                ];
+
+
+            if (
+                !a ||
+                !b
+            ) {
+                continue;
+            }
+
+
+            ctx.strokeStyle =
+                "rgba(116,106,88,.55)";
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                a.x,
+                a.y
+            );
+
+            ctx.lineTo(
+                b.x,
+                b.y
+            );
+
+            ctx.stroke();
+        }
+
+
+        for (
+            const areaId of
+            discovered
+        ) {
+            /*
+                Vazio continua segredo.
+                Só aparece se realmente descoberto.
+            */
+            const position =
+                positions[
+                    areaId
+                ];
+
+
+            if (
+                !position
+            ) {
+                continue;
+            }
+
+
+            const meta =
+                V.REGION_META
+                    ?.[
+                        areaId
+                    ];
+
+
+            ctx.fillStyle =
+                areaId ===
+                state.area
+                    ? "#b49c6d"
+                    : "#69645b";
+
+
+            ctx.beginPath();
+
+            ctx.arc(
+                position.x,
+                position.y,
+                areaId ===
+                    state.area
+                    ? 11
+                    : 8,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+
+
+            ctx.textAlign =
+                "center";
+
+            ctx.font =
+                "11px Georgia";
+
+            ctx.fillStyle =
+                areaId ===
+                state.area
+                    ? "#d7c7a4"
+                    : "#999188";
+
+
+            ctx.fillText(
+                meta?.name ||
+                formatAreaId(
+                    areaId
+                ),
+
+                position.x,
+
+                position.y +
+                    25
+            );
+        }
+
+
+        if (
+            discovered.has(
+                "voidDungeon"
+            )
+        ) {
+            ctx.textAlign =
+                "center";
+
+            ctx.fillStyle =
+                "#725b7d";
+
+            ctx.font =
+                "10px Georgia";
+
+            ctx.fillText(
+                "ÁREA SEM SINAL",
+                canvas.width *
+                    0.73,
+                canvas.height *
+                    0.83
+            );
+        }
+    }
+
+
+    function getWorldMapPositions() {
+        const canvas =
+            DOM.canvas
+                .worldMap;
+
+        const w =
+            canvas?.width ||
+            860;
+
+        const h =
+            canvas?.height ||
+            540;
+
+
+        return {
+            village: {
+                x:
+                    w *
+                    0.5,
+                y:
+                    h *
+                    0.55
+            },
+
+            road: {
+                x:
+                    w *
+                    0.61,
+                y:
+                    h *
+                    0.55
+            },
+
+            forest: {
+                x:
+                    w *
+                    0.70,
+                y:
+                    h *
+                    0.55
+            },
+
+            grove: {
+                x:
+                    w *
+                    0.78,
+                y:
+                    h *
+                    0.52
+            },
+
+            mountains: {
+                x:
+                    w *
+                    0.84,
+                y:
+                    h *
+                    0.45
+            },
+
+            ironRegion: {
+                x:
+                    w *
+                    0.88,
+                y:
+                    h *
+                    0.36
+            },
+
+            rubyRegion: {
+                x:
+                    w *
+                    0.90,
+                y:
+                    h *
+                    0.26
+            },
+
+            monarchMaze: {
+                x:
+                    w *
+                    0.86,
+                y:
+                    h *
+                    0.15
+            },
+
+            gnomeGardens: {
+                x:
+                    w *
+                    0.50,
+                y:
+                    h *
+                    0.41
+            },
+
+            fairyKingdom: {
+                x:
+                    w *
+                    0.50,
+                y:
+                    h *
+                    0.30
+            },
+
+            celestialFrontier: {
+                x:
+                    w *
+                    0.50,
+                y:
+                    h *
+                    0.20
+            },
+
+            celestialStair: {
+                x:
+                    w *
+                    0.50,
+                y:
+                    h *
+                    0.11
+            },
+
+            skyOne: {
+                x:
+                    w *
+                    0.50,
+                y:
+                    h *
+                    0.055
+            },
+
+            voidDungeon: {
+                x:
+                    w *
+                    0.72,
+                y:
+                    h *
+                    0.81
+            }
+        };
+    }
+
+
+    function formatAreaId(
+        id
+    ) {
+        return String(
+            id ||
+            ""
+        )
+            .replace(
+                /([A-Z])/g,
+                " $1"
+            )
+            .replace(
+                /_/g,
+                " "
+            )
+            .trim()
+            .toUpperCase();
+    }
+
+
+    /* ============================================================
+       DIÁLOGO
+       ============================================================ */
+
+    function syncDialoguePanel() {
+        const dialogue =
+            state.dialogue;
+
+        const panel =
+            DOM.panels
+                .dialogue;
+
+
+        if (
+            !panel
+        ) {
+            return;
+        }
+
+
+        if (
+            !dialogue
+        ) {
+            setVisible(
+                panel,
+                false
+            );
+
+            return;
+        }
+
+
+        setVisible(
+            panel,
+            true
+        );
+
+
+        const speaker =
+            dialogue.speaker;
+
+
+        const speakerName =
+            typeof speaker ===
+            "string"
+                ? speaker
+                : (
+                    speaker?.name ||
+                    dialogue.speakerName ||
+                    "???"
+                );
+
+
+        if (
+            DOM.misc.dialogueSpeaker
+        ) {
+            DOM.misc.dialogueSpeaker
+                .textContent =
+                speakerName;
+        }
+
+
+        const line =
+            getCurrentDialogueLine(
+                dialogue
+            );
+
+
+        if (
+            DOM.misc.dialogueText
+        ) {
+            DOM.misc.dialogueText
+                .textContent =
+                getVisibleDialogueText(
+                    dialogue,
+                    line
+                );
+        }
+
+
+        renderDialogueChoices(
+            dialogue
+        );
+    }
+
+
+    function getCurrentDialogueLine(
+        dialogue
+    ) {
+        if (
+            typeof dialogue.text ===
+            "string"
+        ) {
+            return dialogue.text;
+        }
+
+
+        const lines =
+            safeArray(
+                dialogue.lines
+            );
+
+
+        const entry =
+            lines[
+                Math.max(
+                    0,
+                    Math.floor(
+                        finite(
+                            dialogue.index,
+                            0
+                        )
+                    )
+                )
+            ];
+
+
+        if (
+            typeof entry ===
+            "string"
+        ) {
+            return entry;
+        }
+
+
+        return (
+            entry?.text ||
+            ""
+        );
+    }
+
+
+    function getVisibleDialogueText(
+        dialogue,
+        line
+    ) {
+        if (
+            typeof dialogue.visibleText ===
+            "string"
+        ) {
+            return dialogue.visibleText;
+        }
+
+
+        const chars =
+            finite(
+                dialogue.visibleCharacters,
+                line.length
+            );
+
+
+        return line.slice(
+            0,
+            Math.max(
+                0,
+                Math.floor(
+                    chars
+                )
+            )
+        );
+    }
+
+
+    function renderDialogueChoices(
+        dialogue
+    ) {
+        const container =
+            DOM.misc
+                .dialogueChoices;
+
+
+        if (
+            !container
+        ) {
+            return;
+        }
+
+
+        const choices =
+            safeArray(
+                dialogue.choices
+            );
+
+
+        if (
+            choices.length ===
+            0
+        ) {
+            container.innerHTML =
+                "";
+
+            return;
+        }
+
+
+        container.innerHTML =
+            choices
+                .map(
+                    (
+                        choice,
+                        index
+                    ) => `
+                        <button
+                            type="button"
+                            data-dialogue-choice="${index}"
+                        >
+                            ${escapeHTML(
+                                typeof choice ===
+                                    "string"
+                                    ? choice
+                                    : choice.text ||
+                                        choice.label ||
+                                        "Continuar"
+                            )}
+                        </button>
+                    `
+                )
+                .join(
+                    ""
+                );
+
+
+        for (
+            const button of
+            container.querySelectorAll(
+                "[data-dialogue-choice]"
+            )
+        ) {
+            button.addEventListener(
+                "click",
+                () => {
+                    const index =
+                        Number(
+                            button.dataset
+                                .dialogueChoice
+                        );
+
+
+                    firstAvailableCall(
+                        [
+                            "chooseDialogueOption",
+                            "selectDialogueChoice"
+                        ],
+                        index
+                    );
+                }
+            );
+        }
+    }
+
+
+    /* ============================================================
+       BATALHA — ACEITAR / RECUAR
+       ============================================================ */
+
+    function getCurrentBattleBoss() {
+        const battle =
+            state.battle;
+
+
+        if (
+            !battle
+        ) {
+            return null;
+        }
+
+
+        if (
+            battle.boss
+        ) {
+            return battle.boss;
+        }
+
+
+        if (
+            battle.entity
+        ) {
+            return battle.entity;
+        }
+
+
+        return battle;
+    }
+
+
+    function syncBattlePanel() {
+        const boss =
+            getCurrentBattleBoss();
+
+        const panel =
+            DOM.panels
+                .battle;
+
+
+        if (
+            !panel
+        ) {
+            return;
+        }
+
+
+        if (
+            !boss
+        ) {
+            setVisible(
+                panel,
+                false
+            );
+
+            return;
+        }
+
+
+        setVisible(
+            panel,
+            true
+        );
+
+
+        const definition =
+            V.BOSS_REGISTRY
+                ?.[
+                    boss.id
+                ] ||
+            boss.definition ||
+            {};
+
+
+        setText(
+            "battleName",
+            boss.name ||
+            definition.name ||
+            "GUARDIÃO"
+        );
+
+
+        setText(
+            "battleSubtitle",
+            boss.subtitle ||
+            definition.subtitle ||
+            ""
+        );
+
+
+        setText(
+            "battleText",
+            boss.promptText ||
+            "Esta criatura guarda o caminho. Deseja aceitar o desafio?"
+        );
+    }
+
+
+    function acceptCurrentBoss() {
+        const boss =
+            getCurrentBattleBoss();
+
+
+        if (
+            !boss
+        ) {
+            return false;
+        }
+
+
+        const entityId =
+            boss.entityId ||
+            boss.id;
+
+
+        let result;
+
+
+        if (
+            hasFunction(
+                "acceptBossBattleById"
+            )
+        ) {
+            result =
+                safeCall(
+                    "acceptBossBattleById",
+                    entityId
+                );
+        } else {
+            result =
+                firstAvailableCall(
+                    [
+                        "acceptBossBattle",
+                        "acceptBattle"
+                    ],
+                    boss
+                );
+        }
+
+
+        if (
+            result ===
+            undefined
+        ) {
+            boss.confirmed =
+                true;
+
+            boss.aggressive =
+                true;
+
+            if (
+                V.BOSS_STATE
+                    ?.COMBAT
+            ) {
+                boss.state =
+                    V.BOSS_STATE
+                        .COMBAT;
+            }
+
+            state.battle =
+                null;
+
+            result =
+                true;
+        }
+
+
+        if (
+            result !==
+            false
+        ) {
+            state.battle =
+                null;
+
+            setVisible(
+                DOM.panels.battle,
+                false
+            );
+
+            state.paused =
+                false;
+        }
+
+
+        return result !==
+            false;
+    }
+
+
+    function declineCurrentBoss() {
+        const boss =
+            getCurrentBattleBoss();
+
+
+        firstAvailableCall(
+            [
+                "declineBossBattle",
+                "declineBattle",
+                "retreatBossBattle"
+            ],
+            boss
+        );
+
+
+        if (
+            boss
+        ) {
+            boss.confirmed =
+                false;
+
+            boss.aggressive =
+                false;
+
+            if (
+                V.BOSS_STATE
+                    ?.NEUTRAL
+            ) {
+                boss.state =
+                    V.BOSS_STATE
+                        .NEUTRAL;
+            }
+        }
+
+
+        state.battle =
+            null;
+
+        state.paused =
+            false;
+
+
+        setVisible(
+            DOM.panels.battle,
+            false
+        );
+
+
+        return true;
+    }
+
+
+    /* ============================================================
+       TRAVEL
+       ============================================================ */
+
+    function syncTravelPanel() {
+        const travel =
+            state.travel;
+
+        const panel =
+            DOM.panels
+                .travel;
+
+
+        if (
+            !panel
+        ) {
+            return;
+        }
+
+
+        if (
+            !travel
+        ) {
+            setVisible(
+                panel,
+                false
+            );
+
+            return;
+        }
+
+
+        setVisible(
+            panel,
+            true
+        );
+
+
+        setText(
+            "travelTitle",
+            travel.title ||
+            travel.destinationName ||
+            "SEGUIR ADIANTE?"
+        );
+
+
+        setText(
+            "travelText",
+            travel.text ||
+            travel.description ||
+            "Deseja continuar por este caminho?"
+        );
+    }
+
+
+    function confirmTravel() {
+        const travel =
+            state.travel;
+
+
+        if (
+            !travel
+        ) {
+            return false;
+        }
+
+
+        let result =
+            firstAvailableCall(
+                [
+                    "confirmTravel",
+                    "acceptTravel"
+                ],
+                travel
+            );
+
+
+        if (
+            result ===
+            undefined &&
+            travel.destination
+        ) {
+            result =
+                safeCall(
+                    "loadWorld",
+                    travel.destination,
+                    travel.destinationSpawn ||
+                    "default"
+                );
+        }
+
+
+        if (
+            result !==
+            false
+        ) {
+            state.travel =
+                null;
+
+            state.paused =
+                false;
+
+            setVisible(
+                DOM.panels.travel,
+                false
+            );
+
+            syncCameraImmediately();
+
+            startTitleCard(
+                getCurrentLocationName(),
+                1.5
+            );
+        }
+
+
+        return result !==
+            false;
+    }
+
+
+    function cancelTravel() {
+        firstAvailableCall(
+            [
+                "cancelTravel",
+                "declineTravel"
+            ],
+            state.travel
+        );
+
+
+        state.travel =
+            null;
+
+        state.paused =
+            false;
+
+
+        setVisible(
+            DOM.panels.travel,
+            false
+        );
+    }
+
+
+    /* ============================================================
+       MORTE
+
+       RENASCER:
+       -> casa do jogador
+       -> perto da cama
+       -> perda pequena de materiais
+       -> autosave
+
+       DESISTIR:
+       -> descarta estado transitório
+       -> último save válido
+       -> menu
+       ============================================================ */
+
+    function syncDeathPanel() {
+        const panel =
+            DOM.panels
+                .death;
+
+
+        if (
+            !panel
+        ) {
+            return;
+        }
+
+
+        const dead =
+            Boolean(
+                state.deathState ||
+                state.player?.dead
+            );
+
+
+        setVisible(
+            panel,
+            dead
+        );
+
+
+        if (
+            !dead
+        ) {
+            return;
+        }
+
+
+        state.paused =
+            true;
+
+
+        const heading =
+            panel.querySelector(
+                "h1, h2"
+            );
+
+
+        if (
+            heading
+        ) {
+            heading.textContent =
+                "A QUIETUDE O ALCANÇOU";
+        }
+
+
+        const paragraph =
+            panel.querySelector(
+                "p"
+            );
+
+
+        if (
+            paragraph
+        ) {
+            const losses =
+                getDeathLossText();
+
+
+            paragraph.innerHTML =
+                losses
+                    ? `
+                        A memória do mundo ainda reconhece sua casa.
+                        <br><br>
+                        <strong>MATERIAIS PERDIDOS AO RENASCER:</strong>
+                        <br>
+                        ${escapeHTML(losses)}
+                    `
+                    : `
+                        A memória do mundo ainda reconhece sua casa.
+                        Você poderá renascer junto à sua cama.
+                    `;
+        }
+
+
+        if (
+            DOM.buttons.respawn
+        ) {
+            DOM.buttons.respawn
+                .textContent =
+                "RENASCER";
+        }
+
+
+        ensureGiveUpButton();
+    }
+
+
+    function getDeathLossText() {
+        let losses =
+            [];
+
+
+        if (
+            hasFunction(
+                "getDeathLossPreview"
+            )
+        ) {
+            const preview =
+                safeCall(
+                    "getDeathLossPreview"
+                );
+
+            if (
+                Array.isArray(
+                    preview
+                )
+            ) {
+                losses =
+                    preview;
+            }
+        }
+
+
+        if (
+            losses.length ===
+            0 &&
+            Array.isArray(
+                state.deathState
+                    ?.losses
+            )
+        ) {
+            losses =
+                state.deathState
+                    .losses;
+        }
+
+
+        return losses
+            .map(
+                loss => {
+                    const itemId =
+                        loss.itemId ||
+                        loss.id;
+
+                    const item =
+                        V.ITEMS
+                            ?.[
+                                itemId
+                            ];
+
+
+                    return `${
+                        item?.name ||
+                        itemId ||
+                        "Material"
+                    } -${Math.max(
+                        0,
+                        Math.floor(
+                            finite(
+                                loss.amount,
+                                0
+                            )
+                        )
+                    )}`;
+                }
+            )
+            .filter(
+                Boolean
+            )
+            .join(
+                " • "
+            );
+    }
+
+
+    function chooseRespawn() {
+        if (
+            !state.player
+        ) {
+            return false;
+        }
+
+
+        let result =
+            firstAvailableCall(
+                [
+                    "respawnPlayerAtHome",
+                    "respawnAtHome",
+                    "confirmRespawn"
+                ]
+            );
+
+
+        if (
+            result ===
+            undefined
+        ) {
+            result =
+                respawnFallback();
+        }
+
+
+        if (
+            result ===
+            false
+        ) {
+            return false;
+        }
+
+
+        /*
+            Regra definitiva:
+            independentemente da área da morte,
+            renasce dentro da casa.
+        */
+        if (
+            !state.houseMode ||
+            state.currentHouse !==
+                "home"
+        ) {
+            if (
+                hasFunction(
+                    "loadPlayerHome"
+                )
+            ) {
+                safeCall(
+                    "loadPlayerHome"
+                );
+            } else if (
+                hasFunction(
+                    "enterHouse"
+                )
+            ) {
+                safeCall(
+                    "loadWorld",
+                    "village",
+                    "home"
+                );
+
+                safeCall(
+                    "enterHouse",
+                    "home",
+                    "home"
+                );
+            }
+        }
+
+
+        state.player.dead =
+            false;
+
+        state.deathState =
+            null;
+
+        state.paused =
+            false;
+
+
+        setVisible(
+            DOM.panels.death,
+            false
+        );
+
+
+        syncCameraImmediately();
+
+
+        startTitleCard(
+            "CASA DO AVENTUREIRO",
+            1.4
+        );
+
+
+        safeCall(
+            "saveGame",
+            {
+                silent:
+                    true
+            }
+        );
+
+
+        updateHTMLHUD(
+            true
+        );
+
+
+        return true;
+    }
+
+
+    function respawnFallback() {
+        const player =
+            state.player;
+
+
+        if (
+            !player
+        ) {
+            return false;
+        }
+
+
+        safeCall(
+            "loadWorld",
+            "village",
+            "home"
+        );
+
+
+        if (
+            hasFunction(
+                "enterHouse"
+            )
+        ) {
+            safeCall(
+                "enterHouse",
+                "home",
+                "home"
+            );
+        }
+
+
+        player.dead =
+            false;
+
+        player.hp =
+            Math.max(
+                1,
+                finite(
+                    player.maxHp,
+                    1
+                )
+            );
+
+        player.energy =
+            Math.max(
+                1,
+                finite(
+                    player.maxEnergy,
+                    1
+                )
+            );
+
+
+        state.deathState =
+            null;
+
+
+        return true;
+    }
+
+
+    function chooseGiveUp() {
+        /*
+            DESISTIR NÃO CRIA SAVE.
+            Primeiro carregamos o último save válido.
+        */
+        let loaded =
+            false;
+
+
+        if (
+            hasFunction(
+                "loadGame"
+            )
+        ) {
+            loaded =
+                safeCall(
+                    "loadGame"
+                ) !==
+                false;
+        }
+
+
+        if (
+            loaded
+        ) {
+            /*
+                Não começa gameplay imediatamente.
+                Apenas restaura o snapshot seguro.
+            */
+            state.running =
+                false;
+
+            state.deathState =
+                null;
+
+            if (
+                state.player
+            ) {
+                state.player.dead =
+                    false;
+            }
+        }
+
+
+        closeAllPanels();
+
+        showScreen(
+            "menu"
+        );
+
+        refreshContinueButton();
+
+
+        return true;
+    }
+
+
+    /* ============================================================
+       SHOP
+       ============================================================ */
+
+    function syncShopPanel() {
+        const shopOpen =
+            Boolean(
+                state.shopNPC
+            );
+
+
+        if (
+            !shopOpen
+        ) {
+            if (
+                state.activePanel !==
+                "shop"
+            ) {
+                setVisible(
+                    DOM.panels.shop,
+                    false
+                );
+            }
+
+            return;
+        }
+
+
+        setVisible(
+            DOM.panels.shop,
+            true
+        );
+
+
+        state.activePanel =
+            "shop";
+
+        state.paused =
+            true;
+
+
+        renderShop();
+    }
+
+
+    function renderShop() {
+        const container =
+            DOM.misc
+                .shopGrid;
+
+        const npc =
+            state.shopNPC;
+
+
+        if (
+            !container ||
+            !npc
+        ) {
+            return;
+        }
+
+
+        if (
+            DOM.misc.shopTitle
+        ) {
+            DOM.misc.shopTitle
+                .textContent =
+                npc.shopName ||
+                npc.name ||
+                "LOJA";
+        }
+
+
+        const mode =
+            state.shopMode ||
+            "buy";
+
+
+        const entries =
+            mode ===
+            "sell"
+                ? getSellableItems()
+                : getShopBuyEntries(
+                    npc
+                );
+
+
+        if (
+            entries.length ===
+            0
+        ) {
+            container.innerHTML = `
+                <div class="empty-panel-message">
+                    Nenhum item disponível.
+                </div>
+            `;
+
+            return;
+        }
+
+
+        container.innerHTML =
+            entries
+                .map(
+                    entry =>
+                        shopItemHTML(
+                            entry,
+                            mode
+                        )
+                )
+                .join(
+                    ""
+                );
+
+
+        for (
+            const button of
+            container.querySelectorAll(
+                "[data-shop-buy]"
+            )
+        ) {
+            button.addEventListener(
+                "click",
+                () => {
+                    const itemId =
+                        button.dataset
+                            .shopBuy;
+
+
+                    firstAvailableCall(
+                        [
+                            "buyShopItem",
+                            "buyItem"
+                        ],
+                        itemId,
+                        state.shopNPC
+                    );
+
+
+                    renderShop();
+
+                    updateHTMLHUD(
+                        true
+                    );
+                }
+            );
+        }
+
+
+        for (
+            const button of
+            container.querySelectorAll(
+                "[data-shop-sell]"
+            )
+        ) {
+            button.addEventListener(
+                "click",
+                () => {
+                    const itemId =
+                        button.dataset
+                            .shopSell;
+
+
+                    firstAvailableCall(
+                        [
+                            "sellShopItem",
+                            "sellItem"
+                        ],
+                        itemId,
+                        1,
+                        state.shopNPC
+                    );
+
+
+                    renderShop();
+
+                    updateHTMLHUD(
+                        true
+                    );
+                }
+            );
+        }
+    }
+
+
+    function getShopBuyEntries(
+        npc
+    ) {
+        let raw =
+            [];
+
+
+        if (
+            hasFunction(
+                "getShopInventory"
+            )
+        ) {
+            raw =
+                safeCall(
+                    "getShopInventory",
+                    npc
+                ) ||
+                [];
+        } else {
+            raw =
+                npc.shopItems ||
+                npc.items ||
+                npc.shop ||
+                [];
+        }
+
+
+        if (
+            !Array.isArray(
+                raw
+            )
+        ) {
+            raw =
+                Object.entries(
+                    raw
+                )
+                    .map(
+                        (
+                            [
+                                id,
+                                data
+                            ]
+                        ) =>
+                            typeof data ===
+                            "object"
+                                ? {
+                                    id,
+                                    ...data
+                                }
+                                : {
+                                    id,
+                                    price:
+                                        data
+                                }
+                    );
+        }
+
+
+        return raw
+            .map(
+                entry => {
+                    const id =
+                        typeof entry ===
+                        "string"
+                            ? entry
+                            : entry.id ||
+                                entry.itemId;
+
+                    const item =
+                        V.ITEMS
+                            ?.[
+                                id
+                            ] ||
+                        V.ARMOR_DATA
+                            ?.[
+                                id
+                            ];
+
+
+                    if (
+                        !id ||
+                        !item
+                    ) {
+                        return null;
+                    }
+
+
+                    return {
+                        id,
+                        item,
+                        price:
+                            finite(
+                                typeof entry ===
+                                    "object"
+                                    ? entry.price
+                                    : undefined,
+
+                                finite(
+                                    item.price,
+                                    0
+                                )
+                            )
+                    };
+                }
+            )
+            .filter(
+                Boolean
+            );
+    }
+
+
+    function getSellableItems() {
+        return getInventoryEntries()
+            .filter(
+                entry =>
+                    !entry.item.unique &&
+                    !entry.item.keyItem &&
+                    entry.item.sellable !==
+                        false
+            )
+            .map(
+                entry => ({
+                    id:
+                        entry.id,
+
+                    item:
+                        entry.item,
+
+                    amount:
+                        entry.amount,
+
+                    price:
+                        Math.max(
+                            1,
+                            Math.floor(
+                                finite(
+                                    entry.item
+                                        .sellPrice,
+                                    finite(
+                                        entry.item
+                                            .price,
+                                        2
+                                    ) *
+                                        0.45
+                                )
+                            )
+                        )
+                })
+            );
+    }
+
+
+    function shopItemHTML(
+        entry,
+        mode
+    ) {
+        return `
+            <div class="shop-item">
+
+                <div class="shop-item-icon">
+                    ${escapeHTML(
+                        entry.item.icon ||
+                        getItemSymbol(
+                            entry.id
+                        )
+                    )}
+                </div>
+
+                <div class="shop-item-info">
+
+                    <strong>
+                        ${escapeHTML(
+                            entry.item.name ||
+                            entry.id
+                        )}
+                    </strong>
+
+                    <span>
+                        ${escapeHTML(
+                            entry.item.description ||
+                            ""
+                        )}
+                    </span>
+
+                    ${
+                        mode ===
+                            "sell"
+                            ? `
+                                <span>
+                                    POSSUI: ${entry.amount}
+                                </span>
+                            `
+                            : ""
+                    }
+
+                </div>
+
+                <button
+                    type="button"
+                    ${
+                        mode ===
+                        "sell"
+                            ? `data-shop-sell="${escapeHTML(entry.id)}"`
+                            : `data-shop-buy="${escapeHTML(entry.id)}"`
+                    }
+                >
+                    ${
+                        mode ===
+                        "sell"
+                            ? "VENDER"
+                            : "COMPRAR"
+                    }
+                    •
+                    ${Math.floor(entry.price)}
+                </button>
+
+            </div>
+        `;
+    }
+
+
+    function closeShop() {
+        firstAvailableCall(
+            [
+                "closeShop"
+            ],
+            true
+        );
+
+
+        state.shopNPC =
+            null;
+
+
+        if (
+            state.activePanel ===
+            "shop"
+        ) {
+            state.activePanel =
+                null;
+        }
+
+
+        state.paused =
+            false;
+
+
+        setVisible(
+            DOM.panels.shop,
+            false
+        );
+    }
+
+
+    /* ============================================================
+       INPUT
+       ============================================================ */
+
+    function ensureInputState() {
+        if (
+            !(state.keys instanceof Set)
+        ) {
+            state.keys =
+                new Set();
+        }
+
+
+        state.pointer =
+            state.pointer ||
+            {};
+
+
+        state.mouse =
+            state.mouse ||
+            {};
+    }
+
+
+    function registerKey(
+        event
+    ) {
+        state.keys.add(
+            event.code
+        );
+
+
+        if (
+            event.key
+        ) {
+            state.keys.add(
+                event.key
+                    .toLowerCase()
+            );
+        }
+    }
+
+
+    function unregisterKey(
+        event
+    ) {
+        state.keys.delete(
+            event.code
+        );
+
+
+        if (
+            event.key
+        ) {
+            state.keys.delete(
+                event.key
+                    .toLowerCase()
+            );
+        }
+    }
+
+
+    function handleKeyDown(
+        event
+    ) {
+        ensureInputState();
+
+
+        registerKey(
+            event
+        );
+
+
+        const code =
+            event.code;
+
+
+        const gameKeys =
+            [
+                "ArrowUp",
+                "ArrowDown",
+                "ArrowLeft",
+                "ArrowRight",
+                "KeyW",
+                "KeyA",
+                "KeyS",
+                "KeyD",
+                "KeyE",
+                "KeyZ",
+                "KeyQ",
+                "KeyR",
+                "KeyF",
+                "Space"
+            ];
+
+
+        if (
+            state.running &&
+            gameKeys.includes(
+                code
+            )
+        ) {
+            event.preventDefault();
+        }
+
+
+        /*
+            Debug privado.
+        */
+        if (
+            hasFunction(
+                "handleDevShortcutKeyDown"
+            )
+        ) {
+            safeCall(
+                "handleDevShortcutKeyDown",
+                event
+            );
+        }
+
+
+        /*
+            Não repetir habilidades
+            segurando a tecla.
+        */
+        if (
+            event.repeat &&
+            (
+                code ===
+                    "KeyQ" ||
+                code ===
+                    "KeyR" ||
+                code ===
+                    "KeyF" ||
+                code ===
+                    "Space" ||
+                code ===
+                    "KeyE" ||
+                code ===
+                    "KeyZ"
+            )
+        ) {
+            return;
+        }
+
+
+        if (
+            !state.running
+        ) {
+            return;
+        }
+
+
+        switch (
+            code
+        ) {
+            case "KeyE":
+                safeCall(
+                    "handlePrimaryInteractionPress"
+                );
+                break;
+
+
+            case "KeyZ":
+                safeCall(
+                    "handleDoorInteraction"
+                );
+                break;
+
+
+            case "KeyQ":
+                safeCall(
+                    "handleGameplaySkillInput",
+                    "q"
+                );
+                break;
+
+
+            case "KeyR":
+                safeCall(
+                    "handleGameplaySkillInput",
+                    "r"
+                );
+                break;
+
+
+            case "KeyF":
+                safeCall(
+                    "handleGameplaySkillInput",
+                    "f"
+                );
+                break;
+
+
+            case "Space":
+                safeCall(
+                    "handleGameplayDashInput"
+                );
+                break;
+
+
+            case "KeyI":
+                openNormalPanel(
+                    "inventory"
+                );
+                break;
+
+
+            case "KeyM":
+                openNormalPanel(
+                    "map"
+                );
+                break;
+
+
+            case "KeyL":
+                openNormalPanel(
+                    "book"
+                );
+                break;
+
+
+            case "KeyC":
+                openNormalPanel(
+                    "status"
+                );
+                break;
+
+
+            case "Escape":
+                handleEscape();
+                break;
+        }
+    }
+
+
+    function handleKeyUp(
+        event
+    ) {
+        ensureInputState();
+
+
+        unregisterKey(
+            event
+        );
+
+
+        if (
+            event.code ===
+            "KeyE"
+        ) {
+            safeCall(
+                "handlePrimaryHoldInteractionEnd"
+            );
+        }
+    }
+
+
+    function handleEscape() {
+        if (
+            state.deathState
+        ) {
+            return;
+        }
+
+
+        if (
+            state.dialogue
+        ) {
+            return;
+        }
+
+
+        if (
+            state.battle
+        ) {
+            declineCurrentBoss();
+
+            return;
+        }
+
+
+        if (
+            state.travel
+        ) {
+            cancelTravel();
+
+            return;
+        }
+
+
+        for (
+            const name of
+            NORMAL_PANEL_NAMES
+        ) {
+            if (
+                isVisible(
+                    DOM.panels[
+                        name
+                    ]
+                )
+            ) {
+                closeNormalPanels();
+
+                return;
+            }
+        }
+
+
+        openNormalPanel(
+            "menu"
+        );
+    }
+
+
+    /* ============================================================
+       MOUSE
+       ============================================================ */
+
+    function updatePointerFromEvent(
+        event
+    ) {
+        const canvas =
+            DOM.canvas.game;
+
+
+        if (
+            !canvas
+        ) {
+            return;
+        }
+
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+
+        if (
+            rect.width <=
+                0 ||
+            rect.height <=
+                0
+        ) {
+            return;
+        }
+
+
+        const screenX =
+            (
+                event.clientX -
+                rect.left
+            ) *
+            (
+                renderRuntime.width /
+                rect.width
+            );
+
+
+        const screenY =
+            (
+                event.clientY -
+                rect.top
+            ) *
+            (
+                renderRuntime.height /
+                rect.height
+            );
+
+
+        let world =
+            {
+                x:
+                    screenX,
+                y:
+                    screenY
+            };
+
+
+        if (
+            hasFunction(
+                "screenToWorld"
+            )
+        ) {
+            world =
+                safeCall(
+                    "screenToWorld",
+                    screenX,
+                    screenY
+                ) ||
+                world;
+        }
+
+
+        state.pointer.x =
+            screenX;
+
+        state.pointer.y =
+            screenY;
+
+        state.pointer.screenX =
+            screenX;
+
+        state.pointer.screenY =
+            screenY;
+
+        state.pointer.worldX =
+            world.x;
+
+        state.pointer.worldY =
+            world.y;
+
+
+        /*
+            Compatibilidade com sistemas antigos.
+        */
+        state.mouse.x =
+            screenX;
+
+        state.mouse.y =
+            screenY;
+
+        state.mouse.worldX =
+            world.x;
+
+        state.mouse.worldY =
+            world.y;
+    }
+
+
+    function handlePointerMove(
+        event
+    ) {
+        UI_RUNTIME.pointerInsideCanvas =
+            true;
+
+        updatePointerFromEvent(
+            event
+        );
+    }
+
+
+    function handlePointerDown(
+        event
+    ) {
+        if (
+            event.button !==
+            0 ||
+            !state.running
+        ) {
+            return;
+        }
+
+
+        updatePointerFromEvent(
+            event
+        );
+
+
+        /*
+            1 CLIQUE = 1 ATAQUE.
+
+            NÃO criamos mouseHeld.
+            NÃO fazemos ataque em update().
+        */
+        safeCall(
+            "handleGameplayAttackInput"
+        );
+    }
+
+
+    /* ============================================================
+       EXPLORAÇÃO DO MAPA
+       ============================================================ */
+
+    function updateMapExploration() {
+        const player =
+            state.player;
+
+
+        if (
+            !player ||
+            !state.world ||
+            !hasFunction(
+                "markMapExploredAt"
+            )
+        ) {
+            return;
+        }
+
+
+        safeCall(
+            "markMapExploredAt",
+            state.area,
+            player.x,
+            player.y
+        );
+    }
+
+
+    /* ============================================================
+       AUTOSAVE
+       ============================================================ */
+
+    function updateAutosave(
+        dt
+    ) {
+        if (
+            !state.running ||
+            !state.player ||
+            state.player.dead ||
+            state.deathState ||
+            state.cutscene
+        ) {
+            return;
+        }
+
+
+        UI_RUNTIME
+            .autosaveAccumulator +=
+            dt;
+
+
+        const interval =
+            Math.max(
+                15,
+                finite(
+                    V.GAME_CONFIG
+                        ?.autosaveSeconds,
+                    30
+                )
+            );
+
+
+        if (
+            UI_RUNTIME
+                .autosaveAccumulator <
+            interval
+        ) {
+            return;
+        }
+
+
+        UI_RUNTIME
+            .autosaveAccumulator =
+            0;
+
+
+        safeCall(
+            "saveGame",
+            {
+                silent:
+                    true
+            }
+        );
+    }
+
+
+    /* ============================================================
+       SINCRONIZAÇÃO DE PAINÉIS
+       ============================================================ */
+
+    function syncRuntimePanels() {
+        syncDialoguePanel();
+
+        syncBattlePanel();
+
+        syncTravelPanel();
+
+        syncDeathPanel();
+
+        syncShopPanel();
+    }
+
+
+    /* ============================================================
+       RENDER PRINCIPAL
+
+       IMPORTANTE:
+       NÃO usa V.renderGame(), pois a Parte 4
+       também possui HUD canvas.
+
+       Aqui preservamos o HUD HTML aprovado
+       e desenhamos SOMENTE O MUNDO no canvas.
+       ============================================================ */
+
+    function renderMainCanvas() {
+        const ctx =
+            renderRuntime.ctx;
+
+
+        if (
+            !ctx ||
+            !renderRuntime.canvas
+        ) {
+            return;
+        }
+
+
+        const dpr =
+            renderRuntime.dpr ||
+            1;
+
+
+        ctx.save();
+
+
+        ctx.setTransform(
+            dpr,
+            0,
+            0,
+            dpr,
+            0,
+            0
+        );
+
+
+        ctx.clearRect(
+            0,
+            0,
+            renderRuntime.width,
+            renderRuntime.height
+        );
+
+
+        if (
+            state.running &&
+            state.world
+        ) {
+            safeCall(
+                "renderWorld",
+                ctx
+            );
+
+
+            if (
+                state.fragmentMinigame
+                    ?.active
+            ) {
+                safeCall(
+                    "drawFragmentMinigame",
+                    ctx
+                );
+            }
+
+
+            /*
+                Transições que venham das partes anteriores.
+            */
+            if (
+                state.transition
+            ) {
+                safeCall(
+                    "drawTransitionOverlay",
+                    ctx
+                );
+            }
+
+
+            drawTitleCard(
+                ctx
+            );
+        }
+
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       TRANSIÇÃO RUNTIME
+       ============================================================ */
+
+    function updateTransition(
+        dt
+    ) {
+        const transition =
+            state.transition;
+
+
+        if (
+            !transition
+        ) {
+            return;
+        }
+
+
+        transition.timer =
+            finite(
+                transition.timer,
+                0
+            ) +
+            dt;
+
+
+        const duration =
+            Math.max(
+                0.01,
+                finite(
+                    transition.duration,
+                    1
+                )
+            );
+
+
+        if (
+            transition.timer >=
+            duration
+        ) {
+            if (
+                typeof transition.onComplete ===
+                "function"
+            ) {
+                try {
+                    transition.onComplete();
+                } catch (
+                    error
+                ) {
+                    console.error(
+                        "VEYRA — erro ao finalizar transição:",
+                        error
+                    );
+                }
+            }
+
+
+            if (
+                state.transition ===
+                transition
+            ) {
+                state.transition =
+                    null;
+            }
+        }
+    }
+
+
+    /* ============================================================
+       GAME LOOP
+       ============================================================ */
+
+    function gameLoop(
+        timestamp
+    ) {
+        requestAnimationFrame(
+            gameLoop
+        );
+
+
+        if (
+            !UI_RUNTIME.lastFrame
+        ) {
+            UI_RUNTIME.lastFrame =
+                timestamp;
+        }
+
+
+        let dt =
+            (
+                timestamp -
+                UI_RUNTIME.lastFrame
+            ) /
+            1000;
+
+
+        UI_RUNTIME.lastFrame =
+            timestamp;
+
+
+        dt =
+            clamp(
+                dt,
+                0,
+                finite(
+                    V.GAME_CONFIG
+                        ?.maxDeltaTime,
+                    0.05
+                )
+            );
+
+
+        if (
+            !state.running
+        ) {
+            return;
+        }
+
+
+        /*
+            Gameplay oficial da Parte 3.
+        */
+        if (
+            hasFunction(
+                "updateGameplaySystems"
+            )
+        ) {
+            safeCall(
+                "updateGameplaySystems",
+                dt
+            );
+        } else {
+            /*
+                Fallback mínimo.
+                Não duplica sistemas se updateGameplaySystems existe.
+            */
+            updateGameplayFallback(
+                dt
+            );
+        }
+
+
+        updateMapExploration();
+
+        updateTransition(
+            dt
+        );
+
+        updateTitleCard(
+            dt
+        );
+
+        updateAutosave(
+            dt
+        );
+
+
+        UI_RUNTIME
+            .hudAccumulator +=
+            dt;
+
+        UI_RUNTIME
+            .minimapAccumulator +=
+            dt;
+
+
+        if (
+            UI_RUNTIME
+                .hudAccumulator >=
+            0.08
+        ) {
+            UI_RUNTIME
+                .hudAccumulator =
+                0;
+
+            updateHTMLHUD();
+
+            syncRuntimePanels();
+        }
+
+
+        if (
+            UI_RUNTIME
+                .minimapAccumulator >=
+            0.14
+        ) {
+            UI_RUNTIME
+                .minimapAccumulator =
+                0;
+
+            renderDOMMinimap();
+
+
+            if (
+                isVisible(
+                    DOM.panels.map
+                )
+            ) {
+                renderWorldMap();
+            }
+        }
+
+
+        renderMainCanvas();
+    }
+
+
+    function updateGameplayFallback(
+        dt
+    ) {
+        const names = [
+            "updatePlayerCooldowns",
+            "updatePotionBuffs",
+            "updateResting",
+            "updatePlayerDash",
+            "updatePlayerMovement",
+            "updateSurvival",
+            "updateEnemies",
+            "updateBosses",
+            "updateProjectiles",
+            "updateWorldGeometry",
+            "updateTreeRespawns",
+            "updateInteractionTargets",
+            "updateDeathState",
+            "updateCamera"
+        ];
+
+
+        for (
+            const name of
+            names
+        ) {
+            safeCall(
+                name,
+                dt
+            );
+        }
+    }
+
+
+    /* ============================================================
+       PAUSA
+       ============================================================ */
+
+    function openPauseMenu() {
+        openNormalPanel(
+            "menu"
+        );
+    }
+
+
+    function closePauseMenu() {
+        setVisible(
+            DOM.panels.menu,
+            false
+        );
+
+
+        if (
+            state.activePanel ===
+            "menu"
+        ) {
+            state.activePanel =
+                null;
+        }
+
+
+        if (
+            !state.dialogue &&
+            !state.battle &&
+            !state.travel &&
+            !state.deathState
+        ) {
+            state.paused =
+                false;
+        }
+    }
+
+
+    /* ============================================================
+       MENSAGEM PEQUENA
+       ============================================================ */
+
+    function showSmallMessage(
+        message
+    ) {
+        if (
+            hasFunction(
+                "pushNotification"
+            ) &&
+            state.running
+        ) {
+            safeCall(
+                "pushNotification",
+                "VEYRA",
+                message,
+                "info",
+                2
+            );
+
+            return;
+        }
+
+
+        let element =
+            byId(
+                "veyraMenuMessage"
+            );
+
+
+        if (
+            !element
+        ) {
+            element =
+                document.createElement(
+                    "div"
+                );
+
+            element.id =
+                "veyraMenuMessage";
+
+            element.style.cssText = `
+                position:fixed;
+                left:50%;
+                bottom:28px;
+                z-index:9999;
+                transform:translateX(-50%);
+                max-width:min(520px,calc(100vw - 40px));
+                padding:10px 16px;
+                border:1px solid rgba(191,158,91,.2);
+                border-radius:8px;
+                color:#c9c0af;
+                background:rgba(8,9,11,.94);
+                font:12px Georgia,serif;
+                text-align:center;
+                pointer-events:none;
+                opacity:0;
+                transition:opacity .18s ease;
+            `;
+
+
+            document.body
+                .appendChild(
+                    element
+                );
+        }
+
+
+        element.textContent =
+            message;
+
+        element.style.opacity =
+            "1";
+
+
+        clearTimeout(
+            element
+                ._veyraTimer
+        );
+
+
+        element._veyraTimer =
+            setTimeout(
+                () => {
+                    element.style.opacity =
+                        "0";
+                },
+                2200
+            );
+    }
+
+
+    /* ============================================================
+       EVENTOS DE BOTÃO
+       ============================================================ */
+
+    function bindButton(
+        button,
+        handler
+    ) {
+        if (
+            !button
+        ) {
+            return;
+        }
+
+
+        button.addEventListener(
+            "click",
+            handler
+        );
+    }
+
+
+    function bindMenuButtons() {
+        bindButton(
+            DOM.buttons.newGame,
+            () => {
+                UI_RUNTIME
+                    .selectedCharacter =
+                    state.selectedCharacter ||
+                    "kaelion";
+
+                renderCharacterCards();
+
+                showScreen(
+                    "character"
+                );
+
+
+                setTimeout(
+                    () => {
+                        DOM.inputs
+                            .playerName
+                            ?.focus();
+                    },
+                    160
+                );
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.continueGame,
+            () => {
+                continueGame();
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.how,
+            () => {
+                showScreen(
+                    "how"
+                );
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.credits,
+            () => {
+                showScreen(
+                    "credits"
+                );
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.closeHow,
+            () => {
+                showScreen(
+                    "menu"
+                );
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.closeCredits,
+            () => {
+                showScreen(
+                    "menu"
+                );
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.backMenu,
+            () => {
+                showScreen(
+                    "menu"
+                );
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.startGame,
+            () => {
+                startNewGameFromSelection();
+            }
+        );
+    }
+
+
+    function bindGameButtons() {
+        bindButton(
+            DOM.buttons.inventory,
+            () => {
+                openNormalPanel(
+                    "inventory"
+                );
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.map,
+            () => {
+                openNormalPanel(
+                    "map"
+                );
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.book,
+            () => {
+                openNormalPanel(
+                    "book"
+                );
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.status,
+            () => {
+                openNormalPanel(
+                    "status"
+                );
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.save,
+            () => {
+                safeCall(
+                    "saveGame",
+                    {
+                        silent:
+                            false
+                    }
+                );
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.menu,
+            openPauseMenu
+        );
+
+
+        bindButton(
+            DOM.buttons.closeInventory,
+            closeNormalPanels
+        );
+
+
+        bindButton(
+            DOM.buttons.closeMap,
+            closeNormalPanels
+        );
+
+
+        bindButton(
+            DOM.buttons.closeBook,
+            closeNormalPanels
+        );
+
+
+        bindButton(
+            DOM.buttons.closeStatus,
+            closeNormalPanels
+        );
+
+
+        bindButton(
+            DOM.buttons.closeShop,
+            closeShop
+        );
+
+
+        bindButton(
+            DOM.buttons.shopBuy,
+            () => {
+                state.shopMode =
+                    "buy";
+
+                DOM.buttons.shopBuy
+                    ?.classList
+                    .add(
+                        "active"
+                    );
+
+                DOM.buttons.shopSell
+                    ?.classList
+                    .remove(
+                        "active"
+                    );
+
+                renderShop();
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.shopSell,
+            () => {
+                state.shopMode =
+                    "sell";
+
+                DOM.buttons.shopSell
+                    ?.classList
+                    .add(
+                        "active"
+                    );
+
+                DOM.buttons.shopBuy
+                    ?.classList
+                    .remove(
+                        "active"
+                    );
+
+                renderShop();
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.battleAccept,
+            acceptCurrentBoss
+        );
+
+
+        bindButton(
+            DOM.buttons.battleDecline,
+            declineCurrentBoss
+        );
+
+
+        bindButton(
+            DOM.buttons.travelYes,
+            confirmTravel
+        );
+
+
+        bindButton(
+            DOM.buttons.travelNo,
+            cancelTravel
+        );
+
+
+        bindButton(
+            DOM.buttons.respawn,
+            chooseRespawn
+        );
+
+
+        bindButton(
+            ensureGiveUpButton(),
+            chooseGiveUp
+        );
+
+
+        bindButton(
+            DOM.buttons.questAction,
+            () => {
+                setVisible(
+                    DOM.panels.quest,
+                    false
+                );
+
+                if (
+                    state.activePanel ===
+                    "quest"
+                ) {
+                    state.activePanel =
+                        null;
+                }
+
+
+                state.paused =
+                    false;
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.resumeGame,
+            closePauseMenu
+        );
+
+
+        bindButton(
+            DOM.buttons.closeMenu,
+            closePauseMenu
+        );
+
+
+        bindButton(
+            DOM.buttons.menuSave,
+            () => {
+                safeCall(
+                    "saveGame",
+                    {
+                        silent:
+                            false
+                    }
+                );
+            }
+        );
+
+
+        bindButton(
+            DOM.buttons.returnMainMenu,
+            () => {
+                /*
+                    Salva apenas se estado for seguro.
+                */
+                if (
+                    state.player &&
+                    !state.player.dead &&
+                    !state.deathState
+                ) {
+                    safeCall(
+                        "saveGame",
+                        {
+                            silent:
+                                true
+                        }
+                    );
+                }
+
+
+                returnToMainScreen();
+            }
+        );
+    }
+
+
+    /* ============================================================
+       EVENTOS GLOBAIS
+       ============================================================ */
+
+    function bindGlobalEvents() {
+        window.addEventListener(
+            "keydown",
+            handleKeyDown,
+            {
+                passive:
+                    false
+            }
+        );
+
+
+        window.addEventListener(
+            "keyup",
+            handleKeyUp,
+            {
+                passive:
+                    false
+            }
+        );
+
+
+        window.addEventListener(
+            "blur",
+            () => {
+                if (
+                    state.keys instanceof
+                    Set
+                ) {
+                    state.keys.clear();
+                }
+
+
+                safeCall(
+                    "handlePrimaryHoldInteractionEnd"
+                );
+            }
+        );
+
+
+        window.addEventListener(
+            "resize",
+            () => {
+                safeCall(
+                    "resizeRenderer"
+                );
+
+                renderDOMMinimap();
+
+                if (
+                    isVisible(
+                        DOM.panels.map
+                    )
+                ) {
+                    renderWorldMap();
+                }
+            }
+        );
+
+
+        if (
+            DOM.canvas.game
+        ) {
+            DOM.canvas.game
+                .addEventListener(
+                    "pointermove",
+                    handlePointerMove
+                );
+
+
+            DOM.canvas.game
+                .addEventListener(
+                    "pointerdown",
+                    handlePointerDown
+                );
+
+
+            DOM.canvas.game
+                .addEventListener(
+                    "pointerleave",
+                    () => {
+                        UI_RUNTIME.pointerInsideCanvas =
+                            false;
+                    }
+                );
+
+
+            DOM.canvas.game
+                .addEventListener(
+                    "contextmenu",
+                    event => {
+                        event.preventDefault();
+                    }
+                );
+        }
+
+
+        /*
+            Clique no painel de diálogo
+            também avança texto.
+        */
+        DOM.panels.dialogue
+            ?.addEventListener(
+                "click",
+                event => {
+                    if (
+                        event.target
+                            .closest(
+                                "button"
+                            )
+                    ) {
+                        return;
+                    }
+
+
+                    safeCall(
+                        "handlePrimaryInteractionPress"
+                    );
+                }
+            );
+    }
+
+
+    /* ============================================================
+       VALIDAÇÃO DO HTML
+       ============================================================ */
+
+    function validateRequiredDOM() {
+        const errors =
+            [];
+
+
+        const required = [
+            [
+                "menuScreen",
+                DOM.screens.menu
+            ],
+
+            [
+                "characterScreen",
+                DOM.screens.character
+            ],
+
+            [
+                "gameScreen",
+                DOM.screens.game
+            ],
+
+            [
+                "gameCanvas",
+                DOM.canvas.game
+            ],
+
+            [
+                "newGameBtn",
+                DOM.buttons.newGame
+            ],
+
+            [
+                "startGameBtn",
+                DOM.buttons.startGame
+            ]
+        ];
+
+
+        for (
+            const [
+                id,
+                element
+            ] of
+            required
+        ) {
+            if (
+                !element
+            ) {
+                errors.push(
+                    `Elemento HTML obrigatório ausente: #${id}`
+                );
+            }
+        }
+
+
+        return errors;
+    }
+
+
+    /* ============================================================
+       VALIDAÇÃO DO JAVASCRIPT
+       ============================================================ */
+
+    function validatePart5Data() {
+        const errors =
+            [];
+
+
+        if (
+            !V.__part4Loaded
+        ) {
+            errors.push(
+                "Parte 4 não foi carregada."
+            );
+        }
+
+
+        if (
+            typeof V.renderWorld !==
+            "function"
+        ) {
+            errors.push(
+                "renderWorld da Parte 4 ausente."
+            );
+        }
+
+
+        if (
+            typeof V.configureRenderer !==
+            "function"
+        ) {
+            errors.push(
+                "configureRenderer da Parte 4 ausente."
+            );
+        }
+
+
+        if (
+            typeof V.loadWorld !==
+            "function"
+        ) {
+            errors.push(
+                "loadWorld da Parte 2 ausente."
+            );
+        }
+
+
+        if (
+            typeof V.handleGameplayAttackInput !==
+            "function"
+        ) {
+            errors.push(
+                "Ataque básico não exportado pela Parte 3."
+            );
+        }
+
+
+        if (
+            typeof V.handleGameplaySkillInput !==
+            "function"
+        ) {
+            errors.push(
+                "Q/R/F não exportados pela Parte 3."
+            );
+        }
+
+
+        if (
+            typeof V.handleGameplayDashInput !==
+            "function"
+        ) {
+            errors.push(
+                "Dash não exportado pela Parte 3."
+            );
+        }
+
+
+        if (
+            typeof V.handlePrimaryInteractionPress !==
+            "function"
+        ) {
+            errors.push(
+                "Interação E não exportada pela Parte 3."
+            );
+        }
+
+
+        if (
+            typeof V.handleDoorInteraction !==
+            "function"
+        ) {
+            errors.push(
+                "Interação Z de portas não exportada pela Parte 3."
+            );
+        }
+
+
+        if (
+            typeof V.updateGameplaySystems !==
+            "function"
+        ) {
+            console.warn(
+                "VEYRA — updateGameplaySystems não exportado; fallback da Parte 5 será usado."
+            );
+        }
+
+
+        const domErrors =
+            validateRequiredDOM();
+
+
+        errors.push(
+            ...domErrors
+        );
+
+
+        if (
+            errors.length >
+            0
+        ) {
+            console.error(
+                "VEYRA V32 — ERROS NA PARTE 5:",
+                errors
+            );
+
+
+            return {
+                ok:
+                    false,
+
+                errors
+            };
+        }
+
+
+        console.log(
+            "VEYRA V32 — Parte 5 validada."
+        );
+
+
+        return {
+            ok:
+                true,
+
+            errors:
+                []
+        };
+    }
+
+
+    /* ============================================================
+       INITIALIZE
+       ============================================================ */
+
+    function initializeVeyra() {
+        if (
+            UI_RUNTIME.initialized
+        ) {
+            return true;
+        }
+
+
+        cacheDOM();
+
+
+        const domErrors =
+            validateRequiredDOM();
+
+
+        if (
+            domErrors.length >
+            0
+        ) {
+            console.error(
+                "VEYRA — não foi possível iniciar:",
+                domErrors
+            );
+
+            return false;
+        }
+
+
+        ensureInputState();
+
+
+        adaptLegacyHUDToNewStats();
+
+
+        /*
+            A Parte 4 tem fallback Canvas
+            para diálogo.
+
+            Como o HTML possui diálogo aprovado,
+            usamos DOM.
+        */
+        renderRuntime.useDOMDialogue =
+            true;
+
+
+        if (
+            !safeCall(
+                "configureRenderer",
+                DOM.canvas.game
+            )
+        ) {
+            console.error(
+                "VEYRA — falha ao configurar gameCanvas."
+            );
+
+            return false;
+        }
+
+
+        renderCharacterCards();
+
+
+        bindMenuButtons();
+
+        bindGameButtons();
+
+        bindGlobalEvents();
+
+
+        closeAllPanels();
+
+
+        refreshContinueButton();
+
+
+        showScreen(
+            "menu"
+        );
+
+
+        UI_RUNTIME.initialized =
+            true;
+
+
+        if (
+            !UI_RUNTIME.loopStarted
+        ) {
+            UI_RUNTIME.loopStarted =
+                true;
+
+            UI_RUNTIME.lastFrame =
+                performance.now();
+
+
+            requestAnimationFrame(
+                gameLoop
+            );
+        }
+
+
+        console.log(
+            "============================================================"
+        );
+
+        console.log(
+            "VEYRA: A QUIETUDE"
+        );
+
+        console.log(
+            "Partes 1/5 → 5/5 carregadas."
+        );
+
+        console.log(
+            "HTML5 + CSS3 + JavaScript"
+        );
+
+        console.log(
+            "Desenvolvimento: Pedro + ChatGPT"
+        );
+
+        console.log(
+            "============================================================"
+        );
+
+
+        return true;
+    }
+
+
+    /* ============================================================
+       EXPORTAÇÃO
+       ============================================================ */
+
+    Object.assign(
+        V,
+        {
+            UI_RUNTIME,
+
+            initializeVeyra,
+
+            cacheDOM,
+
+            showScreen,
+
+            beginFreshAdventureSession,
+
+            renderCharacterCards,
+
+            startNewGameFromSelection,
+
+            continueGame,
+
+            refreshContinueButton,
+
+            startTitleCard,
+
+            updateHTMLHUD,
+
+            renderInventory,
+
+            renderEquipment,
+
+            renderStatusPanel,
+
+            renderBossBook,
+
+            renderDOMMinimap,
+
+            renderWorldMap,
+
+            syncDialoguePanel,
+
+            syncBattlePanel,
+
+            acceptCurrentBoss,
+
+            declineCurrentBoss,
+
+            syncTravelPanel,
+
+            confirmTravel,
+
+            cancelTravel,
+
+            syncDeathPanel,
+
+            chooseRespawn,
+
+            chooseGiveUp,
+
+            renderShop,
+
+            closeShop,
+
+            handleKeyDown,
+
+            handleKeyUp,
+
+            handlePointerMove,
+
+            handlePointerDown,
+
+            updateMapExploration,
+
+            renderMainCanvas,
+
+            validatePart5Data
+        }
+    );
+
+
+    V.__part5Loaded =
+        true;
+
+
+    /*
+        Precisamos cachear o DOM antes
+        da validação completa.
+    */
+    function boot() {
+        cacheDOM();
+
+
+        V.__part5Validation =
+            validatePart5Data();
+
+
+        if (
+            !V.__part5Validation.ok
+        ) {
+            /*
+                Não inicia loop quebrado,
+                mas mantém console claro
+                para acharmos o problema.
+            */
+            return;
+        }
+
+
+        initializeVeyra();
+    }
+
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            boot,
+            {
+                once:
+                    true
+            }
+        );
+    } else {
+        boot();
+    }
+
+})();

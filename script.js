@@ -66564,14 +66564,20 @@ maintainDevRuntime,
         true;
 
 
+/*
+    BOOT OFICIAL DA PARTE 5.
+*/
+function boot() {
     /*
-        Precisamos cachear o DOM antes
-        da validação completa.
+        Primeiro encontra todos
+        os elementos do HTML.
     */
-   function boot() {
+    cacheDOM();
+
+
     /*
-        A inicialização oficial
-        cuida do cache e dos eventos.
+        Valida as partes do jogo
+        depois que o DOM já existe.
     */
     V.__part5Validation =
         validatePart5Data();
@@ -66581,44 +66587,42 @@ maintainDevRuntime,
         !V.__part5Validation.ok
     ) {
         console.warn(
-            "VEYRA — existem avisos de validação, mas o menu continuará iniciando.",
+            "VEYRA — existem avisos de validação, mas o jogo continuará iniciando.",
             V.__part5Validation.errors
         );
     }
 
 
+    /*
+        Inicialização principal.
+
+        Aqui os botões também
+        são registrados.
+    */
     initializeVeyra();
 }
-    if (
-        !V.__part5Validation.ok
-        ) {
-            /*
-                Não inicia loop quebrado,
-                mas mantém console claro
-                para acharmos o problema.
-            */
-          // return;
+
+
+/*
+    INICIALIZA SOMENTE QUANDO
+    O HTML ESTIVER PRONTO.
+*/
+if (
+    document.readyState ===
+    "loading"
+) {
+    document.addEventListener(
+        "DOMContentLoaded",
+        boot,
+        {
+            once:
+                true
         }
+    );
+}
 
+else {
+    boot();
+}
 
-        initializeVeyra();
-    }
-
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-        document.addEventListener(
-            "DOMContentLoaded",
-            boot,
-            {
-                once:
-                    true
-            }
-        );
-    } else {
-        boot();
-    }
-
-})();
+ })();

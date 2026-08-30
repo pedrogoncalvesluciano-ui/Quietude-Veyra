@@ -64115,8 +64115,11 @@ function authenticateDevPanel() {
         input.value =
             "";
 
+       input.blur();
+
         hint.textContent =
             "";
+       
 
         renderDevPanelState();
 
@@ -64398,33 +64401,42 @@ function handleDevShortcutKeyDown(
     event
 ) {
 
-    const target =
-        event.target;
+  const dev =
+    ensureDevRuntime();
 
 
-    const tag =
-        String(
-            target
-                ?.tagName ||
-            ""
-        )
-            .toLowerCase();
+const target =
+    event.target;
 
 
-    if (
+const tag =
+    String(
+        target?.tagName ||
+        ""
+    ).toLowerCase();
+
+
+/*
+    Enquanto estiver digitando
+    a SENHA, não interpreta X+1 etc.
+
+    Depois de autenticado,
+    mesmo que o input ainda tenha
+    foco, os comandos funcionam.
+*/
+if (
+    (
         tag ===
             "input" ||
         tag ===
             "textarea" ||
         target
             ?.isContentEditable
-    ) {
-        return false;
-    }
-
-
-    const dev =
-        ensureDevRuntime();
+    ) &&
+    !dev.unlocked
+) {
+    return false;
+}
 
 
     const key =
@@ -64632,7 +64644,6 @@ function clearDevHeldKeys() {
 
 
 function maintainDevRuntime() {
-
     const dev =
         ensureDevRuntime();
 
@@ -64645,52 +64656,78 @@ function maintainDevRuntime() {
     }
 
 
+    const player =
+        state.player;
+
+
     /*
-        Cooldown zero é apenas runtime.
-        Não alteramos status,
-        dinheiro ou materiais reais.
+        X + 1
+        VIDA INFINITA.
+    */
+    if (
+        dev.cheats
+            .invincible
+    ) {
+        player.hp =
+            player.maxHp;
+    }
+
+
+    /*
+        X + 4
+        ENERGIA INFINITA.
+    */
+    if (
+        dev.cheats
+            .infiniteEnergy
+    ) {
+        player.energy =
+            player.maxEnergy;
+    }
+
+
+    /*
+        X + 5
+        SEM EXAUSTÃO.
+    */
+    if (
+        dev.cheats
+            .noExhaustion
+    ) {
+        player.exhaustion =
+            0;
+    }
+
+
+    /*
+        X + 6
+        SEM COOLDOWN.
     */
     if (
         dev.cheats
             .noCooldowns
     ) {
-
-        state.player
-            .attackCooldown =
+        player.attackCooldown =
             0;
 
-
-        state.player
-            .universalDashCooldown =
+        player.universalDashCooldown =
             0;
 
 
         if (
-            state.player
-                .skillCooldowns
+            player.skillCooldowns
         ) {
-
-            state.player
-                .skillCooldowns
-                .q =
+            player.skillCooldowns.q =
                 0;
 
-            state.player
-                .skillCooldowns
-                .r =
+            player.skillCooldowns.r =
                 0;
 
-            state.player
-                .skillCooldowns
-                .f =
+            player.skillCooldowns.f =
                 0;
-
         }
-
     }
-
 }
-
     /* ============================================================
        INPUT
        ============================================================ */

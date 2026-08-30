@@ -28483,11 +28483,11 @@ if (
         player.hurtAnim =
             0.24;
 
-        state.damageFlash =
-            Math.max(
-                state.damageFlash,
-                0.18
-            );
+       state.damageFlash =
+    Math.max(
+        state.damageFlash,
+        0.62
+    );
 
         state.screenShake =
             Math.max(
@@ -50856,6 +50856,44 @@ else {
             });
         }
 
+/*
+    DROPS TAMBÉM PARTICIPAM
+    DO Y-SORT.
+
+    Assim árvore na frente
+    esconde o item corretamente.
+*/
+for (
+    const drop of
+    safeArray(
+        world.droppedItems
+    )
+) {
+    if (
+        drop.picked
+    ) {
+        continue;
+    }
+
+
+    entries.push({
+
+        kind:
+            "drop",
+
+        entity:
+            drop,
+
+        depth:
+            finiteNumber(
+                drop.y,
+                0
+            ) +
+            4
+
+    });
+}
+       
         if (
             player &&
             !player.dead
@@ -50974,6 +51012,15 @@ else {
                     );
                     break;
 
+                  case "drop":
+
+    drawWorldDrops(
+        ctx,
+        entry.entity
+    );
+
+    break;
+
                 case "player":
                     drawPlayer(
                         ctx
@@ -51029,8 +51076,35 @@ else {
        DROPS
        ============================================================ */
 
-    function drawWorldDrops(
-        ctx
+  function drawWorldDrops(
+    ctx,
+    onlyDrop =
+        null
+) {
+    const world =
+        state.world;
+
+
+    if (
+        !world
+    ) {
+        return;
+    }
+
+
+    const drops =
+        onlyDrop
+            ? [
+                onlyDrop
+            ]
+            : safeArray(
+                world.droppedItems
+            );
+
+
+    for (
+        const drop of
+        drops
     ) {
         const world =
             state.world;
@@ -51550,7 +51624,17 @@ switch (
         );
         break;
 
+case "bossTrail":
 
+    drawBossTrailEffect(
+        ctx,
+        screen,
+        effect,
+        progress
+    );
+
+    break;
+      
     case "hitSpark":
     case "playerHit":
     case "voidHit":
@@ -56490,9 +56574,6 @@ drawStaticDecorations(
         /*
             Ataques e drops.
         */
-        drawWorldDrops(
-            ctx
-        );
 
         drawHazards(
             ctx
@@ -56594,33 +56675,154 @@ drawStaticDecorations(
                 ctx
             );
 
-            if (
-                state.damageFlash >
-                0
-            ) {
-                ctx.fillStyle =
-                    `rgba(130,45,45,${clamp(
-                        state.damageFlash *
-                            0.5,
-                        0,
-                        0.18
-                    )})`;
+          if (
+    state.damageFlash >
+    0
+) {
+    const bloodAlpha =
+        clamp(
+            state.damageFlash *
+                0.55,
+            0,
+            0.32
+        );
 
-                ctx.fillRect(
-                    0,
-                    0,
-                    renderRuntime.width,
-                    renderRuntime.height
-                );
 
-                state.damageFlash =
-                    Math.max(
-                        0,
-                        state.damageFlash -
-                            dt *
-                                1.8
-                    );
-            }
+    /*
+        TELA AVERMELHADA.
+    */
+    ctx.fillStyle =
+        `rgba(105,15,18,${
+            bloodAlpha *
+            0.42
+        })`;
+
+
+    ctx.fillRect(
+        0,
+        0,
+        renderRuntime.width,
+        renderRuntime.height
+    );
+
+
+    /*
+        RESPINGOS NAS BORDAS.
+    */
+    ctx.fillStyle =
+        `rgba(92,8,12,${
+            bloodAlpha
+        })`;
+
+
+    const splats = [
+
+        {
+            x: 18,
+            y: 90,
+            r: 47
+        },
+
+        {
+            x:
+                renderRuntime.width -
+                12,
+
+            y: 150,
+            r: 58
+        },
+
+        {
+            x: 75,
+
+            y:
+                renderRuntime.height -
+                18,
+
+            r: 52
+        },
+
+        {
+            x:
+                renderRuntime.width -
+                95,
+
+            y:
+                renderRuntime.height -
+                22,
+
+            r: 66
+        }
+
+    ];
+
+
+    for (
+        const splat of
+        splats
+    ) {
+        ctx.beginPath();
+
+        ctx.arc(
+            splat.x,
+            splat.y,
+            splat.r,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            splat.x +
+                splat.r *
+                    0.72,
+            splat.y +
+                splat.r *
+                    0.24,
+            splat.r *
+                0.23,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+    }
+
+
+    /*
+        ESCORRIDOS.
+    */
+    ctx.fillRect(
+        25,
+        0,
+        9,
+        115
+    );
+
+
+    ctx.fillRect(
+        renderRuntime.width -
+            42,
+        0,
+        7,
+        82
+    );
+
+
+    state.damageFlash =
+        Math.max(
+            0,
+            state.damageFlash -
+                dt *
+                    1.15
+        );
+}
         }
 
         ctx.restore();
@@ -59282,16 +59484,24 @@ drawStaticDecorations(
         );
 
 
-        setText(
-            "moneyText",
-            Math.floor(
-                finite(
-                    player.money,
-                    0
-                )
-            )
-        );
+     setText(
+    "moneyText",
 
+    state.dev
+        ?.unlocked &&
+    state.dev
+        ?.cheats
+        ?.infiniteMoney
+
+        ? "∞"
+
+        : Math.floor(
+            finite(
+                player.money,
+                0
+            )
+        )
+);
 
         setText(
             "locationLabel",
@@ -63577,16 +63787,33 @@ function getDevPanel() {
     );
 
 
-  panel
+ panel
     .querySelector(
         "#veyraDevClose"
     )
     .addEventListener(
         "click",
         () => {
+
             /*
-                Desliga comandos ao sair.
+                Só fecha a janela.
+
+                NÃO desliga os comandos.
+                NÃO bloqueia a sessão.
+
+                Ao recarregar/sair do jogo,
+                createDevRuntime inicia
+                unlocked = false novamente.
             */
+            clearDevHeldKeys();
+
+
+            panel.style.display =
+                "none";
+
+        }
+    );
+   
             for (
                 const key of
                 Object.keys(

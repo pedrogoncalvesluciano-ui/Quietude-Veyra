@@ -42748,23 +42748,29 @@ function resizeRenderer() {
        FUNDO / TERRENO
        ============================================================ */
 
-    function drawWorldBackground(
-        ctx
+function drawWorldBackground(
+    ctx
+) {
+    const world =
+        state.world;
+
+    if (!world) {
+        return;
+    }
+
+
+    /*
+        INTERIOR DE CASA.
+    */
+    if (
+        world.interior &&
+        world.room
     ) {
-        const world =
-            state.world;
-
-        if (!world) {
-            return;
-        }
-
-        const style =
-            getBiomeStyle(
-                world.biome
-            );
-
+        /*
+            Fora das paredes.
+        */
         ctx.fillStyle =
-            style.ground;
+            "#17130f";
 
         ctx.fillRect(
             0,
@@ -42773,11 +42779,183 @@ function resizeRenderer() {
             renderRuntime.height
         );
 
-        drawGroundTexture(
-            ctx,
-            style
+
+        const room =
+            world.room;
+
+        const screen =
+            worldToScreen(
+                room.x,
+                room.y
+            );
+
+        const wallSize =
+            28;
+
+
+        /*
+            Base escura embaixo
+            das paredes.
+        */
+        ctx.fillStyle =
+            "#493529";
+
+        ctx.fillRect(
+            screen.x,
+            screen.y,
+            room.w,
+            room.h
         );
+
+
+        /*
+            PISO DE MADEIRA.
+        */
+        ctx.fillStyle =
+            "#826044";
+
+        ctx.fillRect(
+            screen.x +
+                wallSize,
+            screen.y +
+                wallSize,
+            room.w -
+                wallSize * 2,
+            room.h -
+                wallSize * 2
+        );
+
+
+        /*
+            Tábuas.
+        */
+        ctx.strokeStyle =
+            "rgba(48,29,19,0.38)";
+
+        ctx.lineWidth =
+            2;
+
+
+        for (
+            let y =
+                wallSize + 34;
+
+            y <
+                room.h -
+                wallSize;
+
+            y += 38
+        ) {
+            ctx.beginPath();
+
+            ctx.moveTo(
+                screen.x +
+                    wallSize,
+                screen.y +
+                    y
+            );
+
+            ctx.lineTo(
+                screen.x +
+                    room.w -
+                    wallSize,
+                screen.y +
+                    y
+            );
+
+            ctx.stroke();
+        }
+
+
+        /*
+            Brilho leve da madeira.
+        */
+        ctx.strokeStyle =
+            "rgba(255,225,185,0.10)";
+
+        ctx.lineWidth =
+            1;
+
+
+        for (
+            let x =
+                wallSize + 70;
+
+            x <
+                room.w -
+                wallSize;
+
+            x += 105
+        ) {
+            ctx.beginPath();
+
+            ctx.moveTo(
+                screen.x +
+                    x,
+                screen.y +
+                    wallSize
+            );
+
+            ctx.lineTo(
+                screen.x +
+                    x,
+                screen.y +
+                    room.h -
+                    wallSize
+            );
+
+            ctx.stroke();
+        }
+
+
+        /*
+            Acabamento junto às paredes.
+        */
+        ctx.strokeStyle =
+            "#38271f";
+
+        ctx.lineWidth =
+            5;
+
+        ctx.strokeRect(
+            screen.x +
+                wallSize,
+            screen.y +
+                wallSize,
+            room.w -
+                wallSize * 2,
+            room.h -
+                wallSize * 2
+        );
+
+
+        return;
     }
+
+
+    /*
+        MUNDO EXTERNO NORMAL.
+    */
+    const style =
+        getBiomeStyle(
+            world.biome
+        );
+
+    ctx.fillStyle =
+        style.ground;
+
+    ctx.fillRect(
+        0,
+        0,
+        renderRuntime.width,
+        renderRuntime.height
+    );
+
+    drawGroundTexture(
+        ctx,
+        style
+    );
+}
 
 
     function drawGroundTexture(

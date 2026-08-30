@@ -43664,124 +43664,202 @@ function drawWorldBackground(
     }
 
 
-    function drawDoor(
-        ctx,
-        door
+   function drawDoor(
+    ctx,
+    door
+) {
+    const width =
+        finiteNumber(
+            door.w,
+            90
+        );
+
+    const height =
+        finiteNumber(
+            door.h,
+            50
+        );
+
+
+    /*
+        A posição agora é a DOBRADIÇA,
+        não o centro da porta.
+    */
+    const hingeX =
+        door.hinge ===
+        "right"
+            ? door.x +
+                width
+            : door.x;
+
+
+    const hingeY =
+        door.y +
+        height / 2;
+
+
+    if (
+        !isPointVisible(
+            hingeX,
+            hingeY,
+            120
+        )
     ) {
-        const cx =
-            finiteNumber(
-                door.centerX,
-                door.x +
-                    door.w /
-                        2
-            );
-
-        const cy =
-            finiteNumber(
-                door.centerY,
-                door.y +
-                    door.h /
-                        2
-            );
-
-        if (
-            !isPointVisible(
-                cx,
-                cy,
-                100
-            )
-        ) {
-            return;
-        }
-
-        const screen =
-            worldToScreen(
-                cx,
-                cy
-            );
-
-        const width =
-            finiteNumber(
-                door.width,
-                door.w ||
-                    42
-            );
-
-        const height =
-            finiteNumber(
-                door.height,
-                door.h ||
-                    72
-            );
-
-        ctx.save();
-
-        ctx.translate(
-            screen.x,
-            screen.y
-        );
-
-        ctx.rotate(
-            finiteNumber(
-                door.angle,
-                0
-            )
-        );
-
-        /*
-            Folha da porta gira.
-            Não encolhe.
-        */
-        ctx.fillStyle =
-            door.locked
-                ? "#40352f"
-                : "#5a4432";
-
-        roundRectPath(
-            ctx,
-            -width /
-                2,
-            -height /
-                2,
-            width,
-            height,
-            5
-        );
-
-        ctx.fill();
-
-        ctx.strokeStyle =
-            "#241b18";
-
-        ctx.lineWidth =
-            4;
-
-        ctx.stroke();
-
-        ctx.fillStyle =
-            "#b59b62";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            width *
-                0.28,
-            0,
-            3.5,
-            0,
-            Math.PI *
-                2
-        );
-
-        ctx.fill();
-
-        ctx.restore();
+        return;
     }
 
 
-    /* ============================================================
-       FONTE CENTRAL
-       ============================================================ */
+    const screen =
+        worldToScreen(
+            hingeX,
+            hingeY
+        );
+
+
+    /*
+        Impede a porta de chegar
+        quase a 90 graus visualmente.
+    */
+    const angle =
+        clamp(
+            finiteNumber(
+                door.angle,
+                0
+            ),
+            -1.08,
+            1.08
+        );
+
+
+    ctx.save();
+
+
+    ctx.translate(
+        screen.x,
+        screen.y
+    );
+
+
+    ctx.rotate(
+        angle
+    );
+
+
+    /*
+        Se a dobradiça for esquerda,
+        desenha para a direita.
+
+        Se for direita,
+        desenha para a esquerda.
+    */
+    const drawX =
+        door.hinge ===
+        "right"
+            ? -width
+            : 0;
+
+
+    const drawY =
+        -height / 2;
+
+
+    /*
+        Sombra.
+    */
+    ctx.fillStyle =
+        "rgba(0,0,0,0.24)";
+
+    roundRectPath(
+        ctx,
+        drawX + 5,
+        drawY + 6,
+        width,
+        height,
+        5
+    );
+
+    ctx.fill();
+
+
+    /*
+        Madeira.
+    */
+    ctx.fillStyle =
+        door.locked
+            ? "#40352f"
+            : "#634a34";
+
+
+    roundRectPath(
+        ctx,
+        drawX,
+        drawY,
+        width,
+        height,
+        5
+    );
+
+    ctx.fill();
+
+
+    ctx.strokeStyle =
+        "#281c17";
+
+    ctx.lineWidth =
+        4;
+
+    ctx.stroke();
+
+
+    /*
+        Detalhe central.
+    */
+    ctx.strokeStyle =
+        "rgba(190,153,102,0.30)";
+
+    ctx.lineWidth =
+        2;
+
+    ctx.strokeRect(
+        drawX + 10,
+        drawY + 9,
+        width - 20,
+        height - 18
+    );
+
+
+    /*
+        Maçaneta fica no lado
+        OPOSTO da dobradiça.
+    */
+    const knobX =
+        door.hinge ===
+        "right"
+            ? drawX +
+                width * 0.22
+            : drawX +
+                width * 0.78;
+
+
+    ctx.fillStyle =
+        "#c2a45f";
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        knobX,
+        0,
+        4,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    ctx.restore();
+}
 
     function drawFountain(
         ctx,
@@ -48924,34 +49002,300 @@ function drawWorldBackground(
     }
 
 
-    function drawGenericDecoration(
-        ctx,
-        decoration
+  function drawGenericDecoration(
+    ctx,
+    decoration
+) {
+    if (
+        !decoration ||
+        decoration.hidden
     ) {
-        if (
-            decoration.hidden
-        ) {
-            return;
-        }
+        return;
+    }
 
-        const screen =
-            worldToScreen(
-                decoration.x,
-                decoration.y
+
+    const screen =
+        worldToScreen(
+            decoration.x,
+            decoration.y
+        );
+
+
+    switch (
+        decoration.type
+    ) {
+
+        /*
+            TAPETE.
+        */
+        case "rug": {
+
+            const w =
+                decoration.w ||
+                220;
+
+            const h =
+                decoration.h ||
+                120;
+
+
+            ctx.fillStyle =
+                "#643d35";
+
+            ctx.fillRect(
+                screen.x -
+                    w / 2,
+                screen.y -
+                    h / 2,
+                w,
+                h
             );
 
-        if (
-            decoration.type ===
-            "lantern"
-        ) {
+
+            ctx.strokeStyle =
+                "#a37755";
+
+            ctx.lineWidth =
+                5;
+
+            ctx.strokeRect(
+                screen.x -
+                    w / 2 +
+                    6,
+                screen.y -
+                    h / 2 +
+                    6,
+                w - 12,
+                h - 12
+            );
+
+
+            ctx.strokeStyle =
+                "rgba(231,196,143,0.35)";
+
+            ctx.lineWidth =
+                2;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                screen.x -
+                    w * 0.35,
+                screen.y
+            );
+
+            ctx.lineTo(
+                screen.x +
+                    w * 0.35,
+                screen.y
+            );
+
+            ctx.stroke();
+
+            break;
+        }
+
+
+        /*
+            BAÚ.
+        */
+        case "chest":
+
+            ctx.fillStyle =
+                "#583c28";
+
+            ctx.fillRect(
+                screen.x -
+                    34,
+                screen.y -
+                    24,
+                68,
+                48
+            );
+
+
+            ctx.strokeStyle =
+                "#291d17";
+
+            ctx.lineWidth =
+                4;
+
+            ctx.strokeRect(
+                screen.x -
+                    34,
+                screen.y -
+                    24,
+                68,
+                48
+            );
+
+
+            ctx.fillStyle =
+                "#b0924e";
+
+            ctx.fillRect(
+                screen.x -
+                    4,
+                screen.y -
+                    2,
+                8,
+                10
+            );
+
+            break;
+
+
+        /*
+            MESA PEQUENA.
+        */
+        case "smallTable":
+
+            drawTable(
+                ctx,
+                decoration
+            );
+
+            break;
+
+
+        /*
+            CADEIRA.
+        */
+        case "chair":
+
+            ctx.fillStyle =
+                "#513725";
+
+            ctx.fillRect(
+                screen.x -
+                    17,
+                screen.y -
+                    15,
+                34,
+                30
+            );
+
+            ctx.fillRect(
+                screen.x -
+                    17,
+                screen.y -
+                    30,
+                5,
+                18
+            );
+
+            ctx.fillRect(
+                screen.x +
+                    12,
+                screen.y -
+                    30,
+                5,
+                18
+            );
+
+            break;
+
+
+        /*
+            JANELA.
+        */
+        case "window":
+
+            ctx.fillStyle =
+                "#243541";
+
+            ctx.fillRect(
+                screen.x -
+                    38,
+                screen.y -
+                    18,
+                76,
+                36
+            );
+
+            ctx.strokeStyle =
+                "#9a8264";
+
+            ctx.lineWidth =
+                5;
+
+            ctx.strokeRect(
+                screen.x -
+                    38,
+                screen.y -
+                    18,
+                76,
+                36
+            );
+
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                screen.x,
+                screen.y -
+                    16
+            );
+
+            ctx.lineTo(
+                screen.x,
+                screen.y +
+                    16
+            );
+
+            ctx.stroke();
+
+            break;
+
+
+        /*
+            VELA.
+        */
+        case "candle":
+
+            ctx.fillStyle =
+                "#d8c7a0";
+
+            ctx.fillRect(
+                screen.x -
+                    3,
+                screen.y -
+                    13,
+                6,
+                17
+            );
+
+
+            ctx.fillStyle =
+                "#ed934c";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                screen.x,
+                screen.y -
+                    18,
+                5,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fill();
+
+            break;
+
+
+        /*
+            LANTERNA.
+        */
+        case "lantern":
+
             ctx.fillStyle =
                 "#5c4936";
 
             ctx.fillRect(
-                screen.x -
-                    2,
-                screen.y -
-                    36,
+                screen.x - 2,
+                screen.y - 36,
                 4,
                 38
             );
@@ -48963,28 +49307,17 @@ function drawWorldBackground(
 
             ctx.arc(
                 screen.x,
-                screen.y -
-                    38,
+                screen.y - 38,
                 6,
                 0,
-                Math.PI *
-                    2
+                Math.PI * 2
             );
 
             ctx.fill();
-        }
+
+            break;
     }
-
-
-    /* ============================================================
-       DEPTH SORT
-
-       CORREÇÃO IMPORTANTE:
-       NÃO desenhar todas as árvores depois do player.
-
-       Tudo com altura relevante entra aqui.
-       ============================================================ */
-
+}
     function buildDepthEntries() {
         const world =
             state.world;

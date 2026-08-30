@@ -60535,6 +60535,1545 @@ function drawMagicSparkEffect(
         );
     }
 
+   /* ============================================================
+   COMANDOS PRIVADOS DE TESTE
+   ============================================================ */
+
+const DEV_STORAGE = Object.freeze({
+
+    password:
+        "veyra_dev_password_v32",
+
+    remember:
+        "veyra_dev_remember_v32",
+
+    privacy:
+        "veyra_dev_privacy_v32"
+
+});
+
+
+const DEV_COMMANDS = Object.freeze({
+
+    "1": {
+        id:
+            "invincible",
+
+        label:
+            "Vida infinita"
+    },
+
+    "2": {
+        id:
+            "highDamage",
+
+        label:
+            "Dano extremamente alto"
+    },
+
+    "3": {
+        id:
+            "maxDomain",
+
+        label:
+            "Domínio máximo"
+    },
+
+    "4": {
+        id:
+            "infiniteEnergy",
+
+        label:
+            "Energia infinita"
+    },
+
+    "5": {
+        id:
+            "noExhaustion",
+
+        label:
+            "Exaustão não aumenta"
+    },
+
+    "6": {
+        id:
+            "noCooldowns",
+
+        label:
+            "Sem cooldown"
+    },
+
+    "7": {
+        id:
+            "infiniteMoney",
+
+        label:
+            "Dinheiro infinito"
+    },
+
+    "8": {
+        id:
+            "infiniteMaterials",
+
+        label:
+            "Materiais infinitos"
+    }
+
+});
+
+
+function devStorageGet(
+    key
+) {
+    try {
+        return localStorage
+            .getItem(
+                key
+            );
+    } catch {
+        return null;
+    }
+}
+
+
+function devStorageSet(
+    key,
+    value
+) {
+    try {
+        localStorage
+            .setItem(
+                key,
+                String(
+                    value
+                )
+            );
+
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+
+function devHashPassword(
+    value
+) {
+    const text =
+        `VEYRA_V32|${String(
+            value ||
+            ""
+        )}`;
+
+
+    let hash =
+        2166136261;
+
+
+    for (
+        let index = 0;
+        index <
+            text.length;
+        index += 1
+    ) {
+        hash ^=
+            text.charCodeAt(
+                index
+            );
+
+        hash =
+            Math.imul(
+                hash,
+                16777619
+            );
+    }
+
+
+    return (
+        hash >>>
+        0
+    )
+        .toString(
+            16
+        )
+        .padStart(
+            8,
+            "0"
+        );
+}
+
+
+function createDevRuntime() {
+    const remember =
+        devStorageGet(
+            DEV_STORAGE
+                .remember
+        ) ===
+        "1";
+
+
+    const hasPassword =
+        Boolean(
+            devStorageGet(
+                DEV_STORAGE
+                    .password
+            )
+        );
+
+
+    return {
+
+        unlocked:
+            remember &&
+            hasPassword,
+
+        heldKeys:
+            new Set(),
+
+        latched:
+            new Set(),
+
+        panel:
+            null,
+
+        privacy:
+            devStorageGet(
+                DEV_STORAGE
+                    .privacy
+            ) !==
+            "0",
+
+        cheats: {
+
+            invincible:
+                false,
+
+            highDamage:
+                false,
+
+            maxDomain:
+                false,
+
+            infiniteEnergy:
+                false,
+
+            noExhaustion:
+                false,
+
+            noCooldowns:
+                false,
+
+            infiniteMoney:
+                false,
+
+            infiniteMaterials:
+                false
+
+        }
+
+    };
+}
+
+
+function ensureDevRuntime() {
+
+    if (
+        !state.dev ||
+        !(state.dev.heldKeys instanceof Set)
+    ) {
+        state.dev =
+            createDevRuntime();
+    }
+
+
+    if (
+        !(state.dev.latched instanceof Set)
+    ) {
+        state.dev.latched =
+            new Set();
+    }
+
+
+    return state.dev;
+}
+
+
+function getDevPanel() {
+
+    const dev =
+        ensureDevRuntime();
+
+
+    if (
+        dev.panel &&
+        document.body
+            .contains(
+                dev.panel
+            )
+    ) {
+        return dev.panel;
+    }
+
+
+    const panel =
+        document.createElement(
+            "div"
+        );
+
+
+    panel.id =
+        "veyraDevPanel";
+
+
+    panel.style.cssText = `
+        position:fixed;
+        left:50%;
+        top:50%;
+        transform:translate(-50%,-50%);
+        z-index:99999;
+        width:min(540px,calc(100vw - 30px));
+        max-height:82vh;
+        overflow:auto;
+        padding:24px;
+        box-sizing:border-box;
+        border:1px solid rgba(190,158,91,.34);
+        border-radius:12px;
+        background:rgba(8,10,13,.985);
+        color:#d7d0c2;
+        box-shadow:0 35px 110px rgba(0,0,0,.75);
+        font-family:Georgia,serif;
+        display:none;
+    `;
+
+
+    panel.innerHTML = `
+
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:18px;
+        ">
+
+            <div>
+                <small style="
+                    color:#82755d;
+                    letter-spacing:.16em;
+                ">
+                    DESENVOLVIMENTO
+                </small>
+
+                <h2 style="
+                    margin:5px 0 0;
+                    font-size:22px;
+                    font-weight:400;
+                ">
+                    COMANDOS
+                </h2>
+            </div>
+
+            <button
+                type="button"
+                id="veyraDevClose"
+                style="
+                    width:36px;
+                    height:36px;
+                    border-radius:50%;
+                    border:1px solid rgba(255,255,255,.12);
+                    background:#111419;
+                    color:#aaa;
+                    cursor:pointer;
+                    font-size:20px;
+                "
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div
+            id="veyraDevAuth"
+            style="
+                margin-top:20px;
+            "
+        >
+
+            <div
+                id="veyraDevAuthText"
+                style="
+                    color:#aaa294;
+                    font-size:12px;
+                    line-height:1.6;
+                    margin-bottom:10px;
+                "
+            ></div>
+
+
+            <div style="
+                display:flex;
+                gap:8px;
+            ">
+
+                <input
+                    id="veyraDevPassword"
+                    type="password"
+                    autocomplete="off"
+                    spellcheck="false"
+                    maxlength="64"
+                    placeholder="Senha"
+                    style="
+                        flex:1;
+                        min-width:0;
+                        border:1px solid rgba(255,255,255,.11);
+                        border-radius:6px;
+                        background:#101318;
+                        color:#ddd4c5;
+                        padding:10px 12px;
+                        outline:none;
+                    "
+                >
+
+                <button
+                    id="veyraDevLogin"
+                    type="button"
+                    style="
+                        border:1px solid rgba(190,158,91,.28);
+                        border-radius:6px;
+                        background:#171813;
+                        color:#c9b47e;
+                        padding:0 15px;
+                        cursor:pointer;
+                    "
+                >
+                    ENTRAR
+                </button>
+
+            </div>
+
+
+            <div
+                id="veyraDevAuthHint"
+                style="
+                    min-height:18px;
+                    margin-top:8px;
+                    font-size:11px;
+                    color:#9e756d;
+                "
+            ></div>
+
+        </div>
+
+
+        <div
+            id="veyraDevCommands"
+            style="
+                display:none;
+                margin-top:20px;
+            "
+        >
+
+            <div
+                id="veyraDevCommandGrid"
+                style="
+                    display:grid;
+                    grid-template-columns:1fr 1fr;
+                    gap:8px;
+                "
+            ></div>
+
+
+            <div style="
+                margin-top:18px;
+                padding-top:14px;
+                border-top:1px solid rgba(255,255,255,.07);
+                display:grid;
+                gap:10px;
+            ">
+
+                <label style="
+                    display:flex;
+                    gap:9px;
+                    align-items:center;
+                    font-size:12px;
+                ">
+                    <input
+                        type="checkbox"
+                        id="veyraDevRemember"
+                    >
+                    Lembrar acesso
+                </label>
+
+
+                <label style="
+                    display:flex;
+                    gap:9px;
+                    align-items:center;
+                    font-size:12px;
+                ">
+                    <input
+                        type="checkbox"
+                        id="veyraDevPrivacy"
+                    >
+                    Modo privacidade
+                </label>
+
+
+                <button
+                    id="veyraDevForget"
+                    type="button"
+                    style="
+                        margin-top:4px;
+                        padding:9px;
+                        border:1px solid rgba(255,255,255,.1);
+                        border-radius:6px;
+                        background:#111419;
+                        color:#a9a29a;
+                        cursor:pointer;
+                    "
+                >
+                    ESQUECER ACESSO
+                </button>
+
+            </div>
+
+
+            <div
+                id="veyraDevStatus"
+                style="
+                    margin-top:15px;
+                    color:#8e856f;
+                    font-size:11px;
+                    line-height:1.5;
+                "
+            ></div>
+
+        </div>
+
+    `;
+
+
+    document.body
+        .appendChild(
+            panel
+        );
+
+
+    const grid =
+        panel.querySelector(
+            "#veyraDevCommandGrid"
+        );
+
+
+    for (
+        const [
+            number,
+            command
+        ] of Object.entries(
+            DEV_COMMANDS
+        )
+    ) {
+        const button =
+            document.createElement(
+                "button"
+            );
+
+
+        button.type =
+            "button";
+
+
+        button.dataset
+            .devCheat =
+            command.id;
+
+
+        button.style.cssText = `
+            text-align:left;
+            padding:10px 12px;
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:6px;
+            background:#101318;
+            color:#bbb3a5;
+            cursor:pointer;
+            font-family:inherit;
+            font-size:12px;
+        `;
+
+
+        button.innerHTML =
+            `<strong style="color:#c9b47e">X + ${number}</strong><br>${command.label}`;
+
+
+        button.addEventListener(
+            "click",
+            () => {
+                toggleDevCheat(
+                    command.id
+                );
+            }
+        );
+
+
+        grid.appendChild(
+            button
+        );
+    }
+
+
+    const allButton =
+        document.createElement(
+            "button"
+        );
+
+
+    allButton.type =
+        "button";
+
+    allButton.style.cssText =
+        grid.firstElementChild
+            ?.style
+            .cssText ||
+        "";
+
+
+    allButton.innerHTML =
+        `<strong style="color:#c9b47e">X + 9</strong><br>Ativar tudo`;
+
+
+    allButton.addEventListener(
+        "click",
+        () => {
+            setAllDevCheats(
+                true
+            );
+        }
+    );
+
+
+    grid.appendChild(
+        allButton
+    );
+
+
+    const offButton =
+        document.createElement(
+            "button"
+        );
+
+
+    offButton.type =
+        "button";
+
+    offButton.style.cssText =
+        allButton.style
+            .cssText;
+
+
+    offButton.innerHTML =
+        `<strong style="color:#c9b47e">X + 0</strong><br>Desativar tudo`;
+
+
+    offButton.addEventListener(
+        "click",
+        () => {
+            setAllDevCheats(
+                false
+            );
+        }
+    );
+
+
+    grid.appendChild(
+        offButton
+    );
+
+
+    panel
+        .querySelector(
+            "#veyraDevClose"
+        )
+        .addEventListener(
+            "click",
+            () => {
+                panel.style.display =
+                    "none";
+            }
+        );
+
+
+    panel
+        .querySelector(
+            "#veyraDevLogin"
+        )
+        .addEventListener(
+            "click",
+            authenticateDevPanel
+        );
+
+
+    panel
+        .querySelector(
+            "#veyraDevPassword"
+        )
+        .addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+                    authenticateDevPanel();
+                }
+
+            }
+        );
+
+
+    panel
+        .querySelector(
+            "#veyraDevRemember"
+        )
+        .addEventListener(
+            "change",
+            event => {
+
+                devStorageSet(
+                    DEV_STORAGE
+                        .remember,
+
+                    event.target
+                        .checked
+                        ? "1"
+                        : "0"
+                );
+
+            }
+        );
+
+
+    panel
+        .querySelector(
+            "#veyraDevPrivacy"
+        )
+        .addEventListener(
+            "change",
+            event => {
+
+                dev.privacy =
+                    Boolean(
+                        event.target
+                            .checked
+                    );
+
+
+                devStorageSet(
+                    DEV_STORAGE
+                        .privacy,
+
+                    dev.privacy
+                        ? "1"
+                        : "0"
+                );
+
+
+                updateDevPanelStatus();
+
+            }
+        );
+
+
+    panel
+        .querySelector(
+            "#veyraDevForget"
+        )
+        .addEventListener(
+            "click",
+            () => {
+
+                devStorageSet(
+                    DEV_STORAGE
+                        .remember,
+                    "0"
+                );
+
+
+                setAllDevCheats(
+                    false
+                );
+
+
+                dev.unlocked =
+                    false;
+
+
+                renderDevPanelState();
+
+            }
+        );
+
+
+    dev.panel =
+        panel;
+
+
+    renderDevPanelState();
+
+
+    return panel;
+}
+
+
+function renderDevPanelState() {
+
+    const dev =
+        ensureDevRuntime();
+
+    const panel =
+        dev.panel;
+
+
+    if (
+        !panel
+    ) {
+        return;
+    }
+
+
+    const hash =
+        devStorageGet(
+            DEV_STORAGE
+                .password
+        );
+
+
+    const auth =
+        panel.querySelector(
+            "#veyraDevAuth"
+        );
+
+
+    const commands =
+        panel.querySelector(
+            "#veyraDevCommands"
+        );
+
+
+    const authText =
+        panel.querySelector(
+            "#veyraDevAuthText"
+        );
+
+
+    const login =
+        panel.querySelector(
+            "#veyraDevLogin"
+        );
+
+
+    const password =
+        panel.querySelector(
+            "#veyraDevPassword"
+        );
+
+
+    const remember =
+        panel.querySelector(
+            "#veyraDevRemember"
+        );
+
+
+    const privacy =
+        panel.querySelector(
+            "#veyraDevPrivacy"
+        );
+
+
+    auth.style.display =
+        dev.unlocked
+            ? "none"
+            : "block";
+
+
+    commands.style.display =
+        dev.unlocked
+            ? "block"
+            : "none";
+
+
+    authText.textContent =
+        hash
+            ? "Digite a senha de desenvolvimento."
+            : "Primeiro acesso: crie uma senha de desenvolvimento.";
+
+
+    login.textContent =
+        hash
+            ? "ENTRAR"
+            : "CRIAR";
+
+
+    remember.checked =
+        devStorageGet(
+            DEV_STORAGE
+                .remember
+        ) ===
+        "1";
+
+
+    privacy.checked =
+        dev.privacy;
+
+
+    if (
+        !dev.unlocked
+    ) {
+        setTimeout(
+            () => {
+                password.focus();
+            },
+            30
+        );
+    }
+
+
+    updateDevPanelStatus();
+}
+
+
+function authenticateDevPanel() {
+
+    const dev =
+        ensureDevRuntime();
+
+    const panel =
+        getDevPanel();
+
+
+    const input =
+        panel.querySelector(
+            "#veyraDevPassword"
+        );
+
+
+    const hint =
+        panel.querySelector(
+            "#veyraDevAuthHint"
+        );
+
+
+    const password =
+        String(
+            input.value ||
+            ""
+        );
+
+
+    if (
+        password.length <
+        4
+    ) {
+        hint.textContent =
+            "Use pelo menos 4 caracteres.";
+
+        return false;
+    }
+
+
+    const stored =
+        devStorageGet(
+            DEV_STORAGE
+                .password
+        );
+
+
+    const hash =
+        devHashPassword(
+            password
+        );
+
+
+    if (
+        !stored
+    ) {
+        devStorageSet(
+            DEV_STORAGE
+                .password,
+            hash
+        );
+
+        dev.unlocked =
+            true;
+
+        input.value =
+            "";
+
+        hint.textContent =
+            "";
+
+        renderDevPanelState();
+
+        return true;
+    }
+
+
+    if (
+        stored !==
+        hash
+    ) {
+        hint.textContent =
+            "Senha incorreta.";
+
+        input.value =
+            "";
+
+        return false;
+    }
+
+
+    dev.unlocked =
+        true;
+
+    input.value =
+        "";
+
+    hint.textContent =
+        "";
+
+    renderDevPanelState();
+
+    return true;
+}
+
+
+function updateDevPanelStatus() {
+
+    const dev =
+        ensureDevRuntime();
+
+
+    const element =
+        dev.panel
+            ?.querySelector(
+                "#veyraDevStatus"
+            );
+
+
+    if (
+        !element
+    ) {
+        return;
+    }
+
+
+    const active =
+        Object.entries(
+            dev.cheats
+        )
+            .filter(
+                (
+                    [
+                        ,
+                        enabled
+                    ]
+                ) =>
+                    enabled
+            )
+            .map(
+                (
+                    [
+                        key
+                    ]
+                ) =>
+                    key
+            );
+
+
+    if (
+        active.length ===
+        0
+    ) {
+        element.textContent =
+            "Nenhum comando ativo.";
+
+        return;
+    }
+
+
+    element.textContent =
+        dev.privacy
+            ? `ATIVOS: ${active.length} comando(s) privado(s)`
+            : `ATIVOS: ${active.join(", ")}`;
+}
+
+
+function toggleDevCommandPanel() {
+
+    const panel =
+        getDevPanel();
+
+
+    const opening =
+        panel.style.display !==
+        "block";
+
+
+    panel.style.display =
+        opening
+            ? "block"
+            : "none";
+
+
+    if (
+        opening
+    ) {
+        renderDevPanelState();
+    }
+}
+
+
+function toggleDevCheat(
+    id
+) {
+
+    const dev =
+        ensureDevRuntime();
+
+
+    if (
+        !dev.unlocked ||
+        !Object.prototype
+            .hasOwnProperty
+            .call(
+                dev.cheats,
+                id
+            )
+    ) {
+        return false;
+    }
+
+
+    dev.cheats[
+        id
+    ] =
+        !dev.cheats[
+            id
+        ];
+
+
+    updateDevPanelStatus();
+
+
+    showSmallMessage(
+        `${id}: ${
+            dev.cheats[
+                id
+            ]
+                ? "ATIVADO"
+                : "DESATIVADO"
+        }`
+    );
+
+
+    return true;
+}
+
+
+function setAllDevCheats(
+    enabled
+) {
+
+    const dev =
+        ensureDevRuntime();
+
+
+    if (
+        !dev.unlocked
+    ) {
+        return false;
+    }
+
+
+    for (
+        const key of
+        Object.keys(
+            dev.cheats
+        )
+    ) {
+        dev.cheats[
+            key
+        ] =
+            Boolean(
+                enabled
+            );
+    }
+
+
+    updateDevPanelStatus();
+
+
+    showSmallMessage(
+        enabled
+            ? "TODOS OS COMANDOS ATIVADOS"
+            : "TODOS OS COMANDOS DESATIVADOS"
+    );
+
+
+    return true;
+}
+
+
+function normalizeDevKey(
+    event
+) {
+
+    if (
+        event.code ===
+        "KeyX"
+    ) {
+        return "X";
+    }
+
+
+    if (
+        event.code ===
+        "KeyY"
+    ) {
+        return "Y";
+    }
+
+
+    if (
+        /^Digit[0-9]$/.test(
+            event.code
+        )
+    ) {
+        return event.code
+            .replace(
+                "Digit",
+                ""
+            );
+    }
+
+
+    if (
+        /^Numpad[0-9]$/.test(
+            event.code
+        )
+    ) {
+        return event.code
+            .replace(
+                "Numpad",
+                ""
+            );
+    }
+
+
+    return String(
+        event.key ||
+        ""
+    )
+        .toUpperCase();
+}
+
+
+function handleDevShortcutKeyDown(
+    event
+) {
+
+    const target =
+        event.target;
+
+
+    const tag =
+        String(
+            target
+                ?.tagName ||
+            ""
+        )
+            .toLowerCase();
+
+
+    if (
+        tag ===
+            "input" ||
+        tag ===
+            "textarea" ||
+        target
+            ?.isContentEditable
+    ) {
+        return false;
+    }
+
+
+    const dev =
+        ensureDevRuntime();
+
+
+    const key =
+        normalizeDevKey(
+            event
+        );
+
+
+    dev.heldKeys.add(
+        key
+    );
+
+
+    /*
+        X + Y
+    */
+    if (
+        dev.heldKeys.has(
+            "X"
+        ) &&
+        dev.heldKeys.has(
+            "Y"
+        )
+    ) {
+
+        if (
+            !dev.latched.has(
+                "XY"
+            )
+        ) {
+
+            dev.latched.add(
+                "XY"
+            );
+
+
+            toggleDevCommandPanel();
+
+        }
+
+
+        return true;
+    }
+
+
+    /*
+        Os demais só funcionam
+        após autenticação.
+    */
+    if (
+        !dev.unlocked ||
+        !dev.heldKeys.has(
+            "X"
+        )
+    ) {
+        return false;
+    }
+
+
+    if (
+        DEV_COMMANDS[
+            key
+        ]
+    ) {
+
+        const latch =
+            `X${key}`;
+
+
+        if (
+            !dev.latched.has(
+                latch
+            )
+        ) {
+
+            dev.latched.add(
+                latch
+            );
+
+
+            toggleDevCheat(
+                DEV_COMMANDS[
+                    key
+                ].id
+            );
+
+        }
+
+
+        return true;
+    }
+
+
+    if (
+        key ===
+        "9"
+    ) {
+
+        if (
+            !dev.latched.has(
+                "X9"
+            )
+        ) {
+
+            dev.latched.add(
+                "X9"
+            );
+
+
+            setAllDevCheats(
+                true
+            );
+
+        }
+
+
+        return true;
+    }
+
+
+    if (
+        key ===
+        "0"
+    ) {
+
+        if (
+            !dev.latched.has(
+                "X0"
+            )
+        ) {
+
+            dev.latched.add(
+                "X0"
+            );
+
+
+            setAllDevCheats(
+                false
+            );
+
+        }
+
+
+        return true;
+    }
+
+
+    return false;
+}
+
+
+function handleDevShortcutKeyUp(
+    event
+) {
+
+    const dev =
+        ensureDevRuntime();
+
+
+    const key =
+        normalizeDevKey(
+            event
+        );
+
+
+    dev.heldKeys.delete(
+        key
+    );
+
+
+    if (
+        key ===
+            "X" ||
+        key ===
+            "Y"
+    ) {
+        dev.latched.delete(
+            "XY"
+        );
+    }
+
+
+    if (
+        /^[0-9]$/.test(
+            key
+        )
+    ) {
+        dev.latched.delete(
+            `X${key}`
+        );
+    }
+}
+
+
+function clearDevHeldKeys() {
+
+    const dev =
+        ensureDevRuntime();
+
+
+    dev.heldKeys.clear();
+
+    dev.latched.clear();
+}
+
+
+function maintainDevRuntime() {
+
+    const dev =
+        ensureDevRuntime();
+
+
+    if (
+        !dev.unlocked ||
+        !state.player
+    ) {
+        return;
+    }
+
+
+    /*
+        Cooldown zero é apenas runtime.
+        Não alteramos status,
+        dinheiro ou materiais reais.
+    */
+    if (
+        dev.cheats
+            .noCooldowns
+    ) {
+
+        state.player
+            .attackCooldown =
+            0;
+
+
+        state.player
+            .universalDashCooldown =
+            0;
+
+
+        if (
+            state.player
+                .skillCooldowns
+        ) {
+
+            state.player
+                .skillCooldowns
+                .q =
+                0;
+
+            state.player
+                .skillCooldowns
+                .r =
+                0;
+
+            state.player
+                .skillCooldowns
+                .f =
+                0;
+
+        }
+
+    }
+
+}
 
     /* ============================================================
        INPUT
@@ -60782,6 +62321,10 @@ function drawMagicSparkEffect(
             event
         );
 
+       safeCall(
+    "handleDevShortcutKeyUp",
+    event
+);
 
         if (
             event.code ===
@@ -61342,11 +62885,16 @@ if (
 }
 
 
-        updateMapExploration();
+safeCall(
+    "maintainDevRuntime"
+);
 
-        updateTransition(
-            dt
-        );
+
+updateMapExploration();
+
+updateTransition(
+    dt
+);
 
         updateTitleCard(
             dt
@@ -62418,6 +63966,12 @@ if (
         V,
         {
             UI_RUNTIME,
+
+           handleDevShortcutKeyDown,
+handleDevShortcutKeyUp,
+clearDevHeldKeys,
+toggleDevCommandPanel,
+maintainDevRuntime,
 
             initializeVeyra,
 

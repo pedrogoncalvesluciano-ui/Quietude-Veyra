@@ -61441,7 +61441,7 @@
         renderCharacterCards();
 
 
-        bindMenuButtons();
+  //      bindMenuButtons();
 
         bindGameButtons();
 
@@ -61599,15 +61599,17 @@
         da validação completa.
     */
     function boot() {
-        cacheDOM();
+    cacheDOM();
+
+    bindMenuButtons();
 
 
-        V.__part5Validation =
-            validatePart5Data();
+    V.__part5Validation =
+        validatePart5Data();
 
 
-        if (
-            !V.__part5Validation.ok
+    if (
+        !V.__part5Validation.ok
         ) {
             /*
                 Não inicia loop quebrado,

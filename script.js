@@ -60418,27 +60418,23 @@ function resizeRenderer() {
         }
 
 
-        /*
-            Gameplay oficial da Parte 3.
-        */
-        if (
-            hasFunction(
-                "updateGameplaySystems"
-            )
-        ) {
-            safeCall(
-                "updateGameplaySystems",
-                dt
-            );
-        } else {
-            /*
-                Fallback mínimo.
-                Não duplica sistemas se updateGameplaySystems existe.
-            */
-            updateGameplayFallback(
-                dt
-            );
-        }
+    /*
+    Gameplay oficial da Parte 3.
+*/
+if (
+    hasFunction(
+        "updateGameplay"
+    )
+) {
+    safeCall(
+        "updateGameplay",
+        dt
+    );
+} else {
+    updateGameplayFallback(
+        dt
+    );
+}
 
 
         updateMapExploration();

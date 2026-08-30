@@ -45290,41 +45290,70 @@ function drawGate(
                 resource.glow ||
                 "rgba(255,255,255,0.2)";
 
-            if (
-                resource.type ===
-                    "ore" ||
-                resource.itemId ===
-                    "ferro" ||
-                resource.itemId ===
-                    "ouro" ||
-                resource.itemId ===
-                    "diamante" ||
-                resource.itemId ===
-                    "rubi" ||
-                resource.itemId ===
-                    "carvao"
-            ) {
-                drawOreNode(
-                    ctx,
-                    resource
-                );
-            } else {
-                ctx.fillStyle =
-                    "#827766";
+          if (
+    resource.itemId ===
+    "madeira"
+) {
+    ctx.shadowBlur =
+        0;
 
-                ctx.beginPath();
+    ctx.font =
+        "30px sans-serif";
 
-                ctx.arc(
-                    0,
-                    0,
-                    18,
-                    0,
-                    Math.PI *
-                        2
-                );
+    ctx.textAlign =
+        "center";
 
-                ctx.fill();
-            }
+    ctx.textBaseline =
+        "middle";
+
+    ctx.fillStyle =
+        "#ffffff";
+
+
+    ctx.fillText(
+        "🪵",
+        0,
+        0
+    );
+}
+
+else if (
+    resource.type ===
+        "ore" ||
+    resource.itemId ===
+        "ferro" ||
+    resource.itemId ===
+        "ouro" ||
+    resource.itemId ===
+        "diamante" ||
+    resource.itemId ===
+        "rubi" ||
+    resource.itemId ===
+        "carvao"
+) {
+    drawOreNode(
+        ctx,
+        resource
+    );
+}
+
+else {
+    ctx.font =
+        "26px sans-serif";
+
+    ctx.textAlign =
+        "center";
+
+    ctx.textBaseline =
+        "middle";
+
+    ctx.fillText(
+        item?.icon ||
+            "◆",
+        0,
+        0
+    );
+}
 
             ctx.shadowBlur =
                 0;
@@ -46025,29 +46054,6 @@ function drawGate(
             ctx,
             player
         );
-
-        if (
-            player.hurtAnim >
-            0
-        ) {
-            ctx.globalCompositeOperation =
-                "source-atop";
-
-            ctx.fillStyle =
-                `rgba(255,235,225,${clamp(
-                    player.hurtAnim *
-                        2.8,
-                    0,
-                    0.65
-                )})`;
-
-            ctx.fillRect(
-                -30,
-                -50,
-                60,
-                80
-            );
-        }
 
         ctx.restore();
 
@@ -47004,29 +47010,6 @@ function drawGate(
                 break;
         }
 
-        if (
-            enemy.hurtAnim >
-            0
-        ) {
-            ctx.globalCompositeOperation =
-                "source-atop";
-
-            ctx.fillStyle =
-                `rgba(255,245,238,${clamp(
-                    enemy.hurtAnim *
-                        3,
-                    0,
-                    0.7
-                )})`;
-
-            ctx.fillRect(
-                -45,
-                -45,
-                90,
-                90
-            );
-        }
-
         ctx.restore();
 
         drawEnemyTelegraph(
@@ -47613,59 +47596,171 @@ function drawGate(
     }
 
 
-    function drawEnemyHealthBar(
-        ctx,
-        enemy
+  function drawEnemyHealthBar(
+    ctx,
+    enemy
+) {
+    if (
+        !enemy ||
+        enemy.dead
     ) {
-        if (
-            enemy.hp >=
-                enemy.maxHp ||
-            enemy.dead
-        ) {
-            return;
-        }
+        return;
+    }
 
-        const screen =
-            worldToScreen(
-                enemy.x,
-                enemy.y
-            );
 
+    const screen =
+        worldToScreen(
+            enemy.x,
+            enemy.y
+        );
+
+
+    const levels = {
+
+        village:
+            1,
+
+        road:
+            1,
+
+        forest:
+            2,
+
+        grove:
+            3,
+
+        mountains:
+            4,
+
+        ironRegion:
+            5,
+
+        rubyRegion:
+            6,
+
+        monarchMaze:
+            7,
+
+        gnomeGardens:
+            8,
+
+        fairyWoods:
+            9,
+
+        celestialFrontier:
+            10,
+
+        skyRealm:
+            11,
+
+        voidDungeon:
+            12
+
+    };
+
+
+    const level =
+        enemy.level ||
+        levels[
+            state.area
+        ] ||
+        1;
+
+
+    const top =
+        screen.y -
+        enemy.radius -
+        37;
+
+
+    ctx.save();
+
+
+    /*
+        NOME.
+    */
+    ctx.font =
+        "700 11px serif";
+
+    ctx.textAlign =
+        "center";
+
+    ctx.fillStyle =
+        "rgba(240,233,217,0.96)";
+
+
+    ctx.fillText(
+        enemy.name ||
+            "CRIATURA",
+        screen.x,
+        top
+    );
+
+
+    /*
+        NÍVEL.
+    */
+    ctx.font =
+        "700 9px sans-serif";
+
+    ctx.fillStyle =
+        "#c9ae70";
+
+
+    ctx.fillText(
+        `NV. ${level}`,
+        screen.x,
+        top +
+            13
+    );
+
+
+    /*
+        Vida só aparece
+        depois de levar dano.
+    */
+    if (
+        enemy.hp <
+        enemy.maxHp
+    ) {
         const width =
-            38;
+            44;
+
 
         const ratio =
             clamp(
                 enemy.hp /
-                    enemy.maxHp,
+                enemy.maxHp,
                 0,
                 1
             );
 
+
         ctx.fillStyle =
-            "rgba(0,0,0,0.55)";
+            "rgba(0,0,0,0.65)";
+
 
         ctx.fillRect(
             screen.x -
                 width /
                     2,
-            screen.y -
-                enemy.radius -
-                20,
+            top +
+                19,
             width,
             5
         );
 
+
         ctx.fillStyle =
             "#a35353";
+
 
         ctx.fillRect(
             screen.x -
                 width /
                     2,
-            screen.y -
-                enemy.radius -
-                20,
+            top +
+                19,
             width *
                 ratio,
             5
@@ -47673,10 +47768,8 @@ function drawGate(
     }
 
 
-    /* ============================================================
-       BOSSES
-       ============================================================ */
-
+    ctx.restore();
+}
     function drawBoss(
         ctx,
         boss
@@ -49364,110 +49457,207 @@ function drawGate(
     }
 
 
-    function drawForgeFire(
+   function drawForgeFire(
+    ctx,
+    forge
+) {
+    const screen =
+        worldToScreen(
+            forge.x,
+            forge.y
+        );
+
+
+    const pulse =
+        Math.sin(
+            renderRuntime
+                .ambientTime *
+            7 +
+            forge.x *
+                0.01
+        );
+
+
+    ctx.save();
+
+
+    /*
+        BASE DE PEDRA.
+    */
+    ctx.fillStyle =
+        "#4d4742";
+
+
+    roundRectPath(
         ctx,
-        forge
-    ) {
-        const screen =
-            worldToScreen(
-                forge.x,
-                forge.y
-            );
+        screen.x -
+            48,
+        screen.y -
+            5,
+        96,
+        52,
+        9
+    );
 
-        const pulse =
-            Math.sin(
-                renderRuntime
-                    .ambientTime *
-                    7 +
-                forge.x *
-                    0.01
-            );
+    ctx.fill();
 
-        ctx.save();
 
-        ctx.shadowBlur =
-            20;
+    ctx.strokeStyle =
+        "#26211e";
 
-        ctx.shadowColor =
-            "#d47a3f";
+    ctx.lineWidth =
+        4;
 
-        ctx.fillStyle =
-            "#9d4932";
+    ctx.stroke();
 
-        ctx.beginPath();
 
-        ctx.moveTo(
-            screen.x,
-            screen.y -
-                24 -
-                pulse *
-                    4
-        );
+    /*
+        BOCA DA FORNALHA.
+    */
+    ctx.fillStyle =
+        "#171210";
 
-        ctx.quadraticCurveTo(
-            screen.x -
-                16,
-            screen.y -
-                2,
-            screen.x,
-            screen.y +
-                15
-        );
 
-        ctx.quadraticCurveTo(
-            screen.x +
-                17,
-            screen.y -
-                3,
-            screen.x,
-            screen.y -
-                24 -
-                pulse *
-                    4
-        );
+    ctx.beginPath();
 
-        ctx.fill();
+    ctx.ellipse(
+        screen.x,
+        screen.y +
+            2,
+        34,
+        16,
+        0,
+        0,
+        Math.PI *
+            2
+    );
 
-        ctx.fillStyle =
-            "#e4a253";
+    ctx.fill();
 
-        ctx.beginPath();
 
-        ctx.moveTo(
-            screen.x,
-            screen.y -
-                13 -
-                pulse *
-                    2
-        );
+    /*
+        PEDRAS.
+    */
+    ctx.fillStyle =
+        "#68605a";
 
-        ctx.quadraticCurveTo(
-            screen.x -
-                8,
-            screen.y,
-            screen.x,
-            screen.y +
-                10
-        );
 
-        ctx.quadraticCurveTo(
-            screen.x +
-                8,
-            screen.y,
-            screen.x,
-            screen.y -
-                13 -
-                pulse *
-                    2
-        );
+    ctx.fillRect(
+        screen.x -
+            48,
+        screen.y +
+            13,
+        14,
+        30
+    );
 
-        ctx.fill();
 
-        ctx.shadowBlur =
-            0;
+    ctx.fillRect(
+        screen.x +
+            34,
+        screen.y +
+            13,
+        14,
+        30
+    );
 
-        ctx.restore();
-    }
+
+    /*
+        FOGO EXTERNO.
+    */
+    ctx.shadowBlur =
+        20;
+
+    ctx.shadowColor =
+        "#d47a3f";
+
+    ctx.fillStyle =
+        "#a84c30";
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        screen.x,
+        screen.y -
+            31 -
+            pulse *
+                4
+    );
+
+    ctx.quadraticCurveTo(
+        screen.x -
+            17,
+        screen.y -
+            6,
+        screen.x,
+        screen.y +
+            11
+    );
+
+    ctx.quadraticCurveTo(
+        screen.x +
+            17,
+        screen.y -
+            6,
+        screen.x,
+        screen.y -
+            31 -
+            pulse *
+                4
+    );
+
+    ctx.fill();
+
+
+    /*
+        FOGO INTERNO.
+    */
+    ctx.fillStyle =
+        "#efad52";
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        screen.x,
+        screen.y -
+            20 -
+            pulse *
+                2
+    );
+
+    ctx.quadraticCurveTo(
+        screen.x -
+            8,
+        screen.y -
+            2,
+        screen.x,
+        screen.y +
+            7
+    );
+
+    ctx.quadraticCurveTo(
+        screen.x +
+            8,
+        screen.y -
+            2,
+        screen.x,
+        screen.y -
+            20 -
+            pulse *
+                2
+    );
+
+    ctx.fill();
+
+
+    ctx.shadowBlur =
+        0;
+
+
+    ctx.restore();
+}
 
 
     function drawMaterialPile(
@@ -50235,41 +50425,25 @@ function drawGate(
                     ? "#73518b"
                     : "rgba(220,210,180,0.5)";
 
-            ctx.fillStyle =
-                getItemWorldColor(
-                    drop.itemId
-                );
+          ctx.font =
+    "25px sans-serif";
 
-            ctx.beginPath();
+ctx.textAlign =
+    "center";
 
-            ctx.moveTo(
-                0,
-                -10
-            );
+ctx.textBaseline =
+    "middle";
 
-            ctx.lineTo(
-                9,
-                -2
-            );
+ctx.fillStyle =
+    "#ffffff";
 
-            ctx.lineTo(
-                6,
-                9
-            );
 
-            ctx.lineTo(
-                -6,
-                9
-            );
-
-            ctx.lineTo(
-                -9,
-                -2
-            );
-
-            ctx.closePath();
-
-            ctx.fill();
+ctx.fillText(
+    item?.icon ||
+        "◆",
+    0,
+    0
+);
 
             ctx.shadowBlur =
                 0;
@@ -54309,73 +54483,176 @@ function drawHoldHUD(
 }
 
 
-    function drawHoldHUD(
-        ctx
+  function drawHoldHUD(
+    ctx
+) {
+    const progress =
+        getHoldActionProgress();
+
+    const action =
+        state.holdAction;
+
+
+    if (
+        progress === null ||
+        !action
     ) {
-        const progress =
-            getHoldActionProgress();
-
-        if (
-            progress ===
-            null
-        ) {
-            return;
-        }
-
-        const width =
-            230;
-
-        const height =
-            8;
-
-        const x =
-            renderRuntime.width /
-                2 -
-            width /
-                2;
-
-        const y =
-            renderRuntime.height -
-                158;
-
-        ctx.save();
-
-        ctx.fillStyle =
-            "rgba(0,0,0,0.65)";
-
-        roundRectPath(
-            ctx,
-            x,
-            y,
-            width,
-            height,
-            4
-        );
-
-        ctx.fill();
-
-        ctx.fillStyle =
-            "#b5a16f";
-
-        roundRectPath(
-            ctx,
-            x,
-            y,
-            width *
-                progress,
-            height,
-            4
-        );
-
-        ctx.fill();
-
-        ctx.restore();
+        return;
     }
 
 
-    /* ============================================================
-       NOTIFICAÇÕES
-       ============================================================ */
+    const width =
+        Math.min(
+            360,
+            renderRuntime.width -
+                80
+        );
+
+    const height =
+        14;
+
+
+    const x =
+        renderRuntime.width /
+            2 -
+        width /
+            2;
+
+
+    const y =
+        renderRuntime.height -
+        155;
+
+
+    let label =
+        "INTERAGINDO";
+
+
+    if (
+        action.type ===
+        "tree"
+    ) {
+        label =
+            "QUEBRANDO MADEIRA";
+    }
+
+    else if (
+        action.type ===
+        "resource"
+    ) {
+        label =
+            "COLETANDO RECURSO";
+    }
+
+    else if (
+        action.type ===
+        "darkKey"
+    ) {
+        label =
+            "COLETANDO CHAVE";
+    }
+
+
+    ctx.save();
+
+
+    /*
+        Texto.
+    */
+    ctx.font =
+        "700 11px sans-serif";
+
+    ctx.textAlign =
+        "center";
+
+    ctx.fillStyle =
+        "#e3dac7";
+
+
+    ctx.fillText(
+        `${label} • ${Math.floor(
+            progress *
+            100
+        )}%`,
+        renderRuntime.width /
+            2,
+        y -
+            11
+    );
+
+
+    /*
+        Fundo.
+    */
+    ctx.fillStyle =
+        "rgba(7,7,9,0.92)";
+
+
+    roundRectPath(
+        ctx,
+        x,
+        y,
+        width,
+        height,
+        7
+    );
+
+    ctx.fill();
+
+
+    /*
+        Barra enchendo.
+    */
+    const fillWidth =
+        Math.max(
+            0,
+            width *
+                progress
+        );
+
+
+    if (
+        fillWidth >
+        0
+    ) {
+        ctx.fillStyle =
+            "#bda15f";
+
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            fillWidth,
+            height,
+            7
+        );
+
+        ctx.fill();
+    }
+
+
+    ctx.strokeStyle =
+        "rgba(227,210,170,0.45)";
+
+    ctx.lineWidth =
+        1;
+
+
+    roundRectPath(
+        ctx,
+        x,
+        y,
+        width,
+        height,
+        7
+    );
+
+    ctx.stroke();
+
+
+    ctx.restore();
+}
 
     function drawNotifications(
         ctx
@@ -61651,15 +61928,15 @@ drawStaticDecorations(
                             .shopSell;
 
 
-                    firstAvailableCall(
-                        [
-                            "sellShopItem",
-                            "sellItem"
-                        ],
-                        itemId,
-                        1,
-                        state.shopNPC
-                    );
+        firstAvailableCall(
+    [
+        "sellInventoryItem",
+        "sellShopItem",
+        "sellItem"
+    ],
+    itemId,
+    1
+);
 
 
                     renderShop();
@@ -61673,32 +61950,26 @@ drawStaticDecorations(
     }
 
 
-    function getShopBuyEntries(
-        npc
-    ) {
-        let raw =
-            [];
+   function getShopBuyEntries(
+    npc
+) {
+    const vendorId =
+        typeof npc ===
+        "string"
+            ? npc
+            : (
+                npc?.vendor ||
+                npc?.id
+            );
 
 
-        if (
-            hasFunction(
-                "getShopInventory"
+    let raw =
+        vendorId
+            ? safeArray(
+                V.SHOP_CATALOG
+                    ?.[vendorId]
             )
-        ) {
-            raw =
-                safeCall(
-                    "getShopInventory",
-                    npc
-                ) ||
-                [];
-        } else {
-            raw =
-                npc.shopItems ||
-                npc.items ||
-                npc.shop ||
-                [];
-        }
-
+            : [];
 
         if (
             !Array.isArray(
@@ -64098,16 +64369,36 @@ function maintainDevRuntime() {
             state.running &&
             state.world
         ) {
-            safeCall(
-                "renderWorld",
-                ctx
-            );
+         safeCall(
+    "renderWorld",
+    ctx
+);
 
 
-            if (
-                state.fragmentMinigame
-                    ?.active
-            ) {
+/*
+    MOSTRA:
+    E CONVERSAR
+    E DESCANSAR
+    SEGURE E MADEIRA
+    Z ENTRAR / SAIR
+    E ENFRENTAR BOSS
+*/
+safeCall(
+    "drawInteractionHUD",
+    ctx
+);
+
+
+safeCall(
+    "drawHoldHUD",
+    ctx
+);
+
+
+if (
+    state.fragmentMinigame
+        ?.active
+) {
                 safeCall(
                     "drawFragmentMinigame",
                     ctx

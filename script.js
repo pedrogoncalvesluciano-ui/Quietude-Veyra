@@ -6447,6 +6447,24 @@
                 STAT_CAP
             );
 
+       /*
+    X + 3.
+
+    Usa Domínio 30 apenas para
+    cálculo, sem alterar o status
+    verdadeiro do save.
+*/
+const effectiveDomain =
+    (
+        state.dev
+            ?.unlocked &&
+        state.dev
+            ?.cheats
+            ?.maxDomain
+    )
+        ? STAT_CAP
+        : domain;
+
 
         const energyStat =
             clamp(
@@ -6654,7 +6672,7 @@
 
         const domainMultiplier =
             1 +
-            domain *
+           effectiveDomain *
                 STAT_CONFIG
                     .domain
                     .damagePerPoint;
@@ -27351,6 +27369,19 @@ if (
             return;
         }
 
+       /*
+    X + 5.
+*/
+if (
+    state.dev
+        ?.unlocked &&
+    state.dev
+        ?.cheats
+        ?.noExhaustion
+) {
+    return;
+}
+
         const gain =
             GAME_CONFIG
                 .exhaustionGainPerSecond *
@@ -28704,28 +28735,50 @@ if (
             return false;
         }
 
-        const playerMultiplier =
-            (
-                source.player ||
-                source.owner ===
-                    "player" ||
-                source.playerAttack
-            )
-                ? getExhaustionDamageMultiplier(
-                    state.player
-                )
-                : 1;
+       const isPlayerSource =
+    Boolean(
+        source.player ||
+        source.owner ===
+            "player" ||
+        source.playerAttack
+    );
 
-        const damage =
-            calculateDamageAfterDefense(
-                finiteNumber(
-                    rawDamage,
-                    1
-                ) *
-                playerMultiplier,
 
-                enemy.defense
-            );
+const playerMultiplier =
+    isPlayerSource
+        ? getExhaustionDamageMultiplier(
+            state.player
+        )
+        : 1;
+
+
+/*
+    X + 2.
+*/
+const baseDamage =
+    (
+        isPlayerSource &&
+        state.dev
+            ?.unlocked &&
+        state.dev
+            ?.cheats
+            ?.highDamage
+    )
+        ? GAME_CONFIG
+            .debugDamageValue
+        : finiteNumber(
+            rawDamage,
+            1
+        );
+
+
+const damage =
+    calculateDamageAfterDefense(
+        baseDamage *
+            playerMultiplier,
+
+        enemy.defense
+    );
 
         enemy.hp =
             Math.max(
@@ -37723,6 +37776,15 @@ if (
                 itemId
             ];
 
+       const infiniteMoney =
+    Boolean(
+        state.dev
+            ?.unlocked &&
+        state.dev
+            ?.cheats
+            ?.infiniteMoney
+    );
+
         if (
             !player ||
             !entry ||
@@ -37749,10 +37811,11 @@ if (
             return false;
         }
 
-        if (
-            player.money <
-            entry.price
-        ) {
+      if (
+    !infiniteMoney &&
+    player.money <
+        entry.price
+) {
             pushNotification(
                 "MOEDAS INSUFICIENTES",
                 `Você precisa de ${entry.price} moedas.`,
@@ -37773,8 +37836,12 @@ if (
             return false;
         }
 
-        player.money -=
-            entry.price;
+      if (
+    !infiniteMoney
+) {
+    player.money -=
+        entry.price;
+}
 
         if (
             !addItem(
@@ -37783,8 +37850,12 @@ if (
                 player
             )
         ) {
-            player.money +=
-                entry.price;
+           if (
+    !infiniteMoney
+) {
+    player.money +=
+        entry.price;
+}
 
             return false;
         }
@@ -37952,6 +38023,15 @@ if (
         const player =
             state.player;
 
+       const infiniteMoney =
+    Boolean(
+        state.dev
+            ?.unlocked &&
+        state.dev
+            ?.cheats
+            ?.infiniteMoney
+    );
+
         const armor =
             V.ARMOR_DATA[
                 armorId
@@ -37979,11 +38059,11 @@ if (
         ) {
             return false;
         }
-
-        if (
-            player.money <
-            armor.price
-        ) {
+if (
+    !infiniteMoney &&
+    player.money <
+        armor.price
+) {
             pushNotification(
                 "MOEDAS INSUFICIENTES",
                 `Você precisa de ${armor.price} moedas.`,
@@ -38015,8 +38095,12 @@ if (
             return false;
         }
 
-        player.money -=
-            armor.price;
+  if (
+    !infiniteMoney
+) {
+    player.money -=
+        armor.price;
+}
 
         if (
             armor.material
@@ -54703,28 +54787,18 @@ function drawMagicSparkEffect(
        INTERAÇÃO
        ============================================================ */
 
-   function drawInteractionHUD(
+  function drawInteractionHUD(
     ctx
 ) {
     const prompt =
         getInteractionPrompt();
 
-    const player =
-        state.player;
 
     if (
-        !prompt ||
-        !player
+        !prompt
     ) {
         return;
     }
-
-
-    const playerScreen =
-        worldToScreen(
-            player.x,
-            player.y
-        );
 
 
     const keyText =
@@ -54732,6 +54806,7 @@ function drawMagicSparkEffect(
             prompt.key ||
             "E"
         );
+
 
     const actionText =
         String(
@@ -54744,10 +54819,11 @@ function drawMagicSparkEffect(
 
 
     /*
-        TAMANHO.
+        TAMANHO DA TECLA.
     */
     ctx.font =
         "700 12px sans-serif";
+
 
     const keyWidth =
         Math.max(
@@ -54759,8 +54835,12 @@ function drawMagicSparkEffect(
         );
 
 
+    /*
+        TAMANHO DO TEXTO.
+    */
     ctx.font =
         "600 11px sans-serif";
+
 
     const actionWidth =
         ctx.measureText(
@@ -54773,6 +54853,7 @@ function drawMagicSparkEffect(
         Math.min(
             renderRuntime.width -
                 30,
+
             keyWidth +
                 actionWidth +
                 8
@@ -54780,13 +54861,22 @@ function drawMagicSparkEffect(
 
 
     /*
-        Em cima do personagem.
+        CENTRALIZADO NA PARTE
+        DE BAIXO DA TELA.
+
+        Fica em cima de:
+        MOCHILA / MAPA / LIVRO /
+        STATUS / SALVAR / MENU.
     */
     const x =
         clamp(
-            playerScreen.x -
-                totalWidth / 2,
+            renderRuntime.width /
+                2 -
+                totalWidth /
+                    2,
+
             15,
+
             renderRuntime.width -
                 totalWidth -
                 15
@@ -54794,12 +54884,10 @@ function drawMagicSparkEffect(
 
 
     const y =
-        clamp(
-            playerScreen.y -
-                92,
+        Math.max(
             70,
             renderRuntime.height -
-                180
+                132
         );
 
 
@@ -54807,7 +54895,8 @@ function drawMagicSparkEffect(
         FUNDO.
     */
     ctx.fillStyle =
-        "rgba(10,9,12,0.94)";
+        "rgba(10,9,12,0.96)";
+
 
     roundRectPath(
         ctx,
@@ -54818,23 +54907,27 @@ function drawMagicSparkEffect(
         8
     );
 
+
     ctx.fill();
 
 
     ctx.strokeStyle =
-        "rgba(191,164,104,0.52)";
+        "rgba(191,164,104,0.58)";
+
 
     ctx.lineWidth =
         1.5;
+
 
     ctx.stroke();
 
 
     /*
-        TECLA.
+        QUADRADO DA TECLA.
     */
     ctx.fillStyle =
         "#c0a868";
+
 
     roundRectPath(
         ctx,
@@ -54845,54 +54938,68 @@ function drawMagicSparkEffect(
         6
     );
 
+
     ctx.fill();
 
 
     ctx.fillStyle =
         "#17130f";
 
+
     ctx.font =
         "800 11px sans-serif";
+
 
     ctx.textAlign =
         "center";
 
+
     ctx.textBaseline =
         "middle";
 
+
     ctx.fillText(
         keyText,
+
         x +
             5 +
-            keyWidth / 2,
-        y + 19
+            keyWidth /
+                2,
+
+        y +
+            19
     );
 
 
     /*
-        TEXTO.
+        TEXTO DA INTERAÇÃO.
     */
     ctx.fillStyle =
         "#e0d6c2";
 
+
     ctx.font =
         "600 11px sans-serif";
+
 
     ctx.textAlign =
         "left";
 
+
     ctx.fillText(
         actionText,
+
         x +
             keyWidth +
             17,
-        y + 19
+
+        y +
+            19
     );
 
 
     ctx.restore();
 }
-
 
 function drawHoldHUD(
     ctx
@@ -55106,7 +55213,7 @@ function drawHoldHUD(
 
     const y =
         renderRuntime.height -
-        155;
+        162;
 
 
     let label =
@@ -62807,6 +62914,13 @@ const DEV_STORAGE = Object.freeze({
 
 });
 
+   /*
+    Código mestre usado SOMENTE
+    para trocar a senha DEV.
+*/
+const DEV_MASTER_CHANGE_CODE =
+    "2612";
+
 
 const DEV_COMMANDS = Object.freeze({
 
@@ -62978,9 +63092,8 @@ function createDevRuntime() {
 
     return {
 
-        unlocked:
-            remember &&
-            hasPassword,
+       unlocked:
+    false,
 
         heldKeys:
             new Set(),
@@ -63217,6 +63330,26 @@ function getDevPanel() {
                 "
             ></div>
 
+<button
+    id="veyraDevChangePassword"
+    type="button"
+    style="
+        width:100%;
+        margin-top:8px;
+        padding:9px 12px;
+        border:1px solid rgba(190,158,91,.20);
+        border-radius:6px;
+        background:#111419;
+        color:#a99b7b;
+        cursor:pointer;
+        font-family:inherit;
+        font-size:11px;
+        letter-spacing:.08em;
+    "
+>
+    ALTERAR SENHA
+</button>
+
         </div>
 
 
@@ -63444,17 +63577,58 @@ function getDevPanel() {
     );
 
 
-    panel
-        .querySelector(
-            "#veyraDevClose"
-        )
-        .addEventListener(
-            "click",
-            () => {
-                panel.style.display =
-                    "none";
+  panel
+    .querySelector(
+        "#veyraDevClose"
+    )
+    .addEventListener(
+        "click",
+        () => {
+            /*
+                Desliga comandos ao sair.
+            */
+            for (
+                const key of
+                Object.keys(
+                    dev.cheats
+                )
+            ) {
+                dev.cheats[
+                    key
+                ] =
+                    false;
             }
-        );
+
+
+            /*
+                Fecha e bloqueia.
+            */
+            dev.unlocked =
+                false;
+
+
+            devStorageSet(
+                DEV_STORAGE.remember,
+                "0"
+            );
+
+
+            clearDevHeldKeys();
+
+
+            panel.style.display =
+                "none";
+        }
+    );
+
+   panel
+    .querySelector(
+        "#veyraDevChangePassword"
+    )
+    ?.addEventListener(
+        "click",
+        changeDevPassword
+    );
 
 
     panel
@@ -63696,6 +63870,183 @@ function renderDevPanelState() {
     updateDevPanelStatus();
 }
 
+   function changeDevPassword() {
+    const dev =
+        ensureDevRuntime();
+
+
+    const panel =
+        getDevPanel();
+
+
+    const hint =
+        panel.querySelector(
+            "#veyraDevAuthHint"
+        );
+
+
+    /*
+        Primeiro pede o código
+        exclusivo de alteração.
+    */
+    const masterCode =
+        window.prompt(
+            "Digite o código para alterar a senha:"
+        );
+
+
+    if (
+        masterCode ===
+        null
+    ) {
+        return false;
+    }
+
+
+    if (
+        String(
+            masterCode
+        ).trim() !==
+        DEV_MASTER_CHANGE_CODE
+    ) {
+        hint.textContent =
+            "Código de alteração incorreto.";
+
+        return false;
+    }
+
+
+    /*
+        Nova senha.
+    */
+    const newPasswordInput =
+        window.prompt(
+            "Digite a NOVA senha DEV:"
+        );
+
+
+    if (
+        newPasswordInput ===
+        null
+    ) {
+        return false;
+    }
+
+
+    const newPassword =
+        String(
+            newPasswordInput
+        ).trim();
+
+
+    if (
+        newPassword.length <
+        4
+    ) {
+        hint.textContent =
+            "A nova senha precisa ter pelo menos 4 caracteres.";
+
+        return false;
+    }
+
+
+    /*
+        Confirmação.
+    */
+    const confirmation =
+        window.prompt(
+            "Digite a nova senha novamente:"
+        );
+
+
+    if (
+        confirmation ===
+        null
+    ) {
+        return false;
+    }
+
+
+    if (
+        String(
+            confirmation
+        ).trim() !==
+        newPassword
+    ) {
+        hint.textContent =
+            "As duas senhas são diferentes.";
+
+        return false;
+    }
+
+
+    /*
+        Salva NOVO hash.
+
+        Isso substitui a senha
+        antiga completamente.
+    */
+    devStorageSet(
+        DEV_STORAGE.password,
+        devHashPassword(
+            newPassword
+        )
+    );
+
+
+    /*
+        Nunca mantém acesso
+        liberado após trocar.
+    */
+    devStorageSet(
+        DEV_STORAGE.remember,
+        "0"
+    );
+
+
+    /*
+        Desliga todos os cheats.
+    */
+    for (
+        const key of
+        Object.keys(
+            dev.cheats
+        )
+    ) {
+        dev.cheats[
+            key
+        ] =
+            false;
+    }
+
+
+    dev.unlocked =
+        false;
+
+
+    const passwordInput =
+        panel.querySelector(
+            "#veyraDevPassword"
+        );
+
+
+    if (
+        passwordInput
+    ) {
+        passwordInput.value =
+            "";
+    }
+
+
+    renderDevPanelState();
+
+
+    hint.textContent =
+        "Senha alterada. Entre usando a nova senha.";
+
+
+    return true;
+}
 
 function authenticateDevPanel() {
 
@@ -63916,6 +64267,16 @@ function toggleDevCheat(
             id
         ];
 
+   if (
+    id ===
+        "maxDomain" &&
+    state.player
+) {
+    safeCall(
+        "recalculatePlayerStats",
+        state.player
+    );
+}
 
     updateDevPanelStatus();
 
@@ -66568,17 +66929,9 @@ maintainDevRuntime,
     BOOT OFICIAL DA PARTE 5.
 */
 function boot() {
-    /*
-        Primeiro encontra todos
-        os elementos do HTML.
-    */
     cacheDOM();
 
 
-    /*
-        Valida as partes do jogo
-        depois que o DOM já existe.
-    */
     V.__part5Validation =
         validatePart5Data();
 
@@ -66593,20 +66946,10 @@ function boot() {
     }
 
 
-    /*
-        Inicialização principal.
-
-        Aqui os botões também
-        são registrados.
-    */
     initializeVeyra();
 }
 
 
-/*
-    INICIALIZA SOMENTE QUANDO
-    O HTML ESTIVER PRONTO.
-*/
 if (
     document.readyState ===
     "loading"
@@ -66624,5 +66967,4 @@ if (
 else {
     boot();
 }
-
- })();
+   })();

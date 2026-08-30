@@ -40189,27 +40189,144 @@ if (
             return false;
         }
 
-        if (
-            exit.gateId ===
-                "north_gate" &&
-            !exit.unlocked
-        ) {
-            return requestNorthGateUnlock();
-        }
+    /*
+    PORTÃO NORTE BLOQUEADO.
 
-        if (
-            !exit.unlocked
-        ) {
-            pushNotification(
-                "CAMINHO BLOQUEADO",
-                exit.lockedMessage ||
-                    "A passagem permanece fechada.",
-                "warning",
-                2
-            );
+    Mantém o sistema especial de
+    desbloqueio do Caminho 2.
+*/
+if (
+    exit.gateId ===
+        "north_gate" &&
+    !exit.unlocked
+) {
+    return requestNorthGateUnlock();
+}
 
-            return false;
+
+/*
+    CAMINHO 1 — PORTÃO LESTE.
+*/
+if (
+    exit.gateId ===
+        "east_gate"
+) {
+    return startDialogue(
+        [
+            "O Caminho 1 está aberto.",
+            "A Estrada se estende para além da Vila.",
+            "Um antigo Guardião protege a passagem para a Floresta."
+        ],
+        {
+            speaker:
+                "PORTÃO LESTE",
+
+            onComplete:
+                () => {
+
+                    performAreaTravel(
+                        exit.destination,
+                        exit.destinationSpawn ||
+                            "west",
+                        "CAMINHO 1 — ESTRADA"
+                    );
+
+                }
         }
+    );
+}
+
+
+/*
+    CAMINHO 2 — PORTÃO NORTE ABERTO.
+*/
+if (
+    exit.gateId ===
+        "north_gate" &&
+    exit.unlocked
+) {
+    return startDialogue(
+        [
+            "O selo reconhece o Passo do Vento.",
+            "O Caminho 2 está aberto.",
+            "As terras dos gnomos aguardam além do portão."
+        ],
+        {
+            speaker:
+                "PORTÃO NORTE",
+
+            onComplete:
+                () => {
+
+                    performAreaTravel(
+                        exit.destination,
+                        exit.destinationSpawn ||
+                            "south",
+                        "CAMINHO 2"
+                    );
+
+                }
+        }
+    );
+}
+
+
+/*
+    CAMINHO 3.
+*/
+if (
+    exit.gateId ===
+        "west_gate"
+) {
+    return startDialogue(
+        [
+            "O Caminho 3 permanece selado.",
+            "A Quietude ainda esconde aquilo que existe além deste portão."
+        ],
+        {
+            speaker:
+                "PORTÃO OESTE"
+        }
+    );
+}
+
+
+/*
+    CAMINHO 4.
+*/
+if (
+    exit.gateId ===
+        "south_gate"
+) {
+    return startDialogue(
+        [
+            "O Caminho 4 permanece adormecido.",
+            "Nenhuma passagem responde deste lado do portão."
+        ],
+        {
+            speaker:
+                "PORTÃO SUL"
+        }
+    );
+}
+
+
+/*
+    OUTRAS SAÍDAS BLOQUEADAS.
+*/
+if (
+    !exit.unlocked
+) {
+    pushNotification(
+        "CAMINHO BLOQUEADO",
+        exit.lockedMessage ||
+            "A passagem permanece fechada.",
+        "warning",
+        2
+    );
+
+    return false;
+}
 
         if (
             !exit.destination
@@ -41859,13 +41976,15 @@ if (
         const transition =
             state.transition;
 
-        if (
-            !transition ||
-            transition.type ===
-                "rest"
-        ) {
-            return;
-        }
+       if (
+    !transition ||
+    transition.type ===
+        "rest" ||
+    transition.type ===
+        "area"
+) {
+    return;
+}
 
         transition.timer =
             finiteNumber(
@@ -56205,10 +56324,18 @@ drawGates(
     ctx
 );
 
-drawStaticDecorations(
+
+/*
+    BARREIRAS DOS BOSSES.
+*/
+drawBossBarriers(
     ctx
 );
 
+
+drawStaticDecorations(
+    ctx
+);
         drawResources(
             ctx
         );
@@ -64894,6 +65021,130 @@ if (
         ctx.restore();
     }
 
+function beginAreaTransition(
+    destination,
+    spawnId =
+        "default",
+    title =
+        ""
+) {
+    if (
+        !destination
+    ) {
+        return false;
+    }
+
+
+    /*
+        Não inicia outra troca de mapa
+        enquanto uma já está acontecendo.
+    */
+    if (
+        state.transition &&
+        state.transition
+            .type ===
+            "area"
+    ) {
+        return false;
+    }
+
+
+    state.transition = {
+
+        type:
+            "area",
+
+        timer:
+            0,
+
+        duration:
+            1.2,
+
+        title:
+            title ||
+            "",
+
+
+        /*
+            Evita carregar o mapa
+            duas vezes.
+        */
+        midpointDone:
+            false,
+
+
+        /*
+            Quando a tela estiver preta,
+            troca o mundo.
+        */
+        onMidpoint:
+            () => {
+
+                const loaded =
+                    safeCall(
+                        "loadWorld",
+                        destination,
+                        spawnId
+                    );
+
+
+                if (
+                    loaded ===
+                    false
+                ) {
+                    console.error(
+                        "VEYRA — não foi possível carregar a área:",
+                        destination
+                    );
+
+                    return;
+                }
+
+
+                safeCall(
+                    "repairWorldProgressionState",
+                    state.world
+                );
+
+
+                safeCall(
+                    "rebuildDynamicWorldObstacles",
+                    state.world
+                );
+
+
+                updateHTMLHUD(
+                    true
+                );
+
+            },
+
+
+        /*
+            Salva somente depois
+            da transição terminar.
+        */
+        onComplete:
+            () => {
+
+                safeCall(
+                    "saveGame",
+                    {
+                        silent:
+                            true,
+
+                        safe:
+                            true
+                    }
+                );
+
+            }
+
+    };
+
+
+    return true;
+}
 
     /* ============================================================
        TRANSIÇÃO RUNTIME
@@ -64921,20 +65172,46 @@ if (
             dt;
 
 
-        const duration =
-            Math.max(
-                0.01,
-                finite(
-                    transition.duration,
-                    1
-                )
+      /*
+    TRANSIÇÃO DE ÁREA.
+
+    Aos 50%:
+    tela está escura e o mapa troca.
+*/
+if (
+    transition.type ===
+        "area" &&
+    !transition.midpointDone &&
+    transition.timer >=
+        duration *
+            0.5
+) {
+    transition.midpointDone =
+        true;
+
+
+    if (
+        typeof transition
+            .onMidpoint ===
+        "function"
+    ) {
+        try {
+
+            transition
+                .onMidpoint();
+
+        } catch (
+            error
+        ) {
+
+            console.error(
+                "VEYRA — erro ao trocar de cenário:",
+                error
             );
 
-
-        if (
-            transition.timer >=
-            duration
-        ) {
+        }
+    }
+}
             if (
                 typeof transition.onComplete ===
                 "function"
@@ -66114,6 +66391,8 @@ updateTransition(
         V,
         {
             UI_RUNTIME,
+
+           beginAreaTransition,
 
            handleDevShortcutKeyDown,
 handleDevShortcutKeyUp,

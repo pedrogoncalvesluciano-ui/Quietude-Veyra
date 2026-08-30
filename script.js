@@ -65574,25 +65574,77 @@ updateTransition(
        EVENTOS DE BOTÃO
        ============================================================ */
 
-    function bindButton(
-        button,
-        handler
+  function bindButton(
+    button,
+    handler
+) {
+    if (
+        !button ||
+        typeof handler !==
+            "function"
     ) {
-        if (
-            !button
-        ) {
-            return;
-        }
-
-
-        button.addEventListener(
-            "click",
-            handler
-        );
+        return false;
     }
 
 
+    /*
+        onclick evita acumular listeners
+        duplicados quando o jogo reinicia
+        ou inicializa novamente.
+    */
+    button.onclick =
+        handler;
+
+
+    /*
+        Garante que o botão possa
+        receber clique.
+    */
+    button.style.pointerEvents =
+        "auto";
+
+
+    return true;
+}
+
     function bindMenuButtons() {
+
+/*
+    Esses três sempre precisam
+    estar clicáveis na tela inicial.
+*/
+const alwaysEnabled = [
+
+    DOM.buttons.newGame,
+    DOM.buttons.how,
+    DOM.buttons.credits
+
+];
+
+
+for (
+    const button of
+    alwaysEnabled
+) {
+    if (
+        !button
+    ) {
+        continue;
+    }
+
+
+    button.disabled =
+        false;
+
+
+    button.style.pointerEvents =
+        "auto";
+
+
+    button.style.cursor =
+        "pointer";
+}
+       
         bindButton(
             DOM.buttons.newGame,
             () => {
@@ -66289,6 +66341,18 @@ updateTransition(
 
         cacheDOM();
 
+       /*
+    BOTÕES DA TELA INICIAL.
+
+    Registramos imediatamente depois
+    que o DOM foi encontrado.
+
+    Assim eles continuam funcionando
+    mesmo se alguma parte do renderer
+    apresentar problema depois.
+*/
+bindMenuButtons();
+
 
         const domErrors =
             validateRequiredDOM();
@@ -66339,9 +66403,7 @@ updateTransition(
 
 
         renderCharacterCards();
-
-
-  //      bindMenuButtons();
+       
 
         bindGameButtons();
 
@@ -66506,16 +66568,27 @@ maintainDevRuntime,
         Precisamos cachear o DOM antes
         da validação completa.
     */
-    function boot() {
-    cacheDOM();
-
-    bindMenuButtons();
-
-
+   function boot() {
+    /*
+        A inicialização oficial
+        cuida do cache e dos eventos.
+    */
     V.__part5Validation =
         validatePart5Data();
 
 
+    if (
+        !V.__part5Validation.ok
+    ) {
+        console.warn(
+            "VEYRA — existem avisos de validação, mas o menu continuará iniciando.",
+            V.__part5Validation.errors
+        );
+    }
+
+
+    initializeVeyra();
+}
     if (
         !V.__part5Validation.ok
         ) {

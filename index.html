@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -10,7 +12,12 @@
 
     <meta
         name="theme-color"
-        content="#080a0d"
+        content="#07090b"
+    >
+
+    <meta
+        name="description"
+        content="VEYRA: A Quietude — RPG 2D dark fantasy sobre memória, silêncio e identidade."
     >
 
     <title>VEYRA: A Quietude</title>
@@ -19,9 +26,12 @@
         rel="stylesheet"
         href="style.css"
     >
+
 </head>
 
+
 <body>
+
 
     <!-- =========================================================
          FUNDO GERAL
@@ -31,16 +41,20 @@
         class="ambient-bg"
         aria-hidden="true"
     >
+
         <div class="ambient-vignette"></div>
+
         <div class="ambient-grain"></div>
+
         <div class="ambient-glow glow-a"></div>
+
         <div class="ambient-glow glow-b"></div>
+
     </div>
 
 
     <!-- =========================================================
          TELA INICIAL
-         PRESERVAR IDENTIDADE APROVADA
          ========================================================= -->
 
     <section
@@ -48,12 +62,18 @@
         class="screen menu-screen active"
     >
 
-        <div class="menu-atmosphere">
+        <div
+            class="menu-atmosphere"
+            aria-hidden="true"
+        >
 
             <div class="menu-mist mist-a"></div>
+
             <div class="menu-mist mist-b"></div>
 
+
             <div class="menu-particle-field">
+
                 <i></i>
                 <i></i>
                 <i></i>
@@ -62,6 +82,9 @@
                 <i></i>
                 <i></i>
                 <i></i>
+                <i></i>
+                <i></i>
+
             </div>
 
         </div>
@@ -69,15 +92,22 @@
 
         <main class="menu-shell">
 
+
             <div
                 class="veyra-emblem"
                 aria-hidden="true"
             >
+
                 <span class="emblem-ring ring-one"></span>
+
                 <span class="emblem-ring ring-two"></span>
+
                 <span class="emblem-line line-a"></span>
+
                 <span class="emblem-line line-b"></span>
+
                 <span class="emblem-core"></span>
+
             </div>
 
 
@@ -120,11 +150,13 @@
 
             <div class="menu-actions">
 
+
                 <button
                     id="newGameBtn"
                     class="menu-main-btn"
                     type="button"
                 >
+
                     <span class="btn-small">
                         COMEÇAR UMA NOVA MEMÓRIA
                     </span>
@@ -132,6 +164,7 @@
                     <strong>
                         NOVO JOGO
                     </strong>
+
                 </button>
 
 
@@ -140,6 +173,7 @@
                     class="menu-main-btn menu-secondary-main"
                     type="button"
                 >
+
                     <span class="btn-small">
                         RETORNAR À JORNADA
                     </span>
@@ -147,12 +181,15 @@
                     <strong>
                         CONTINUAR
                     </strong>
+
                 </button>
+
 
             </div>
 
 
             <div class="menu-small-actions">
+
 
                 <button
                     id="howToBtn"
@@ -161,7 +198,9 @@
                     COMO JOGAR
                 </button>
 
+
                 <span></span>
+
 
                 <button
                     id="creditsBtn"
@@ -169,6 +208,7 @@
                 >
                     CRÉDITOS
                 </button>
+
 
             </div>
 
@@ -187,6 +227,7 @@
 
             </div>
 
+
         </main>
 
     </section>
@@ -202,6 +243,7 @@
     >
 
         <div class="info-shell">
+
 
             <header class="info-header">
 
@@ -232,10 +274,11 @@
 
             <div class="help-grid">
 
+
                 <article class="help-card">
 
                     <div class="help-icon">
-                        ⌨
+                        W
                     </div>
 
                     <div>
@@ -245,7 +288,7 @@
                         </strong>
 
                         <p>
-                            Use WASD ou as setas para percorrer o mundo.
+                            Use WASD ou as setas para caminhar pelo mundo.
                         </p>
 
                     </div>
@@ -255,19 +298,19 @@
 
                 <article class="help-card">
 
-                    <div class="help-icon">
-                        🖱
+                    <div class="help-icon help-icon-wide">
+                        LMB
                     </div>
 
                     <div>
 
                         <strong>
-                            ATAQUE
+                            ATAQUE BÁSICO
                         </strong>
 
                         <p>
-                            Clique uma vez com o botão esquerdo para realizar
-                            um ataque em direção ao cursor.
+                            Clique uma vez com o botão esquerdo para atacar.
+                            Segurar o mouse não gera ataques automáticos.
                         </p>
 
                     </div>
@@ -288,8 +331,9 @@
                         </strong>
 
                         <p>
-                            Pressione E para conversar e interagir.
-                            Alguns recursos precisam que E seja segurado.
+                            Use E para conversar, interagir, descansar e coletar.
+                            Madeira e outras coletas especiais podem exigir que
+                            E permaneça pressionado.
                         </p>
 
                     </div>
@@ -310,7 +354,7 @@
                         </strong>
 
                         <p>
-                            Aproxime-se da porta para ela abrir e pressione Z
+                            Aproxime-se de portas e use Z quando necessário
                             para entrar ou sair.
                         </p>
 
@@ -328,12 +372,12 @@
                     <div>
 
                         <strong>
-                            HABILIDADES
+                            PRIMEIRA HABILIDADE
                         </strong>
 
                         <p>
-                            Cada personagem possui habilidades próprias em
-                            Q, R e F.
+                            Q está disponível desde o início e consome Energia.
+                        Seu dano aumenta com Domínio.
                         </p>
 
                     </div>
@@ -344,7 +388,49 @@
                 <article class="help-card">
 
                     <div class="help-icon">
-                        ⇧
+                        R
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            SEGUNDA HABILIDADE
+                        </strong>
+
+                        <p>
+                            A habilidade R é desbloqueada no nível 5.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+                <article class="help-card">
+
+                    <div class="help-icon">
+                        F
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            TERCEIRA HABILIDADE
+                        </strong>
+
+                        <p>
+                            A habilidade F é desbloqueada no nível 10.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+                <article class="help-card">
+
+                    <div class="help-icon help-icon-wide">
+                        SPC
                     </div>
 
                     <div>
@@ -354,8 +440,8 @@
                         </strong>
 
                         <p>
-                            Depois de desbloqueado, use Espaço para executar
-                            o Dash.
+                            Depois de despertar o Dash, pressione Espaço.
+                            O movimento consome Energia.
                         </p>
 
                     </div>
@@ -363,21 +449,66 @@
                 </article>
 
 
-                <article class="help-card help-danger">
+                <article class="help-card">
 
                     <div class="help-icon">
-                        ⚠
+                        I
                     </div>
 
                     <div>
 
                         <strong>
-                            FOME E CANSAÇO
+                            MOCHILA
                         </strong>
 
                         <p>
-                            Fome e Cansaço diminuem lentamente durante a jornada.
-                            Observe seus recursos.
+                            Abra o inventário para usar comida, poções,
+                            equipamentos e consultar materiais.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+                <article class="help-card">
+
+                    <div class="help-icon">
+                        C
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            STATUS
+                        </strong>
+
+                        <p>
+                            Cada nível concede exatamente 3 pontos.
+                            Distribua-os entre Vida, Domínio, Energia e Exaustão.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+                <article class="help-card help-warning">
+
+                    <div class="help-icon">
+                        ◒
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            EXAUSTÃO
+                        </strong>
+
+                        <p>
+                            A Exaustão aumenta durante a jornada.
+                            Comer reduz Exaustão e descansar em uma cama
+                            a reduz ainda mais.
                         </p>
 
                     </div>
@@ -388,7 +519,7 @@
                 <article class="help-card help-danger">
 
                     <div class="help-icon">
-                        ☠
+                        ◇
                     </div>
 
                     <div>
@@ -398,13 +529,15 @@
                         </strong>
 
                         <p>
-                            Ao morrer, parte dos materiais pode ser perdida.
-                            Seu único ponto de retorno é sua casa.
+                            Toda morte leva de volta à sua casa.
+                            Renascer pode consumir uma pequena quantidade
+                            de materiais comuns.
                         </p>
 
                     </div>
 
                 </article>
+
 
             </div>
 
@@ -416,6 +549,7 @@
                 </span>
 
             </footer>
+
 
         </div>
 
@@ -432,6 +566,7 @@
     >
 
         <div class="credits-shell">
+
 
             <button
                 id="closeCreditsBtn"
@@ -492,6 +627,7 @@
                 permanece quando até os lugares começam a esquecer.
             </p>
 
+
         </div>
 
     </section>
@@ -508,7 +644,9 @@
 
         <div class="character-select-shell">
 
+
             <header class="character-select-header">
+
 
                 <button
                     id="backMenuBtn"
@@ -525,16 +663,19 @@
                         ESCOLHA QUEM CARREGARÁ ESTA MEMÓRIA
                     </span>
 
+
                     <h2>
                         PERSONAGEM
                     </h2>
 
+
                     <p>
-                        Cada viajante possui atributos, estilo de combate
-                        e habilidades diferentes.
+                        Kaelion, Theron, Grumgar, Lirael e Zephyr possuem
+                        atributos, corpos, ataques e habilidades próprios.
                     </p>
 
                 </div>
+
 
             </header>
 
@@ -543,11 +684,12 @@
                 id="characterCards"
                 class="character-cards"
             >
-                <!-- JS gera os cinco personagens -->
+                <!-- JavaScript cria os cinco personagens -->
             </div>
 
 
             <div class="character-bottom-panel">
+
 
                 <label
                     class="name-field"
@@ -557,6 +699,7 @@
                     <span>
                         NOME DO PERSONAGEM
                     </span>
+
 
                     <input
                         id="playerName"
@@ -575,6 +718,7 @@
                     class="start-journey-btn"
                     type="button"
                 >
+
                     <span>
                         INICIAR
                     </span>
@@ -582,9 +726,12 @@
                     <strong>
                         COMEÇAR JORNADA
                     </strong>
+
                 </button>
 
+
             </div>
+
 
         </div>
 
@@ -592,7 +739,7 @@
 
 
     <!-- =========================================================
-         GAME SCREEN
+         GAME
          ========================================================= -->
 
     <section
@@ -600,8 +747,9 @@
         class="screen game-screen"
     >
 
+
         <!-- =====================================================
-             CANVAS
+             CANVAS PRINCIPAL
              ===================================================== -->
 
         <canvas
@@ -611,12 +759,14 @@
 
 
         <!-- =====================================================
-             HUD SUPERIOR ESQUERDO
+             HUD
              ===================================================== -->
 
         <aside class="player-hud">
 
+
             <div class="hud-identity">
+
 
                 <div
                     id="hudAvatar"
@@ -651,8 +801,11 @@
 
                 </div>
 
+
             </div>
 
+
+            <!-- VIDA -->
 
             <div class="hud-resource-row hp-row">
 
@@ -660,11 +813,13 @@
                     VIDA
                 </span>
 
+
                 <div class="hud-bar">
 
                     <i id="hpBar"></i>
 
                 </div>
+
 
                 <span
                     id="hpText"
@@ -676,27 +831,7 @@
             </div>
 
 
-            <div class="hud-resource-row magic-row">
-
-                <span class="hud-resource-label">
-                    MAGIA
-                </span>
-
-                <div class="hud-bar">
-
-                    <i id="magicBar"></i>
-
-                </div>
-
-                <span
-                    id="magicText"
-                    class="hud-resource-number"
-                >
-                    0/0
-                </span>
-
-            </div>
-
+            <!-- ENERGIA -->
 
             <div class="hud-resource-row energy-row">
 
@@ -704,11 +839,13 @@
                     ENERGIA
                 </span>
 
+
                 <div class="hud-bar">
 
                     <i id="energyBar"></i>
 
                 </div>
+
 
                 <span
                     id="energyText"
@@ -720,35 +857,33 @@
             </div>
 
 
-            <div class="hud-secondary-resources">
+            <!-- EXAUSTÃO
+                 Mantemos hungerText porque é o ID lido
+                 pela integração da Parte 5. -->
+
+            <div class="hud-exhaustion">
 
                 <div>
 
                     <span>
-                        FOME
+                        EXAUSTÃO
                     </span>
 
-                    <strong id="hungerText">
-                        0/0
-                    </strong>
+                    <small>
+                        SOBREVIVÊNCIA
+                    </small>
 
                 </div>
 
 
-                <div>
-
-                    <span>
-                        CANSAÇO
-                    </span>
-
-                    <strong id="fatigueText">
-                        0/0
-                    </strong>
-
-                </div>
+                <strong id="hungerText">
+                    0/100
+                </strong>
 
             </div>
 
+
+            <!-- XP -->
 
             <div class="hud-xp">
 
@@ -757,10 +892,11 @@
                 </span>
 
                 <strong id="xpText">
-                    0 / 0
+                    0 / 100
                 </strong>
 
             </div>
+
 
         </aside>
 
@@ -776,7 +912,7 @@
             </span>
 
             <strong id="locationLabel">
-                Vila do Crepúsculo
+                VILA DO CREPÚSCULO
             </strong>
 
         </div>
@@ -805,9 +941,18 @@
 
         <div class="minimap-shell">
 
-            <div class="minimap-title">
-                MAPA
+            <div class="minimap-header">
+
+                <span class="minimap-title">
+                    MAPA
+                </span>
+
+                <span class="minimap-signal">
+                    SINAL
+                </span>
+
             </div>
+
 
             <canvas
                 id="miniCanvas"
@@ -819,15 +964,46 @@
 
 
         <!-- =====================================================
+             GUIA DE COMBATE
+             ===================================================== -->
+
+        <div class="combat-hints">
+
+            <div>
+                <kbd>Q</kbd>
+                <span>HABILIDADE</span>
+            </div>
+
+            <div>
+                <kbd>R</kbd>
+                <span>NV. 5</span>
+            </div>
+
+            <div>
+                <kbd>F</kbd>
+                <span>NV. 10</span>
+            </div>
+
+            <div>
+                <kbd>SPACE</kbd>
+                <span>DASH</span>
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
              HOTBAR
              ===================================================== -->
 
         <nav class="game-hotbar">
 
+
             <button
                 id="inventoryBtn"
                 type="button"
             >
+
                 <span class="hotbar-key">
                     I
                 </span>
@@ -835,6 +1011,7 @@
                 <strong>
                     MOCHILA
                 </strong>
+
             </button>
 
 
@@ -842,6 +1019,7 @@
                 id="mapBtn"
                 type="button"
             >
+
                 <span class="hotbar-key">
                     M
                 </span>
@@ -849,6 +1027,7 @@
                 <strong>
                     MAPA
                 </strong>
+
             </button>
 
 
@@ -856,6 +1035,7 @@
                 id="bookBtn"
                 type="button"
             >
+
                 <span class="hotbar-key">
                     L
                 </span>
@@ -863,6 +1043,7 @@
                 <strong>
                     LIVRO
                 </strong>
+
             </button>
 
 
@@ -870,6 +1051,7 @@
                 id="statusBtn"
                 type="button"
             >
+
                 <span class="hotbar-key">
                     C
                 </span>
@@ -877,6 +1059,7 @@
                 <strong>
                     STATUS
                 </strong>
+
             </button>
 
 
@@ -884,6 +1067,7 @@
                 id="saveBtn"
                 type="button"
             >
+
                 <span class="hotbar-symbol">
                     ◆
                 </span>
@@ -891,6 +1075,7 @@
                 <strong>
                     SALVAR
                 </strong>
+
             </button>
 
 
@@ -898,6 +1083,7 @@
                 id="menuBtn"
                 type="button"
             >
+
                 <span class="hotbar-symbol">
                     ☰
                 </span>
@@ -905,14 +1091,15 @@
                 <strong>
                     MENU
                 </strong>
+
             </button>
+
 
         </nav>
 
 
         <!-- =====================================================
-             PAINEL DE DIÁLOGO
-             PRESERVAR IDENTIDADE
+             DIÁLOGO
              ===================================================== -->
 
         <div
@@ -922,10 +1109,13 @@
 
             <div class="dialogue-box">
 
+
                 <div class="dialogue-side-mark">
 
                     <span></span>
+
                     <i></i>
+
                     <span></span>
 
                 </div>
@@ -967,13 +1157,14 @@
 
                 </div>
 
+
             </div>
 
         </div>
 
 
         <!-- =====================================================
-             BATALHA DO GUARDIÃO / BOSSES
+             BOSS — ACEITAR / RECUAR
              ===================================================== -->
 
         <div
@@ -983,8 +1174,9 @@
 
             <div class="battle-card">
 
+
                 <div class="battle-warning">
-                    ⚔
+                    ◇
                 </div>
 
 
@@ -1017,6 +1209,7 @@
 
                 <div class="modal-actions">
 
+
                     <button
                         id="battleDecline"
                         class="modal-secondary-btn"
@@ -1034,7 +1227,9 @@
                         ACEITAR
                     </button>
 
+
                 </div>
+
 
             </div>
 
@@ -1042,7 +1237,7 @@
 
 
         <!-- =====================================================
-             TRAVEL
+             VIAGEM
              ===================================================== -->
 
         <div
@@ -1051,6 +1246,7 @@
         >
 
             <div class="travel-card">
+
 
                 <span class="modal-eyebrow">
                     CAMINHO
@@ -1062,6 +1258,9 @@
                 </h2>
 
 
+                <div class="modal-separator"></div>
+
+
                 <p
                     id="travelText"
                     class="modal-text"
@@ -1069,6 +1268,7 @@
 
 
                 <div class="modal-actions">
+
 
                     <button
                         id="travelNo"
@@ -1087,7 +1287,9 @@
                         SIM
                     </button>
 
+
                 </div>
+
 
             </div>
 
@@ -1105,7 +1307,8 @@
 
             <div class="death-card">
 
-                <div class="battle-icon">
+
+                <div class="death-symbol">
                     ◇
                 </div>
 
@@ -1124,16 +1327,38 @@
 
 
                 <p class="modal-text">
-                    Você retornará ao último lugar que ainda se lembra de você.
+                    A memória do mundo ainda reconhece sua casa.
                 </p>
 
 
-                <button
-                    id="respawnBtn"
-                    type="button"
-                >
-                    RETORNAR À CASA
-                </button>
+                <div class="modal-actions death-actions">
+
+
+                    <button
+                        id="giveUpBtn"
+                        class="modal-secondary-btn"
+                        type="button"
+                    >
+                        DESISTIR
+                    </button>
+
+
+                    <button
+                        id="respawnBtn"
+                        class="death-respawn-btn"
+                        type="button"
+                    >
+                        RENASCER
+                    </button>
+
+
+                </div>
+
+
+                <small class="death-note">
+                    DESISTIR retorna ao menu usando o último save válido.
+                </small>
+
 
             </div>
 
@@ -1146,12 +1371,14 @@
 
         <div
             id="inventoryPanel"
-            class="overlay-panel side-panel hidden"
+            class="overlay-panel centered-panel hidden"
         >
 
             <section class="large-game-panel inventory-game-panel">
 
+
                 <header class="game-panel-header">
+
 
                     <div>
 
@@ -1167,6 +1394,7 @@
 
 
                     <div class="panel-header-right">
+
 
                         <div class="weight-indicator">
 
@@ -1185,65 +1413,23 @@
                             id="closeInventoryBtn"
                             class="close-circle-btn"
                             type="button"
+                            aria-label="Fechar mochila"
                         >
                             ×
                         </button>
 
+
                     </div>
+
 
                 </header>
 
 
-                <div class="inventory-tabs">
-
-                    <button
-                        type="button"
-                        data-inventory-category="all"
-                    >
-                        TODOS
-                    </button>
-
-                    <button
-                        type="button"
-                        data-inventory-category="materials"
-                    >
-                        MATERIAIS
-                    </button>
-
-                    <button
-                        type="button"
-                        data-inventory-category="food"
-                    >
-                        COMIDA
-                    </button>
-
-                    <button
-                        type="button"
-                        data-inventory-category="potions"
-                    >
-                        POÇÕES
-                    </button>
-
-                    <button
-                        type="button"
-                        data-inventory-category="armor"
-                    >
-                        ARMADURAS
-                    </button>
-
-                    <button
-                        type="button"
-                        data-inventory-category="special"
-                    >
-                        ESPECIAIS
-                    </button>
-
-                </div>
-
-
                 <div class="inventory-layout">
 
+
                     <div>
+
 
                         <div class="panel-subtitle">
                             INVENTÁRIO
@@ -1255,10 +1441,12 @@
                             class="inventory-grid"
                         ></div>
 
+
                     </div>
 
 
                     <aside class="equipment-section">
+
 
                         <div class="panel-subtitle">
                             EQUIPAMENTO
@@ -1270,9 +1458,12 @@
                             class="equipment-grid"
                         ></div>
 
+
                     </aside>
 
+
                 </div>
+
 
             </section>
 
@@ -1290,7 +1481,9 @@
 
             <section class="large-game-panel map-game-panel">
 
+
                 <header class="game-panel-header">
+
 
                     <div>
 
@@ -1309,9 +1502,11 @@
                         id="closeMapBtn"
                         class="close-circle-btn"
                         type="button"
+                        aria-label="Fechar mapa"
                     >
                         ×
                     </button>
+
 
                 </header>
 
@@ -1329,7 +1524,9 @@
 
                 <footer class="map-footer-note">
                     Regiões secretas permanecem ocultas até serem descobertas.
+                    O Vazio não fornece sinal cartográfico.
                 </footer>
+
 
             </section>
 
@@ -1347,7 +1544,9 @@
 
             <section class="large-game-panel book-game-panel">
 
+
                 <header class="game-panel-header">
+
 
                     <div>
 
@@ -1366,14 +1565,17 @@
                         id="closeBookBtn"
                         class="close-circle-btn"
                         type="button"
+                        aria-label="Fechar livro"
                     >
                         ×
                     </button>
+
 
                 </header>
 
 
                 <div class="book-introduction">
+
 
                     <div class="book-symbol">
                         ◇
@@ -1382,9 +1584,10 @@
 
                     <p>
                         Criaturas importantes deixam marcas na memória.
-                        Ao derrotar um chefe, novas informações sobre ele
-                        serão registradas.
+                        Informações completas sobre um chefe só são registradas
+                        depois de sua derrota.
                     </p>
+
 
                 </div>
 
@@ -1393,6 +1596,7 @@
                     id="bossBook"
                     class="boss-book"
                 ></div>
+
 
             </section>
 
@@ -1410,7 +1614,9 @@
 
             <section class="large-game-panel status-game-panel">
 
+
                 <header class="game-panel-header">
+
 
                     <div>
 
@@ -1429,19 +1635,49 @@
                         id="closeStatusBtn"
                         class="close-circle-btn"
                         type="button"
+                        aria-label="Fechar status"
                     >
                         ×
                     </button>
 
+
                 </header>
+
+
+                <div class="status-summary">
+
+                    <span>
+                        VIDA
+                    </span>
+
+                    <i></i>
+
+                    <span>
+                        DOMÍNIO
+                    </span>
+
+                    <i></i>
+
+                    <span>
+                        ENERGIA
+                    </span>
+
+                    <i></i>
+
+                    <span>
+                        EXAUSTÃO
+                    </span>
+
+                </div>
 
 
                 <div
                     id="statusContent"
                     class="status-content"
                 >
-                    <!-- JS gera status -->
+                    <!-- JavaScript gera os atributos -->
                 </div>
+
 
             </section>
 
@@ -1449,7 +1685,7 @@
 
 
         <!-- =====================================================
-             SHOP
+             LOJA
              ===================================================== -->
 
         <div
@@ -1459,7 +1695,9 @@
 
             <section class="large-game-panel shop-game-panel">
 
+
                 <header class="game-panel-header">
+
 
                     <div>
 
@@ -1478,22 +1716,27 @@
                         id="closeShopBtn"
                         class="close-circle-btn"
                         type="button"
+                        aria-label="Fechar loja"
                     >
                         ×
                     </button>
+
 
                 </header>
 
 
                 <div class="shop-tabs">
 
+
                     <button
                         id="shopBuyBtn"
+                        class="active"
                         type="button"
                         data-shop-mode="buy"
                     >
                         COMPRAR
                     </button>
+
 
                     <button
                         id="shopSellBtn"
@@ -1503,6 +1746,7 @@
                         VENDER
                     </button>
 
+
                 </div>
 
 
@@ -1511,13 +1755,14 @@
                     class="shop-grid"
                 ></div>
 
+
             </section>
 
         </div>
 
 
         <!-- =====================================================
-             QUEST MODAL ANTIGO / COMPATIBILIDADE
+             QUEST MODAL
              ===================================================== -->
 
         <div
@@ -1527,25 +1772,22 @@
 
             <section class="small-game-panel">
 
-                <header class="game-panel-header">
 
-                    <div>
+                <span class="panel-kicker">
+                    MISSÃO
+                </span>
 
-                        <span class="panel-kicker">
-                            MISSÃO
-                        </span>
 
-                        <h2>
-                            OBJETIVO
-                        </h2>
+                <h2>
+                    OBJETIVO ATUALIZADO
+                </h2>
 
-                    </div>
 
-                </header>
+                <div class="modal-separator"></div>
 
 
                 <p class="modal-text">
-                    Acompanhe seu objetivo pela lateral da tela.
+                    Acompanhe seu objetivo durante a jornada.
                 </p>
 
 
@@ -1557,13 +1799,14 @@
                     FECHAR
                 </button>
 
+
             </section>
 
         </div>
 
 
         <!-- =====================================================
-             MENU DENTRO DO JOGO
+             MENU DE PAUSA
              ===================================================== -->
 
         <div
@@ -1572,6 +1815,7 @@
         >
 
             <section class="small-game-panel game-pause-menu">
+
 
                 <span class="panel-kicker">
                     VEYRA
@@ -1621,18 +1865,22 @@
                     FECHAR
                 </button>
 
+
             </section>
 
         </div>
+
 
     </section>
 
 
     <!-- =========================================================
-         SCRIPT
+         JAVASCRIPT
          ========================================================= -->
 
     <script src="script.js"></script>
 
+
 </body>
+
 </html>

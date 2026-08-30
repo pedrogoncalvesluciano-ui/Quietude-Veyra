@@ -44704,6 +44704,57 @@ function drawWorldBackground(
                 )
             );
 
+       /*
+    CORES REAIS DOS DETALHES
+    DOS CAMINHOS.
+
+    PATH_STYLE_CONFIG guarda nomes
+    como "rubyShard" e "ironDust",
+    não cores CSS diretamente.
+*/
+const detailColors = {
+
+    villageStone:
+        "#9b896c",
+
+    wagonDirt:
+        "#5f503d",
+
+    forestStone:
+        "#706858",
+
+    roots:
+        "#49372c",
+
+    gravel:
+        "#88867f",
+
+    ironDust:
+        "#343537",
+
+    rubyShard:
+        "#a13d54",
+
+    mushroomPath:
+        "#718b70",
+
+    fairyPetals:
+        "#d38cbd",
+
+    greenStone:
+        "#64755d",
+
+    cloudStone:
+        "#dfe4e3",
+
+    skyStone:
+        "#d7e7ec",
+
+    voidCrack:
+        "#79558d"
+
+};
+
         for (
             let index = 0;
             index < count;
@@ -44757,11 +44808,16 @@ function drawWorldBackground(
                     wy
                 );
 
-            ctx.globalAlpha =
-                0.34;
+           ctx.globalAlpha =
+    0.34;
 
-            ctx.fillStyle =
-                style.detail;
+
+ctx.fillStyle =
+    detailColors[
+        style.detail
+    ] ||
+    style.edge ||
+    "#70685c";
 
             ctx.beginPath();
 
@@ -57771,16 +57827,33 @@ function drawHoldHUD(
 
         updateVisibleWorldRect();
 
-        drawWorldBackground(
-            ctx
-        );
+    drawWorldBackground(
+    ctx
+);
 
-        /*
-            Base do cenário.
-        */
-        drawWorldPaths(
-            ctx
-        );
+
+/*
+    DETALHES MINERAIS DO CHÃO.
+
+    Veios de Ferro:
+    pequenas pedras/metais.
+
+    Vale de Rubi:
+    cristais de rubi decorativos.
+
+    NÃO são coletáveis.
+*/
+drawMiningGroundDetails(
+    ctx
+);
+
+
+/*
+    Base do cenário.
+*/
+drawWorldPaths(
+    ctx
+);
 
         drawGrassPatches(
             ctx

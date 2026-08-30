@@ -15971,30 +15971,100 @@
         }
 
 
-        for (
-            const obstacle of
-            safeArray(
-                world.obstacles
+      for (
+    const obstacle of
+    safeArray(
+        world.obstacles
+    )
+) {
+    if (
+        collidesWithObstacleAt(
+            x,
+            y,
+            radius,
+            obstacle
+        )
+    ) {
+        return true;
+    }
+}
+
+
+/*
+    GARANTIA EXTRA DAS PAREDES INTERNAS.
+*/
+if (
+    world.interior
+) {
+    for (
+        const wall of
+        safeArray(
+            world.walls
+        )
+    ) {
+        if (
+            wall.solid !==
+                false &&
+            V.circleRectCollision(
+                x,
+                y,
+                radius,
+                wall
             )
         ) {
+            return true;
+        }
+    }
 
+
+    /*
+        A porta também possui corpo físico
+        enquanto estiver fechada.
+
+        Quando abre mais de 68%,
+        o jogador consegue atravessar.
+    */
+    for (
+        const door of
+        safeArray(
+            world.doors
+        )
+    ) {
+        if (
+            finiteNumber(
+                door.openAmount,
+                0
+            ) <
+            0.68
+        ) {
             if (
-                collidesWithObstacleAt(
+                V.circleRectCollision(
                     x,
                     y,
                     radius,
-                    obstacle
+                    {
+                        x:
+                            door.x,
+
+                        y:
+                            door.y,
+
+                        w:
+                            door.w,
+
+                        h:
+                            door.h
+                    }
                 )
             ) {
-
                 return true;
-
             }
-
         }
+    }
+}
 
 
-        return false;
+return false;
 
     }
 

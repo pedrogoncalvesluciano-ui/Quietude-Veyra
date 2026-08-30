@@ -25819,3 +25819,16210 @@
         validatePart2Data();
 
 })();
+/* ============================================================
+   VEYRA: A QUIETUDE
+   SCRIPT.JS — PARTE 3/5
+
+   GAMEPLAY / COMBATE / INTERAÇÕES / BOSSES / MORTE
+
+   REQUER:
+   - PARTE 1/5
+   - PARTE 2/5
+   ============================================================ */
+
+(() => {
+    "use strict";
+
+    const V = window.VEYRA;
+
+    if (!V || !V.__part1Loaded || !V.__part2Loaded) {
+        throw new Error(
+            "VEYRA — carregue as Partes 1/5 e 2/5 antes da Parte 3/5."
+        );
+    }
+
+    if (V.__part3Loaded) {
+        console.warn(
+            "VEYRA — Parte 3 já foi carregada; ignorando duplicação."
+        );
+        return;
+    }
+
+    const {
+        state,
+        clamp,
+        lerp,
+        finiteNumber,
+        integer,
+        random,
+        randomInt,
+        chance,
+        distance,
+        normalize,
+        safeArray,
+        uniqueArray,
+
+        GAME_CONFIG,
+        MAX_ACTIVE_POTION_BUFFS,
+
+        ITEMS,
+        ENEMY_SPECIES,
+        BOSS_REGISTRY,
+        CLASS_SKILLS,
+        BOSS_STATE,
+        QUEST_STATE,
+        MIGUEL_QUEST_STAGE,
+        VOID_MISSION_CONFIG,
+
+        DASH_V1_OFFERING,
+        NORTH_GATE_OFFERING,
+
+        currentCharacter,
+        getSkill,
+        isSkillUnlocked,
+
+        getDashVersion,
+        getDashConfig,
+
+        recalculatePlayerStats,
+        getExhaustionRatio,
+        grantXP,
+
+        addItem,
+        removeItem,
+        getItemCount,
+        getRealItemCount,
+        canCarryItem,
+
+        registerBossDiscovered,
+        registerBossDefeated,
+        isBossDefeated,
+
+        saveGame,
+        getSafeStoredSave,
+        migrateSaveData,
+        restorePlayerFromSave,
+
+        circleCircleCollision,
+        circleRectCollision,
+
+        rebuildDynamicWorldObstacles,
+        isPositionBlocked,
+        findSafePosition,
+
+        enterHouse,
+        exitHouse,
+        loadWorld,
+        loadPlayerHome,
+        applyBedRest,
+
+        getNorthGateStatus,
+        unlockNorthGate,
+
+        getMazeEntranceStatus,
+        getMonarchAltarStatus,
+        unlockDashV1FromAltar,
+        getLanternLightingState,
+
+        markMapExploredAt,
+        getZoneAtPoint,
+
+        canOpenVoidSecretDoor,
+        openVoidSecretDoor,
+
+        canCollectDarkKey,
+        collectDarkKey,
+
+        rollEnemyDrops
+    } = V;
+
+
+    /* ============================================================
+       RUNTIME
+       ============================================================ */
+
+    const gameplayRuntime = {
+        interactionTarget: null,
+        interactionPrompt: null,
+
+        nearbyDoor: null,
+        nearbyExit: null,
+        nearbyResource: null,
+        nearbyNPC: null,
+        nearbySecretDoor: null,
+        nearbyInteractable: null,
+
+        attackSerial: 0,
+
+        lastAutosaveAt: 0,
+        lastExhaustionWarningAt: -999,
+        lastEnergyWarningAt: -999,
+
+        deathSafeSnapshot: null,
+
+        transientEffects: [],
+
+        bossRunes: [],
+
+        lastWorldRef: null,
+
+        monarch: {
+            awakened: false,
+            endingStarted: false,
+            endingCompleted: false,
+            summonSerial: 0
+        },
+
+        vaelkor: {
+            arenaEntered: false,
+            entranceLocked: false,
+            endingStarted: false,
+            endingCompleted: false,
+            attackPatternIndex: 0
+        },
+
+        fragment: {
+            rewardSpawned: false
+        }
+    };
+
+
+    /* ============================================================
+       NOTIFICAÇÕES / EFEITOS
+       ============================================================ */
+
+    function pushNotification(
+        title,
+        text = "",
+        type = "info",
+        duration = 2.4
+    ) {
+        const notification = {
+            id:
+                `note_${Date.now()}_${Math.random()
+                    .toString(36)
+                    .slice(2)}`,
+
+            title:
+                String(title || ""),
+
+            text:
+                String(text || ""),
+
+            type,
+
+            timer:
+                Math.max(
+                    0.2,
+                    finiteNumber(
+                        duration,
+                        2.4
+                    )
+                ),
+
+            maxTimer:
+                Math.max(
+                    0.2,
+                    finiteNumber(
+                        duration,
+                        2.4
+                    )
+                )
+        };
+
+        state.notifications =
+            safeArray(
+                state.notifications
+            );
+
+        state.notifications.push(
+            notification
+        );
+
+        while (
+            state.notifications.length >
+            5
+        ) {
+            state.notifications.shift();
+        }
+
+        return notification;
+    }
+
+
+    function updateNotifications(
+        dt
+    ) {
+        for (
+            const notification of
+            safeArray(
+                state.notifications
+            )
+        ) {
+            notification.timer -=
+                dt;
+        }
+
+        state.notifications =
+            safeArray(
+                state.notifications
+            )
+                .filter(
+                    notification =>
+                        notification.timer >
+                        0
+                );
+    }
+
+
+    function spawnTransientEffect(
+        type,
+        x,
+        y,
+        options = {}
+    ) {
+        const effect = {
+            id:
+                options.id ||
+                `fx_${Date.now()}_${Math.random()
+                    .toString(36)
+                    .slice(2)}`,
+
+            type,
+
+            x:
+                finiteNumber(x),
+
+            y:
+                finiteNumber(y),
+
+            timer:
+                Math.max(
+                    0.05,
+                    finiteNumber(
+                        options.duration,
+                        0.7
+                    )
+                ),
+
+            maxTimer:
+                Math.max(
+                    0.05,
+                    finiteNumber(
+                        options.duration,
+                        0.7
+                    )
+                ),
+
+            ...options
+        };
+
+        gameplayRuntime
+            .transientEffects
+            .push(
+                effect
+            );
+
+        return effect;
+    }
+
+
+    function updateTransientEffects(
+        dt
+    ) {
+        for (
+            const effect of
+            gameplayRuntime
+                .transientEffects
+        ) {
+            effect.timer -=
+                dt;
+        }
+
+        gameplayRuntime
+            .transientEffects =
+            gameplayRuntime
+                .transientEffects
+                .filter(
+                    effect =>
+                        effect.timer >
+                        0
+                );
+    }
+
+
+    /* ============================================================
+       DIÁLOGOS
+       ============================================================ */
+
+    function startDialogue(
+        lines,
+        options = {}
+    ) {
+        const safeLines =
+            safeArray(lines)
+                .map(
+                    line =>
+                        String(
+                            line ??
+                            ""
+                        )
+                )
+                .filter(
+                    Boolean
+                );
+
+        if (
+            !safeLines.length
+        ) {
+            return false;
+        }
+
+        state.dialogue = {
+            id:
+                options.id ||
+                `dialogue_${Date.now()}`,
+
+            speaker:
+                options.speaker ||
+                "",
+
+            lines:
+                safeLines,
+
+            index:
+                0,
+
+            visibleCharacters:
+                0,
+
+            completeLine:
+                false,
+
+            onComplete:
+                typeof options.onComplete ===
+                "function"
+                    ? options.onComplete
+                    : null
+        };
+
+        return true;
+    }
+
+
+    function getCurrentDialogueLine() {
+        if (
+            !state.dialogue
+        ) {
+            return "";
+        }
+
+        return (
+            state.dialogue
+                .lines[
+                    state.dialogue
+                        .index
+                ] ||
+            ""
+        );
+    }
+
+
+    function updateDialogue(
+        dt
+    ) {
+        const dialogue =
+            state.dialogue;
+
+        if (
+            !dialogue
+        ) {
+            return;
+        }
+
+        const line =
+            getCurrentDialogueLine();
+
+        if (
+            dialogue.completeLine
+        ) {
+            dialogue
+                .visibleCharacters =
+                line.length;
+
+            return;
+        }
+
+        dialogue.visibleCharacters =
+            Math.min(
+                line.length,
+
+                dialogue
+                    .visibleCharacters +
+
+                GAME_CONFIG
+                    .dialogueCharactersPerSecond *
+                    dt
+            );
+
+        if (
+            dialogue
+                .visibleCharacters >=
+            line.length
+        ) {
+            dialogue
+                .visibleCharacters =
+                line.length;
+
+            dialogue.completeLine =
+                true;
+        }
+    }
+
+
+    function advanceDialogue() {
+        const dialogue =
+            state.dialogue;
+
+        if (
+            !dialogue
+        ) {
+            return false;
+        }
+
+        const line =
+            getCurrentDialogueLine();
+
+        if (
+            !dialogue.completeLine
+        ) {
+            dialogue
+                .visibleCharacters =
+                line.length;
+
+            dialogue.completeLine =
+                true;
+
+            return true;
+        }
+
+        if (
+            dialogue.index <
+            dialogue.lines.length -
+                1
+        ) {
+            dialogue.index +=
+                1;
+
+            dialogue
+                .visibleCharacters =
+                0;
+
+            dialogue.completeLine =
+                false;
+
+            return true;
+        }
+
+        const onComplete =
+            dialogue.onComplete;
+
+        state.dialogue =
+            null;
+
+        if (
+            typeof onComplete ===
+            "function"
+        ) {
+            onComplete();
+        }
+
+        return true;
+    }
+
+
+    /* ============================================================
+       CONTROLE / MOVIMENTO
+       ============================================================ */
+
+    function getFacingVector(
+        facing
+    ) {
+        switch (
+            facing
+        ) {
+            case "up":
+                return {
+                    x: 0,
+                    y: -1
+                };
+
+            case "down":
+                return {
+                    x: 0,
+                    y: 1
+                };
+
+            case "left":
+                return {
+                    x: -1,
+                    y: 0
+                };
+
+            case "right":
+            default:
+                return {
+                    x: 1,
+                    y: 0
+                };
+        }
+    }
+
+
+    function getMovementInputVector() {
+        let x =
+            0;
+
+        let y =
+            0;
+
+        if (
+            state.keys.has(
+                "KeyA"
+            ) ||
+            state.keys.has(
+                "ArrowLeft"
+            )
+        ) {
+            x -=
+                1;
+        }
+
+        if (
+            state.keys.has(
+                "KeyD"
+            ) ||
+            state.keys.has(
+                "ArrowRight"
+            )
+        ) {
+            x +=
+                1;
+        }
+
+        if (
+            state.keys.has(
+                "KeyW"
+            ) ||
+            state.keys.has(
+                "ArrowUp"
+            )
+        ) {
+            y -=
+                1;
+        }
+
+        if (
+            state.keys.has(
+                "KeyS"
+            ) ||
+            state.keys.has(
+                "ArrowDown"
+            )
+        ) {
+            y +=
+                1;
+        }
+
+        return normalize(
+            x,
+            y
+        );
+    }
+
+
+    function updatePlayerFacingFromVector(
+        vector
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            !vector
+        ) {
+            return;
+        }
+
+        if (
+            Math.abs(
+                vector.x
+            ) >
+            Math.abs(
+                vector.y
+            )
+        ) {
+            if (
+                vector.x >
+                0
+            ) {
+                player.facing =
+                    "right";
+            }
+
+            if (
+                vector.x <
+                0
+            ) {
+                player.facing =
+                    "left";
+            }
+        } else {
+            if (
+                vector.y >
+                0
+            ) {
+                player.facing =
+                    "down";
+            }
+
+            if (
+                vector.y <
+                0
+            ) {
+                player.facing =
+                    "up";
+            }
+        }
+    }
+
+
+    function isPlayerControlBlocked() {
+        const player =
+            state.player;
+
+        if (
+            !state.running ||
+            !player ||
+            player.dead
+        ) {
+            return true;
+        }
+
+        return Boolean(
+            state.paused ||
+            state.activePanel ||
+            state.dialogue ||
+            state.travel ||
+            state.battle ||
+            state.cutscene ||
+            state.fragmentMinigame
+                ?.active ||
+            state.deathState
+        );
+    }
+
+
+    function moveCircleWithCollision(
+        entity,
+        dx,
+        dy,
+        radius,
+        world =
+            state.world
+    ) {
+        if (
+            !entity ||
+            !world
+        ) {
+            return false;
+        }
+
+        let moved =
+            false;
+
+        const safeRadius =
+            Math.max(
+                1,
+                finiteNumber(
+                    radius,
+                    16
+                )
+            );
+
+        const targetX =
+            clamp(
+                entity.x +
+                    finiteNumber(
+                        dx
+                    ),
+                safeRadius,
+                world.width -
+                    safeRadius
+            );
+
+        if (
+            !isPositionBlocked(
+                targetX,
+                entity.y,
+                safeRadius,
+                world
+            )
+        ) {
+            entity.x =
+                targetX;
+
+            moved =
+                true;
+        }
+
+        const targetY =
+            clamp(
+                entity.y +
+                    finiteNumber(
+                        dy
+                    ),
+                safeRadius,
+                world.height -
+                    safeRadius
+            );
+
+        if (
+            !isPositionBlocked(
+                entity.x,
+                targetY,
+                safeRadius,
+                world
+            )
+        ) {
+            entity.y =
+                targetY;
+
+            moved =
+                true;
+        }
+
+        return moved;
+    }
+
+
+    function moveEntityIgnoringSoftCollision(
+        entity,
+        dx,
+        dy
+    ) {
+        if (
+            !entity ||
+            !state.world
+        ) {
+            return false;
+        }
+
+        const safe =
+            findSafePosition(
+                entity.x +
+                    finiteNumber(
+                        dx
+                    ),
+
+                entity.y +
+                    finiteNumber(
+                        dy
+                    ),
+
+                entity.radius ||
+                    16,
+
+                state.world
+            );
+
+        entity.x =
+            safe.x;
+
+        entity.y =
+            safe.y;
+
+        return true;
+    }
+
+
+    /* ============================================================
+       EXAUSTÃO
+       ============================================================ */
+
+    function getExhaustionSpeedMultiplier(
+        player =
+            state.player
+    ) {
+        if (
+            !player
+        ) {
+            return 1;
+        }
+
+        const ratio =
+            getExhaustionRatio(
+                player
+            );
+
+        const start =
+            GAME_CONFIG
+                .exhaustionWarningRatio;
+
+        if (
+            ratio <=
+            start
+        ) {
+            return 1;
+        }
+
+        const t =
+            clamp(
+                (
+                    ratio -
+                    start
+                ) /
+                Math.max(
+                    0.001,
+                    1 -
+                    start
+                ),
+                0,
+                1
+            );
+
+        return (
+            1 -
+            GAME_CONFIG
+                .exhaustionMaxSpeedPenalty *
+                t
+        );
+    }
+
+
+    function getExhaustionDamageMultiplier(
+        player =
+            state.player
+    ) {
+        if (
+            !player
+        ) {
+            return 1;
+        }
+
+        const ratio =
+            getExhaustionRatio(
+                player
+            );
+
+        const start =
+            GAME_CONFIG
+                .exhaustionWarningRatio;
+
+        if (
+            ratio <=
+            start
+        ) {
+            return 1;
+        }
+
+        const t =
+            clamp(
+                (
+                    ratio -
+                    start
+                ) /
+                Math.max(
+                    0.001,
+                    1 -
+                    start
+                ),
+                0,
+                1
+            );
+
+        return (
+            1 -
+            GAME_CONFIG
+                .exhaustionMaxDamagePenalty *
+                t
+        );
+    }
+
+
+    function changeExhaustion(
+        amount,
+        player =
+            state.player
+    ) {
+        if (
+            !player
+        ) {
+            return 0;
+        }
+
+        player.exhaustion =
+            clamp(
+                finiteNumber(
+                    player.exhaustion,
+                    0
+                ) +
+                finiteNumber(
+                    amount,
+                    0
+                ),
+
+                0,
+
+                player.maxExhaustion
+            );
+
+        return player.exhaustion;
+    }
+
+
+    function updateSurvival(
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            player.dead ||
+            (
+                state.houseMode &&
+                player.resting
+                    ?.active
+            )
+        ) {
+            return;
+        }
+
+        const gain =
+            GAME_CONFIG
+                .exhaustionGainPerSecond *
+            finiteNumber(
+                player
+                    .exhaustionGainMultiplier,
+                1
+            ) *
+            dt;
+
+        changeExhaustion(
+            gain,
+            player
+        );
+
+        const ratio =
+            getExhaustionRatio(
+                player
+            );
+
+        if (
+            ratio >=
+                GAME_CONFIG
+                    .exhaustionCriticalRatio &&
+            state.time -
+                gameplayRuntime
+                    .lastExhaustionWarningAt >
+                12
+        ) {
+            gameplayRuntime
+                .lastExhaustionWarningAt =
+                state.time;
+
+            pushNotification(
+                "EXAUSTÃO ALTA",
+                "Coma ou descanse. Seu corpo começa a perder rendimento.",
+                "warning",
+                3
+            );
+        }
+    }
+
+
+    function updatePlayerMovement(
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            isPlayerControlBlocked() ||
+            player.dashRuntime
+                ?.active
+        ) {
+            return;
+        }
+
+        const vector =
+            getMovementInputVector();
+
+        if (
+            vector.x ===
+                0 &&
+            vector.y ===
+                0
+        ) {
+            player.visual.idleTime +=
+                dt;
+
+            return;
+        }
+
+        updatePlayerFacingFromVector(
+            vector
+        );
+
+        let speed =
+            player.speed *
+            getExhaustionSpeedMultiplier(
+                player
+            );
+
+        if (
+            player.movementSlowTimer >
+            0
+        ) {
+            speed *=
+                player
+                    .movementSlowMultiplier;
+        }
+
+        const moved =
+            moveCircleWithCollision(
+                player,
+
+                vector.x *
+                    speed *
+                    dt,
+
+                vector.y *
+                    speed *
+                    dt,
+
+                player.radius,
+
+                state.world
+            );
+
+        if (
+            moved
+        ) {
+            player.visual.walkTime +=
+                dt;
+
+            player.visual.idleTime =
+                0;
+        }
+    }
+
+
+    /* ============================================================
+       COOLDOWNS / BUFFS
+       ============================================================ */
+
+    function updatePlayerCooldowns(
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        player.attackCooldown =
+            Math.max(
+                0,
+                finiteNumber(
+                    player.attackCooldown
+                ) -
+                dt
+            );
+
+        player.universalDashCooldown =
+            Math.max(
+                0,
+                finiteNumber(
+                    player
+                        .universalDashCooldown
+                ) -
+                dt
+            );
+
+        for (
+            const key of
+            [
+                "q",
+                "r",
+                "f"
+            ]
+        ) {
+            player.skillCooldowns[
+                key
+            ] =
+                Math.max(
+                    0,
+                    finiteNumber(
+                        player
+                            .skillCooldowns[
+                                key
+                            ],
+                        0
+                    ) -
+                    dt
+                );
+        }
+
+        player.hurtAnim =
+            Math.max(
+                0,
+                finiteNumber(
+                    player.hurtAnim
+                ) -
+                dt
+            );
+
+        player.invincible =
+            Math.max(
+                0,
+                finiteNumber(
+                    player.invincible
+                ) -
+                dt
+            );
+
+        if (
+            player.movementSlowTimer >
+            0
+        ) {
+            player.movementSlowTimer =
+                Math.max(
+                    0,
+                    player
+                        .movementSlowTimer -
+                        dt
+                );
+
+            if (
+                player
+                    .movementSlowTimer <=
+                0
+            ) {
+                player
+                    .movementSlowMultiplier =
+                    1;
+            }
+        }
+
+        if (
+            player.poisonEffect
+        ) {
+            player
+                .poisonEffect
+                .timer -=
+                dt;
+
+            player
+                .poisonEffect
+                .tickTimer -=
+                dt;
+
+            if (
+                player
+                    .poisonEffect
+                    .tickTimer <=
+                0
+            ) {
+                player
+                    .poisonEffect
+                    .tickTimer =
+                    0.8;
+
+                applyDamageToPlayer(
+                    player
+                        .poisonEffect
+                        .damage,
+                    {
+                        type:
+                            "poison"
+                    }
+                );
+            }
+
+            if (
+                player
+                    .poisonEffect
+                    .timer <=
+                0
+            ) {
+                player.poisonEffect =
+                    null;
+            }
+        }
+    }
+
+
+    function addOrRefreshPotionBuff(
+        type,
+        multiplier,
+        duration
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return false;
+        }
+
+        player.activePotionBuffs =
+            safeArray(
+                player
+                    .activePotionBuffs
+            );
+
+        const existing =
+            player
+                .activePotionBuffs
+                .find(
+                    buff =>
+                        buff.type ===
+                        type
+                );
+
+        if (
+            existing
+        ) {
+            existing.multiplier =
+                Math.max(
+                    existing.multiplier,
+                    finiteNumber(
+                        multiplier,
+                        1
+                    )
+                );
+
+            existing.timer =
+                Math.max(
+                    existing.timer,
+                    finiteNumber(
+                        duration,
+                        1
+                    )
+                );
+
+            recalculatePlayerStats(
+                player
+            );
+
+            return true;
+        }
+
+        if (
+            player
+                .activePotionBuffs
+                .length >=
+            MAX_ACTIVE_POTION_BUFFS
+        ) {
+            player
+                .activePotionBuffs
+                .sort(
+                    (
+                        a,
+                        b
+                    ) =>
+                        finiteNumber(
+                            a.timer
+                        ) -
+                        finiteNumber(
+                            b.timer
+                        )
+                );
+
+            player
+                .activePotionBuffs
+                .shift();
+        }
+
+        player
+            .activePotionBuffs
+            .push({
+                type,
+
+                multiplier:
+                    Math.max(
+                        0.1,
+                        finiteNumber(
+                            multiplier,
+                            1
+                        )
+                    ),
+
+                timer:
+                    Math.max(
+                        0.1,
+                        finiteNumber(
+                            duration,
+                            1
+                        )
+                    )
+            });
+
+        recalculatePlayerStats(
+            player
+        );
+
+        return true;
+    }
+
+
+    function addClassBuff(
+        buff
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return false;
+        }
+
+        player.classBuffs =
+            safeArray(
+                player.classBuffs
+            );
+
+        const existing =
+            player.classBuffs
+                .find(
+                    item =>
+                        item.type ===
+                        buff.type
+                );
+
+        if (
+            existing
+        ) {
+            Object.assign(
+                existing,
+                buff
+            );
+
+            recalculatePlayerStats(
+                player
+            );
+
+            return true;
+        }
+
+        player.classBuffs.push({
+            ...buff
+        });
+
+        recalculatePlayerStats(
+            player
+        );
+
+        return true;
+    }
+
+
+    function updatePotionBuffs(
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        let changed =
+            false;
+
+        for (
+            const buff of
+            safeArray(
+                player
+                    .activePotionBuffs
+            )
+        ) {
+            buff.timer -=
+                dt;
+        }
+
+        const before =
+            safeArray(
+                player
+                    .activePotionBuffs
+            ).length;
+
+        player.activePotionBuffs =
+            safeArray(
+                player
+                    .activePotionBuffs
+            )
+                .filter(
+                    buff =>
+                        buff.timer >
+                        0
+                );
+
+        if (
+            before !==
+            player
+                .activePotionBuffs
+                .length
+        ) {
+            changed =
+                true;
+        }
+
+        for (
+            const buff of
+            safeArray(
+                player.classBuffs
+            )
+        ) {
+            buff.timer -=
+                dt;
+        }
+
+        const classBefore =
+            safeArray(
+                player.classBuffs
+            ).length;
+
+        player.classBuffs =
+            safeArray(
+                player.classBuffs
+            )
+                .filter(
+                    buff =>
+                        buff.timer >
+                        0
+                );
+
+        if (
+            classBefore !==
+            player.classBuffs.length
+        ) {
+            changed =
+                true;
+        }
+
+        if (
+            changed
+        ) {
+            recalculatePlayerStats(
+                player
+            );
+        }
+    }
+
+
+    /* ============================================================
+       USAR ITEM
+       ============================================================ */
+
+    function useInventoryItem(
+        itemId
+    ) {
+        const player =
+            state.player;
+
+        const item =
+            ITEMS[
+                itemId
+            ];
+
+        if (
+            !player ||
+            !item ||
+            getRealItemCount(
+                itemId,
+                player
+            ) <=
+                0
+        ) {
+            return false;
+        }
+
+        if (
+            item.category ===
+            "food"
+        ) {
+            const reduction =
+                Math.abs(
+                    finiteNumber(
+                        item.effect
+                            ?.exhaustion,
+                        0
+                    )
+                );
+
+            if (
+                reduction <=
+                    0 ||
+                player.exhaustion <=
+                    0
+            ) {
+                pushNotification(
+                    "NÃO É NECESSÁRIO",
+                    "Você não está exausto o suficiente para comer agora.",
+                    "info",
+                    1.8
+                );
+
+                return false;
+            }
+
+            if (
+                !removeItem(
+                    itemId,
+                    1,
+                    player
+                )
+            ) {
+                return false;
+            }
+
+            changeExhaustion(
+                -reduction,
+                player
+            );
+
+            pushNotification(
+                item.name
+                    .toUpperCase(),
+                `Exaustão -${Math.round(
+                    reduction
+                )}`,
+                "item",
+                1.7
+            );
+
+            return true;
+        }
+
+        if (
+            item.category !==
+            "potions"
+        ) {
+            return false;
+        }
+
+        const effect =
+            item.effect ||
+            {};
+
+        if (
+            Number.isFinite(
+                effect.hp
+            )
+        ) {
+            if (
+                player.hp >=
+                player.maxHp
+            ) {
+                pushNotification(
+                    "VIDA CHEIA",
+                    "A poção foi preservada.",
+                    "info",
+                    1.5
+                );
+
+                return false;
+            }
+
+            if (
+                !removeItem(
+                    itemId,
+                    1,
+                    player
+                )
+            ) {
+                return false;
+            }
+
+            player.hp =
+                clamp(
+                    player.hp +
+                        effect.hp,
+                    0,
+                    player.maxHp
+                );
+
+            return true;
+        }
+
+        if (
+            Number.isFinite(
+                effect.energy
+            )
+        ) {
+            if (
+                player.energy >=
+                player.maxEnergy
+            ) {
+                pushNotification(
+                    "ENERGIA CHEIA",
+                    "O elixir foi preservado.",
+                    "info",
+                    1.5
+                );
+
+                return false;
+            }
+
+            if (
+                !removeItem(
+                    itemId,
+                    1,
+                    player
+                )
+            ) {
+                return false;
+            }
+
+            player.energy =
+                clamp(
+                    player.energy +
+                        effect.energy,
+                    0,
+                    player.maxEnergy
+                );
+
+            return true;
+        }
+
+        if (
+            effect.buff
+        ) {
+            if (
+                !removeItem(
+                    itemId,
+                    1,
+                    player
+                )
+            ) {
+                return false;
+            }
+
+            addOrRefreshPotionBuff(
+                effect.buff,
+                finiteNumber(
+                    effect.multiplier,
+                    1
+                ),
+                finiteNumber(
+                    effect.duration,
+                    30
+                )
+            );
+
+            pushNotification(
+                item.name
+                    .toUpperCase(),
+                `Efeito ativo por ${Math.round(
+                    effect.duration
+                )}s.`,
+                "item",
+                1.8
+            );
+
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /* ============================================================
+       CÂMERA
+       ============================================================ */
+
+    function updateCamera(
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        state.camera.targetX =
+            player.x;
+
+        state.camera.targetY =
+            player.y;
+
+        const smoothing =
+            1 -
+            Math.pow(
+                0.001,
+                dt
+            );
+
+        state.camera.x =
+            lerp(
+                state.camera.x,
+                state.camera.targetX,
+                smoothing
+            );
+
+        state.camera.y =
+            lerp(
+                state.camera.y,
+                state.camera.targetY,
+                smoothing
+            );
+    }
+
+
+    /* ============================================================
+       DANO
+       ============================================================ */
+
+    function calculateDamageAfterDefense(
+        rawDamage,
+        defense
+    ) {
+        const damage =
+            Math.max(
+                1,
+                finiteNumber(
+                    rawDamage,
+                    1
+                )
+            );
+
+        const safeDefense =
+            Math.max(
+                0,
+                finiteNumber(
+                    defense,
+                    0
+                )
+            );
+
+        const reduction =
+            safeDefense /
+            (
+                safeDefense +
+                80
+            );
+
+        return Math.max(
+            1,
+            Math.round(
+                damage *
+                (
+                    1 -
+                    reduction
+                )
+            )
+        );
+    }
+
+
+    function getPlayerCombatDefense(
+        player =
+            state.player
+    ) {
+        if (
+            !player
+        ) {
+            return 0;
+        }
+
+        let defense =
+            finiteNumber(
+                player.defense,
+                0
+            );
+
+        for (
+            const buff of
+            safeArray(
+                player.classBuffs
+            )
+        ) {
+            defense +=
+                finiteNumber(
+                    buff.defenseBonus,
+                    0
+                );
+        }
+
+        return defense;
+    }
+
+
+    function canBossBecomeAggressive(
+        boss
+    ) {
+        if (
+            !boss ||
+            boss.dead ||
+            isBossDefeated(
+                boss.id
+            )
+        ) {
+            return false;
+        }
+
+        const definition =
+            BOSS_REGISTRY[
+                boss.id
+            ];
+
+        if (
+            definition
+                ?.requiresConfirmation
+        ) {
+            return Boolean(
+                boss.confirmed
+            );
+        }
+
+        if (
+            boss.id ===
+            "monarch"
+        ) {
+            return Boolean(
+                state.player
+                    ?.monarch
+                    ?.battleStarted
+            );
+        }
+
+        if (
+            boss.id ===
+            "vaelkor"
+        ) {
+            return Boolean(
+                state.player
+                    ?.miguelQuest
+                    ?.vaelkorActivated
+            );
+        }
+
+        return true;
+    }
+
+
+    function canBossDamagePlayer(
+        boss
+    ) {
+        if (
+            !canBossBecomeAggressive(
+                boss
+            )
+        ) {
+            return false;
+        }
+
+        return [
+            BOSS_STATE.COMBAT,
+            BOSS_STATE
+                .PHASE_TRANSITION
+        ].includes(
+            boss.state
+        );
+    }
+
+
+    function canPlayerDamageBoss(
+        boss
+    ) {
+        if (
+            !boss ||
+            boss.dead ||
+            isBossDefeated(
+                boss.id
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            boss.id ===
+                "monarch" &&
+            !state.player
+                ?.monarch
+                ?.battleStarted
+        ) {
+            return false;
+        }
+
+        if (
+            boss.id ===
+                "vaelkor" &&
+            !state.player
+                ?.miguelQuest
+                ?.vaelkorActivated
+        ) {
+            return false;
+        }
+
+        const definition =
+            BOSS_REGISTRY[
+                boss.id
+            ];
+
+        if (
+            definition
+                ?.requiresConfirmation &&
+            !boss.confirmed
+        ) {
+            return false;
+        }
+
+        return [
+            BOSS_STATE.CONFIRMED,
+            BOSS_STATE.COMBAT,
+            BOSS_STATE.STUNNED,
+            BOSS_STATE
+                .PHASE_TRANSITION
+        ].includes(
+            boss.state
+        );
+    }
+
+
+    function applyDamageToPlayer(
+        rawDamage,
+        source = {}
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            player.dead
+        ) {
+            return false;
+        }
+
+        if (
+            state.dev
+                ?.cheats
+                ?.invincible
+        ) {
+            return false;
+        }
+
+        if (
+            player.invincible >
+            0
+        ) {
+            return false;
+        }
+
+        if (
+            source.boss &&
+            !canBossDamagePlayer(
+                source.boss
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            source.projectile ===
+                true &&
+            source.phaseCompatible !==
+                false &&
+            player.dashRuntime
+                ?.active &&
+            player.dashRuntime
+                .version ===
+                2 &&
+            player.dashRuntime
+                .phaseWindow >
+                0
+        ) {
+            player.dashRuntime
+                .perfectPhaseTriggered =
+                true;
+
+            spawnTransientEffect(
+                "perfectPhase",
+                player.x,
+                player.y,
+                {
+                    duration:
+                        0.5,
+                    radius:
+                        62
+                }
+            );
+
+            pushNotification(
+                "PASSAGEM DO VAZIO",
+                "O projétil atravessou sua sombra.",
+                "special",
+                1.25
+            );
+
+            return false;
+        }
+
+        const damage =
+            calculateDamageAfterDefense(
+                rawDamage,
+                getPlayerCombatDefense(
+                    player
+                )
+            );
+
+        player.hp =
+            Math.max(
+                0,
+                player.hp -
+                    damage
+            );
+
+        player.hurtAnim =
+            0.24;
+
+        state.damageFlash =
+            Math.max(
+                state.damageFlash,
+                0.18
+            );
+
+        state.screenShake =
+            Math.max(
+                state.screenShake,
+                0.16
+            );
+
+        state.screenShakePower =
+            Math.max(
+                state.screenShakePower,
+                Math.min(
+                    12,
+                    damage *
+                        0.25
+                )
+            );
+
+        spawnTransientEffect(
+            "playerHit",
+            player.x,
+            player.y,
+            {
+                duration:
+                    0.35,
+                damage
+            }
+        );
+
+        if (
+            player.hp <=
+            0
+        ) {
+            killPlayer(
+                source
+            );
+        }
+
+        return damage;
+    }
+
+
+    function createAttackToken(
+        prefix =
+            "attack"
+    ) {
+        gameplayRuntime
+            .attackSerial +=
+            1;
+
+        return (
+            `${prefix}_${gameplayRuntime.attackSerial}`
+        );
+    }
+
+
+    /* ============================================================
+       MONARCA — STAGGER
+       ============================================================ */
+
+    function applyMonarchStagger(
+        boss,
+        source = {}
+    ) {
+        if (
+            !boss ||
+            boss.id !==
+                "monarch" ||
+            boss.dead
+        ) {
+            return false;
+        }
+
+        if (
+            boss.state ===
+            BOSS_STATE.STUNNED
+        ) {
+            return false;
+        }
+
+        boss.staggerTokens =
+            boss.staggerTokens ||
+            new Set();
+
+        const token =
+            source.attackToken ||
+            createAttackToken(
+                "monarch_hit"
+            );
+
+        if (
+            boss.staggerTokens.has(
+                token
+            )
+        ) {
+            return false;
+        }
+
+        boss.staggerTokens.add(
+            token
+        );
+
+        if (
+            boss.staggerTokens
+                .size >
+            60
+        ) {
+            boss.staggerTokens.clear();
+            boss.staggerTokens.add(
+                token
+            );
+        }
+
+        const config =
+            boss.definition
+                ?.stagger ||
+            BOSS_REGISTRY
+                .monarch
+                .stagger;
+
+        const amount =
+            source.skillKey
+                ? config.skillValue
+                : config
+                    .basicAttackValue;
+
+        boss.stagger =
+            finiteNumber(
+                boss.stagger,
+                0
+            ) +
+            amount;
+
+        spawnTransientEffect(
+            "monarchCrack",
+            boss.x,
+            boss.y,
+            {
+                duration:
+                    0.55,
+
+                stagger:
+                    boss.stagger,
+
+                threshold:
+                    config.threshold
+            }
+        );
+
+        if (
+            boss.stagger >=
+            config.threshold
+        ) {
+            boss.state =
+                BOSS_STATE
+                    .STUNNED;
+
+            boss.stunnedTimer =
+                config
+                    .stunnedSeconds;
+
+            boss.defense =
+                boss.baseDefense *
+                config
+                    .defenseMultiplierWhileStunned;
+
+            boss.aggro =
+                false;
+
+            if (
+                state.world
+            ) {
+                ensureWorldCombatArrays(
+                    state.world
+                );
+
+                state.world.projectiles =
+                    state.world
+                        .projectiles
+                        .filter(
+                            projectile =>
+                                projectile
+                                    .source !==
+                                boss
+                        );
+
+                state.world.hazards =
+                    state.world
+                        .hazards
+                        .filter(
+                            hazard =>
+                                hazard.source !==
+                                boss
+                        );
+            }
+
+            spawnTransientEffect(
+                "monarchStaggerBreak",
+                boss.x,
+                boss.y,
+                {
+                    duration:
+                        1,
+                    radius:
+                        110
+                }
+            );
+
+            pushNotification(
+                "AS SOMBRAS SE PARTIRAM",
+                "O Monarca está vulnerável por alguns instantes.",
+                "special",
+                2.2
+            );
+        }
+
+        return true;
+    }
+
+
+    function applyDamageToEnemy(
+        enemy,
+        rawDamage,
+        source = {}
+    ) {
+        if (
+            !enemy ||
+            enemy.dead
+        ) {
+            return false;
+        }
+
+        const isBoss =
+            Boolean(
+                BOSS_REGISTRY[
+                    enemy.id
+                ]
+            );
+
+        if (
+            isBoss &&
+            !canPlayerDamageBoss(
+                enemy
+            )
+        ) {
+            return false;
+        }
+
+        const playerMultiplier =
+            (
+                source.player ||
+                source.owner ===
+                    "player" ||
+                source.playerAttack
+            )
+                ? getExhaustionDamageMultiplier(
+                    state.player
+                )
+                : 1;
+
+        const damage =
+            calculateDamageAfterDefense(
+                finiteNumber(
+                    rawDamage,
+                    1
+                ) *
+                playerMultiplier,
+
+                enemy.defense
+            );
+
+        enemy.hp =
+            Math.max(
+                0,
+                enemy.hp -
+                    damage
+            );
+
+        enemy.hurtAnim =
+            0.2;
+
+        spawnTransientEffect(
+            enemy.id ===
+                "vaelkor"
+                ? "voidHit"
+                : "hitSpark",
+
+            enemy.x,
+            enemy.y,
+
+            {
+                duration:
+                    0.28,
+
+                damage,
+
+                color:
+                    enemy.definition
+                        ?.aura ||
+                    null
+            }
+        );
+
+        if (
+            enemy.id ===
+            "monarch"
+        ) {
+            applyMonarchStagger(
+                enemy,
+                source
+            );
+        }
+
+        if (
+            enemy.hp <=
+            0
+        ) {
+            killEnemy(
+                enemy,
+                source
+            );
+        }
+
+        return damage;
+    }
+
+
+    /* ============================================================
+       PROJÉTEIS / HAZARDS
+       ============================================================ */
+
+    function ensureWorldCombatArrays(
+        world =
+            state.world
+    ) {
+        if (
+            !world
+        ) {
+            return null;
+        }
+
+        world.projectiles =
+            safeArray(
+                world.projectiles
+            );
+
+        world.hazards =
+            safeArray(
+                world.hazards
+            );
+
+        world.groundEffects =
+            safeArray(
+                world.groundEffects
+            );
+
+        world.droppedItems =
+            safeArray(
+                world.droppedItems
+            );
+
+        world.bossAttacks =
+            safeArray(
+                world.bossAttacks
+            );
+
+        return world;
+    }
+
+
+    function createProjectile(
+        config = {}
+    ) {
+        const world =
+            ensureWorldCombatArrays();
+
+        if (
+            !world
+        ) {
+            return null;
+        }
+
+        const direction =
+            normalize(
+                finiteNumber(
+                    config.dx,
+                    1
+                ),
+                finiteNumber(
+                    config.dy,
+                    0
+                )
+            );
+
+        const projectile = {
+            id:
+                config.id ||
+                `projectile_${Date.now()}_${Math.random()
+                    .toString(36)
+                    .slice(2)}`,
+
+            owner:
+                config.owner ||
+                "enemy",
+
+            source:
+                config.source ||
+                null,
+
+            attackToken:
+                config.attackToken ||
+                null,
+
+            skillKey:
+                config.skillKey ||
+                null,
+
+            x:
+                finiteNumber(
+                    config.x
+                ),
+
+            y:
+                finiteNumber(
+                    config.y
+                ),
+
+            vx:
+                direction.x *
+                finiteNumber(
+                    config.speed,
+                    250
+                ),
+
+            vy:
+                direction.y *
+                finiteNumber(
+                    config.speed,
+                    250
+                ),
+
+            radius:
+                Math.max(
+                    2,
+                    finiteNumber(
+                        config.radius,
+                        8
+                    )
+                ),
+
+            damage:
+                Math.max(
+                    1,
+                    finiteNumber(
+                        config.damage,
+                        1
+                    )
+                ),
+
+            color:
+                config.color ||
+                "#ffffff",
+
+            life:
+                Math.max(
+                    0.05,
+                    finiteNumber(
+                        config.life,
+                        2.5
+                    )
+                ),
+
+            pierce:
+                Boolean(
+                    config.pierce
+                ),
+
+            type:
+                config.type ||
+                "normal",
+
+            phaseCompatible:
+                config.phaseCompatible !==
+                false,
+
+            dead:
+                false,
+
+            hitEntityIds:
+                new Set()
+        };
+
+        world.projectiles.push(
+            projectile
+        );
+
+        return projectile;
+    }
+
+
+    function createHazard(
+        config = {}
+    ) {
+        const world =
+            ensureWorldCombatArrays();
+
+        if (
+            !world
+        ) {
+            return null;
+        }
+
+        const hazard = {
+            id:
+                config.id ||
+                `hazard_${Date.now()}_${Math.random()
+                    .toString(36)
+                    .slice(2)}`,
+
+            type:
+                config.type ||
+                "circle",
+
+            source:
+                config.source ||
+                null,
+
+            x:
+                finiteNumber(
+                    config.x
+                ),
+
+            y:
+                finiteNumber(
+                    config.y
+                ),
+
+            radius:
+                Math.max(
+                    1,
+                    finiteNumber(
+                        config.radius,
+                        60
+                    )
+                ),
+
+            width:
+                Math.max(
+                    1,
+                    finiteNumber(
+                        config.width,
+                        80
+                    )
+                ),
+
+            length:
+                Math.max(
+                    1,
+                    finiteNumber(
+                        config.length,
+                        500
+                    )
+                ),
+
+            angle:
+                finiteNumber(
+                    config.angle,
+                    0
+                ),
+
+            damage:
+                Math.max(
+                    1,
+                    finiteNumber(
+                        config.damage,
+                        1
+                    )
+                ),
+
+            telegraph:
+                Math.max(
+                    0,
+                    finiteNumber(
+                        config.telegraph,
+                        0.6
+                    )
+                ),
+
+            activeDuration:
+                Math.max(
+                    0.05,
+                    finiteNumber(
+                        config.activeDuration,
+                        0.35
+                    )
+                ),
+
+            timer:
+                0,
+
+            active:
+                false,
+
+            damageApplied:
+                false,
+
+            phaseCompatible:
+                false,
+
+            dead:
+                false,
+
+            color:
+                config.color ||
+                "#80668f"
+        };
+
+        world.hazards.push(
+            hazard
+        );
+
+        return hazard;
+    }
+
+
+    function projectileHitsSolid(
+        projectile
+    ) {
+        const world =
+            state.world;
+
+        if (
+            !world
+        ) {
+            return false;
+        }
+
+        for (
+            const obstacle of
+            safeArray(
+                world.obstacles
+            )
+        ) {
+            if (
+                !obstacle.solid
+            ) {
+                continue;
+            }
+
+            if (
+                obstacle.shape ===
+                "circle"
+            ) {
+                if (
+                    circleCircleCollision(
+                        projectile.x,
+                        projectile.y,
+                        projectile.radius,
+
+                        obstacle.x,
+                        obstacle.y,
+                        obstacle.radius
+                    )
+                ) {
+                    return true;
+                }
+            } else if (
+                circleRectCollision(
+                    projectile.x,
+                    projectile.y,
+                    projectile.radius,
+                    obstacle
+                )
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    function getAllCombatEnemies(
+        world =
+            state.world
+    ) {
+        if (
+            !world
+        ) {
+            return [];
+        }
+
+        return [
+            ...safeArray(
+                world.enemies
+            ),
+
+            ...safeArray(
+                world.bosses
+            )
+        ];
+    }
+
+
+    function applyProjectileSecondaryEffect(
+        projectile
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            !projectile ||
+            player.dead
+        ) {
+            return;
+        }
+
+        if (
+            projectile.type ===
+            "web"
+        ) {
+            player.movementSlowTimer =
+                1.8;
+
+            player.movementSlowMultiplier =
+                0.62;
+        }
+
+        if (
+            projectile.type ===
+            "root"
+        ) {
+            player.movementSlowTimer =
+                1.45;
+
+            player.movementSlowMultiplier =
+                0.48;
+        }
+    }
+
+
+    function updateProjectiles(
+        dt
+    ) {
+        const world =
+            ensureWorldCombatArrays();
+
+        if (
+            !world
+        ) {
+            return;
+        }
+
+        for (
+            const projectile of
+            world.projectiles
+        ) {
+            if (
+                projectile.dead
+            ) {
+                continue;
+            }
+
+            projectile.life -=
+                dt;
+
+            if (
+                projectile.life <=
+                0
+            ) {
+                projectile.dead =
+                    true;
+
+                continue;
+            }
+
+            projectile.x +=
+                projectile.vx *
+                dt;
+
+            projectile.y +=
+                projectile.vy *
+                dt;
+
+            if (
+                projectile.x <
+                    -80 ||
+                projectile.y <
+                    -80 ||
+                projectile.x >
+                    world.width +
+                        80 ||
+                projectile.y >
+                    world.height +
+                        80
+            ) {
+                projectile.dead =
+                    true;
+
+                continue;
+            }
+
+            if (
+                projectileHitsSolid(
+                    projectile
+                )
+            ) {
+                projectile.dead =
+                    true;
+
+                spawnTransientEffect(
+                    "projectileImpact",
+                    projectile.x,
+                    projectile.y,
+                    {
+                        duration:
+                            0.25,
+                        color:
+                            projectile.color
+                    }
+                );
+
+                continue;
+            }
+
+            if (
+                projectile.owner ===
+                "player"
+            ) {
+                for (
+                    const enemy of
+                    getAllCombatEnemies(
+                        world
+                    )
+                ) {
+                    if (
+                        enemy.dead
+                    ) {
+                        continue;
+                    }
+
+                    const entityKey =
+                        enemy.entityId ||
+                        enemy.id;
+
+                    if (
+                        projectile
+                            .hitEntityIds
+                            .has(
+                                entityKey
+                            )
+                    ) {
+                        continue;
+                    }
+
+                    if (
+                        !circleCircleCollision(
+                            projectile.x,
+                            projectile.y,
+                            projectile.radius,
+
+                            enemy.x,
+                            enemy.y,
+                            enemy.radius
+                        )
+                    ) {
+                        continue;
+                    }
+
+                    projectile
+                        .hitEntityIds
+                        .add(
+                            entityKey
+                        );
+
+                    const result =
+                        applyDamageToEnemy(
+                            enemy,
+                            projectile.damage,
+                            {
+                                projectile,
+
+                                player:
+                                    state.player,
+
+                                playerAttack:
+                                    true,
+
+                                attackToken:
+                                    projectile
+                                        .attackToken,
+
+                                skillKey:
+                                    projectile
+                                        .skillKey
+                            }
+                        );
+
+                    if (
+                        result !==
+                            false &&
+                        !projectile.pierce
+                    ) {
+                        projectile.dead =
+                            true;
+                    }
+
+                    if (
+                        !projectile.pierce
+                    ) {
+                        break;
+                    }
+                }
+            } else {
+                const player =
+                    state.player;
+
+                if (
+                    player &&
+                    !player.dead &&
+                    circleCircleCollision(
+                        projectile.x,
+                        projectile.y,
+                        projectile.radius,
+
+                        player.x,
+                        player.y,
+                        player.radius
+                    )
+                ) {
+                    const result =
+                        applyDamageToPlayer(
+                            projectile.damage,
+                            {
+                                projectile:
+                                    true,
+
+                                phaseCompatible:
+                                    projectile
+                                        .phaseCompatible,
+
+                                projectileObject:
+                                    projectile,
+
+                                boss:
+                                    projectile
+                                        .source &&
+                                    BOSS_REGISTRY[
+                                        projectile
+                                            .source
+                                            .id
+                                    ]
+                                        ? projectile
+                                            .source
+                                        : null,
+
+                                enemy:
+                                    projectile
+                                        .source &&
+                                    !BOSS_REGISTRY[
+                                        projectile
+                                            .source
+                                            .id
+                                    ]
+                                        ? projectile
+                                            .source
+                                        : null
+                            }
+                        );
+
+                    if (
+                        result !==
+                        false
+                    ) {
+                        applyProjectileSecondaryEffect(
+                            projectile
+                        );
+                    }
+
+                    if (
+                        result !==
+                            false ||
+                        player
+                            .dashRuntime
+                            ?.perfectPhaseTriggered
+                    ) {
+                        projectile.dead =
+                            true;
+                    }
+                }
+            }
+        }
+
+        world.projectiles =
+            world.projectiles
+                .filter(
+                    projectile =>
+                        !projectile.dead
+                );
+    }
+
+
+    function pointToSegmentDistance(
+        px,
+        py,
+        x1,
+        y1,
+        x2,
+        y2
+    ) {
+        const vx =
+            x2 -
+            x1;
+
+        const vy =
+            y2 -
+            y1;
+
+        const wx =
+            px -
+            x1;
+
+        const wy =
+            py -
+            y1;
+
+        const lengthSquared =
+            vx * vx +
+            vy * vy;
+
+        if (
+            lengthSquared <=
+            0.00001
+        ) {
+            return distance(
+                px,
+                py,
+                x1,
+                y1
+            );
+        }
+
+        const t =
+            clamp(
+                (
+                    wx *
+                        vx +
+                    wy *
+                        vy
+                ) /
+                lengthSquared,
+
+                0,
+                1
+            );
+
+        const projectionX =
+            x1 +
+            vx *
+                t;
+
+        const projectionY =
+            y1 +
+            vy *
+                t;
+
+        return distance(
+            px,
+            py,
+            projectionX,
+            projectionY
+        );
+    }
+
+
+    function playerInsideHazard(
+        hazard,
+        player =
+            state.player
+    ) {
+        if (
+            !hazard ||
+            !player
+        ) {
+            return false;
+        }
+
+        if (
+            hazard.type ===
+            "beam"
+        ) {
+            const x2 =
+                hazard.x +
+                Math.cos(
+                    hazard.angle
+                ) *
+                hazard.length;
+
+            const y2 =
+                hazard.y +
+                Math.sin(
+                    hazard.angle
+                ) *
+                hazard.length;
+
+            return (
+                pointToSegmentDistance(
+                    player.x,
+                    player.y,
+
+                    hazard.x,
+                    hazard.y,
+
+                    x2,
+                    y2
+                ) <=
+                hazard.width /
+                    2 +
+                player.radius
+            );
+        }
+
+        return (
+            distance(
+                player.x,
+                player.y,
+                hazard.x,
+                hazard.y
+            ) <=
+            hazard.radius +
+                player.radius
+        );
+    }
+
+
+    function updateHazards(
+        dt
+    ) {
+        const world =
+            ensureWorldCombatArrays();
+
+        if (
+            !world
+        ) {
+            return;
+        }
+
+        for (
+            const hazard of
+            world.hazards
+        ) {
+            if (
+                hazard.dead
+            ) {
+                continue;
+            }
+
+            hazard.timer +=
+                dt;
+
+            if (
+                !hazard.active &&
+                hazard.timer >=
+                    hazard.telegraph
+            ) {
+                hazard.active =
+                    true;
+
+                hazard.timer =
+                    0;
+
+                hazard.damageApplied =
+                    false;
+
+                spawnTransientEffect(
+                    "hazardActivate",
+                    hazard.x,
+                    hazard.y,
+                    {
+                        duration:
+                            0.25,
+
+                        radius:
+                            hazard.radius,
+
+                        color:
+                            hazard.color
+                    }
+                );
+            }
+
+            if (
+                !hazard.active
+            ) {
+                continue;
+            }
+
+            const player =
+                state.player;
+
+            if (
+                !hazard.damageApplied &&
+                player &&
+                !player.dead &&
+                playerInsideHazard(
+                    hazard,
+                    player
+                )
+            ) {
+                applyDamageToPlayer(
+                    hazard.damage,
+                    {
+                        boss:
+                            hazard.source &&
+                            BOSS_REGISTRY[
+                                hazard
+                                    .source
+                                    .id
+                            ]
+                                ? hazard.source
+                                : null,
+
+                        hazard:
+                            true,
+
+                        phaseCompatible:
+                            false
+                    }
+                );
+
+                hazard.damageApplied =
+                    true;
+            }
+
+            if (
+                hazard.timer >=
+                hazard.activeDuration
+            ) {
+                hazard.dead =
+                    true;
+            }
+        }
+
+        world.hazards =
+            world.hazards
+                .filter(
+                    hazard =>
+                        !hazard.dead
+                );
+    }
+
+
+    /* ============================================================
+       ATAQUE BÁSICO
+       ============================================================ */
+
+    function getPlayerAimVector() {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return {
+                x: 1,
+                y: 0
+            };
+        }
+
+        const dx =
+            finiteNumber(
+                state.pointer
+                    .worldX,
+                player.x +
+                    1
+            ) -
+            player.x;
+
+        const dy =
+            finiteNumber(
+                state.pointer
+                    .worldY,
+                player.y
+            ) -
+            player.y;
+
+        const aim =
+            normalize(
+                dx,
+                dy
+            );
+
+        if (
+            aim.x ===
+                0 &&
+            aim.y ===
+                0
+        ) {
+            return getFacingVector(
+                player.facing
+            );
+        }
+
+        return aim;
+    }
+
+
+    function angleBetween(
+        x1,
+        y1,
+        x2,
+        y2
+    ) {
+        return Math.atan2(
+            y2 -
+                y1,
+            x2 -
+                x1
+        );
+    }
+
+
+    function performMeleeArcAttack(
+        player,
+        aim,
+        range,
+        arc,
+        damage,
+        source = {}
+    ) {
+        const attackAngle =
+            Math.atan2(
+                aim.y,
+                aim.x
+            );
+
+        let hits =
+            0;
+
+        for (
+            const enemy of
+            getAllCombatEnemies()
+        ) {
+            if (
+                enemy.dead
+            ) {
+                continue;
+            }
+
+            const dist =
+                distance(
+                    player.x,
+                    player.y,
+                    enemy.x,
+                    enemy.y
+                );
+
+            if (
+                dist >
+                range +
+                    enemy.radius
+            ) {
+                continue;
+            }
+
+            const enemyAngle =
+                angleBetween(
+                    player.x,
+                    player.y,
+                    enemy.x,
+                    enemy.y
+                );
+
+            const difference =
+                Math.abs(
+                    Math.atan2(
+                        Math.sin(
+                            enemyAngle -
+                            attackAngle
+                        ),
+                        Math.cos(
+                            enemyAngle -
+                            attackAngle
+                        )
+                    )
+                );
+
+            if (
+                difference <=
+                arc /
+                    2
+            ) {
+                const result =
+                    applyDamageToEnemy(
+                        enemy,
+                        damage,
+                        {
+                            melee:
+                                true,
+
+                            player,
+
+                            playerAttack:
+                                true,
+
+                            ...source
+                        }
+                    );
+
+                if (
+                    result !==
+                    false
+                ) {
+                    hits +=
+                        1;
+                }
+            }
+        }
+
+        return hits;
+    }
+
+
+    function damageEnemiesInRadius(
+        x,
+        y,
+        radius,
+        damage,
+        source = {}
+    ) {
+        let hits =
+            0;
+
+        for (
+            const enemy of
+            getAllCombatEnemies()
+        ) {
+            if (
+                enemy.dead
+            ) {
+                continue;
+            }
+
+            if (
+                distance(
+                    x,
+                    y,
+                    enemy.x,
+                    enemy.y
+                ) <=
+                radius +
+                    enemy.radius
+            ) {
+                const result =
+                    applyDamageToEnemy(
+                        enemy,
+                        damage,
+                        {
+                            area:
+                                true,
+
+                            player:
+                                state.player,
+
+                            playerAttack:
+                                true,
+
+                            ...source
+                        }
+                    );
+
+                if (
+                    result !==
+                    false
+                ) {
+                    hits +=
+                        1;
+                }
+            }
+        }
+
+        return hits;
+    }
+
+
+    function performSplashAttack(
+        player,
+        aim,
+        attack,
+        source = {}
+    ) {
+        const x =
+            player.x +
+            aim.x *
+                attack.range *
+                0.7;
+
+        const y =
+            player.y +
+            aim.y *
+                attack.range *
+                0.7;
+
+        const hits =
+            damageEnemiesInRadius(
+                x,
+                y,
+                attack.radius,
+                player.damage *
+                    1.08,
+                source
+            );
+
+        state.screenShake =
+            Math.max(
+                state.screenShake,
+                0.12
+            );
+
+        state.screenShakePower =
+            Math.max(
+                state.screenShakePower,
+                5
+            );
+
+        spawnTransientEffect(
+            "groundImpact",
+            x,
+            y,
+            {
+                duration:
+                    0.45,
+                radius:
+                    attack.radius
+            }
+        );
+
+        return hits;
+    }
+
+
+    function handleGameplayAttackInput() {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            isPlayerControlBlocked() ||
+            player.attackCooldown >
+                0
+        ) {
+            return false;
+        }
+
+        const character =
+            currentCharacter();
+
+        const attack =
+            character
+                .basicAttack;
+
+        const aim =
+            getPlayerAimVector();
+
+        const attackToken =
+            createAttackToken(
+                "basic"
+            );
+
+        updatePlayerFacingFromVector(
+            aim
+        );
+
+        player.visual.attackTime =
+            0.22;
+
+        switch (
+            attack.type
+        ) {
+            case "projectile":
+                createProjectile({
+                    owner:
+                        "player",
+
+                    source:
+                        player,
+
+                    attackToken,
+
+                    x:
+                        player.x +
+                        aim.x *
+                            24,
+
+                    y:
+                        player.y +
+                        aim.y *
+                            24,
+
+                    dx:
+                        aim.x,
+
+                    dy:
+                        aim.y,
+
+                    speed:
+                        attack.speed,
+
+                    radius:
+                        attack.radius,
+
+                    damage:
+                        player.damage,
+
+                    color:
+                        attack.color,
+
+                    life:
+                        attack.range /
+                        attack.speed
+                });
+
+                player.attackCooldown =
+                    character.id ===
+                    "lirael"
+                        ? 0.31
+                        : 0.42;
+
+                break;
+
+            case "splash":
+                performSplashAttack(
+                    player,
+                    aim,
+                    attack,
+                    {
+                        attackToken
+                    }
+                );
+
+                player.attackCooldown =
+                    0.72;
+
+                break;
+
+            case "riftArc":
+                performMeleeArcAttack(
+                    player,
+                    aim,
+                    attack.range,
+                    attack.arc,
+                    player.damage,
+                    {
+                        attackToken
+                    }
+                );
+
+                player.attackCooldown =
+                    0.42;
+
+                break;
+
+            case "meleeArc":
+            default:
+                performMeleeArcAttack(
+                    player,
+                    aim,
+                    attack.range,
+                    attack.arc,
+                    player.damage,
+                    {
+                        attackToken
+                    }
+                );
+
+                player.attackCooldown =
+                    0.47;
+
+                break;
+        }
+
+        spawnTransientEffect(
+            "basicAttack",
+            player.x,
+            player.y,
+            {
+                duration:
+                    0.3,
+
+                characterId:
+                    character.id,
+
+                aimX:
+                    aim.x,
+
+                aimY:
+                    aim.y
+            }
+        );
+
+        return true;
+    }
+
+
+    /* ============================================================
+       HABILIDADES
+       ============================================================ */
+
+    function canPaySkillCost(
+        skill,
+        player =
+            state.player
+    ) {
+        if (
+            !player ||
+            !skill
+        ) {
+            return false;
+        }
+
+        if (
+            state.dev
+                ?.cheats
+                ?.infiniteEnergy
+        ) {
+            return true;
+        }
+
+        return (
+            player.energy >=
+            finiteNumber(
+                skill.energyCost,
+                0
+            )
+        );
+    }
+
+
+    function paySkillCost(
+        skill,
+        player =
+            state.player
+    ) {
+        if (
+            !player ||
+            !skill
+        ) {
+            return false;
+        }
+
+        if (
+            !state.dev
+                ?.cheats
+                ?.infiniteEnergy
+        ) {
+            player.energy =
+                Math.max(
+                    0,
+                    player.energy -
+                    finiteNumber(
+                        skill.energyCost,
+                        0
+                    )
+                );
+        }
+
+        return true;
+    }
+
+
+    function performForwardSkillMovement(
+        entity,
+        direction,
+        distanceAmount
+    ) {
+        if (
+            !entity ||
+            !state.world
+        ) {
+            return false;
+        }
+
+        const steps =
+            10;
+
+        const step =
+            distanceAmount /
+            steps;
+
+        let movedAny =
+            false;
+
+        for (
+            let index = 0;
+            index < steps;
+            index += 1
+        ) {
+            const moved =
+                moveCircleWithCollision(
+                    entity,
+                    direction.x *
+                        step,
+                    direction.y *
+                        step,
+                    entity.radius,
+                    state.world
+                );
+
+            if (
+                !moved
+            ) {
+                break;
+            }
+
+            movedAny =
+                true;
+        }
+
+        return movedAny;
+    }
+
+
+    function executeClassSkill(
+        key,
+        skill,
+        attackToken
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return false;
+        }
+
+        const aim =
+            getPlayerAimVector();
+
+        const id =
+            player.characterId;
+
+        const source = {
+            attackToken,
+            skillKey:
+                key
+        };
+
+        updatePlayerFacingFromVector(
+            aim
+        );
+
+
+        /* KAELION */
+
+        if (
+            id ===
+            "kaelion"
+        ) {
+            if (
+                key ===
+                "q"
+            ) {
+                createProjectile({
+                    owner:
+                        "player",
+
+                    source:
+                        player,
+
+                    attackToken,
+
+                    skillKey:
+                        key,
+
+                    x:
+                        player.x,
+
+                    y:
+                        player.y,
+
+                    dx:
+                        aim.x,
+
+                    dy:
+                        aim.y,
+
+                    speed:
+                        720,
+
+                    radius:
+                        11,
+
+                    damage:
+                        player.damage *
+                        1.45,
+
+                    color:
+                        "#ff9a4d",
+
+                    life:
+                        0.78,
+
+                    pierce:
+                        true
+                });
+
+                spawnTransientEffect(
+                    "kaelionRay",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.45
+                    }
+                );
+
+                return true;
+            }
+
+            if (
+                key ===
+                "r"
+            ) {
+                damageEnemiesInRadius(
+                    player.x,
+                    player.y,
+                    130,
+                    player.damage *
+                        1.35,
+                    source
+                );
+
+                spawnTransientEffect(
+                    "arcaneCircle",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.7,
+                        radius:
+                            130,
+                        color:
+                            "#f09a55"
+                    }
+                );
+
+                return true;
+            }
+
+            if (
+                key ===
+                "f"
+            ) {
+                damageEnemiesInRadius(
+                    player.x,
+                    player.y,
+                    195,
+                    player.damage *
+                        2,
+                    source
+                );
+
+                state.screenShake =
+                    Math.max(
+                        state.screenShake,
+                        0.25
+                    );
+
+                state.screenShakePower =
+                    Math.max(
+                        state.screenShakePower,
+                        9
+                    );
+
+                spawnTransientEffect(
+                    "memoryExplosion",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.9,
+                        radius:
+                            195,
+                        color:
+                            "#ffb16a"
+                    }
+                );
+
+                return true;
+            }
+        }
+
+
+        /* THERON */
+
+        if (
+            id ===
+            "theron"
+        ) {
+            if (
+                key ===
+                "q"
+            ) {
+                performMeleeArcAttack(
+                    player,
+                    aim,
+                    94,
+                    1.15,
+                    player.damage *
+                        1.7,
+                    source
+                );
+
+                spawnTransientEffect(
+                    "guardianStrike",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.4
+                    }
+                );
+
+                return true;
+            }
+
+            if (
+                key ===
+                "r"
+            ) {
+                damageEnemiesInRadius(
+                    player.x,
+                    player.y,
+                    92,
+                    player.damage *
+                        0.55,
+                    source
+                );
+
+                addClassBuff({
+                    type:
+                        "ironStance",
+
+                    timer:
+                        3.5,
+
+                    defenseBonus:
+                        18
+                });
+
+                spawnTransientEffect(
+                    "ironStance",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.7,
+                        radius:
+                            56
+                    }
+                );
+
+                return true;
+            }
+
+            if (
+                key ===
+                "f"
+            ) {
+                performForwardSkillMovement(
+                    player,
+                    aim,
+                    150
+                );
+
+                performMeleeArcAttack(
+                    player,
+                    aim,
+                    92,
+                    1.4,
+                    player.damage *
+                        1.85,
+                    source
+                );
+
+                spawnTransientEffect(
+                    "guardianCharge",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.55
+                    }
+                );
+
+                return true;
+            }
+        }
+
+
+        /* GRUMGAR */
+
+        if (
+            id ===
+            "grumgar"
+        ) {
+            if (
+                key ===
+                "q"
+            ) {
+                const x =
+                    player.x +
+                    aim.x *
+                        52;
+
+                const y =
+                    player.y +
+                    aim.y *
+                        52;
+
+                damageEnemiesInRadius(
+                    x,
+                    y,
+                    75,
+                    player.damage *
+                        1.65,
+                    source
+                );
+
+                spawnTransientEffect(
+                    "crushingBlow",
+                    x,
+                    y,
+                    {
+                        duration:
+                            0.5,
+                        radius:
+                            75
+                    }
+                );
+
+                return true;
+            }
+
+            if (
+                key ===
+                "r"
+            ) {
+                damageEnemiesInRadius(
+                    player.x,
+                    player.y,
+                    145,
+                    player.damage *
+                        0.72,
+                    source
+                );
+
+                for (
+                    const enemy of
+                    getAllCombatEnemies()
+                ) {
+                    if (
+                        enemy.dead ||
+                        enemy.centerLocked
+                    ) {
+                        continue;
+                    }
+
+                    if (
+                        distance(
+                            player.x,
+                            player.y,
+                            enemy.x,
+                            enemy.y
+                        ) <=
+                        145 +
+                            enemy.radius
+                    ) {
+                        const away =
+                            normalize(
+                                enemy.x -
+                                    player.x,
+                                enemy.y -
+                                    player.y
+                            );
+
+                        moveEntityIgnoringSoftCollision(
+                            enemy,
+                            away.x *
+                                58,
+                            away.y *
+                                58
+                        );
+                    }
+                }
+
+                spawnTransientEffect(
+                    "stoneRoar",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.7,
+                        radius:
+                            150
+                    }
+                );
+
+                return true;
+            }
+
+            if (
+                key ===
+                "f"
+            ) {
+                damageEnemiesInRadius(
+                    player.x,
+                    player.y,
+                    185,
+                    player.damage *
+                        2.15,
+                    source
+                );
+
+                state.screenShake =
+                    Math.max(
+                        state.screenShake,
+                        0.32
+                    );
+
+                state.screenShakePower =
+                    Math.max(
+                        state.screenShakePower,
+                        11
+                    );
+
+                spawnTransientEffect(
+                    "earthBreaker",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.9,
+                        radius:
+                            185
+                    }
+                );
+
+                return true;
+            }
+        }
+
+
+        /* LIRAEL */
+
+        if (
+            id ===
+            "lirael"
+        ) {
+            if (
+                key ===
+                "q"
+            ) {
+                player.hp =
+                    clamp(
+                        player.hp +
+                        player.maxHp *
+                            0.18,
+                        0,
+                        player.maxHp
+                    );
+
+                /*
+                    A luz também pulsa ao redor dela.
+                    Assim Q consegue participar do stagger
+                    do Monarca quando ele estiver no alcance.
+                */
+                damageEnemiesInRadius(
+                    player.x,
+                    player.y,
+                    88,
+                    player.damage *
+                        0.45,
+                    source
+                );
+
+                spawnTransientEffect(
+                    "vitalLight",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.8,
+                        radius:
+                            65,
+                        color:
+                            "#f2b3dc"
+                    }
+                );
+
+                return true;
+            }
+
+            if (
+                key ===
+                "r"
+            ) {
+                const angle =
+                    Math.atan2(
+                        aim.y,
+                        aim.x
+                    );
+
+                for (
+                    let index = -1;
+                    index <= 1;
+                    index += 1
+                ) {
+                    const current =
+                        angle +
+                        index *
+                            0.13;
+
+                    createProjectile({
+                        owner:
+                            "player",
+
+                        source:
+                            player,
+
+                        attackToken,
+
+                        skillKey:
+                            key,
+
+                        x:
+                            player.x,
+
+                        y:
+                            player.y,
+
+                        dx:
+                            Math.cos(
+                                current
+                            ),
+
+                        dy:
+                            Math.sin(
+                                current
+                            ),
+
+                        speed:
+                            700,
+
+                        radius:
+                            7,
+
+                        damage:
+                            player.damage *
+                            0.9,
+
+                        color:
+                            "#f2a6db",
+
+                        life:
+                            0.72
+                    });
+                }
+
+                spawnTransientEffect(
+                    "fairyBlast",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.45
+                    }
+                );
+
+                return true;
+            }
+
+            if (
+                key ===
+                "f"
+            ) {
+                damageEnemiesInRadius(
+                    player.x,
+                    player.y,
+                    270,
+                    player.damage *
+                        1.55,
+                    source
+                );
+
+                spawnTransientEffect(
+                    "lightRain",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            1.15,
+                        radius:
+                            270,
+                        color:
+                            "#f2a7d8"
+                    }
+                );
+
+                return true;
+            }
+        }
+
+
+        /* ZEPHYR */
+
+        if (
+            id ===
+            "zephyr"
+        ) {
+            if (
+                key ===
+                "q"
+            ) {
+                performMeleeArcAttack(
+                    player,
+                    aim,
+                    112,
+                    1.05,
+                    player.damage *
+                        1.55,
+                    source
+                );
+
+                spawnTransientEffect(
+                    "adaptiveCut",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.42
+                    }
+                );
+
+                return true;
+            }
+
+            if (
+                key ===
+                "r"
+            ) {
+                damageEnemiesInRadius(
+                    player.x,
+                    player.y,
+                    90,
+                    player.damage *
+                        0.5,
+                    source
+                );
+
+                addClassBuff({
+                    type:
+                        "speed",
+                    timer:
+                        5,
+                    multiplier:
+                        1.12,
+                    source:
+                        "adaptiveForm"
+                });
+
+                addClassBuff({
+                    type:
+                        "damage",
+                    timer:
+                        5,
+                    multiplier:
+                        1.12,
+                    source:
+                        "adaptiveForm"
+                });
+
+                spawnTransientEffect(
+                    "adaptiveForm",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.8,
+                        radius:
+                            70,
+                        color:
+                            "#9b79bd"
+                    }
+                );
+
+                return true;
+            }
+
+            if (
+                key ===
+                "f"
+            ) {
+                performForwardSkillMovement(
+                    player,
+                    aim,
+                    125
+                );
+
+                damageEnemiesInRadius(
+                    player.x,
+                    player.y,
+                    75,
+                    player.damage *
+                        1.1,
+                    source
+                );
+
+                spawnTransientEffect(
+                    "riftStep",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.55
+                    }
+                );
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    function handleGameplaySkillInput(
+        key
+    ) {
+        const player =
+            state.player;
+
+        const normalizedKey =
+            String(
+                key ||
+                ""
+            )
+                .toLowerCase();
+
+        if (
+            !player ||
+            isPlayerControlBlocked()
+        ) {
+            return false;
+        }
+
+        if (
+            ![
+                "q",
+                "r",
+                "f"
+            ].includes(
+                normalizedKey
+            )
+        ) {
+            return false;
+        }
+
+        const skill =
+            getSkill(
+                player.characterId,
+                normalizedKey
+            );
+
+        if (
+            !skill
+        ) {
+            return false;
+        }
+
+        if (
+            !isSkillUnlocked(
+                player,
+                normalizedKey
+            )
+        ) {
+            pushNotification(
+                "HABILIDADE BLOQUEADA",
+
+                normalizedKey ===
+                    "r"
+                    ? "R é desbloqueado no nível 5."
+                    : "F é desbloqueado no nível 10.",
+
+                "warning",
+                1.8
+            );
+
+            return false;
+        }
+
+        if (
+            player.skillCooldowns[
+                normalizedKey
+            ] >
+            0
+        ) {
+            return false;
+        }
+
+        if (
+            !canPaySkillCost(
+                skill,
+                player
+            )
+        ) {
+            if (
+                state.time -
+                gameplayRuntime
+                    .lastEnergyWarningAt >
+                1
+            ) {
+                gameplayRuntime
+                    .lastEnergyWarningAt =
+                    state.time;
+
+                pushNotification(
+                    "ENERGIA INSUFICIENTE",
+                    "Você não possui Energia suficiente.",
+                    "warning",
+                    1.5
+                );
+            }
+
+            return false;
+        }
+
+        const attackToken =
+            createAttackToken(
+                `skill_${normalizedKey}`
+            );
+
+        const success =
+            executeClassSkill(
+                normalizedKey,
+                skill,
+                attackToken
+            );
+
+        if (
+            !success
+        ) {
+            return false;
+        }
+
+        paySkillCost(
+            skill,
+            player
+        );
+
+        player.skillCooldowns[
+            normalizedKey
+        ] =
+            skill.cooldown;
+
+        player.visual.attackTime =
+            0.28;
+
+        return true;
+    }
+
+
+    /* ============================================================
+       DASH
+       ============================================================ */
+
+    function canUseDash(
+        player =
+            state.player
+    ) {
+        if (
+            !player ||
+            isPlayerControlBlocked()
+        ) {
+            return false;
+        }
+
+        const config =
+            getDashConfig(
+                player
+            );
+
+        if (
+            !config ||
+            player.universalDashCooldown >
+                0 ||
+            player.dashRuntime
+                ?.active
+        ) {
+            return false;
+        }
+
+        if (
+            !state.dev
+                ?.cheats
+                ?.infiniteEnergy &&
+            player.energy <
+            config.energyCost
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    function handleGameplayDashInput() {
+        const player =
+            state.player;
+
+        if (
+            !canUseDash(
+                player
+            )
+        ) {
+            const config =
+                player
+                    ? getDashConfig(
+                        player
+                    )
+                    : null;
+
+            if (
+                player &&
+                config &&
+                player.energy <
+                    config.energyCost &&
+                state.time -
+                    gameplayRuntime
+                        .lastEnergyWarningAt >
+                    1
+            ) {
+                gameplayRuntime
+                    .lastEnergyWarningAt =
+                    state.time;
+
+                pushNotification(
+                    "ENERGIA INSUFICIENTE",
+                    "Você precisa de Energia para usar o Dash.",
+                    "warning",
+                    1.4
+                );
+            }
+
+            return false;
+        }
+
+        const config =
+            getDashConfig(
+                player
+            );
+
+        const version =
+            getDashVersion(
+                player
+            );
+
+        let direction =
+            getMovementInputVector();
+
+        if (
+            direction.x ===
+                0 &&
+            direction.y ===
+                0
+        ) {
+            direction =
+                getFacingVector(
+                    player.facing
+                );
+        }
+
+        if (
+            !state.dev
+                ?.cheats
+                ?.infiniteEnergy
+        ) {
+            player.energy =
+                Math.max(
+                    0,
+                    player.energy -
+                    config.energyCost
+                );
+        }
+
+        player
+            .universalDashCooldown =
+            config.cooldown;
+
+        player.dashRuntime = {
+            active:
+                true,
+
+            version,
+
+            config,
+
+            direction,
+
+            elapsed:
+                0,
+
+            duration:
+                config.duration,
+
+            remainingDistance:
+                config.distance,
+
+            phaseWindow:
+                version ===
+                    2
+                    ? config
+                        .projectilePhaseWindow
+                    : 0,
+
+            perfectPhaseTriggered:
+                false,
+
+            trailTimer:
+                0
+        };
+
+        updatePlayerFacingFromVector(
+            direction
+        );
+
+        spawnTransientEffect(
+            version ===
+                2
+                ? "dashV2Start"
+                : "dashV1Start",
+
+            player.x,
+            player.y,
+
+            {
+                duration:
+                    0.42,
+                color:
+                    config.color
+            }
+        );
+
+        return true;
+    }
+
+
+    function updatePlayerDash(
+        dt
+    ) {
+        const player =
+            state.player;
+
+        const dash =
+            player
+                ?.dashRuntime;
+
+        if (
+            !player ||
+            !dash
+                ?.active
+        ) {
+            return;
+        }
+
+        dash.elapsed +=
+            dt;
+
+        dash.phaseWindow =
+            Math.max(
+                0,
+                finiteNumber(
+                    dash.phaseWindow,
+                    0
+                ) -
+                dt
+            );
+
+        dash.trailTimer -=
+            dt;
+
+        const maxStep =
+            dash.config.speed *
+            dt;
+
+        const step =
+            Math.min(
+                maxStep,
+                dash.remainingDistance
+            );
+
+        if (
+            step >
+            0
+        ) {
+            const beforeX =
+                player.x;
+
+            const beforeY =
+                player.y;
+
+            const moved =
+                moveCircleWithCollision(
+                    player,
+
+                    dash.direction.x *
+                        step,
+
+                    dash.direction.y *
+                        step,
+
+                    player.radius,
+
+                    state.world
+                );
+
+            const actual =
+                distance(
+                    beforeX,
+                    beforeY,
+                    player.x,
+                    player.y
+                );
+
+            dash.remainingDistance =
+                Math.max(
+                    0,
+                    dash.remainingDistance -
+                        actual
+                );
+
+            if (
+                !moved ||
+                actual <
+                    step *
+                        0.25
+            ) {
+                dash.remainingDistance =
+                    0;
+            }
+        }
+
+        if (
+            dash.trailTimer <=
+            0
+        ) {
+            dash.trailTimer =
+                0.028;
+
+            spawnTransientEffect(
+                dash.version ===
+                    2
+                    ? "dashV2Trail"
+                    : "dashV1Trail",
+
+                player.x,
+                player.y,
+
+                {
+                    duration:
+                        0.36,
+
+                    color:
+                        dash.config
+                            .trailColor,
+
+                    characterId:
+                        player.characterId
+                }
+            );
+        }
+
+        if (
+            dash.elapsed >=
+                dash.duration ||
+            dash.remainingDistance <=
+                0.5
+        ) {
+            dash.active =
+                false;
+
+            spawnTransientEffect(
+                dash.version ===
+                    2
+                    ? "dashV2End"
+                    : "dashV1End",
+
+                player.x,
+                player.y,
+
+                {
+                    duration:
+                        0.34,
+
+                    color:
+                        dash.config
+                            .color
+                }
+            );
+
+            player.dashRuntime =
+                null;
+        }
+    }
+
+
+    /* ============================================================
+       INIMIGOS
+       ============================================================ */
+
+    function updateEnemies(
+        dt
+    ) {
+        const world =
+            state.world;
+
+        const player =
+            state.player;
+
+        if (
+            !world ||
+            !player ||
+            player.dead
+        ) {
+            return;
+        }
+
+        for (
+            const enemy of
+            safeArray(
+                world.enemies
+            )
+        ) {
+            if (
+                enemy.dead
+            ) {
+                continue;
+            }
+
+            enemy.animationTime +=
+                dt;
+
+            enemy.hurtAnim =
+                Math.max(
+                    0,
+                    finiteNumber(
+                        enemy.hurtAnim
+                    ) -
+                    dt
+                );
+
+            enemy.attackCooldown =
+                Math.max(
+                    0,
+                    finiteNumber(
+                        enemy
+                            .attackCooldown
+                    ) -
+                    dt
+                );
+
+            enemy.abilityCooldown =
+                Math.max(
+                    0,
+                    finiteNumber(
+                        enemy
+                            .abilityCooldown
+                    ) -
+                    dt
+                );
+
+            enemy.stateTimer =
+                Math.max(
+                    0,
+                    finiteNumber(
+                        enemy.stateTimer
+                    ) -
+                    dt
+                );
+
+            if (
+                enemy.telegraph
+            ) {
+                enemy.telegraph.timer =
+                    Math.max(
+                        0,
+                        enemy
+                            .telegraph
+                            .timer -
+                            dt
+                    );
+            }
+
+            const dist =
+                distance(
+                    enemy.x,
+                    enemy.y,
+                    player.x,
+                    player.y
+                );
+
+            if (
+                !enemy.aggro
+            ) {
+                if (
+                    dist <=
+                    GAME_CONFIG
+                        .enemyActivationDistance
+                ) {
+                    enemy.aggro =
+                        true;
+
+                    enemy.state =
+                        "chase";
+                } else {
+                    updateEnemyIdle(
+                        enemy,
+                        dt
+                    );
+
+                    continue;
+                }
+            }
+
+            if (
+                dist >
+                GAME_CONFIG
+                    .enemyForgetDistance
+            ) {
+                enemy.aggro =
+                    false;
+
+                enemy.state =
+                    "idle";
+
+                updateEnemyIdle(
+                    enemy,
+                    dt
+                );
+
+                continue;
+            }
+
+            updateEnemyAbility(
+                enemy,
+                dt
+            );
+        }
+    }
+
+
+    function updateEnemyIdle(
+        enemy,
+        dt
+    ) {
+        if (
+            !enemy
+        ) {
+            return;
+        }
+
+        if (
+            distance(
+                enemy.x,
+                enemy.y,
+                enemy.spawnX,
+                enemy.spawnY
+            ) >
+            95
+        ) {
+            const direction =
+                normalize(
+                    enemy.spawnX -
+                        enemy.x,
+                    enemy.spawnY -
+                        enemy.y
+                );
+
+            moveCircleWithCollision(
+                enemy,
+
+                direction.x *
+                    enemy.speed *
+                    0.32 *
+                    dt,
+
+                direction.y *
+                    enemy.speed *
+                    0.32 *
+                    dt,
+
+                enemy.radius,
+
+                state.world
+            );
+        }
+    }
+
+
+    function updateEnemyAbility(
+        enemy,
+        dt
+    ) {
+        switch (
+            enemy.ability
+        ) {
+            case "wolfCharge":
+                updateWolfCharge(
+                    enemy,
+                    dt
+                );
+                break;
+
+            case "heavyCharge":
+                updateBoarCharge(
+                    enemy,
+                    dt
+                );
+                break;
+
+            case "rootShot":
+                updateRangedEnemy(
+                    enemy,
+                    dt,
+                    {
+                        range:
+                            285,
+
+                        projectileSpeed:
+                            225,
+
+                        damageMultiplier:
+                            0.7,
+
+                        color:
+                            "#72895f",
+
+                        type:
+                            "root"
+                    }
+                );
+                break;
+
+            case "groundSlam":
+                updateGroundSlamEnemy(
+                    enemy,
+                    dt
+                );
+                break;
+
+            case "oreBurst":
+                updateOreBurstEnemy(
+                    enemy,
+                    dt
+                );
+                break;
+
+            case "burningCharge":
+                updateBurningChargeEnemy(
+                    enemy,
+                    dt
+                );
+                break;
+
+            case "webSlow":
+            case "voidWeb":
+                updateWebEnemy(
+                    enemy,
+                    dt
+                );
+                break;
+
+            case "poison":
+                updatePoisonEnemy(
+                    enemy,
+                    dt
+                );
+                break;
+
+            case "dive":
+                updateDiveEnemy(
+                    enemy,
+                    dt
+                );
+                break;
+
+            case "shadowStrike":
+                updateShadowStrikeEnemy(
+                    enemy,
+                    dt
+                );
+                break;
+
+            case "voidBlink":
+                updateVoidBlinkEnemy(
+                    enemy,
+                    dt
+                );
+                break;
+
+            case "quickStrike":
+            default:
+                updateBasicMeleeEnemy(
+                    enemy,
+                    dt
+                );
+                break;
+        }
+    }
+
+
+    function updateWolfCharge(
+        enemy,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        const config =
+            enemy.abilityConfig ||
+            ENEMY_SPECIES
+                .wolf
+                .abilityConfig;
+
+        if (
+            !player ||
+            !config
+        ) {
+            return;
+        }
+
+        if (
+            enemy.state ===
+            "chargeWindup"
+        ) {
+            if (
+                enemy.stateTimer <=
+                0
+            ) {
+                enemy.state =
+                    "charging";
+
+                enemy.stateTimer =
+                    config.duration;
+
+                enemy.telegraph =
+                    null;
+
+                spawnTransientEffect(
+                    "enemyChargeStart",
+                    enemy.x,
+                    enemy.y,
+                    {
+                        duration:
+                            0.3,
+                        enemyId:
+                            enemy.entityId
+                    }
+                );
+            }
+
+            return;
+        }
+
+        if (
+            enemy.state ===
+            "charging"
+        ) {
+            const moved =
+                moveCircleWithCollision(
+                    enemy,
+
+                    enemy.velocityX *
+                        dt,
+
+                    enemy.velocityY *
+                        dt,
+
+                    enemy.radius,
+
+                    state.world
+                );
+
+            if (
+                circleCircleCollision(
+                    enemy.x,
+                    enemy.y,
+                    enemy.radius,
+
+                    player.x,
+                    player.y,
+                    player.radius
+                )
+            ) {
+                applyDamageToPlayer(
+                    enemy.damage *
+                        1.35,
+                    {
+                        enemy
+                    }
+                );
+
+                enemy.stateTimer =
+                    0;
+            }
+
+            if (
+                !moved ||
+                enemy.stateTimer <=
+                    0
+            ) {
+                enemy.state =
+                    "chase";
+
+                enemy.abilityCooldown =
+                    config.cooldown;
+            }
+
+            return;
+        }
+
+        const dist =
+            distance(
+                enemy.x,
+                enemy.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            enemy.abilityCooldown <=
+                0 &&
+            dist >=
+                110 &&
+            dist <=
+                360
+        ) {
+            const direction =
+                normalize(
+                    player.x -
+                        enemy.x,
+                    player.y -
+                        enemy.y
+                );
+
+            enemy.velocityX =
+                direction.x *
+                config.speed;
+
+            enemy.velocityY =
+                direction.y *
+                config.speed;
+
+            enemy.state =
+                "chargeWindup";
+
+            enemy.stateTimer =
+                config.telegraph;
+
+            enemy.telegraph = {
+                type:
+                    "charge",
+
+                x:
+                    player.x,
+
+                y:
+                    player.y,
+
+                timer:
+                    config.telegraph
+            };
+
+            return;
+        }
+
+        updateBasicMeleeEnemy(
+            enemy,
+            dt
+        );
+    }
+
+
+    function updateBoarCharge(
+        enemy,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        const config =
+            enemy.abilityConfig ||
+            ENEMY_SPECIES
+                .boar
+                .abilityConfig;
+
+        if (
+            !player ||
+            !config
+        ) {
+            return;
+        }
+
+        if (
+            enemy.state ===
+            "heavyWindup"
+        ) {
+            if (
+                enemy.stateTimer <=
+                0
+            ) {
+                enemy.state =
+                    "heavyCharging";
+
+                enemy.stateTimer =
+                    config.duration;
+
+                enemy.telegraph =
+                    null;
+            }
+
+            return;
+        }
+
+        if (
+            enemy.state ===
+            "heavyCharging"
+        ) {
+            const moved =
+                moveCircleWithCollision(
+                    enemy,
+
+                    enemy.velocityX *
+                        dt,
+
+                    enemy.velocityY *
+                        dt,
+
+                    enemy.radius,
+
+                    state.world
+                );
+
+            if (
+                circleCircleCollision(
+                    enemy.x,
+                    enemy.y,
+                    enemy.radius,
+
+                    player.x,
+                    player.y,
+                    player.radius
+                )
+            ) {
+                applyDamageToPlayer(
+                    enemy.damage *
+                        1.6,
+                    {
+                        enemy
+                    }
+                );
+
+                enemy.stateTimer =
+                    0;
+            }
+
+            if (
+                !moved ||
+                enemy.stateTimer <=
+                    0
+            ) {
+                enemy.state =
+                    "chase";
+
+                enemy.abilityCooldown =
+                    config.cooldown;
+            }
+
+            return;
+        }
+
+        const dist =
+            distance(
+                enemy.x,
+                enemy.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            enemy.abilityCooldown <=
+                0 &&
+            dist >=
+                120 &&
+            dist <=
+                330
+        ) {
+            const direction =
+                normalize(
+                    player.x -
+                        enemy.x,
+                    player.y -
+                        enemy.y
+                );
+
+            enemy.velocityX =
+                direction.x *
+                config.speed;
+
+            enemy.velocityY =
+                direction.y *
+                config.speed;
+
+            enemy.state =
+                "heavyWindup";
+
+            enemy.stateTimer =
+                config.telegraph;
+
+            enemy.telegraph = {
+                type:
+                    "heavyCharge",
+
+                x:
+                    player.x,
+
+                y:
+                    player.y,
+
+                timer:
+                    config.telegraph
+            };
+
+            return;
+        }
+
+        updateBasicMeleeEnemy(
+            enemy,
+            dt
+        );
+    }
+
+
+    function updateBasicMeleeEnemy(
+        enemy,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        const dist =
+            distance(
+                enemy.x,
+                enemy.y,
+                player.x,
+                player.y
+            );
+
+        const range =
+            enemy.radius +
+            player.radius +
+            15;
+
+        if (
+            dist <=
+            range
+        ) {
+            if (
+                enemy.attackCooldown <=
+                0
+            ) {
+                applyDamageToPlayer(
+                    enemy.damage,
+                    {
+                        enemy
+                    }
+                );
+
+                enemy.attackCooldown =
+                    1.05;
+            }
+
+            return;
+        }
+
+        const direction =
+            normalize(
+                player.x -
+                    enemy.x,
+                player.y -
+                    enemy.y
+            );
+
+        moveCircleWithCollision(
+            enemy,
+
+            direction.x *
+                enemy.speed *
+                dt,
+
+            direction.y *
+                enemy.speed *
+                dt,
+
+            enemy.radius,
+
+            state.world
+        );
+    }
+
+
+    function updateRangedEnemy(
+        enemy,
+        dt,
+        config
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        const dist =
+            distance(
+                enemy.x,
+                enemy.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            dist >
+            config.range *
+                0.75
+        ) {
+            const direction =
+                normalize(
+                    player.x -
+                        enemy.x,
+                    player.y -
+                        enemy.y
+                );
+
+            moveCircleWithCollision(
+                enemy,
+
+                direction.x *
+                    enemy.speed *
+                    0.7 *
+                    dt,
+
+                direction.y *
+                    enemy.speed *
+                    0.7 *
+                    dt,
+
+                enemy.radius,
+
+                state.world
+            );
+        }
+
+        if (
+            dist <=
+                config.range &&
+            enemy.attackCooldown <=
+                0
+        ) {
+            const direction =
+                normalize(
+                    player.x -
+                        enemy.x,
+                    player.y -
+                        enemy.y
+                );
+
+            createProjectile({
+                owner:
+                    "enemy",
+
+                source:
+                    enemy,
+
+                x:
+                    enemy.x,
+
+                y:
+                    enemy.y,
+
+                dx:
+                    direction.x,
+
+                dy:
+                    direction.y,
+
+                speed:
+                    config
+                        .projectileSpeed,
+
+                radius:
+                    7,
+
+                damage:
+                    enemy.damage *
+                    config
+                        .damageMultiplier,
+
+                color:
+                    config.color,
+
+                type:
+                    config.type,
+
+                life:
+                    2.2
+            });
+
+            enemy.attackCooldown =
+                1.75;
+        }
+    }
+
+
+    function updateGroundSlamEnemy(
+        enemy,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        const dist =
+            distance(
+                enemy.x,
+                enemy.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            dist <=
+                88 &&
+            enemy.abilityCooldown <=
+                0
+        ) {
+            createHazard({
+                type:
+                    "circle",
+
+                source:
+                    enemy,
+
+                x:
+                    enemy.x,
+
+                y:
+                    enemy.y,
+
+                radius:
+                    92,
+
+                damage:
+                    enemy.damage *
+                    1.25,
+
+                telegraph:
+                    0.38,
+
+                activeDuration:
+                    0.2,
+
+                color:
+                    "#847d70"
+            });
+
+            enemy.abilityCooldown =
+                2.6;
+
+            return;
+        }
+
+        updateBasicMeleeEnemy(
+            enemy,
+            dt
+        );
+    }
+
+
+    function updateOreBurstEnemy(
+        enemy,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        const dist =
+            distance(
+                enemy.x,
+                enemy.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            enemy.abilityCooldown <=
+                0 &&
+            dist <=
+                250
+        ) {
+            for (
+                let index = 0;
+                index < 6;
+                index += 1
+            ) {
+                const angle =
+                    (
+                        index /
+                        6
+                    ) *
+                    Math.PI *
+                    2;
+
+                createProjectile({
+                    owner:
+                        "enemy",
+
+                    source:
+                        enemy,
+
+                    x:
+                        enemy.x,
+
+                    y:
+                        enemy.y,
+
+                    dx:
+                        Math.cos(
+                            angle
+                        ),
+
+                    dy:
+                        Math.sin(
+                            angle
+                        ),
+
+                    speed:
+                        190,
+
+                    radius:
+                        6,
+
+                    damage:
+                        enemy.damage *
+                        0.75,
+
+                    color:
+                        "#887c69",
+
+                    type:
+                        "ore",
+
+                    life:
+                        1.6
+                });
+            }
+
+            enemy.abilityCooldown =
+                2.8;
+
+            return;
+        }
+
+        updateBasicMeleeEnemy(
+            enemy,
+            dt
+        );
+    }
+
+
+    function updateBurningChargeEnemy(
+        enemy,
+        dt
+    ) {
+        if (
+            !enemy
+                .abilityConfig
+        ) {
+            enemy.abilityConfig = {
+                cooldown:
+                    2.4,
+
+                telegraph:
+                    0.5,
+
+                speed:
+                    420,
+
+                duration:
+                    0.5
+            };
+        }
+
+        updateWolfCharge(
+            enemy,
+            dt
+        );
+    }
+
+
+    function updateWebEnemy(
+        enemy,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        const dist =
+            distance(
+                enemy.x,
+                enemy.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            enemy.abilityCooldown <=
+                0 &&
+            dist <=
+                280
+        ) {
+            const direction =
+                normalize(
+                    player.x -
+                        enemy.x,
+                    player.y -
+                        enemy.y
+                );
+
+            createProjectile({
+                owner:
+                    "enemy",
+
+                source:
+                    enemy,
+
+                x:
+                    enemy.x,
+
+                y:
+                    enemy.y,
+
+                dx:
+                    direction.x,
+
+                dy:
+                    direction.y,
+
+                speed:
+                    220,
+
+                radius:
+                    8,
+
+                damage:
+                    enemy.damage *
+                    0.55,
+
+                color:
+                    enemy.ability ===
+                        "voidWeb"
+                        ? "#6e527c"
+                        : "#d6d6cf",
+
+                type:
+                    "web",
+
+                life:
+                    2.2
+            });
+
+            enemy.abilityCooldown =
+                2.1;
+
+            return;
+        }
+
+        updateBasicMeleeEnemy(
+            enemy,
+            dt
+        );
+    }
+
+
+    function updatePoisonEnemy(
+        enemy,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        const dist =
+            distance(
+                enemy.x,
+                enemy.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            dist <=
+                enemy.radius +
+                    player.radius +
+                    13 &&
+            enemy.attackCooldown <=
+                0
+        ) {
+            const result =
+                applyDamageToPlayer(
+                    enemy.damage,
+                    {
+                        enemy
+                    }
+                );
+
+            if (
+                result !==
+                    false &&
+                !player.dead
+            ) {
+                player.poisonEffect = {
+                    timer:
+                        4,
+
+                    tickTimer:
+                        0.8,
+
+                    damage:
+                        3
+                };
+            }
+
+            enemy.attackCooldown =
+                1.5;
+
+            return;
+        }
+
+        updateBasicMeleeEnemy(
+            enemy,
+            dt
+        );
+    }
+
+
+    function updateDiveEnemy(
+        enemy,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        const dist =
+            distance(
+                enemy.x,
+                enemy.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            enemy.abilityCooldown <=
+                0 &&
+            dist >=
+                90 &&
+            dist <=
+                250
+        ) {
+            enemy.state =
+                "dive";
+
+            enemy.abilityCooldown =
+                2.1;
+
+            enemy.stateTimer =
+                0.55;
+        }
+
+        enemy.speed =
+            ENEMY_SPECIES
+                .bat
+                .speed *
+            (
+                enemy.state ===
+                    "dive" &&
+                enemy.stateTimer >
+                    0
+                    ? 1.45
+                    : 1
+            );
+
+        if (
+            enemy.state ===
+                "dive" &&
+            enemy.stateTimer <=
+                0
+        ) {
+            enemy.state =
+                "chase";
+        }
+
+        updateBasicMeleeEnemy(
+            enemy,
+            dt
+        );
+    }
+
+
+    function updateShadowStrikeEnemy(
+        enemy,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        const dist =
+            distance(
+                enemy.x,
+                enemy.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            dist <=
+                110 &&
+            enemy.abilityCooldown <=
+                0
+        ) {
+            applyDamageToPlayer(
+                enemy.damage *
+                    1.45,
+                {
+                    enemy
+                }
+            );
+
+            enemy.abilityCooldown =
+                2.2;
+
+            spawnTransientEffect(
+                "shadowStrike",
+                player.x,
+                player.y,
+                {
+                    duration:
+                        0.45
+                }
+            );
+
+            return;
+        }
+
+        updateBasicMeleeEnemy(
+            enemy,
+            dt
+        );
+    }
+
+
+    function updateVoidBlinkEnemy(
+        enemy,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        const dist =
+            distance(
+                enemy.x,
+                enemy.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            enemy.abilityCooldown <=
+                0 &&
+            dist >=
+                160 &&
+            dist <=
+                430
+        ) {
+            const angle =
+                Math.atan2(
+                    player.y -
+                        enemy.y,
+                    player.x -
+                        enemy.x
+                );
+
+            const side =
+                chance(
+                    0.5
+                )
+                    ? 1
+                    : -1;
+
+            const x =
+                player.x -
+                Math.cos(
+                    angle
+                ) *
+                    95 +
+                Math.cos(
+                    angle +
+                    Math.PI /
+                        2
+                ) *
+                    55 *
+                    side;
+
+            const y =
+                player.y -
+                Math.sin(
+                    angle
+                ) *
+                    95 +
+                Math.sin(
+                    angle +
+                    Math.PI /
+                        2
+                ) *
+                    55 *
+                    side;
+
+            const safe =
+                findSafePosition(
+                    x,
+                    y,
+                    enemy.radius,
+                    state.world
+                );
+
+            spawnTransientEffect(
+                "voidBlinkOut",
+                enemy.x,
+                enemy.y,
+                {
+                    duration:
+                        0.35
+                }
+            );
+
+            enemy.x =
+                safe.x;
+
+            enemy.y =
+                safe.y;
+
+            spawnTransientEffect(
+                "voidBlinkIn",
+                enemy.x,
+                enemy.y,
+                {
+                    duration:
+                        0.35
+                }
+            );
+
+            enemy.abilityCooldown =
+                3.1;
+
+            enemy.attackCooldown =
+                0.35;
+
+            return;
+        }
+
+        updateBasicMeleeEnemy(
+            enemy,
+            dt
+        );
+    }
+
+
+    /* ============================================================
+       BOSSES DE CAMINHO
+       ============================================================ */
+
+    function getNearbyUnconfirmedBoss() {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world
+        ) {
+            return null;
+        }
+
+        let nearest =
+            null;
+
+        let nearestDistance =
+            Infinity;
+
+        for (
+            const boss of
+            safeArray(
+                world.bosses
+            )
+        ) {
+            if (
+                boss.dead ||
+                boss.confirmed
+            ) {
+                continue;
+            }
+
+            const definition =
+                BOSS_REGISTRY[
+                    boss.id
+                ];
+
+            if (
+                !definition
+                    ?.requiresConfirmation
+            ) {
+                continue;
+            }
+
+            const dist =
+                distance(
+                    player.x,
+                    player.y,
+                    boss.x,
+                    boss.y
+                );
+
+            if (
+                dist <=
+                    GAME_CONFIG
+                        .bossConfirmationDistance &&
+                dist <
+                    nearestDistance
+            ) {
+                nearest =
+                    boss;
+
+                nearestDistance =
+                    dist;
+            }
+        }
+
+        return nearest;
+    }
+
+
+    function openBossConfirmation(
+        boss
+    ) {
+        if (
+            !boss ||
+            boss.dead ||
+            !BOSS_REGISTRY[
+                boss.id
+            ]?.requiresConfirmation
+        ) {
+            return false;
+        }
+
+        registerBossDiscovered(
+            boss.id
+        );
+
+        state.battle = {
+            type:
+                "bossConfirmation",
+
+            bossId:
+                boss.id,
+
+            boss,
+
+            title:
+                boss.name,
+
+            subtitle:
+                boss.subtitle ||
+                "",
+
+            acceptLabel:
+                "ACEITAR",
+
+            retreatLabel:
+                "RECUAR"
+        };
+
+        return true;
+    }
+
+
+    function acceptBossFight() {
+        const battle =
+            state.battle;
+
+        const boss =
+            battle
+                ?.boss;
+
+        if (
+            !battle ||
+            battle.type !==
+                "bossConfirmation" ||
+            !boss ||
+            boss.dead
+        ) {
+            return false;
+        }
+
+        /*
+            Salva ANTES de começar a luta.
+            Assim DESISTIR após morrer
+            volta para um ponto seguro.
+        */
+        saveGame({
+            silent:
+                true,
+
+            safe:
+                true
+        });
+
+        state.battle =
+            null;
+
+        boss.confirmed =
+            true;
+
+        boss.state =
+            BOSS_STATE
+                .CONFIRMED;
+
+        boss.aggro =
+            true;
+
+        boss.attackCooldown =
+            0.65;
+
+        boss.abilityCooldown =
+            1.4;
+
+        state.bossBarTarget =
+            boss;
+
+        spawnTransientEffect(
+            "bossAwaken",
+            boss.x,
+            boss.y,
+            {
+                duration:
+                    0.9,
+
+                bossId:
+                    boss.id,
+
+                radius:
+                    boss.radius *
+                    1.8
+            }
+        );
+
+        return true;
+    }
+
+
+    function retreatBossFight() {
+        const battle =
+            state.battle;
+
+        const boss =
+            battle
+                ?.boss;
+
+        if (
+            !battle ||
+            battle.type !==
+                "bossConfirmation"
+        ) {
+            return false;
+        }
+
+        if (
+            boss &&
+            !boss.dead
+        ) {
+            boss.confirmed =
+                false;
+
+            boss.aggro =
+                false;
+
+            boss.state =
+                BOSS_STATE
+                    .NEUTRAL;
+
+            boss.attackCooldown =
+                0;
+
+            boss.abilityCooldown =
+                0;
+
+            boss.x =
+                boss.spawnX;
+
+            boss.y =
+                boss.spawnY;
+        }
+
+        state.battle =
+            null;
+
+        state.bossBarTarget =
+            null;
+
+        return true;
+    }
+
+
+    function activateBossCombat(
+        boss
+    ) {
+        if (
+            !boss ||
+            boss.dead ||
+            !canBossBecomeAggressive(
+                boss
+            )
+        ) {
+            return false;
+        }
+
+        boss.state =
+            BOSS_STATE
+                .COMBAT;
+
+        boss.aggro =
+            true;
+
+        state.bossBarTarget =
+            boss;
+
+        registerBossDiscovered(
+            boss.id
+        );
+
+        return true;
+    }
+
+
+    function chaseBossPlayer(
+        boss,
+        dt,
+        multiplier = 1,
+        stopRange = null
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            boss.centerLocked
+        ) {
+            return false;
+        }
+
+        const dist =
+            distance(
+                boss.x,
+                boss.y,
+                player.x,
+                player.y
+            );
+
+        const range =
+            stopRange ??
+            (
+                boss.radius +
+                player.radius +
+                25
+            );
+
+        if (
+            dist <=
+            range
+        ) {
+            return false;
+        }
+
+        const direction =
+            normalize(
+                player.x -
+                    boss.x,
+                player.y -
+                    boss.y
+            );
+
+        return moveCircleWithCollision(
+            boss,
+
+            direction.x *
+                boss.speed *
+                multiplier *
+                dt,
+
+            direction.y *
+                boss.speed *
+                multiplier *
+                dt,
+
+            boss.radius,
+
+            state.world
+        );
+    }
+
+
+    function bossBasicMelee(
+        boss,
+        multiplier = 1,
+        cooldown = 1.1
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return false;
+        }
+
+        const range =
+            boss.radius +
+            player.radius +
+            28;
+
+        if (
+            distance(
+                boss.x,
+                boss.y,
+                player.x,
+                player.y
+            ) >
+                range ||
+            boss.attackCooldown >
+                0
+        ) {
+            return false;
+        }
+
+        applyDamageToPlayer(
+            boss.damage *
+                multiplier,
+            {
+                boss
+            }
+        );
+
+        boss.attackCooldown =
+            cooldown;
+
+        spawnTransientEffect(
+            "bossMelee",
+            player.x,
+            player.y,
+            {
+                duration:
+                    0.38,
+
+                bossId:
+                    boss.id
+            }
+        );
+
+        return true;
+    }
+
+
+    function fireRadialBossProjectiles(
+        boss,
+        count,
+        options = {}
+    ) {
+        for (
+            let index = 0;
+            index < count;
+            index += 1
+        ) {
+            const angle =
+                (
+                    index /
+                    count
+                ) *
+                Math.PI *
+                2 +
+                finiteNumber(
+                    options.rotation,
+                    0
+                );
+
+            createProjectile({
+                owner:
+                    "enemy",
+
+                source:
+                    boss,
+
+                x:
+                    boss.x,
+
+                y:
+                    boss.y,
+
+                dx:
+                    Math.cos(
+                        angle
+                    ),
+
+                dy:
+                    Math.sin(
+                        angle
+                    ),
+
+                speed:
+                    options.speed ||
+                    210,
+
+                radius:
+                    options.radius ||
+                    8,
+
+                damage:
+                    boss.damage *
+                    finiteNumber(
+                        options.multiplier,
+                        0.55
+                    ),
+
+                color:
+                    options.color ||
+                    boss.definition
+                        ?.aura ||
+                    "#aaa",
+
+                type:
+                    options.type ||
+                    "bossOrb",
+
+                life:
+                    options.life ||
+                    3,
+
+                phaseCompatible:
+                    options.phaseCompatible !==
+                    false
+            });
+        }
+    }
+
+
+    function updateStandardBossAI(
+        boss,
+        dt
+    ) {
+        if (
+            bossBasicMelee(
+                boss
+            )
+        ) {
+            return;
+        }
+
+        chaseBossPlayer(
+            boss,
+            dt
+        );
+    }
+
+
+    function updateRoadGuardianAI(
+        boss,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        if (
+            boss.specialState ===
+            "roadChargeWindup"
+        ) {
+            boss.specialTimer -=
+                dt;
+
+            if (
+                boss.specialTimer <=
+                0
+            ) {
+                boss.specialState =
+                    "roadCharge";
+
+                boss.specialTimer =
+                    0.42;
+            }
+
+            return;
+        }
+
+        if (
+            boss.specialState ===
+            "roadCharge"
+        ) {
+            boss.specialTimer -=
+                dt;
+
+            const moved =
+                moveCircleWithCollision(
+                    boss,
+
+                    boss.velocityX *
+                        dt,
+
+                    boss.velocityY *
+                        dt,
+
+                    boss.radius,
+
+                    state.world
+                );
+
+            if (
+                circleCircleCollision(
+                    boss.x,
+                    boss.y,
+                    boss.radius,
+
+                    player.x,
+                    player.y,
+                    player.radius
+                )
+            ) {
+                applyDamageToPlayer(
+                    boss.damage *
+                        1.35,
+                    {
+                        boss
+                    }
+                );
+
+                boss.specialTimer =
+                    0;
+            }
+
+            if (
+                !moved ||
+                boss.specialTimer <=
+                    0
+            ) {
+                boss.specialState =
+                    null;
+            }
+
+            return;
+        }
+
+        const dist =
+            distance(
+                boss.x,
+                boss.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            boss.abilityCooldown <=
+                0 &&
+            dist >=
+                150 &&
+            dist <=
+                420
+        ) {
+            const direction =
+                normalize(
+                    player.x -
+                        boss.x,
+                    player.y -
+                        boss.y
+                );
+
+            boss.velocityX =
+                direction.x *
+                310;
+
+            boss.velocityY =
+                direction.y *
+                310;
+
+            boss.specialState =
+                "roadChargeWindup";
+
+            boss.specialTimer =
+                0.72;
+
+            boss.abilityCooldown =
+                3.2;
+
+            spawnTransientEffect(
+                "bossChargeTelegraph",
+                boss.x,
+                boss.y,
+                {
+                    duration:
+                        0.72,
+
+                    targetX:
+                        player.x,
+
+                    targetY:
+                        player.y
+                }
+            );
+
+            return;
+        }
+
+        if (
+            bossBasicMelee(
+                boss,
+                1,
+                1.05
+            )
+        ) {
+            return;
+        }
+
+        chaseBossPlayer(
+            boss,
+            dt,
+            0.95
+        );
+    }
+
+
+    function updateForestWardenAI(
+        boss,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        const dist =
+            distance(
+                boss.x,
+                boss.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            boss.abilityCooldown <=
+                0 &&
+            dist <=
+                460
+        ) {
+            const angle =
+                Math.atan2(
+                    player.y -
+                        boss.y,
+                    player.x -
+                        boss.x
+                );
+
+            for (
+                let index = -1;
+                index <= 1;
+                index += 1
+            ) {
+                const current =
+                    angle +
+                    index *
+                        0.18;
+
+                createProjectile({
+                    owner:
+                        "enemy",
+
+                    source:
+                        boss,
+
+                    x:
+                        boss.x,
+
+                    y:
+                        boss.y,
+
+                    dx:
+                        Math.cos(
+                            current
+                        ),
+
+                    dy:
+                        Math.sin(
+                            current
+                        ),
+
+                    speed:
+                        260,
+
+                    radius:
+                        8,
+
+                    damage:
+                        boss.damage *
+                        0.72,
+
+                    color:
+                        "#79a46f",
+
+                    type:
+                        "root",
+
+                    life:
+                        2.3
+                });
+            }
+
+            boss.abilityCooldown =
+                2.7;
+
+            return;
+        }
+
+        if (
+            bossBasicMelee(
+                boss
+            )
+        ) {
+            return;
+        }
+
+        chaseBossPlayer(
+            boss,
+            dt,
+            0.92
+        );
+    }
+
+
+    function updateGroveHeartAI(
+        boss,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        const dist =
+            distance(
+                boss.x,
+                boss.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            boss.abilityCooldown <=
+                0 &&
+            dist <=
+                390
+        ) {
+            for (
+                let index = 0;
+                index < 3;
+                index += 1
+            ) {
+                const angle =
+                    (
+                        index /
+                        3
+                    ) *
+                    Math.PI *
+                    2 +
+                    boss.animationTime;
+
+                createHazard({
+                    type:
+                        "circle",
+
+                    source:
+                        boss,
+
+                    x:
+                        player.x +
+                        Math.cos(
+                            angle
+                        ) *
+                            90,
+
+                    y:
+                        player.y +
+                        Math.sin(
+                            angle
+                        ) *
+                            90,
+
+                    radius:
+                        58,
+
+                    damage:
+                        boss.damage *
+                        0.82,
+
+                    telegraph:
+                        0.85 +
+                        index *
+                            0.12,
+
+                    activeDuration:
+                        0.25,
+
+                    color:
+                        "#78965f"
+                });
+            }
+
+            boss.abilityCooldown =
+                3.4;
+
+            return;
+        }
+
+        if (
+            bossBasicMelee(
+                boss,
+                1.12,
+                1.25
+            )
+        ) {
+            return;
+        }
+
+        chaseBossPlayer(
+            boss,
+            dt,
+            0.7
+        );
+    }
+
+
+    function updateMountainTitanAI(
+        boss,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        if (
+            boss.abilityCooldown <=
+            0 &&
+            distance(
+                boss.x,
+                boss.y,
+                player.x,
+                player.y
+            ) <=
+                330
+        ) {
+            createHazard({
+                type:
+                    "circle",
+
+                source:
+                    boss,
+
+                x:
+                    boss.x,
+
+                y:
+                    boss.y,
+
+                radius:
+                    165,
+
+                damage:
+                    boss.damage *
+                    1.2,
+
+                telegraph:
+                    0.92,
+
+                activeDuration:
+                    0.22,
+
+                color:
+                    "#a2a49e"
+            });
+
+            fireRadialBossProjectiles(
+                boss,
+                8,
+                {
+                    speed:
+                        175,
+
+                    multiplier:
+                        0.48,
+
+                    color:
+                        "#908c82",
+
+                    type:
+                        "stoneShard"
+                }
+            );
+
+            boss.abilityCooldown =
+                4.1;
+
+            state.screenShake =
+                Math.max(
+                    state.screenShake,
+                    0.22
+                );
+
+            state.screenShakePower =
+                Math.max(
+                    state.screenShakePower,
+                    8
+                );
+
+            return;
+        }
+
+        if (
+            bossBasicMelee(
+                boss,
+                1.2,
+                1.35
+            )
+        ) {
+            return;
+        }
+
+        chaseBossPlayer(
+            boss,
+            dt,
+            0.64
+        );
+    }
+
+
+    function updateIronColossusAI(
+        boss,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        if (
+            boss.abilityCooldown <=
+            0 &&
+            distance(
+                boss.x,
+                boss.y,
+                player.x,
+                player.y
+            ) <=
+                520
+        ) {
+            const angle =
+                Math.atan2(
+                    player.y -
+                        boss.y,
+                    player.x -
+                        boss.x
+                );
+
+            createHazard({
+                type:
+                    "beam",
+
+                source:
+                    boss,
+
+                x:
+                    boss.x,
+
+                y:
+                    boss.y,
+
+                angle,
+
+                width:
+                    72,
+
+                length:
+                    650,
+
+                damage:
+                    boss.damage *
+                    1.15,
+
+                telegraph:
+                    0.95,
+
+                activeDuration:
+                    0.34,
+
+                color:
+                    "#b5b9b8"
+            });
+
+            boss.abilityCooldown =
+                3.8;
+
+            return;
+        }
+
+        if (
+            bossBasicMelee(
+                boss,
+                1.18,
+                1.25
+            )
+        ) {
+            return;
+        }
+
+        chaseBossPlayer(
+            boss,
+            dt,
+            0.68
+        );
+    }
+
+
+    function updateRubyChimeraAI(
+        boss,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        if (
+            boss.abilityCooldown <=
+            0 &&
+            distance(
+                boss.x,
+                boss.y,
+                player.x,
+                player.y
+            ) <=
+                520
+        ) {
+            if (
+                chance(
+                    0.5
+                )
+            ) {
+                fireRadialBossProjectiles(
+                    boss,
+                    10,
+                    {
+                        speed:
+                            235,
+
+                        multiplier:
+                            0.6,
+
+                        color:
+                            "#dc6c80",
+
+                        type:
+                            "rubyShard"
+                    }
+                );
+            } else {
+                for (
+                    let index = 0;
+                    index < 3;
+                    index += 1
+                ) {
+                    createHazard({
+                        type:
+                            "circle",
+
+                        source:
+                            boss,
+
+                        x:
+                            player.x +
+                            random(
+                                -100,
+                                100
+                            ),
+
+                        y:
+                            player.y +
+                            random(
+                                -100,
+                                100
+                            ),
+
+                        radius:
+                            62,
+
+                        damage:
+                            boss.damage *
+                            0.78,
+
+                        telegraph:
+                            0.72 +
+                            index *
+                                0.12,
+
+                        activeDuration:
+                            0.22,
+
+                        color:
+                            "#c75970"
+                    });
+                }
+            }
+
+            boss.abilityCooldown =
+                3.1;
+
+            return;
+        }
+
+        if (
+            bossBasicMelee(
+                boss,
+                1.12,
+                1
+            )
+        ) {
+            return;
+        }
+
+        chaseBossPlayer(
+            boss,
+            dt,
+            1.05
+        );
+    }
+
+
+    function updateCelestialGuardianAI(
+        boss,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        if (
+            boss.specialState ===
+            "celestialRush"
+        ) {
+            boss.specialTimer -=
+                dt;
+
+            if (
+                boss.specialTimer <=
+                0
+            ) {
+                const moved =
+                    moveCircleWithCollision(
+                        boss,
+
+                        boss.velocityX *
+                            dt *
+                            3.2,
+
+                        boss.velocityY *
+                            dt *
+                            3.2,
+
+                        boss.radius,
+
+                        state.world
+                    );
+
+                if (
+                    circleCircleCollision(
+                        boss.x,
+                        boss.y,
+                        boss.radius,
+
+                        player.x,
+                        player.y,
+                        player.radius
+                    )
+                ) {
+                    applyDamageToPlayer(
+                        boss.damage *
+                            1.35,
+                        {
+                            boss
+                        }
+                    );
+
+                    boss.specialState =
+                        null;
+                } else if (
+                    !moved
+                ) {
+                    boss.specialState =
+                        null;
+                }
+            }
+
+            if (
+                boss.specialTimer <
+                -0.28
+            ) {
+                boss.specialState =
+                    null;
+            }
+
+            return;
+        }
+
+        const dist =
+            distance(
+                boss.x,
+                boss.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            boss.abilityCooldown <=
+            0
+        ) {
+            if (
+                dist >=
+                150
+            ) {
+                const direction =
+                    normalize(
+                        player.x -
+                            boss.x,
+                        player.y -
+                            boss.y
+                    );
+
+                boss.specialState =
+                    "celestialRush";
+
+                boss.specialTimer =
+                    0.55;
+
+                boss.velocityX =
+                    direction.x *
+                    430;
+
+                boss.velocityY =
+                    direction.y *
+                    430;
+
+                spawnTransientEffect(
+                    "celestialRushTelegraph",
+                    boss.x,
+                    boss.y,
+                    {
+                        duration:
+                            0.45,
+
+                        targetX:
+                            player.x,
+
+                        targetY:
+                            player.y
+                    }
+                );
+            } else {
+                createHazard({
+                    type:
+                        "beam",
+
+                    source:
+                        boss,
+
+                    x:
+                        boss.x,
+
+                    y:
+                        boss.y,
+
+                    angle:
+                        Math.atan2(
+                            player.y -
+                                boss.y,
+                            player.x -
+                                boss.x
+                        ),
+
+                    width:
+                        82,
+
+                    length:
+                        720,
+
+                    damage:
+                        boss.damage *
+                        1.1,
+
+                    telegraph:
+                        0.82,
+
+                    activeDuration:
+                        0.28,
+
+                    color:
+                        "#ead9a4"
+                });
+            }
+
+            boss.abilityCooldown =
+                2.8;
+        }
+
+        if (
+            bossBasicMelee(
+                boss,
+                1,
+                0.95
+            )
+        ) {
+            return;
+        }
+
+        chaseBossPlayer(
+            boss,
+            dt,
+            1.05
+        );
+    }
+
+
+    function updatePathBossAI(
+        boss,
+        dt
+    ) {
+        switch (
+            boss.id
+        ) {
+            case "road_guardian":
+                updateRoadGuardianAI(
+                    boss,
+                    dt
+                );
+                break;
+
+            case "forest_warden":
+                updateForestWardenAI(
+                    boss,
+                    dt
+                );
+                break;
+
+            case "grove_heart":
+                updateGroveHeartAI(
+                    boss,
+                    dt
+                );
+                break;
+
+            case "mountain_titan":
+                updateMountainTitanAI(
+                    boss,
+                    dt
+                );
+                break;
+
+            case "iron_colossus":
+                updateIronColossusAI(
+                    boss,
+                    dt
+                );
+                break;
+
+            case "ruby_chimera":
+                updateRubyChimeraAI(
+                    boss,
+                    dt
+                );
+                break;
+
+            case "path_guardian":
+                updateCelestialGuardianAI(
+                    boss,
+                    dt
+                );
+                break;
+
+            default:
+                updateStandardBossAI(
+                    boss,
+                    dt
+                );
+                break;
+        }
+    }
+
+
+    /* ============================================================
+       MONARCA
+       ============================================================ */
+
+    function getMonarchBoss(
+        world =
+            state.world
+    ) {
+        return (
+            world
+                ?.bosses
+                ?.find(
+                    boss =>
+                        boss.id ===
+                        "monarch"
+                ) ||
+            null
+        );
+    }
+
+
+    function closeMonarchArena() {
+        const barrier =
+            state.world
+                ?.altarArenaBarrier;
+
+        if (
+            !barrier
+        ) {
+            return false;
+        }
+
+        barrier.active =
+            true;
+
+        barrier.solid =
+            true;
+
+        rebuildDynamicWorldObstacles(
+            state.world
+        );
+
+        return true;
+    }
+
+
+    function openMonarchArena() {
+        const barrier =
+            state.world
+                ?.altarArenaBarrier;
+
+        if (
+            !barrier
+        ) {
+            return false;
+        }
+
+        barrier.active =
+            false;
+
+        barrier.solid =
+            false;
+
+        rebuildDynamicWorldObstacles(
+            state.world
+        );
+
+        return true;
+    }
+
+
+    function requestMonarchAltarInteraction() {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world ||
+            world.id !==
+                "monarchMaze"
+        ) {
+            return false;
+        }
+
+        player.monarch
+            .altarReached =
+            true;
+
+        if (
+            gameplayRuntime
+                .monarch
+                .endingStarted &&
+            !gameplayRuntime
+                .monarch
+                .endingCompleted
+        ) {
+            pushNotification(
+                "O ALTAR ESTÁ REAGINDO",
+                "A essência do Monarca ainda está sendo absorvida.",
+                "special",
+                1.8
+            );
+
+            return false;
+        }
+
+        const status =
+            getMonarchAltarStatus(
+                player
+            );
+
+        if (
+            status.state ===
+                "missing_materials" ||
+            status.state ===
+                "defeated_missing_materials"
+        ) {
+            pushNotification(
+                "MATERIAIS INSUFICIENTES",
+
+                `Rubi ${getItemCount(
+                    "rubi",
+                    player
+                )}/${DASH_V1_OFFERING.rubi} • Diamante ${getItemCount(
+                    "diamante",
+                    player
+                )}/${DASH_V1_OFFERING.diamante}`,
+
+                "warning",
+
+                3.2
+            );
+
+            return false;
+        }
+
+        if (
+            status.state ===
+            "claim_reward"
+        ) {
+            return claimDashV1Reward();
+        }
+
+        if (
+            status.state ===
+            "complete"
+        ) {
+            startDialogue(
+                [
+                    "O altar permanece silencioso.",
+                    "O poder despertado já vive em seus passos."
+                ],
+                {
+                    speaker:
+                        "ALTAR"
+                }
+            );
+
+            return true;
+        }
+
+        if (
+            status.state !==
+            "ready_to_awaken"
+        ) {
+            return false;
+        }
+
+        state.battle = {
+            type:
+                "monarchAltarConfirmation",
+
+            title:
+                "ALTAR DO MONARCA",
+
+            subtitle:
+                "A oferenda não será consumida até a vitória.",
+
+            acceptLabel:
+                "SIM",
+
+            retreatLabel:
+                "NÃO",
+
+            requirements:
+                DASH_V1_OFFERING
+        };
+
+        return true;
+    }
+
+
+    function awakenMonarchFromAltar() {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world ||
+            world.id !==
+                "monarchMaze"
+        ) {
+            return false;
+        }
+
+        const status =
+            getMonarchAltarStatus(
+                player
+            );
+
+        if (
+            !status.ok ||
+            status.state !==
+                "ready_to_awaken"
+        ) {
+            return false;
+        }
+
+        const boss =
+            getMonarchBoss(
+                world
+            );
+
+        if (
+            !boss ||
+            boss.dead
+        ) {
+            return false;
+        }
+
+        /*
+            Salva antes da luta.
+        */
+        saveGame({
+            silent:
+                true,
+            safe:
+                true
+        });
+
+        player.monarch
+            .altarReached =
+            true;
+
+        player.monarch
+            .altarAccepted =
+            true;
+
+        player.monarch
+            .battleStarted =
+            true;
+
+        player.monarch
+            .stagger =
+            0;
+
+        player.monarch
+            .stunned =
+            false;
+
+        boss.state =
+            BOSS_STATE
+                .COMBAT;
+
+        boss.confirmed =
+            true;
+
+        boss.aggro =
+            true;
+
+        boss.hp =
+            boss.maxHp;
+
+        boss.defense =
+            boss.baseDefense;
+
+        boss.stagger =
+            0;
+
+        boss.stunnedTimer =
+            0;
+
+        boss.staggerTokens =
+            new Set();
+
+        boss.attackCooldown =
+            1.3;
+
+        boss.abilityCooldown =
+            1.8;
+
+        boss.summonTimer =
+            random(
+                boss.definition
+                    .summon
+                    .intervalMin,
+                boss.definition
+                    .summon
+                    .intervalMax
+            );
+
+        gameplayRuntime
+            .monarch
+            .awakened =
+            true;
+
+        gameplayRuntime
+            .monarch
+            .endingStarted =
+            false;
+
+        gameplayRuntime
+            .monarch
+            .endingCompleted =
+            false;
+
+        closeMonarchArena();
+
+        state.bossBarTarget =
+            boss;
+
+        spawnTransientEffect(
+            "altarAwaken",
+            world.altar.x,
+            world.altar.y,
+            {
+                duration:
+                    1.2,
+
+                radius:
+                    130
+            }
+        );
+
+        spawnTransientEffect(
+            "monarchAwaken",
+            boss.x,
+            boss.y,
+            {
+                duration:
+                    1.35,
+
+                radius:
+                    125
+            }
+        );
+
+        pushNotification(
+            "O ALTAR DESPERTOU",
+            "Algo nas sombras respondeu à sua presença.",
+            "special",
+            2.8
+        );
+
+        return true;
+    }
+
+
+    function acceptMonarchAltar() {
+        if (
+            state.battle
+                ?.type !==
+            "monarchAltarConfirmation"
+        ) {
+            return false;
+        }
+
+        state.battle =
+            null;
+
+        return awakenMonarchFromAltar();
+    }
+
+
+    function declineMonarchAltar() {
+        if (
+            state.battle
+                ?.type !==
+            "monarchAltarConfirmation"
+        ) {
+            return false;
+        }
+
+        state.battle =
+            null;
+
+        return true;
+    }
+
+
+    function spawnMonarchSummon(
+        boss
+    ) {
+        const world =
+            state.world;
+
+        if (
+            !world ||
+            !boss ||
+            boss.dead
+        ) {
+            return false;
+        }
+
+        const config =
+            boss.definition
+                .summon;
+
+        const alive =
+            safeArray(
+                world.enemies
+            )
+                .filter(
+                    enemy =>
+                        !enemy.dead &&
+                        enemy.summonedBy ===
+                        "monarch"
+                );
+
+        if (
+            alive.length >=
+            config.maxAlive
+        ) {
+            return false;
+        }
+
+        const species =
+            config.species[
+                randomInt(
+                    0,
+                    config.species.length -
+                        1
+                )
+            ];
+
+        const angle =
+            random(
+                0,
+                Math.PI *
+                    2
+            );
+
+        const radius =
+            random(
+                150,
+                245
+            );
+
+        const room =
+            world.mazeData
+                ?.altarRoom;
+
+        let x =
+            boss.x +
+            Math.cos(
+                angle
+            ) *
+                radius;
+
+        let y =
+            boss.y +
+            Math.sin(
+                angle
+            ) *
+                radius;
+
+        if (
+            room
+        ) {
+            x =
+                clamp(
+                    x,
+                    room.x +
+                        65,
+                    room.x +
+                        room.w -
+                        65
+                );
+
+            y =
+                clamp(
+                    y,
+                    room.y +
+                        65,
+                    room.y +
+                        room.h -
+                        65
+                );
+        }
+
+        const safe =
+            findSafePosition(
+                x,
+                y,
+                ENEMY_SPECIES[
+                    species
+                ].radius,
+                world
+            );
+
+        const enemy =
+            V.createEnemy(
+                species,
+                {
+                    entityId:
+                        `monarch_summon_${gameplayRuntime.monarch.summonSerial++}`,
+
+                    x:
+                        safe.x,
+
+                    y:
+                        safe.y
+                }
+            );
+
+        if (
+            !enemy
+        ) {
+            return false;
+        }
+
+        enemy.summonedBy =
+            "monarch";
+
+        enemy.noDrops =
+            true;
+
+        enemy.aggro =
+            true;
+
+        enemy.state =
+            "chase";
+
+        enemy.xp =
+            Math.round(
+                enemy.xp *
+                0.45
+            );
+
+        world.enemies.push(
+            enemy
+        );
+
+        spawnTransientEffect(
+            "shadowSummon",
+            enemy.x,
+            enemy.y,
+            {
+                duration:
+                    0.8,
+
+                radius:
+                    50
+            }
+        );
+
+        return true;
+    }
+
+
+    function updateMonarch(
+        boss,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world ||
+            boss.dead
+        ) {
+            return;
+        }
+
+        if (
+            !player.monarch
+                ?.battleStarted
+        ) {
+            boss.state =
+                BOSS_STATE
+                    .DORMANT;
+
+            boss.aggro =
+                false;
+
+            return;
+        }
+
+        state.bossBarTarget =
+            boss;
+
+        boss.x =
+            boss.spawnX;
+
+        boss.y =
+            boss.spawnY;
+
+        if (
+            boss.state ===
+            BOSS_STATE.STUNNED
+        ) {
+            boss.stunnedTimer -=
+                dt;
+
+            player.monarch
+                .stagger =
+                boss.stagger;
+
+            player.monarch
+                .stunned =
+                true;
+
+            if (
+                boss.stunnedTimer <=
+                0
+            ) {
+                boss.state =
+                    BOSS_STATE
+                        .COMBAT;
+
+                boss.defense =
+                    boss.baseDefense;
+
+                /*
+                    REGRA:
+                    volta exatamente para 0.
+                */
+                boss.stagger =
+                    0;
+
+                boss.staggerTokens =
+                    new Set();
+
+                player.monarch
+                    .stagger =
+                    0;
+
+                player.monarch
+                    .stunned =
+                    false;
+
+                spawnTransientEffect(
+                    "monarchRecover",
+                    boss.x,
+                    boss.y,
+                    {
+                        duration:
+                            0.65,
+
+                        radius:
+                            90
+                    }
+                );
+            }
+
+            return;
+        }
+
+        boss.state =
+            BOSS_STATE
+                .COMBAT;
+
+        boss.aggro =
+            true;
+
+        player.monarch
+            .stagger =
+            boss.stagger;
+
+        player.monarch
+            .stunned =
+            false;
+
+        boss.summonTimer -=
+            dt;
+
+        if (
+            boss.summonTimer <=
+            0
+        ) {
+            spawnMonarchSummon(
+                boss
+            );
+
+            boss.summonTimer =
+                random(
+                    boss.definition
+                        .summon
+                        .intervalMin,
+
+                    boss.definition
+                        .summon
+                        .intervalMax
+                );
+        }
+
+        const hpRatio =
+            boss.hp /
+            boss.maxHp;
+
+        if (
+            boss.abilityCooldown <=
+            0
+        ) {
+            const patterns =
+                hpRatio >
+                    0.5
+                    ? 3
+                    : 4;
+
+            const pattern =
+                randomInt(
+                    0,
+                    patterns -
+                        1
+                );
+
+            if (
+                pattern ===
+                0
+            ) {
+                fireRadialBossProjectiles(
+                    boss,
+                    hpRatio >
+                        0.5
+                        ? 9
+                        : 13,
+                    {
+                        speed:
+                            hpRatio >
+                                0.5
+                                ? 205
+                                : 235,
+
+                        multiplier:
+                            0.55,
+
+                        color:
+                            "#7f638d",
+
+                        type:
+                            "shadowOrb"
+                    }
+                );
+
+                boss.abilityCooldown =
+                    hpRatio >
+                        0.5
+                        ? 2.8
+                        : 2.35;
+            } else if (
+                pattern ===
+                1
+            ) {
+                const amount =
+                    hpRatio >
+                        0.5
+                        ? 2
+                        : 3;
+
+                for (
+                    let index = 0;
+                    index < amount;
+                    index += 1
+                ) {
+                    createHazard({
+                        type:
+                            "circle",
+
+                        source:
+                            boss,
+
+                        x:
+                            player.x +
+                            random(
+                                -95,
+                                95
+                            ),
+
+                        y:
+                            player.y +
+                            random(
+                                -95,
+                                95
+                            ),
+
+                        radius:
+                            68,
+
+                        damage:
+                            boss.damage *
+                            0.76,
+
+                        telegraph:
+                            0.85 +
+                            index *
+                                0.12,
+
+                        activeDuration:
+                            0.25,
+
+                        color:
+                            "#72547e"
+                    });
+                }
+
+                boss.abilityCooldown =
+                    3;
+            } else if (
+                pattern ===
+                2
+            ) {
+                createHazard({
+                    type:
+                        "beam",
+
+                    source:
+                        boss,
+
+                    x:
+                        boss.x,
+
+                    y:
+                        boss.y,
+
+                    angle:
+                        Math.atan2(
+                            player.y -
+                                boss.y,
+                            player.x -
+                                boss.x
+                        ),
+
+                    width:
+                        hpRatio >
+                            0.5
+                            ? 78
+                            : 95,
+
+                    length:
+                        720,
+
+                    damage:
+                        boss.damage *
+                        1.05,
+
+                    telegraph:
+                        hpRatio >
+                            0.5
+                            ? 1.05
+                            : 0.82,
+
+                    activeDuration:
+                        0.34,
+
+                    color:
+                        "#a184b0"
+                });
+
+                boss.abilityCooldown =
+                    3.35;
+            } else {
+                spawnMonarchSummon(
+                    boss
+                );
+
+                spawnMonarchSummon(
+                    boss
+                );
+
+                fireRadialBossProjectiles(
+                    boss,
+                    8,
+                    {
+                        speed:
+                            220,
+
+                        multiplier:
+                            0.45,
+
+                        color:
+                            "#80648e",
+
+                        type:
+                            "shadowOrb"
+                    }
+                );
+
+                boss.abilityCooldown =
+                    3.7;
+            }
+        }
+
+        if (
+            boss.attackCooldown <=
+                0 &&
+            distance(
+                boss.x,
+                boss.y,
+                player.x,
+                player.y
+            ) <=
+                135
+        ) {
+            createHazard({
+                type:
+                    "circle",
+
+                source:
+                    boss,
+
+                x:
+                    boss.x,
+
+                y:
+                    boss.y,
+
+                radius:
+                    145,
+
+                damage:
+                    boss.damage *
+                    0.9,
+
+                telegraph:
+                    0.55,
+
+                activeDuration:
+                    0.2,
+
+                color:
+                    "#5d4867"
+            });
+
+            boss.attackCooldown =
+                2.2;
+        }
+    }
+
+
+    function claimDashV1Reward() {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world ||
+            world.id !==
+                "monarchMaze"
+        ) {
+            return false;
+        }
+
+        if (
+            !unlockDashV1FromAltar(
+                player
+            )
+        ) {
+            return false;
+        }
+
+        spawnTransientEffect(
+            "dashV1Unlock",
+            world.altar.x,
+            world.altar.y,
+            {
+                duration:
+                    1.6,
+
+                radius:
+                    150,
+
+                color:
+                    "#f2f7fa"
+            }
+        );
+
+        pushNotification(
+            "DASH V1 DESPERTADO",
+            "O Passo do Vento agora responde à tecla Espaço.",
+            "special",
+            4
+        );
+
+        saveGame({
+            silent:
+                true
+        });
+
+        return true;
+    }
+
+
+    /* ============================================================
+       VAELKOR
+       ============================================================ */
+
+    function getVaelkorBoss(
+        world =
+            state.world
+    ) {
+        return (
+            world
+                ?.bosses
+                ?.find(
+                    boss =>
+                        boss.id ===
+                        "vaelkor"
+                ) ||
+            null
+        );
+    }
+
+
+    function isPlayerInsideVaelkorArena(
+        player =
+            state.player,
+        world =
+            state.world
+    ) {
+        if (
+            !player ||
+            !world ||
+            world.id !==
+                "voidDungeon"
+        ) {
+            return false;
+        }
+
+        const zone =
+            world.zones
+                ?.find(
+                    item =>
+                        item.id ===
+                        "vaelkor_arena"
+                );
+
+        return Boolean(
+            zone &&
+            V.isPointInsideZone(
+                player.x,
+                player.y,
+                zone
+            )
+        );
+    }
+
+
+    function beginVaelkorEncounter() {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        const boss =
+            getVaelkorBoss(
+                world
+            );
+
+        if (
+            !player ||
+            !world ||
+            world.id !==
+                "voidDungeon" ||
+            !boss ||
+            boss.dead
+        ) {
+            return false;
+        }
+
+        if (
+            player
+                .miguelQuest
+                .vaelkorActivated
+        ) {
+            return true;
+        }
+
+        saveGame({
+            silent:
+                true,
+            safe:
+                true
+        });
+
+        player
+            .miguelQuest
+            .vaelkorActivated =
+            true;
+
+        player
+            .miguelQuest
+            .dungeonDiscovered =
+            true;
+
+        boss.state =
+            BOSS_STATE
+                .COMBAT;
+
+        boss.confirmed =
+            true;
+
+        boss.aggro =
+            true;
+
+        boss.hp =
+            boss.maxHp;
+
+        boss.phase =
+            1;
+
+        boss.abilityCooldown =
+            1.4;
+
+        if (
+            world.vaelkorArenaBarrier
+        ) {
+            world
+                .vaelkorArenaBarrier
+                .active =
+                true;
+
+            world
+                .vaelkorArenaBarrier
+                .solid =
+                true;
+
+            rebuildDynamicWorldObstacles(
+                world
+            );
+        }
+
+        gameplayRuntime
+            .vaelkor
+            .arenaEntered =
+            true;
+
+        gameplayRuntime
+            .vaelkor
+            .entranceLocked =
+            true;
+
+        state.bossBarTarget =
+            boss;
+
+        startDialogue(
+            [
+                "Você aprendeu a fugir...",
+                "Agora mostre-me se consegue sobreviver."
+            ],
+            {
+                speaker:
+                    "VAELKOR"
+            }
+        );
+
+        return true;
+    }
+
+
+    function spawnVaelkorSummon(
+        boss,
+        index = 0
+    ) {
+        const world =
+            state.world;
+
+        const zone =
+            world
+                ?.zones
+                ?.find(
+                    item =>
+                        item.id ===
+                        "vaelkor_arena"
+                );
+
+        if (
+            !world ||
+            !zone
+        ) {
+            return false;
+        }
+
+        const speciesList = [
+            "voidSpider",
+            "voidGoblin",
+            "voidStalker"
+        ];
+
+        const species =
+            speciesList[
+                index %
+                speciesList.length
+            ];
+
+        const angle =
+            random(
+                0,
+                Math.PI *
+                    2
+            );
+
+        const radius =
+            random(
+                210,
+                370
+            );
+
+        const x =
+            clamp(
+                boss.x +
+                Math.cos(
+                    angle
+                ) *
+                    radius,
+
+                zone.x +
+                    80,
+
+                zone.x +
+                    zone.w -
+                    80
+            );
+
+        const y =
+            clamp(
+                boss.y +
+                Math.sin(
+                    angle
+                ) *
+                    radius,
+
+                zone.y +
+                    80,
+
+                zone.y +
+                    zone.h -
+                    80
+            );
+
+        const safe =
+            findSafePosition(
+                x,
+                y,
+                ENEMY_SPECIES[
+                    species
+                ].radius,
+                world
+            );
+
+        const enemy =
+            V.createEnemy(
+                species,
+                {
+                    entityId:
+                        `vaelkor_summon_${Date.now()}_${index}_${Math.random()
+                            .toString(36)
+                            .slice(2)}`,
+
+                    x:
+                        safe.x,
+
+                    y:
+                        safe.y
+                }
+            );
+
+        if (
+            !enemy
+        ) {
+            return false;
+        }
+
+        enemy.summonedBy =
+            "vaelkor";
+
+        enemy.noDrops =
+            true;
+
+        enemy.aggro =
+            true;
+
+        enemy.state =
+            "chase";
+
+        enemy.xp =
+            Math.round(
+                enemy.xp *
+                0.35
+            );
+
+        world.enemies.push(
+            enemy
+        );
+
+        spawnTransientEffect(
+            "voidSummon",
+            enemy.x,
+            enemy.y,
+            {
+                duration:
+                    0.8,
+
+                radius:
+                    55
+            }
+        );
+
+        return true;
+    }
+
+
+    function updateVaelkor(
+        boss,
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            boss.dead
+        ) {
+            return;
+        }
+
+        if (
+            !player
+                .miguelQuest
+                ?.vaelkorActivated
+        ) {
+            boss.state =
+                BOSS_STATE
+                    .DORMANT;
+
+            boss.aggro =
+                false;
+
+            return;
+        }
+
+        boss.state =
+            BOSS_STATE
+                .COMBAT;
+
+        boss.aggro =
+            true;
+
+        boss.x =
+            boss.spawnX;
+
+        boss.y =
+            boss.spawnY;
+
+        state.bossBarTarget =
+            boss;
+
+        const hpRatio =
+            boss.hp /
+            boss.maxHp;
+
+        if (
+            hpRatio <=
+                0.5 &&
+            boss.phase ===
+                1
+        ) {
+            boss.phase =
+                2;
+
+            player
+                .miguelQuest
+                .vaelkorPhaseTwoSeen =
+                true;
+
+            boss.abilityCooldown =
+                1.25;
+
+            spawnTransientEffect(
+                "vaelkorPhase",
+                boss.x,
+                boss.y,
+                {
+                    duration:
+                        1.1,
+
+                    radius:
+                        140
+                }
+            );
+
+            pushNotification(
+                "O VAZIO SE CONTRAI",
+                "Vaelkor começou a combinar seus ataques.",
+                "special",
+                2.5
+            );
+        }
+
+        if (
+            boss.abilityCooldown >
+            0
+        ) {
+            return;
+        }
+
+        const attacks =
+            boss.definition
+                .attacks;
+
+        const pattern =
+            gameplayRuntime
+                .vaelkor
+                .attackPatternIndex %
+            3;
+
+        gameplayRuntime
+            .vaelkor
+            .attackPatternIndex +=
+            1;
+
+        if (
+            pattern ===
+            0
+        ) {
+            const count =
+                boss.phase ===
+                    2
+                    ? attacks
+                        .voidBarrage
+                        .phaseTwoOrbCount
+                    : attacks
+                        .voidBarrage
+                        .baseOrbCount;
+
+            fireRadialBossProjectiles(
+                boss,
+                count,
+                {
+                    speed:
+                        attacks
+                            .voidBarrage
+                            .projectileSpeed,
+
+                    multiplier:
+                        attacks
+                            .voidBarrage
+                            .damage /
+                        boss.damage,
+
+                    color:
+                        "#765486",
+
+                    type:
+                        "voidOrb",
+
+                    phaseCompatible:
+                        true
+                }
+            );
+
+            boss.abilityCooldown =
+                boss.phase ===
+                    2
+                    ? 2.2
+                    : 2.75;
+
+            return;
+        }
+
+        if (
+            pattern ===
+            1
+        ) {
+            createHazard({
+                type:
+                    "beam",
+
+                source:
+                    boss,
+
+                x:
+                    boss.x,
+
+                y:
+                    boss.y,
+
+                angle:
+                    Math.atan2(
+                        player.y -
+                            boss.y,
+                        player.x -
+                            boss.x
+                    ),
+
+                width:
+                    attacks
+                        .voidBeam
+                        .width,
+
+                length:
+                    attacks
+                        .voidBeam
+                        .length,
+
+                damage:
+                    attacks
+                        .voidBeam
+                        .damage,
+
+                telegraph:
+                    boss.phase ===
+                        2
+                        ? attacks
+                            .voidBeam
+                            .phaseTwoTelegraph
+                        : attacks
+                            .voidBeam
+                            .telegraph,
+
+                activeDuration:
+                    attacks
+                        .voidBeam
+                        .duration,
+
+                color:
+                    "#8e66a4"
+            });
+
+            boss.abilityCooldown =
+                boss.phase ===
+                    2
+                    ? 2.65
+                    : 3.3;
+
+            return;
+        }
+
+        const amount =
+            boss.phase ===
+                2
+                ? attacks
+                    .shadowSummon
+                    .phaseTwoCount
+                : attacks
+                    .shadowSummon
+                    .phaseOneCount;
+
+        for (
+            let index = 0;
+            index < amount;
+            index += 1
+        ) {
+            spawnVaelkorSummon(
+                boss,
+                index
+            );
+        }
+
+        if (
+            boss.phase ===
+            2
+        ) {
+            fireRadialBossProjectiles(
+                boss,
+                7,
+                {
+                    speed:
+                        205,
+
+                    multiplier:
+                        0.42,
+
+                    color:
+                        "#654b72",
+
+                    type:
+                        "voidOrb"
+                }
+            );
+        }
+
+        boss.abilityCooldown =
+            boss.phase ===
+                2
+                ? 3.2
+                : 3.8;
+    }
+
+
+    /* ============================================================
+       UPDATE BOSSES
+       ============================================================ */
+
+    function updateBosses(
+        dt
+    ) {
+        const world =
+            state.world;
+
+        const player =
+            state.player;
+
+        if (
+            !world ||
+            !player ||
+            player.dead
+        ) {
+            return;
+        }
+
+        for (
+            const boss of
+            safeArray(
+                world.bosses
+            )
+        ) {
+            if (
+                boss.dead
+            ) {
+                updateBossDeathVisual(
+                    boss,
+                    dt
+                );
+
+                continue;
+            }
+
+            boss.animationTime +=
+                dt;
+
+            boss.hurtAnim =
+                Math.max(
+                    0,
+                    finiteNumber(
+                        boss.hurtAnim
+                    ) -
+                    dt
+                );
+
+            boss.attackCooldown =
+                Math.max(
+                    0,
+                    finiteNumber(
+                        boss
+                            .attackCooldown
+                    ) -
+                    dt
+                );
+
+            boss.abilityCooldown =
+                Math.max(
+                    0,
+                    finiteNumber(
+                        boss
+                            .abilityCooldown
+                    ) -
+                    dt
+                );
+
+            if (
+                boss.id ===
+                "monarch"
+            ) {
+                updateMonarch(
+                    boss,
+                    dt
+                );
+
+                continue;
+            }
+
+            if (
+                boss.id ===
+                "vaelkor"
+            ) {
+                updateVaelkor(
+                    boss,
+                    dt
+                );
+
+                continue;
+            }
+
+            if (
+                !canBossBecomeAggressive(
+                    boss
+                )
+            ) {
+                boss.aggro =
+                    false;
+
+                boss.state =
+                    BOSS_STATE
+                        .NEUTRAL;
+
+                continue;
+            }
+
+            if (
+                boss.state ===
+                BOSS_STATE
+                    .CONFIRMED
+            ) {
+                activateBossCombat(
+                    boss
+                );
+            }
+
+            if (
+                boss.state !==
+                BOSS_STATE
+                    .COMBAT
+            ) {
+                continue;
+            }
+
+            state.bossBarTarget =
+                boss;
+
+            updatePathBossAI(
+                boss,
+                dt
+            );
+        }
+    }
+
+
+    /* ============================================================
+       DROPS
+       ============================================================ */
+
+    function spawnWorldDrop(
+        itemId,
+        amount,
+        x,
+        y,
+        options = {}
+    ) {
+        const item =
+            ITEMS[
+                itemId
+            ];
+
+        if (
+            !item ||
+            amount <=
+                0 ||
+            !state.world
+        ) {
+            return null;
+        }
+
+        ensureWorldCombatArrays(
+            state.world
+        );
+
+        const drop = {
+            id:
+                options.id ||
+                `drop_${itemId}_${Date.now()}_${Math.random()
+                    .toString(36)
+                    .slice(2)}`,
+
+            itemId,
+
+            amount:
+                Math.max(
+                    1,
+                    integer(
+                        amount,
+                        1
+                    )
+                ),
+
+            x:
+                finiteNumber(
+                    x
+                ),
+
+            y:
+                finiteNumber(
+                    y
+                ),
+
+            radius:
+                22,
+
+            age:
+                0,
+
+            bobTime:
+                Math.random() *
+                Math.PI *
+                2,
+
+            picked:
+                false,
+
+            questDrop:
+                Boolean(
+                    options.questDrop
+                )
+        };
+
+        state.world
+            .droppedItems
+            .push(
+                drop
+            );
+
+        return drop;
+    }
+
+
+    function pickupWorldDrop(
+        drop
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            !drop ||
+            drop.picked
+        ) {
+            return false;
+        }
+
+        let amount =
+            drop.amount;
+
+        if (
+            drop.itemId ===
+            "essenciaSombria"
+        ) {
+            const current =
+                getItemCount(
+                    "essenciaSombria",
+                    player
+                );
+
+            amount =
+                Math.min(
+                    amount,
+                    Math.max(
+                        0,
+
+                        VOID_MISSION_CONFIG
+                            .shadowEssenceRequired -
+                        current
+                    )
+                );
+
+            if (
+                amount <=
+                0
+            ) {
+                drop.picked =
+                    true;
+
+                return true;
+            }
+        }
+
+        if (
+            !canCarryItem(
+                drop.itemId,
+                amount,
+                player
+            )
+        ) {
+            pushNotification(
+                "MOCHILA CHEIA",
+                "Não há espaço suficiente para este item.",
+                "warning",
+                1.8
+            );
+
+            return false;
+        }
+
+        if (
+            !addItem(
+                drop.itemId,
+                amount,
+                player
+            )
+        ) {
+            return false;
+        }
+
+        drop.picked =
+            true;
+
+        const item =
+            ITEMS[
+                drop.itemId
+            ];
+
+        pushNotification(
+            item?.name
+                ?.toUpperCase() ||
+                "ITEM",
+
+            `+${amount}`,
+
+            drop.questDrop
+                ? "special"
+                : "item",
+
+            1.4
+        );
+
+        if (
+            drop.itemId ===
+            "essenciaSombria"
+        ) {
+            const quest =
+                player
+                    .miguelQuest;
+
+            quest.shadowEssenceCollected =
+                getItemCount(
+                    "essenciaSombria",
+                    player
+                );
+
+            if (
+                quest.shadowEssenceCollected >=
+                    VOID_MISSION_CONFIG
+                        .shadowEssenceRequired &&
+                !quest.keyCollected
+            ) {
+                updateMiguelQuestObjective(
+                    MIGUEL_QUEST_STAGE
+                        .KEY_FOUND_NEEDS_ESSENCE,
+
+                    `Você possui ${VOID_MISSION_CONFIG.shadowEssenceRequired} Essências Sombrias. Encontre a Chave Obscura no Caminho 2.`
+                );
+            }
+        }
+
+        return true;
+    }
+
+
+    function updateWorldDrops(
+        dt
+    ) {
+        const world =
+            ensureWorldCombatArrays();
+
+        const player =
+            state.player;
+
+        if (
+            !world ||
+            !player
+        ) {
+            return;
+        }
+
+        for (
+            const drop of
+            world.droppedItems
+        ) {
+            if (
+                drop.picked
+            ) {
+                continue;
+            }
+
+            drop.age +=
+                dt;
+
+            drop.bobTime +=
+                dt *
+                2.6;
+
+            if (
+                distance(
+                    player.x,
+                    player.y,
+                    drop.x,
+                    drop.y
+                ) <=
+                52
+            ) {
+                pickupWorldDrop(
+                    drop
+                );
+            }
+        }
+
+        world.droppedItems =
+            world.droppedItems
+                .filter(
+                    drop =>
+                        !drop.picked
+                );
+    }
+
+
+    /* ============================================================
+       MORTE DE INIMIGO
+       ============================================================ */
+
+    function killEnemy(
+        enemy,
+        source = {}
+    ) {
+        if (
+            !enemy ||
+            enemy.dead
+        ) {
+            return false;
+        }
+
+        if (
+            BOSS_REGISTRY[
+                enemy.id
+            ]
+        ) {
+            return killBoss(
+                enemy,
+                source
+            );
+        }
+
+        enemy.dead =
+            true;
+
+        enemy.hp =
+            0;
+
+        enemy.aggro =
+            false;
+
+        enemy.state =
+            "dead";
+
+        enemy.deathTimer =
+            0;
+
+        grantXP(
+            enemy.xp ||
+            0
+        );
+
+        spawnTransientEffect(
+            "enemyDeath",
+            enemy.x,
+            enemy.y,
+            {
+                duration:
+                    0.55,
+
+                speciesId:
+                    enemy.speciesId
+            }
+        );
+
+        if (
+            state.area ===
+                "voidDungeon" &&
+            enemy.questEnemyId &&
+            state.player
+                ?.miguelQuest
+        ) {
+            state.player
+                .miguelQuest
+                .clearedDungeonEnemyIds =
+                uniqueArray([
+                    ...safeArray(
+                        state.player
+                            .miguelQuest
+                            .clearedDungeonEnemyIds
+                    ),
+
+                    enemy.questEnemyId
+                ]);
+        }
+
+        const drops =
+            enemy.noDrops
+                ? []
+                : rollEnemyDrops(
+                    enemy
+                );
+
+        let index =
+            0;
+
+        for (
+            const drop of
+            drops
+        ) {
+            const angle =
+                index *
+                1.8;
+
+            const offset =
+                18 +
+                index *
+                    4;
+
+            spawnWorldDrop(
+                drop.itemId,
+                drop.amount,
+
+                enemy.x +
+                Math.cos(
+                    angle
+                ) *
+                    offset,
+
+                enemy.y +
+                Math.sin(
+                    angle
+                ) *
+                    offset,
+
+                {
+                    questDrop:
+                        drop.itemId ===
+                        "essenciaSombria"
+                }
+            );
+
+            index +=
+                1;
+        }
+
+        return true;
+    }
+
+
+    /* ============================================================
+       BOSS DEATH
+       ============================================================ */
+
+    function createUnlockedPathRune(
+        boss
+    ) {
+        if (
+            !boss ||
+            boss.id ===
+                "monarch" ||
+            boss.id ===
+                "vaelkor"
+        ) {
+            return null;
+        }
+
+        const rune = {
+            id:
+                `rune_${boss.id}`,
+
+            type:
+                "pathUnlockedRune",
+
+            x:
+                boss.spawnX,
+
+            y:
+                boss.spawnY,
+
+            bossId:
+                boss.id,
+
+            timer:
+                Infinity,
+
+            pulse:
+                Math.random() *
+                Math.PI *
+                2,
+
+            color:
+                "#77a7c7"
+        };
+
+        gameplayRuntime
+            .bossRunes =
+            gameplayRuntime
+                .bossRunes
+                .filter(
+                    item =>
+                        item.bossId !==
+                        boss.id
+                );
+
+        gameplayRuntime
+            .bossRunes
+            .push(
+                rune
+            );
+
+        state.world
+            ?.decorations
+            ?.push(
+                rune
+            );
+
+        return rune;
+    }
+
+
+    function repairWorldBossBarriers(
+        world =
+            state.world
+    ) {
+        if (
+            !world
+        ) {
+            return;
+        }
+
+        for (
+            const barrier of
+            safeArray(
+                world.bossBarriers
+            )
+        ) {
+            if (
+                isBossDefeated(
+                    barrier.bossId
+                )
+            ) {
+                barrier.solid =
+                    false;
+            }
+        }
+
+        for (
+            const exit of
+            safeArray(
+                world.exits
+            )
+        ) {
+            if (
+                exit.bossId &&
+                isBossDefeated(
+                    exit.bossId
+                )
+            ) {
+                exit.unlocked =
+                    true;
+            }
+        }
+
+        rebuildDynamicWorldObstacles(
+            world
+        );
+    }
+
+
+    function startMonarchDeathSequence(
+        boss
+    ) {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world
+        ) {
+            return;
+        }
+
+        boss.state =
+            BOSS_STATE
+                .DYING;
+
+        boss.deathTimer =
+            0;
+
+        boss.deathDuration =
+            2.7;
+
+        boss.fade =
+            1;
+
+        boss.aggro =
+            false;
+
+        player.monarch
+            .battleStarted =
+            false;
+
+        player.monarch
+            .defeated =
+            true;
+
+        player.monarch
+            .stagger =
+            0;
+
+        player.monarch
+            .stunned =
+            false;
+
+        openMonarchArena();
+
+        for (
+            const enemy of
+            safeArray(
+                world.enemies
+            )
+        ) {
+            if (
+                enemy.summonedBy ===
+                    "monarch" &&
+                !enemy.dead
+            ) {
+                enemy.dead =
+                    true;
+
+                enemy.hp =
+                    0;
+            }
+        }
+
+        spawnTransientEffect(
+            "monarchDissolve",
+            boss.x,
+            boss.y,
+            {
+                duration:
+                    2.7,
+
+                targetX:
+                    world.altar
+                        ?.x,
+
+                targetY:
+                    world.altar
+                        ?.y,
+
+                count:
+                    38,
+
+                color:
+                    "#e5e6e2"
+            }
+        );
+
+        spawnTransientEffect(
+            "altarSoulAbsorb",
+
+            world.altar
+                ?.x,
+
+            world.altar
+                ?.y,
+
+            {
+                duration:
+                    2.9,
+
+                sourceX:
+                    boss.x,
+
+                sourceY:
+                    boss.y,
+
+                radius:
+                    145,
+
+                color:
+                    "#eceeea"
+            }
+        );
+
+        gameplayRuntime
+            .monarch
+            .endingStarted =
+            true;
+    }
+
+
+    function completeMonarchDeathSequence(
+        boss
+    ) {
+        if (
+            gameplayRuntime
+                .monarch
+                .endingCompleted
+        ) {
+            return;
+        }
+
+        gameplayRuntime
+            .monarch
+            .endingCompleted =
+            true;
+
+        boss.state =
+            BOSS_STATE
+                .DEFEATED;
+
+        boss.fade =
+            0;
+
+        state.bossBarTarget =
+            null;
+
+        registerBossDefeated(
+            "monarch"
+        );
+
+        grantXP(
+            Math.max(
+                100,
+                Math.round(
+                    boss.maxHp *
+                    0.16
+                )
+            )
+        );
+
+        pushNotification(
+            "O MONARCA FOI SILENCIADO",
+            "O altar reconhece aquele que sobreviveu às sombras.",
+            "special",
+            4.2
+        );
+
+        saveGame({
+            silent:
+                true
+        });
+    }
+
+
+    function startVaelkorDeathSequence(
+        boss
+    ) {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world
+        ) {
+            return;
+        }
+
+        boss.state =
+            BOSS_STATE
+                .DYING;
+
+        boss.deathTimer =
+            0;
+
+        boss.deathDuration =
+            2.1;
+
+        boss.fade =
+            1;
+
+        boss.aggro =
+            false;
+
+        player
+            .miguelQuest
+            .vaelkorDefeated =
+            true;
+
+        player
+            .miguelQuest
+            .vaelkorActivated =
+            false;
+
+        updateMiguelQuestObjective(
+            MIGUEL_QUEST_STAGE
+                .COLLECT_FRAGMENT,
+            "Obtenha o Fragmento do Vazio."
+        );
+
+        if (
+            world.vaelkorArenaBarrier
+        ) {
+            world
+                .vaelkorArenaBarrier
+                .active =
+                false;
+
+            world
+                .vaelkorArenaBarrier
+                .solid =
+                false;
+
+            rebuildDynamicWorldObstacles(
+                world
+            );
+        }
+
+        for (
+            const enemy of
+            safeArray(
+                world.enemies
+            )
+        ) {
+            if (
+                enemy.summonedBy ===
+                    "vaelkor"
+            ) {
+                enemy.dead =
+                    true;
+
+                enemy.hp =
+                    0;
+            }
+        }
+
+        spawnTransientEffect(
+            "vaelkorDissolve",
+            boss.x,
+            boss.y,
+            {
+                duration:
+                    2.1,
+
+                radius:
+                    150,
+
+                color:
+                    "#705483"
+            }
+        );
+
+        gameplayRuntime
+            .vaelkor
+            .endingStarted =
+            true;
+    }
+
+
+    function spawnVoidFragmentAfterVaelkor(
+        boss
+    ) {
+        const world =
+            state.world;
+
+        const player =
+            state.player;
+
+        if (
+            !world ||
+            !player ||
+            player
+                .miguelQuest
+                .fragmentCollected
+        ) {
+            return false;
+        }
+
+        if (
+            world.interactables
+                .some(
+                    item =>
+                        item.type ===
+                            "voidFragment" &&
+                        !item.collected
+                )
+        ) {
+            return true;
+        }
+
+        const fragment = {
+            id:
+                "void_fragment_pickup",
+
+            type:
+                "voidFragment",
+
+            x:
+                boss.spawnX,
+
+            y:
+                boss.spawnY +
+                110,
+
+            radius:
+                48,
+
+            collected:
+                false
+        };
+
+        world.interactables.push(
+            fragment
+        );
+
+        world.decorations.push({
+            type:
+                "voidFragmentGlow",
+
+            x:
+                fragment.x,
+
+            y:
+                fragment.y,
+
+            fragmentId:
+                fragment.id
+        });
+
+        player
+            .miguelQuest
+            .fragmentSpawned =
+            true;
+
+        gameplayRuntime
+            .fragment
+            .rewardSpawned =
+            true;
+
+        return true;
+    }
+
+
+    function completeVaelkorDeathSequence(
+        boss
+    ) {
+        if (
+            gameplayRuntime
+                .vaelkor
+                .endingCompleted
+        ) {
+            return;
+        }
+
+        gameplayRuntime
+            .vaelkor
+            .endingCompleted =
+            true;
+
+        boss.state =
+            BOSS_STATE
+                .DEFEATED;
+
+        boss.fade =
+            0;
+
+        state.bossBarTarget =
+            null;
+
+        registerBossDefeated(
+            "vaelkor"
+        );
+
+        grantXP(
+            Math.max(
+                180,
+                Math.round(
+                    boss.maxHp *
+                    0.13
+                )
+            )
+        );
+
+        spawnVoidFragmentAfterVaelkor(
+            boss
+        );
+
+        pushNotification(
+            "VAELKOR FOI VENCIDO",
+            "Algo permaneceu no centro da arena.",
+            "special",
+            3.4
+        );
+
+        saveGame({
+            silent:
+                true
+        });
+    }
+
+
+    function killBoss(
+        boss,
+        source = {}
+    ) {
+        if (
+            !boss ||
+            boss.dead
+        ) {
+            return false;
+        }
+
+        boss.hp =
+            0;
+
+        boss.dead =
+            true;
+
+        boss.aggro =
+            false;
+
+        boss.deathTimer =
+            0;
+
+        boss.fade =
+            1;
+
+        state.bossBarTarget =
+            null;
+
+        if (
+            boss.id ===
+            "monarch"
+        ) {
+            startMonarchDeathSequence(
+                boss
+            );
+
+            return true;
+        }
+
+        if (
+            boss.id ===
+            "vaelkor"
+        ) {
+            startVaelkorDeathSequence(
+                boss
+            );
+
+            return true;
+        }
+
+        boss.state =
+            BOSS_STATE
+                .DYING;
+
+        boss.deathDuration =
+            0.85;
+
+        registerBossDefeated(
+            boss.id
+        );
+
+        grantXP(
+            Math.max(
+                100,
+                Math.round(
+                    boss.maxHp *
+                    0.16
+                )
+            )
+        );
+
+        repairWorldBossBarriers();
+
+        createUnlockedPathRune(
+            boss
+        );
+
+        spawnTransientEffect(
+            "pathBossFade",
+            boss.x,
+            boss.y,
+            {
+                duration:
+                    0.9,
+
+                bossId:
+                    boss.id,
+
+                color:
+                    boss.definition
+                        ?.aura ||
+                    "#9bb6c6",
+
+                particleCount:
+                    12
+            }
+        );
+
+        pushNotification(
+            "CAMINHO LIBERADO",
+            `${boss.name} não bloqueia mais a passagem.`,
+            "success",
+            2.6
+        );
+
+        saveGame({
+            silent:
+                true
+        });
+
+        return true;
+    }
+
+
+    function updateBossDeathVisual(
+        boss,
+        dt
+    ) {
+        if (
+            !boss ||
+            boss.state !==
+            BOSS_STATE.DYING
+        ) {
+            return;
+        }
+
+        boss.deathTimer +=
+            dt;
+
+        const duration =
+            Math.max(
+                0.1,
+                finiteNumber(
+                    boss.deathDuration,
+                    0.85
+                )
+            );
+
+        boss.fade =
+            clamp(
+                1 -
+                boss.deathTimer /
+                    duration,
+                0,
+                1
+            );
+
+        if (
+            boss.id ===
+                "monarch" &&
+            boss.deathTimer >=
+                duration
+        ) {
+            completeMonarchDeathSequence(
+                boss
+            );
+
+            return;
+        }
+
+        if (
+            boss.id ===
+                "vaelkor" &&
+            boss.deathTimer >=
+                duration
+        ) {
+            completeVaelkorDeathSequence(
+                boss
+            );
+
+            return;
+        }
+
+        if (
+            boss.deathTimer >=
+            duration
+        ) {
+            boss.state =
+                BOSS_STATE
+                    .DEFEATED;
+
+            boss.fade =
+                0;
+        }
+    }
+
+
+    /* ============================================================
+       FRAGMENTO — MINIGAME 3 RODADAS
+       ============================================================ */
+
+    function beginFragmentMinigame() {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            !player
+                .miguelQuest
+                ?.vaelkorDefeated ||
+            player
+                .miguelQuest
+                .fragmentCollected
+        ) {
+            return false;
+        }
+
+        state.fragmentMinigame = {
+            active:
+                true,
+
+            round:
+                0,
+
+            cursor:
+                0,
+
+            direction:
+                1,
+
+            targetCenter:
+                random(
+                    0.25,
+                    0.75
+                ),
+
+            attempts:
+                0
+        };
+
+        return true;
+    }
+
+
+    function resetFragmentRoundToFirst() {
+        if (
+            !state.fragmentMinigame
+        ) {
+            return;
+        }
+
+        state.fragmentMinigame.round =
+            0;
+
+        state.fragmentMinigame.cursor =
+            0;
+
+        state.fragmentMinigame.direction =
+            1;
+
+        state.fragmentMinigame.targetCenter =
+            random(
+                0.25,
+                0.75
+            );
+    }
+
+
+    function updateFragmentMinigame(
+        dt
+    ) {
+        const game =
+            state.fragmentMinigame;
+
+        if (
+            !game?.active
+        ) {
+            return;
+        }
+
+        const config =
+            VOID_MISSION_CONFIG
+                .fragmentMinigameRounds[
+                    game.round
+                ];
+
+        if (
+            !config
+        ) {
+            completeFragmentMinigame();
+            return;
+        }
+
+        game.cursor +=
+            game.direction *
+            config.speed *
+            dt;
+
+        if (
+            game.cursor >=
+            1
+        ) {
+            game.cursor =
+                1;
+
+            game.direction =
+                -1;
+        } else if (
+            game.cursor <=
+            0
+        ) {
+            game.cursor =
+                0;
+
+            game.direction =
+                1;
+        }
+    }
+
+
+    function attemptFragmentMinigame() {
+        const game =
+            state.fragmentMinigame;
+
+        if (
+            !game?.active
+        ) {
+            return false;
+        }
+
+        const config =
+            VOID_MISSION_CONFIG
+                .fragmentMinigameRounds[
+                    game.round
+                ];
+
+        const hit =
+            Math.abs(
+                game.cursor -
+                game.targetCenter
+            ) <=
+            config.targetSize /
+                2;
+
+        game.attempts +=
+            1;
+
+        if (
+            !hit
+        ) {
+            spawnTransientEffect(
+                "fragmentMiss",
+                state.player
+                    ?.x,
+                state.player
+                    ?.y,
+                {
+                    duration:
+                        0.45
+                }
+            );
+
+            pushNotification(
+                "RITMO INTERROMPIDO",
+                "A sequência voltou à primeira rodada.",
+                "warning",
+                1.7
+            );
+
+            resetFragmentRoundToFirst();
+
+            return false;
+        }
+
+        spawnTransientEffect(
+            "fragmentHit",
+            state.player
+                ?.x,
+            state.player
+                ?.y,
+            {
+                duration:
+                    0.42,
+
+                round:
+                    game.round +
+                    1
+            }
+        );
+
+        game.round +=
+            1;
+
+        if (
+            game.round >=
+            VOID_MISSION_CONFIG
+                .fragmentMinigameRounds
+                .length
+        ) {
+            completeFragmentMinigame();
+
+            return true;
+        }
+
+        game.cursor =
+            0;
+
+        game.direction =
+            1;
+
+        game.targetCenter =
+            random(
+                0.22,
+                0.78
+            );
+
+        return true;
+    }
+
+
+    function completeFragmentMinigame() {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return false;
+        }
+
+        state.fragmentMinigame =
+            null;
+
+        if (
+            getRealItemCount(
+                "fragmentoVazio",
+                player
+            ) <=
+            0
+        ) {
+            if (
+                !addItem(
+                    "fragmentoVazio",
+                    1,
+                    player
+                )
+            ) {
+                pushNotification(
+                    "MOCHILA CHEIA",
+                    "Libere espaço para o Fragmento do Vazio.",
+                    "warning",
+                    2.2
+                );
+
+                return false;
+            }
+        }
+
+        player
+            .miguelQuest
+            .fragmentMiniGameCompleted =
+            true;
+
+        player
+            .miguelQuest
+            .fragmentCollected =
+            true;
+
+        updateMiguelQuestObjective(
+            MIGUEL_QUEST_STAGE
+                .RETURN_TO_MIGUEL,
+            "Retorne a Miguel com o Fragmento do Vazio."
+        );
+
+        const fragment =
+            state.world
+                ?.interactables
+                ?.find(
+                    item =>
+                        item.type ===
+                        "voidFragment"
+                );
+
+        if (
+            fragment
+        ) {
+            fragment.collected =
+                true;
+        }
+
+        pushNotification(
+            "FRAGMENTO DO VAZIO",
+            "A sequência respondeu ao seu toque.",
+            "special",
+            3
+        );
+
+        saveGame({
+            silent:
+                true
+        });
+
+        return true;
+    }
+
+
+    /* ============================================================
+       QUESTS / LOJA
+       ============================================================ */
+
+    const NPC_DIALOGUES =
+        Object.freeze({
+            elian:
+                Object.freeze([
+                    "A Quietude parece estar chegando mais perto. Ontem eu esqueci o nome da rua onde cresci.",
+                    "Meu pai dizia que a primeira coisa que some não é um lugar. É a lembrança de que ele existia.",
+                    "A estrada leste está estranha. Um Guardião apareceu por lá e não deixa ninguém passar."
+                ]),
+
+            mara:
+                Object.freeze([
+                    "Os registros mais antigos falam da Quietude como se ela já tivesse acontecido antes.",
+                    "Alguns livros têm páginas inteiras em branco, mas a numeração continua como se algo estivesse faltando.",
+                    "Quando encontrar algo que não consegue explicar, tente lembrar de cada detalhe antes de voltar."
+                ]),
+
+            nara:
+                Object.freeze([
+                    "A floresta percebe quem passa por ela.",
+                    "Há árvores que parecem mudar quando ninguém está olhando.",
+                    "Não confunda silêncio com segurança."
+                ]),
+
+            lyra:
+                Object.freeze([
+                    "Este bosque guarda memórias nas raízes.",
+                    "Quando uma árvore cai, às vezes outra nasce carregando lembranças que não são dela.",
+                    "As montanhas ficam além deste lugar."
+                ]),
+
+            kael:
+                Object.freeze([
+                    "O vento daqui apaga pegadas em minutos.",
+                    "Há uma passagem antiga na montanha.",
+                    "Minérios abaixo das pedras ainda reagem a algo que ninguém sabe nomear."
+                ]),
+
+            bran:
+                Object.freeze([
+                    "Preciso reforçar algumas casas. A madeira anda apodrecendo mais rápido desde que a Quietude chegou.",
+                    "Se puder trazer dez madeiras, eu pago pelo trabalho."
+                ]),
+
+            borin:
+                Object.freeze([
+                    "O fogo da forja ainda lembra como queimar. Por enquanto.",
+                    "Se trouxer oito carvões, posso compensar seu esforço."
+                ])
+        });
+
+
+    const SHOP_CATALOG =
+        Object.freeze({
+            doran:
+                Object.freeze([
+                    Object.freeze({
+                        itemId:
+                            "pao",
+                        price:
+                            18
+                    }),
+
+                    Object.freeze({
+                        itemId:
+                            "pocao",
+                        price:
+                            58
+                    }),
+
+                    Object.freeze({
+                        itemId:
+                            "elixir",
+                        price:
+                            62
+                    }),
+
+                    Object.freeze({
+                        itemId:
+                            "pocaoForca",
+                        price:
+                            95
+                    }),
+
+                    Object.freeze({
+                        itemId:
+                            "pocaoResistencia",
+                        price:
+                            95
+                    }),
+
+                    Object.freeze({
+                        itemId:
+                            "pocaoVelocidade",
+                        price:
+                            105
+                    }),
+
+                    Object.freeze({
+                        itemId:
+                            "espadaFerro",
+                        price:
+                            220
+                    }),
+
+                    Object.freeze({
+                        itemId:
+                            "minimapa",
+                        price:
+                            V.MINIMAP_PRICE
+                    }),
+
+                    Object.freeze({
+                        itemId:
+                            "lanterna",
+                        price:
+                            V.LANTERN_PRICE
+                    })
+                ])
+        });
+
+
+    function buyShopItem(
+        vendorId,
+        itemId
+    ) {
+        const player =
+            state.player;
+
+        const entry =
+            SHOP_CATALOG[
+                vendorId
+            ]?.find(
+                item =>
+                    item.itemId ===
+                    itemId
+            );
+
+        const item =
+            ITEMS[
+                itemId
+            ];
+
+        if (
+            !player ||
+            !entry ||
+            !item
+        ) {
+            return false;
+        }
+
+        if (
+            item.unique &&
+            getRealItemCount(
+                itemId,
+                player
+            ) >
+            0
+        ) {
+            pushNotification(
+                "JÁ ADQUIRIDO",
+                `${item.name} já pertence a você.`,
+                "info",
+                1.7
+            );
+
+            return false;
+        }
+
+        if (
+            player.money <
+            entry.price
+        ) {
+            pushNotification(
+                "MOEDAS INSUFICIENTES",
+                `Você precisa de ${entry.price} moedas.`,
+                "warning",
+                1.8
+            );
+
+            return false;
+        }
+
+        if (
+            !canCarryItem(
+                itemId,
+                1,
+                player
+            )
+        ) {
+            return false;
+        }
+
+        player.money -=
+            entry.price;
+
+        if (
+            !addItem(
+                itemId,
+                1,
+                player
+            )
+        ) {
+            player.money +=
+                entry.price;
+
+            return false;
+        }
+
+        if (
+            itemId ===
+            "minimapa"
+        ) {
+            player.minimapOwned =
+                true;
+        }
+
+        if (
+            itemId ===
+            "lanterna"
+        ) {
+            player.lanternOwned =
+                true;
+        }
+
+        if (
+            item.unique
+        ) {
+            player.purchasedUniqueItems =
+                uniqueArray([
+                    ...safeArray(
+                        player
+                            .purchasedUniqueItems
+                    ),
+
+                    itemId
+                ]);
+        }
+
+        pushNotification(
+            "COMPRA CONCLUÍDA",
+            item.name,
+            "success",
+            1.8
+        );
+
+        saveGame({
+            silent:
+                true
+        });
+
+        return true;
+    }
+
+
+    function sellInventoryItem(
+        itemId,
+        amount = 1
+    ) {
+        const player =
+            state.player;
+
+        const item =
+            ITEMS[
+                itemId
+            ];
+
+        const safeAmount =
+            Math.max(
+                1,
+                integer(
+                    amount,
+                    1
+                )
+            );
+
+        if (
+            !player ||
+            !item ||
+            !item.sellable ||
+            getRealItemCount(
+                itemId,
+                player
+            ) <
+            safeAmount
+        ) {
+            return false;
+        }
+
+        if (
+            !removeItem(
+                itemId,
+                safeAmount,
+                player
+            )
+        ) {
+            return false;
+        }
+
+        const earned =
+            Math.max(
+                1,
+                Math.floor(
+                    finiteNumber(
+                        item.value,
+                        1
+                    ) *
+                    safeAmount
+                )
+            );
+
+        player.money +=
+            earned;
+
+        pushNotification(
+            "ITEM VENDIDO",
+            `+${earned} moedas`,
+            "success",
+            1.5
+        );
+
+        return true;
+    }
+
+
+    function getNextArmorUpgrade(
+        player =
+            state.player
+    ) {
+        if (
+            !player
+        ) {
+            return null;
+        }
+
+        const current =
+            player.equipment
+                ?.armor;
+
+        const currentTier =
+            current
+                ? V.ARMOR_DATA[
+                    current
+                ]?.tier ||
+                    0
+                : 0;
+
+        return (
+            V.ARMOR_PROGRESSION
+                .map(
+                    id =>
+                        V.ARMOR_DATA[
+                            id
+                        ]
+                )
+                .find(
+                    armor =>
+                        armor.tier ===
+                        currentTier +
+                            1
+                ) ||
+            null
+        );
+    }
+
+
+    function buyArmorUpgrade(
+        armorId
+    ) {
+        const player =
+            state.player;
+
+        const armor =
+            V.ARMOR_DATA[
+                armorId
+            ];
+
+        const next =
+            getNextArmorUpgrade(
+                player
+            );
+
+        if (
+            !player ||
+            !armor ||
+            !next ||
+            next.id !==
+                armorId
+        ) {
+            return false;
+        }
+
+        if (
+            player
+                .armorHighestTierEver >=
+            armor.tier
+        ) {
+            return false;
+        }
+
+        if (
+            player.money <
+            armor.price
+        ) {
+            pushNotification(
+                "MOEDAS INSUFICIENTES",
+                `Você precisa de ${armor.price} moedas.`,
+                "warning",
+                2
+            );
+
+            return false;
+        }
+
+        if (
+            armor.material &&
+            getItemCount(
+                armor.material,
+                player
+            ) <
+            armor.materialAmount
+        ) {
+            pushNotification(
+                "MATERIAL INSUFICIENTE",
+                `${ITEMS[armor.material]?.name || armor.material}: ${getItemCount(
+                    armor.material,
+                    player
+                )}/${armor.materialAmount}`,
+                "warning",
+                2
+            );
+
+            return false;
+        }
+
+        player.money -=
+            armor.price;
+
+        if (
+            armor.material
+        ) {
+            removeItem(
+                armor.material,
+                armor.materialAmount,
+                player
+            );
+        }
+
+        const previous =
+            player.equipment
+                .armor;
+
+        if (
+            previous &&
+            getRealItemCount(
+                previous,
+                player
+            ) >
+            0
+        ) {
+            removeItem(
+                previous,
+                1,
+                player
+            );
+        }
+
+        if (
+            getRealItemCount(
+                armor.id,
+                player
+            ) <=
+            0
+        ) {
+            addItem(
+                armor.id,
+                1,
+                player
+            );
+        }
+
+        player.equipment.armor =
+            armor.id;
+
+        player.armorHighestTierEver =
+            Math.max(
+                player.armorHighestTierEver,
+                armor.tier
+            );
+
+        recalculatePlayerStats(
+            player
+        );
+
+        pushNotification(
+            "ARMADURA EVOLUÍDA",
+            `${armor.name} • +${armor.hp} HP`,
+            "success",
+            2.4
+        );
+
+        saveGame({
+            silent:
+                true
+        });
+
+        return true;
+    }
+
+
+    function interactBasicQuest(
+        questId
+    ) {
+        const player =
+            state.player;
+
+        const config =
+            V.QUEST_CONFIG[
+                questId
+            ];
+
+        const quest =
+            player
+                ?.quest
+                ?.[questId];
+
+        if (
+            !player ||
+            !config ||
+            !quest
+        ) {
+            return false;
+        }
+
+        if (
+            quest.rewarded
+        ) {
+            return true;
+        }
+
+        if (
+            quest.state ===
+            QUEST_STATE
+                .NOT_STARTED
+        ) {
+            quest.state =
+                QUEST_STATE
+                    .ACTIVE;
+
+            startDialogue(
+                questId ===
+                    "wood"
+                    ? NPC_DIALOGUES
+                        .bran
+                    : NPC_DIALOGUES
+                        .borin,
+
+                {
+                    speaker:
+                        questId ===
+                            "wood"
+                            ? "BRAN"
+                            : "BORIN"
+                }
+            );
+
+            saveGame({
+                silent:
+                    true
+            });
+
+            return true;
+        }
+
+        const current =
+            getItemCount(
+                config.itemId,
+                player
+            );
+
+        if (
+            current <
+            config.amount
+        ) {
+            startDialogue(
+                [
+                    `${current}/${config.amount} ${ITEMS[config.itemId]?.name || config.itemId}.`
+                ],
+                {
+                    speaker:
+                        questId ===
+                            "wood"
+                            ? "BRAN"
+                            : "BORIN"
+                }
+            );
+
+            return true;
+        }
+
+        removeItem(
+            config.itemId,
+            config.amount,
+            player
+        );
+
+        player.money +=
+            config.rewardCoins;
+
+        quest.state =
+            QUEST_STATE
+                .COMPLETE;
+
+        quest.rewarded =
+            true;
+
+        pushNotification(
+            "MISSÃO CONCLUÍDA",
+            `${config.title} • +${config.rewardCoins} moedas`,
+            "success",
+            2.6
+        );
+
+        saveGame({
+            silent:
+                true
+        });
+
+        return true;
+    }
+
+
+    /* ============================================================
+       MIGUEL / DASH V2
+       ============================================================ */
+
+    function updateMiguelQuestObjective(
+        stage,
+        text
+    ) {
+        const quest =
+            state.player
+                ?.miguelQuest;
+
+        if (
+            !quest
+        ) {
+            return false;
+        }
+
+        quest.stage =
+            stage;
+
+        quest.trackerObjective =
+            String(
+                text ||
+                ""
+            );
+
+        quest.objectiveRevision =
+            integer(
+                quest
+                    .objectiveRevision,
+                0
+            ) +
+            1;
+
+        quest.trackerVisible =
+            stage !==
+            MIGUEL_QUEST_STAGE
+                .COMPLETE;
+
+        return true;
+    }
+
+
+    function interactWithMiguel() {
+        const player =
+            state.player;
+
+        const quest =
+            player
+                ?.miguelQuest;
+
+        if (
+            !player ||
+            !quest
+        ) {
+            return false;
+        }
+
+        quest.miguelFound =
+            true;
+
+        if (
+            getDashVersion(
+                player
+            ) <
+            1
+        ) {
+            startDialogue(
+                [
+                    "Você ainda não está preparado.",
+                    "Volte quando seus passos forem mais rápidos que seus olhos."
+                ],
+                {
+                    speaker:
+                        "MIGUEL"
+                }
+            );
+
+            return true;
+        }
+
+        quest.dashV1SeenByMiguel =
+            true;
+
+        if (
+            !quest.missionAccepted &&
+            !quest.completed
+        ) {
+            quest.missionAvailable =
+                true;
+
+            quest.stage =
+                MIGUEL_QUEST_STAGE
+                    .AVAILABLE;
+
+            state.battle = {
+                type:
+                    "miguelQuestConfirmation",
+
+                title:
+                    "A PROVAÇÃO DO VAZIO",
+
+                subtitle:
+                    "Aceitar esta missão revelará uma trilha opcional.",
+
+                acceptLabel:
+                    "ACEITAR",
+
+                retreatLabel:
+                    "RECUAR"
+            };
+
+            return true;
+        }
+
+        if (
+            quest.completed
+        ) {
+            startDialogue(
+                [
+                    "Agora seus passos atravessam o próprio espaço.",
+                    "Não desperdice aquilo que conquistou."
+                ],
+                {
+                    speaker:
+                        "MIGUEL"
+                }
+            );
+
+            return true;
+        }
+
+        if (
+            quest.fragmentCollected &&
+            !quest.fragmentDelivered
+        ) {
+            return deliverVoidFragmentToMiguel();
+        }
+
+        startDialogue(
+            [
+                `Reúna ${VOID_MISSION_CONFIG.shadowEssenceRequired} Essências Sombrias no Labirinto.`,
+                "A Chave Obscura está escondida no Caminho 2."
+            ],
+            {
+                speaker:
+                    "MIGUEL"
+            }
+        );
+
+        return true;
+    }
+
+
+    function acceptMiguelQuest() {
+        const player =
+            state.player;
+
+        const quest =
+            player
+                ?.miguelQuest;
+
+        if (
+            !player ||
+            !quest ||
+            state.battle
+                ?.type !==
+            "miguelQuestConfirmation"
+        ) {
+            return false;
+        }
+
+        if (
+            getDashVersion(
+                player
+            ) <
+            1
+        ) {
+            state.battle =
+                null;
+
+            return false;
+        }
+
+        state.battle =
+            null;
+
+        quest.missionAvailable =
+            false;
+
+        quest.missionAccepted =
+            true;
+
+        updateMiguelQuestObjective(
+            MIGUEL_QUEST_STAGE
+                .FIND_DARK_KEY,
+
+            `Colete ${VOID_MISSION_CONFIG.shadowEssenceRequired} Essências Sombrias no Labirinto e encontre a Chave Obscura no Caminho 2.`
+        );
+
+        const frontier =
+            state.sessionWorldCache
+                ?.celestialFrontier;
+
+        if (
+            frontier &&
+            typeof V
+                .placeDarkKeyInFrontier ===
+                "function"
+        ) {
+            V.placeDarkKeyInFrontier(
+                frontier
+            );
+        }
+
+        pushNotification(
+            "MISSÃO ACEITA",
+            "A PROVAÇÃO DO VAZIO",
+            "special",
+            2.5
+        );
+
+        saveGame({
+            silent:
+                true
+        });
+
+        return true;
+    }
+
+
+    function declineMiguelQuest() {
+        if (
+            state.battle
+                ?.type !==
+            "miguelQuestConfirmation"
+        ) {
+            return false;
+        }
+
+        state.battle =
+            null;
+
+        return true;
+    }
+
+
+    function deliverVoidFragmentToMiguel() {
+        const player =
+            state.player;
+
+        const quest =
+            player
+                ?.miguelQuest;
+
+        if (
+            !player ||
+            !quest ||
+            !quest.fragmentCollected ||
+            quest.fragmentDelivered ||
+            getRealItemCount(
+                "fragmentoVazio",
+                player
+            ) <=
+            0
+        ) {
+            return false;
+        }
+
+        removeItem(
+            "fragmentoVazio",
+            1,
+            player
+        );
+
+        quest.fragmentDelivered =
+            true;
+
+        quest.completed =
+            true;
+
+        updateMiguelQuestObjective(
+            MIGUEL_QUEST_STAGE
+                .COMPLETE,
+            ""
+        );
+
+        player.abilities.dashV1 =
+            true;
+
+        player.abilities.dashV2 =
+            true;
+
+        spawnTransientEffect(
+            "dashV2Unlock",
+            player.x,
+            player.y,
+            {
+                duration:
+                    1.5,
+
+                radius:
+                    120,
+
+                color:
+                    "#76528b"
+            }
+        );
+
+        startDialogue(
+            [
+                "Então era verdade... o Fragmento do Vazio ainda existe.",
+                "Seu Dash rompe o vento.",
+                "Com isto... ele poderá romper o próprio espaço.",
+                "Prepare-se."
+            ],
+            {
+                speaker:
+                    "MIGUEL",
+
+                onComplete:
+                    () => {
+                        pushNotification(
+                            "DASH V2 DESPERTADO",
+                            "O Passo do Vazio substituiu o Dash V1.",
+                            "special",
+                            4
+                        );
+                    }
+            }
+        );
+
+        saveGame({
+            silent:
+                true
+        });
+
+        return true;
+    }
+
+
+    /* ============================================================
+       NPC
+       ============================================================ */
+
+    function openShopPanel(
+        vendor
+    ) {
+        state.activePanel = {
+            type:
+                vendor ===
+                    "borin"
+                    ? "forge"
+                    : "shop",
+
+            vendor,
+
+            mode:
+                "buy"
+        };
+
+        state.shopNPC =
+            vendor;
+
+        return true;
+    }
+
+
+    function closeActivePanel() {
+        state.activePanel =
+            null;
+
+        state.shopNPC =
+            null;
+
+        return true;
+    }
+
+
+    function interactWithNPC(
+        npc
+    ) {
+        if (
+            !npc ||
+            !state.player
+        ) {
+            return false;
+        }
+
+        if (
+            npc.id ===
+            "miguel"
+        ) {
+            return interactWithMiguel();
+        }
+
+        if (
+            npc.id ===
+            "bran"
+        ) {
+            return interactBasicQuest(
+                "wood"
+            );
+        }
+
+        if (
+            npc.id ===
+            "borin"
+        ) {
+            const quest =
+                state.player
+                    .quest
+                    ?.coal;
+
+            if (
+                quest &&
+                !quest.rewarded
+            ) {
+                return interactBasicQuest(
+                    "coal"
+                );
+            }
+
+            return openShopPanel(
+                "borin"
+            );
+        }
+
+        if (
+            npc.id ===
+                "doran" ||
+            npc.vendor ===
+                "doran"
+        ) {
+            return openShopPanel(
+                "doran"
+            );
+        }
+
+        const lines =
+            NPC_DIALOGUES[
+                npc.dialogueId ||
+                npc.id
+            ] ||
+            [
+                "A Quietude tornou as palavras mais difíceis de guardar."
+            ];
+
+        return startDialogue(
+            lines,
+            {
+                speaker:
+                    npc.name
+            }
+        );
+    }
+
+
+    /* ============================================================
+       HOLD E
+       ============================================================ */
+
+    function beginHoldInteraction(
+        type,
+        target,
+        duration
+    ) {
+        if (
+            !target ||
+            !state.player ||
+            isPlayerControlBlocked()
+        ) {
+            return false;
+        }
+
+        state.holdAction = {
+            type,
+
+            target,
+
+            elapsed:
+                0,
+
+            duration:
+                Math.max(
+                    0.1,
+                    finiteNumber(
+                        duration,
+                        1
+                    )
+                ),
+
+            completed:
+                false
+        };
+
+        return true;
+    }
+
+
+    function handlePrimaryHoldInteractionEnd() {
+        if (
+            state.holdAction &&
+            !state.holdAction
+                .completed
+        ) {
+            state.holdAction =
+                null;
+
+            return true;
+        }
+
+        return false;
+    }
+
+
+    function getHoldActionProgress() {
+        if (
+            !state.holdAction
+        ) {
+            return null;
+        }
+
+        return clamp(
+            state.holdAction
+                .elapsed /
+            Math.max(
+                0.01,
+                state.holdAction
+                    .duration
+            ),
+            0,
+            1
+        );
+    }
+
+
+    function harvestTree(
+        tree
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            !tree ||
+            tree.harvested
+        ) {
+            return false;
+        }
+
+        const amount =
+            Math.max(
+                1,
+                integer(
+                    tree.resourceAmount,
+                    1
+                )
+            );
+
+        if (
+            !canCarryItem(
+                "madeira",
+                amount,
+                player
+            )
+        ) {
+            pushNotification(
+                "MOCHILA CHEIA",
+                "Não há espaço para a madeira.",
+                "warning",
+                1.8
+            );
+
+            return false;
+        }
+
+        if (
+            !addItem(
+                "madeira",
+                amount,
+                player
+            )
+        ) {
+            return false;
+        }
+
+        tree.harvested =
+            true;
+
+        tree.respawnTimer =
+            random(
+                70,
+                105
+            );
+
+        /*
+            Não existe mais gasto de Magia.
+            Coletar aumenta levemente a Exaustão.
+        */
+        changeExhaustion(
+            1.15,
+            player
+        );
+
+        rebuildDynamicWorldObstacles(
+            state.world
+        );
+
+        spawnTransientEffect(
+            "woodHarvest",
+            tree.x,
+            tree.y,
+            {
+                duration:
+                    0.55
+            }
+        );
+
+        pushNotification(
+            "MADEIRA",
+            `+${amount}`,
+            "item",
+            1.2
+        );
+
+        return true;
+    }
+
+
+    function harvestResource(
+        resource
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            !resource ||
+            resource.harvested
+        ) {
+            return false;
+        }
+
+        if (
+            !ITEMS[
+                resource.itemId
+            ]
+        ) {
+            return false;
+        }
+
+        if (
+            !canCarryItem(
+                resource.itemId,
+                resource.amount,
+                player
+            )
+        ) {
+            pushNotification(
+                "MOCHILA CHEIA",
+                "Não há espaço para este material.",
+                "warning",
+                1.8
+            );
+
+            return false;
+        }
+
+        if (
+            !addItem(
+                resource.itemId,
+                resource.amount,
+                player
+            )
+        ) {
+            return false;
+        }
+
+        resource.harvested =
+            true;
+
+        resource.respawnTimer =
+            resource.respawnSeconds;
+
+        changeExhaustion(
+            resource.type ===
+                "tree"
+                ? 1.1
+                : 1.35,
+
+            player
+        );
+
+        pushNotification(
+            ITEMS[
+                resource.itemId
+            ].name
+                .toUpperCase(),
+
+            `+${resource.amount}`,
+
+            "item",
+
+            1.2
+        );
+
+        return true;
+    }
+
+
+    function updateHoldInteraction(
+        dt
+    ) {
+        const action =
+            state.holdAction;
+
+        const player =
+            state.player;
+
+        if (
+            !action ||
+            !player
+        ) {
+            return;
+        }
+
+        /*
+            Soltar E cancela.
+        */
+        if (
+            !state.keys.has(
+                "KeyE"
+            )
+        ) {
+            state.holdAction =
+                null;
+
+            return;
+        }
+
+        const target =
+            action.target;
+
+        if (
+            !target
+        ) {
+            state.holdAction =
+                null;
+
+            return;
+        }
+
+        const targetY =
+            target.y +
+            (
+                action.type ===
+                    "tree"
+                    ? 16
+                    : 0
+            );
+
+        if (
+            distance(
+                player.x,
+                player.y,
+                target.x,
+                targetY
+            ) >
+            100
+        ) {
+            state.holdAction =
+                null;
+
+            return;
+        }
+
+        action.elapsed +=
+            dt;
+
+        if (
+            action.elapsed <
+            action.duration
+        ) {
+            return;
+        }
+
+        action.completed =
+            true;
+
+        let success =
+            false;
+
+        if (
+            action.type ===
+            "tree"
+        ) {
+            success =
+                harvestTree(
+                    target
+                );
+        }
+
+        if (
+            action.type ===
+            "resource"
+        ) {
+            success =
+                harvestResource(
+                    target
+                );
+        }
+
+        if (
+            action.type ===
+            "darkKey"
+        ) {
+            success =
+                collectDarkKey(
+                    player
+                );
+
+            if (
+                success
+            ) {
+                target.collected =
+                    true;
+
+                updateMiguelQuestObjective(
+                    MIGUEL_QUEST_STAGE
+                        .RETURN_PATH_ONE,
+
+                    "A Chave Obscura foi despertada. Procure a passagem secreta no Caminho 1."
+                );
+
+                pushNotification(
+                    "CHAVE OBSCURA",
+                    "A chave foi adicionada à Mochila.",
+                    "special",
+                    2.4
+                );
+            }
+        }
+
+        state.holdAction =
+            null;
+
+        return success;
+    }
+
+
+    function updateTreeRespawns(
+        dt
+    ) {
+        const world =
+            state.world;
+
+        if (
+            !world
+        ) {
+            return;
+        }
+
+        let changed =
+            false;
+
+        for (
+            const tree of
+            safeArray(
+                world.trees
+            )
+        ) {
+            if (
+                !tree.harvested
+            ) {
+                continue;
+            }
+
+            tree.respawnTimer -=
+                dt;
+
+            if (
+                tree.respawnTimer <=
+                0
+            ) {
+                tree.harvested =
+                    false;
+
+                changed =
+                    true;
+            }
+        }
+
+        if (
+            changed
+        ) {
+            rebuildDynamicWorldObstacles(
+                world
+            );
+        }
+    }
+
+
+    function updateResourceRespawns(
+        dt
+    ) {
+        const world =
+            state.world;
+
+        if (
+            !world
+        ) {
+            return;
+        }
+
+        for (
+            const resource of
+            safeArray(
+                world.resources
+            )
+        ) {
+            if (
+                !resource.harvested
+            ) {
+                continue;
+            }
+
+            resource.respawnTimer -=
+                dt;
+
+            if (
+                resource.respawnTimer <=
+                0
+            ) {
+                resource.harvested =
+                    false;
+
+                resource.respawnTimer =
+                    0;
+            }
+        }
+    }
+
+
+    /* ============================================================
+       PORTAS
+       ============================================================ */
+
+    function updateDoorAnimations(
+        dt
+    ) {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world
+        ) {
+            return;
+        }
+
+        for (
+            const door of
+            safeArray(
+                world.doors
+            )
+        ) {
+            const x =
+                finiteNumber(
+                    door.centerX,
+                    door.x +
+                        door.w /
+                            2
+                );
+
+            const y =
+                finiteNumber(
+                    door.centerY,
+                    door.y +
+                        door.h /
+                            2
+                );
+
+            const dist =
+                distance(
+                    player.x,
+                    player.y,
+                    x,
+                    y
+                );
+
+            if (
+                door.autoOpen &&
+                !door.locked
+            ) {
+                if (
+                    dist <=
+                    GAME_CONFIG
+                        .doorOpenDistance
+                ) {
+                    door.targetOpen =
+                        1;
+                } else if (
+                    dist >=
+                    GAME_CONFIG
+                        .doorCloseDistance
+                ) {
+                    door.targetOpen =
+                        0;
+                }
+            }
+
+            const step =
+                GAME_CONFIG
+                    .doorAnimationSpeed *
+                dt;
+
+            if (
+                door.openAmount <
+                door.targetOpen
+            ) {
+                door.openAmount =
+                    Math.min(
+                        door.targetOpen,
+                        door.openAmount +
+                            step
+                    );
+            } else if (
+                door.openAmount >
+                door.targetOpen
+            ) {
+                door.openAmount =
+                    Math.max(
+                        door.targetOpen,
+                        door.openAmount -
+                            step
+                    );
+            }
+
+            door.angle =
+                door.maxAngle *
+                door.openAmount *
+                (
+                    door.hinge ===
+                        "left"
+                        ? 1
+                        : -1
+                );
+
+            door.open =
+                door.openAmount >=
+                0.92;
+        }
+    }
+
+
+    function handleDoorInteraction() {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world ||
+            state.dialogue ||
+            state.activePanel ||
+            state.battle ||
+            state.cutscene
+        ) {
+            return false;
+        }
+
+        let nearest =
+            null;
+
+        let nearestDistance =
+            Infinity;
+
+        for (
+            const door of
+            safeArray(
+                world.doors
+            )
+        ) {
+            const x =
+                finiteNumber(
+                    door.centerX,
+                    door.x +
+                        door.w /
+                            2
+                );
+
+            const y =
+                finiteNumber(
+                    door.centerY,
+                    door.y +
+                        door.h /
+                            2
+                );
+
+            const dist =
+                distance(
+                    player.x,
+                    player.y,
+                    x,
+                    y
+                );
+
+            if (
+                dist <=
+                    GAME_CONFIG
+                        .doorEnterDistance +
+                        30 &&
+                dist <
+                    nearestDistance
+            ) {
+                nearest =
+                    door;
+
+                nearestDistance =
+                    dist;
+            }
+        }
+
+        if (
+            state.houseMode
+        ) {
+            if (
+                !nearest
+            ) {
+                return false;
+            }
+
+            nearest.targetOpen =
+                1;
+
+            if (
+                nearest.openAmount <
+                0.68
+            ) {
+                return true;
+            }
+
+            return exitHouse();
+        }
+
+        if (
+            !nearest ||
+            !nearest.houseId ||
+            nearest.locked
+        ) {
+            return false;
+        }
+
+        nearest.targetOpen =
+            1;
+
+        if (
+            nearest.openAmount <
+            0.68
+        ) {
+            return true;
+        }
+
+        return enterHouse(
+            nearest.houseId
+        );
+    }
+
+
+    /* ============================================================
+       CAMA / DESCANSO
+       ============================================================ */
+
+    function beginBedRest() {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            !V.canRestAtBed(
+                player
+            ) ||
+            player.resting
+                ?.active
+        ) {
+            return false;
+        }
+
+        player.resting = {
+            active:
+                true,
+
+            timer:
+                0,
+
+            duration:
+                GAME_CONFIG
+                    .restDurationSeconds,
+
+            applied:
+                false
+        };
+
+        state.transition = {
+            type:
+                "rest",
+
+            timer:
+                0,
+
+            duration:
+                GAME_CONFIG
+                    .restDurationSeconds,
+
+            title:
+                "DESCANSANDO"
+        };
+
+        return true;
+    }
+
+
+    function updateResting(
+        dt
+    ) {
+        const player =
+            state.player;
+
+        const resting =
+            player
+                ?.resting;
+
+        if (
+            !resting
+                ?.active
+        ) {
+            return;
+        }
+
+        resting.timer +=
+            dt;
+
+        if (
+            state.transition
+                ?.type ===
+            "rest"
+        ) {
+            state.transition.timer =
+                resting.timer;
+        }
+
+        if (
+            resting.timer <
+            resting.duration
+        ) {
+            return;
+        }
+
+        if (
+            !resting.applied
+        ) {
+            resting.applied =
+                true;
+
+            applyBedRest(
+                player
+            );
+
+            pushNotification(
+                "DESCANSO CONCLUÍDO",
+                "Energia restaurada e Exaustão reduzida.",
+                "success",
+                2.2
+            );
+        }
+
+        resting.active =
+            false;
+
+        if (
+            state.transition
+                ?.type ===
+            "rest"
+        ) {
+            state.transition =
+                null;
+        }
+    }
+
+
+    /* ============================================================
+       INTERAÇÕES
+       ============================================================ */
+
+    function updateInteractionTargets() {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        gameplayRuntime.interactionTarget =
+            null;
+
+        gameplayRuntime.interactionPrompt =
+            null;
+
+        gameplayRuntime.nearbyDoor =
+            null;
+
+        gameplayRuntime.nearbyExit =
+            null;
+
+        gameplayRuntime.nearbyResource =
+            null;
+
+        gameplayRuntime.nearbyNPC =
+            null;
+
+        if (
+            !player ||
+            !world ||
+            player.dead
+        ) {
+            return;
+        }
+
+        const boss =
+            getNearbyUnconfirmedBoss();
+
+        if (
+            boss
+        ) {
+            gameplayRuntime.interactionTarget = {
+                type:
+                    "boss",
+                entity:
+                    boss
+            };
+
+            gameplayRuntime.interactionPrompt = {
+                key:
+                    "E",
+                text:
+                    `ENFRENTAR ${boss.name}`
+            };
+
+            return;
+        }
+
+        for (
+            const interactable of
+            safeArray(
+                world.interactables
+            )
+        ) {
+            if (
+                interactable.collected
+            ) {
+                continue;
+            }
+
+            if (
+                distance(
+                    player.x,
+                    player.y,
+                    interactable.x,
+                    interactable.y
+                ) >
+                finiteNumber(
+                    interactable.radius,
+                    GAME_CONFIG
+                        .interactionDistance
+                )
+            ) {
+                continue;
+            }
+
+            if (
+                interactable.type ===
+                "bedRest"
+            ) {
+                gameplayRuntime.interactionTarget = {
+                    type:
+                        "bed",
+                    entity:
+                        interactable
+                };
+
+                gameplayRuntime.interactionPrompt = {
+                    key:
+                        "E",
+                    text:
+                        "DESCANSAR"
+                };
+
+                return;
+            }
+
+            if (
+                interactable.type ===
+                "monarchAltar"
+            ) {
+                gameplayRuntime.interactionTarget = {
+                    type:
+                        "monarchAltar",
+                    entity:
+                        interactable
+                };
+
+                gameplayRuntime.interactionPrompt = {
+                    key:
+                        "E",
+                    text:
+                        "TOCAR O ALTAR"
+                };
+
+                return;
+            }
+
+            if (
+                interactable.type ===
+                "darkKey"
+            ) {
+                gameplayRuntime.interactionTarget = {
+                    type:
+                        "darkKey",
+                    entity:
+                        interactable
+                };
+
+                gameplayRuntime.interactionPrompt = {
+                    key:
+                        "SEGURE E",
+
+                    text:
+                        `CHAVE OBSCURA • ${getItemCount(
+                            "essenciaSombria"
+                        )}/${VOID_MISSION_CONFIG.shadowEssenceRequired}`
+                };
+
+                return;
+            }
+
+            if (
+                interactable.type ===
+                "voidFragment"
+            ) {
+                gameplayRuntime.interactionTarget = {
+                    type:
+                        "voidFragment",
+                    entity:
+                        interactable
+                };
+
+                gameplayRuntime.interactionPrompt = {
+                    key:
+                        "E",
+                    text:
+                        "TOCAR O FRAGMENTO DO VAZIO"
+                };
+
+                return;
+            }
+        }
+
+        let nearestNPC =
+            null;
+
+        let npcDistance =
+            Infinity;
+
+        for (
+            const npc of
+            safeArray(
+                world.npcs
+            )
+        ) {
+            const dist =
+                distance(
+                    player.x,
+                    player.y,
+                    npc.x,
+                    npc.y
+                );
+
+            if (
+                dist <=
+                    GAME_CONFIG
+                        .npcInteractionDistance &&
+                dist <
+                    npcDistance
+            ) {
+                nearestNPC =
+                    npc;
+
+                npcDistance =
+                    dist;
+            }
+        }
+
+        if (
+            nearestNPC
+        ) {
+            gameplayRuntime.interactionTarget = {
+                type:
+                    "npc",
+                entity:
+                    nearestNPC
+            };
+
+            gameplayRuntime.interactionPrompt = {
+                key:
+                    "E",
+                text:
+                    `CONVERSAR COM ${nearestNPC.name}`
+            };
+
+            return;
+        }
+
+        for (
+            const secretDoor of
+            safeArray(
+                world.secretDoors
+            )
+        ) {
+            const x =
+                secretDoor.x +
+                secretDoor.w /
+                    2;
+
+            const y =
+                secretDoor.y +
+                secretDoor.h /
+                    2;
+
+            if (
+                distance(
+                    player.x,
+                    player.y,
+                    x,
+                    y
+                ) <=
+                120
+            ) {
+                gameplayRuntime.interactionTarget = {
+                    type:
+                        "secretDoor",
+                    entity:
+                        secretDoor
+                };
+
+                gameplayRuntime.interactionPrompt = {
+                    key:
+                        "E",
+
+                    text:
+                        secretDoor.opened
+                            ? "ENTRAR NA PASSAGEM"
+                            : "EXAMINAR O SELO"
+                };
+
+                return;
+            }
+        }
+
+        for (
+            const resource of
+            safeArray(
+                world.resources
+            )
+        ) {
+            if (
+                resource.harvested
+            ) {
+                continue;
+            }
+
+            if (
+                distance(
+                    player.x,
+                    player.y,
+                    resource.x,
+                    resource.y
+                ) <=
+                95
+            ) {
+                gameplayRuntime.interactionTarget = {
+                    type:
+                        "resource",
+                    entity:
+                        resource
+                };
+
+                gameplayRuntime.interactionPrompt = {
+                    key:
+                        "SEGURE E",
+
+                    text:
+                        `COLETAR ${ITEMS[resource.itemId]?.name?.toUpperCase() || "RECURSO"}`
+                };
+
+                return;
+            }
+        }
+
+        for (
+            const tree of
+            safeArray(
+                world.trees
+            )
+        ) {
+            if (
+                tree.harvested ||
+                tree.harvestable ===
+                    false
+            ) {
+                continue;
+            }
+
+            if (
+                distance(
+                    player.x,
+                    player.y,
+                    tree.x,
+                    tree.y +
+                        16
+                ) <=
+                76
+            ) {
+                gameplayRuntime.interactionTarget = {
+                    type:
+                        "tree",
+                    entity:
+                        tree
+                };
+
+                gameplayRuntime.interactionPrompt = {
+                    key:
+                        "SEGURE E",
+                    text:
+                        "COLETAR MADEIRA"
+                };
+
+                return;
+            }
+        }
+
+        for (
+            const exit of
+            safeArray(
+                world.exits
+            )
+        ) {
+            if (
+                circleRectCollision(
+                    player.x,
+                    player.y,
+                    player.radius,
+                    {
+                        x:
+                            exit.x -
+                            20,
+
+                        y:
+                            exit.y -
+                            20,
+
+                        w:
+                            exit.w +
+                            40,
+
+                        h:
+                            exit.h +
+                            40
+                    }
+                )
+            ) {
+                gameplayRuntime.interactionTarget = {
+                    type:
+                        "exit",
+                    entity:
+                        exit
+                };
+
+                gameplayRuntime.interactionPrompt = {
+                    key:
+                        exit.interactionKey ||
+                        "E",
+
+                    text:
+                        exit.unlocked
+                            ? exit.label
+                            : exit.lockedMessage
+                };
+
+                return;
+            }
+        }
+
+        let doorDistance =
+            Infinity;
+
+        for (
+            const door of
+            safeArray(
+                world.doors
+            )
+        ) {
+            const x =
+                finiteNumber(
+                    door.centerX,
+                    door.x +
+                        door.w /
+                            2
+                );
+
+            const y =
+                finiteNumber(
+                    door.centerY,
+                    door.y +
+                        door.h /
+                            2
+                );
+
+            const dist =
+                distance(
+                    player.x,
+                    player.y,
+                    x,
+                    y
+                );
+
+            if (
+                dist <=
+                    GAME_CONFIG
+                        .doorEnterDistance +
+                        35 &&
+                dist <
+                    doorDistance
+            ) {
+                doorDistance =
+                    dist;
+
+                gameplayRuntime.nearbyDoor =
+                    door;
+            }
+        }
+
+        if (
+            gameplayRuntime
+                .nearbyDoor
+        ) {
+            gameplayRuntime.interactionTarget = {
+                type:
+                    "door",
+
+                entity:
+                    gameplayRuntime
+                        .nearbyDoor
+            };
+
+            gameplayRuntime.interactionPrompt = {
+                key:
+                    "Z",
+
+                text:
+                    state.houseMode
+                        ? "SAIR"
+                        : "ENTRAR"
+            };
+        }
+    }
+
+
+    function getInteractionPrompt() {
+        return gameplayRuntime
+            .interactionPrompt;
+    }
+
+
+    /* ============================================================
+       VIAGEM / PORTÃO NORTE
+       ============================================================ */
+
+    function performAreaTravel(
+        destination,
+        spawnId =
+            "default",
+        title =
+            ""
+    ) {
+        if (
+            !destination
+        ) {
+            return false;
+        }
+
+        if (
+            typeof V
+                .beginAreaTransition ===
+            "function"
+        ) {
+            return V.beginAreaTransition(
+                destination,
+                spawnId,
+                title
+            );
+        }
+
+        const result =
+            loadWorld(
+                destination,
+                spawnId
+            );
+
+        if (
+            result
+        ) {
+            repairWorldProgressionState(
+                state.world
+            );
+
+            saveGame({
+                silent:
+                    true,
+                safe:
+                    true
+            });
+        }
+
+        return result;
+    }
+
+
+    function requestNorthGateUnlock() {
+        const player =
+            state.player;
+
+        const status =
+            getNorthGateStatus(
+                player
+            );
+
+        if (
+            !player
+        ) {
+            return false;
+        }
+
+        if (
+            status.state ===
+            "already_open"
+        ) {
+            return true;
+        }
+
+        if (
+            status.state ===
+            "needs_dash"
+        ) {
+            player
+                .gateDialogueIndex
+                .north =
+                integer(
+                    player
+                        .gateDialogueIndex
+                        .north,
+                    0
+                ) +
+                1;
+
+            startDialogue(
+                [
+                    status.message
+                ],
+                {
+                    speaker:
+                        "PORTÃO NORTE"
+                }
+            );
+
+            return false;
+        }
+
+        if (
+            status.state ===
+            "missing_materials"
+        ) {
+            pushNotification(
+                "O SELO EXIGE UMA OFERENDA",
+
+                `Rubi ${getItemCount("rubi")}/${NORTH_GATE_OFFERING.rubi} • Diamante ${getItemCount("diamante")}/${NORTH_GATE_OFFERING.diamante}`,
+
+                "warning",
+
+                3
+            );
+
+            return false;
+        }
+
+        state.battle = {
+            type:
+                "northGateConfirmation",
+
+            title:
+                "PORTÃO NORTE",
+
+            subtitle:
+                `Oferecer ${NORTH_GATE_OFFERING.rubi} Rubis e ${NORTH_GATE_OFFERING.diamante} Diamantes?`,
+
+            acceptLabel:
+                "OFERECER",
+
+            retreatLabel:
+                "RECUAR"
+        };
+
+        return true;
+    }
+
+
+    function acceptNorthGateUnlock() {
+        if (
+            state.battle
+                ?.type !==
+            "northGateConfirmation"
+        ) {
+            return false;
+        }
+
+        state.battle =
+            null;
+
+        if (
+            !unlockNorthGate(
+                state.player
+            )
+        ) {
+            return false;
+        }
+
+        pushNotification(
+            "CAMINHO 2 DESBLOQUEADO",
+            "O Portão Norte reconheceu o Passo do Vento.",
+            "special",
+            3
+        );
+
+        return true;
+    }
+
+
+    function interactWithExit(
+        exit
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !exit ||
+            !player
+        ) {
+            return false;
+        }
+
+        if (
+            exit.gateId ===
+                "north_gate" &&
+            !exit.unlocked
+        ) {
+            return requestNorthGateUnlock();
+        }
+
+        if (
+            !exit.unlocked
+        ) {
+            pushNotification(
+                "CAMINHO BLOQUEADO",
+                exit.lockedMessage ||
+                    "A passagem permanece fechada.",
+                "warning",
+                2
+            );
+
+            return false;
+        }
+
+        if (
+            !exit.destination
+        ) {
+            return false;
+        }
+
+        if (
+            exit.destination ===
+            "monarchMaze"
+        ) {
+            const status =
+                getMazeEntranceStatus(
+                    player
+                );
+
+            if (
+                !status.ok
+            ) {
+                pushNotification(
+                    "ESCURIDÃO",
+                    status.reason,
+                    "warning",
+                    3
+                );
+
+                return false;
+            }
+        }
+
+        return performAreaTravel(
+            exit.destination,
+            exit.destinationSpawn ||
+                "default",
+
+            V.REGION_META[
+                exit.destination
+            ]?.name ||
+                exit.label
+        );
+    }
+
+
+    function interactWithSecretDoor(
+        door
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !door ||
+            !player
+        ) {
+            return false;
+        }
+
+        player
+            .miguelQuest
+            .secretDoorDiscovered =
+            true;
+
+        if (
+            !door.opened
+        ) {
+            const validation =
+                canOpenVoidSecretDoor(
+                    player
+                );
+
+            if (
+                !validation.ok
+            ) {
+                startDialogue(
+                    [
+                        validation.reason
+                    ],
+                    {
+                        speaker:
+                            "SELO ANTIGO"
+                    }
+                );
+
+                return false;
+            }
+
+            if (
+                !openVoidSecretDoor(
+                    player
+                )
+            ) {
+                return false;
+            }
+
+            door.opened =
+                true;
+
+            door.locked =
+                false;
+
+            updateMiguelQuestObjective(
+                MIGUEL_QUEST_STAGE
+                    .EXPLORE_DUNGEON,
+
+                "Explore a Dungeon do Vazio."
+            );
+
+            pushNotification(
+                "PASSAGEM REVELADA",
+                "O selo do Caminho 1 foi rompido.",
+                "special",
+                2.6
+            );
+
+            return true;
+        }
+
+        return performAreaTravel(
+            door.destination,
+            door.destinationSpawn ||
+                "entrance",
+            "DUNGEON DO VAZIO"
+        );
+    }
+
+
+    /* ============================================================
+       E
+       ============================================================ */
+
+    function handlePrimaryInteractionPress() {
+        if (
+            state.dialogue
+        ) {
+            return advanceDialogue();
+        }
+
+        if (
+            state.fragmentMinigame
+                ?.active
+        ) {
+            return attemptFragmentMinigame();
+        }
+
+        if (
+            state.travel ||
+            state.battle ||
+            state.activePanel ||
+            state.cutscene ||
+            state.deathState
+        ) {
+            return false;
+        }
+
+        updateInteractionTargets();
+
+        const target =
+            gameplayRuntime
+                .interactionTarget;
+
+        if (
+            !target
+        ) {
+            return false;
+        }
+
+        switch (
+            target.type
+        ) {
+            case "boss":
+                return openBossConfirmation(
+                    target.entity
+                );
+
+            case "npc":
+                return interactWithNPC(
+                    target.entity
+                );
+
+            case "monarchAltar":
+                return requestMonarchAltarInteraction();
+
+            case "bed":
+                return beginBedRest();
+
+            case "darkKey": {
+                const validation =
+                    canCollectDarkKey(
+                        state.player
+                    );
+
+                if (
+                    !validation.ok
+                ) {
+                    pushNotification(
+                        "A CHAVE NÃO RESPONDE",
+                        validation.reason,
+                        "warning",
+                        2.2
+                    );
+
+                    return false;
+                }
+
+                return beginHoldInteraction(
+                    "darkKey",
+                    target.entity,
+                    target.entity
+                        .holdSeconds ||
+                        GAME_CONFIG
+                            .darkKeyHarvestSeconds
+                );
+            }
+
+            case "voidFragment":
+                return beginFragmentMinigame();
+
+            case "secretDoor":
+                return interactWithSecretDoor(
+                    target.entity
+                );
+
+            case "resource":
+                return beginHoldInteraction(
+                    "resource",
+                    target.entity,
+                    target.entity
+                        .holdSeconds ||
+                        GAME_CONFIG
+                            .oreHarvestSeconds
+                );
+
+            case "tree":
+                return beginHoldInteraction(
+                    "tree",
+                    target.entity,
+                    GAME_CONFIG
+                        .treeHarvestSeconds
+                );
+
+            case "exit":
+                /*
+                    Saídas internas usam Z.
+                    E não pode ativá-las.
+                */
+                if (
+                    (
+                        target.entity
+                            .interactionKey ||
+                        "E"
+                    ) !==
+                    "E"
+                ) {
+                    return false;
+                }
+
+                return interactWithExit(
+                    target.entity
+                );
+
+            default:
+                return false;
+        }
+    }
+
+
+    /* ============================================================
+       CHOICES
+       ============================================================ */
+
+    function acceptCurrentChoice() {
+        switch (
+            state.battle
+                ?.type
+        ) {
+            case "bossConfirmation":
+                return acceptBossFight();
+
+            case "monarchAltarConfirmation":
+                return acceptMonarchAltar();
+
+            case "northGateConfirmation":
+                return acceptNorthGateUnlock();
+
+            case "miguelQuestConfirmation":
+                return acceptMiguelQuest();
+
+            default:
+                return false;
+        }
+    }
+
+
+    function retreatCurrentChoice() {
+        switch (
+            state.battle
+                ?.type
+        ) {
+            case "bossConfirmation":
+                return retreatBossFight();
+
+            case "monarchAltarConfirmation":
+                return declineMonarchAltar();
+
+            case "northGateConfirmation":
+            case "miguelQuestConfirmation":
+                state.battle =
+                    null;
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+
+    /* ============================================================
+       MORTE
+       ============================================================ */
+
+    function calculateDeathMaterialLoss(
+        player =
+            state.player
+    ) {
+        if (
+            !player
+        ) {
+            return [];
+        }
+
+        const losses =
+            [];
+
+        for (
+            const [
+                itemId,
+                amountRaw
+            ] of
+            Object.entries(
+                player.inventory ||
+                {}
+            )
+        ) {
+            const item =
+                ITEMS[
+                    itemId
+                ];
+
+            const amount =
+                Math.max(
+                    0,
+                    integer(
+                        amountRaw,
+                        0
+                    )
+                );
+
+            if (
+                !item ||
+                item.category !==
+                    "materials" ||
+                !item.deathLossEligible ||
+                amount <
+                    GAME_CONFIG
+                        .deathMinMaterialStackToLose
+            ) {
+                continue;
+            }
+
+            const calculated =
+                Math.ceil(
+                    amount *
+                    GAME_CONFIG
+                        .deathMaterialLossRatio
+                );
+
+            const loss =
+                Math.min(
+                    GAME_CONFIG
+                        .deathMaxMaterialLossPerType,
+
+                    amount,
+
+                    Math.max(
+                        1,
+                        calculated
+                    )
+                );
+
+            if (
+                loss >
+                0
+            ) {
+                losses.push({
+                    itemId,
+                    amount:
+                        loss
+                });
+            }
+        }
+
+        return losses;
+    }
+
+
+    function applyPendingDeathLosses(
+        death =
+            state.deathState,
+        player =
+            state.player
+    ) {
+        if (
+            !death ||
+            !player ||
+            death.lossesApplied
+        ) {
+            return [];
+        }
+
+        const applied =
+            [];
+
+        for (
+            const loss of
+            safeArray(
+                death.losses
+            )
+        ) {
+            const available =
+                getRealItemCount(
+                    loss.itemId,
+                    player
+                );
+
+            const amount =
+                Math.min(
+                    available,
+                    Math.max(
+                        0,
+                        integer(
+                            loss.amount,
+                            0
+                        )
+                    )
+                );
+
+            if (
+                amount <=
+                0
+            ) {
+                continue;
+            }
+
+            if (
+                removeItem(
+                    loss.itemId,
+                    amount,
+                    player
+                )
+            ) {
+                applied.push({
+                    itemId:
+                        loss.itemId,
+                    amount
+                });
+            }
+        }
+
+        death.lossesApplied =
+            true;
+
+        death.appliedLosses =
+            applied;
+
+        return applied;
+    }
+
+
+    function isInActiveBossCombat() {
+        const world =
+            state.world;
+
+        if (
+            !world
+        ) {
+            return false;
+        }
+
+        return safeArray(
+            world.bosses
+        )
+            .some(
+                boss =>
+                    !boss.dead &&
+                    canBossBecomeAggressive(
+                        boss
+                    ) &&
+                    [
+                        BOSS_STATE.COMBAT,
+                        BOSS_STATE.STUNNED,
+                        BOSS_STATE
+                            .PHASE_TRANSITION
+                    ].includes(
+                        boss.state
+                    )
+            );
+    }
+
+
+    function resetActiveEncounterAfterDeath(
+        world =
+            state.world
+    ) {
+        if (
+            !world
+        ) {
+            return;
+        }
+
+        ensureWorldCombatArrays(
+            world
+        );
+
+        world.projectiles =
+            [];
+
+        world.hazards =
+            [];
+
+        world.bossAttacks =
+            [];
+
+        world.enemies =
+            safeArray(
+                world.enemies
+            )
+                .filter(
+                    enemy =>
+                        !enemy.summonedBy
+                );
+
+        for (
+            const enemy of
+            world.enemies
+        ) {
+            if (
+                enemy.dead
+            ) {
+                continue;
+            }
+
+            enemy.aggro =
+                false;
+
+            enemy.state =
+                "idle";
+
+            enemy.x =
+                enemy.spawnX;
+
+            enemy.y =
+                enemy.spawnY;
+
+            enemy.hp =
+                enemy.maxHp;
+        }
+
+        for (
+            const boss of
+            safeArray(
+                world.bosses
+            )
+        ) {
+            if (
+                boss.dead ||
+                isBossDefeated(
+                    boss.id
+                )
+            ) {
+                continue;
+            }
+
+            boss.hp =
+                boss.maxHp;
+
+            boss.defense =
+                boss.baseDefense;
+
+            boss.x =
+                boss.spawnX;
+
+            boss.y =
+                boss.spawnY;
+
+            boss.aggro =
+                false;
+
+            boss.stagger =
+                0;
+
+            boss.stunnedTimer =
+                0;
+
+            boss.staggerTokens =
+                new Set();
+
+            if (
+                boss.id ===
+                "monarch"
+            ) {
+                boss.state =
+                    BOSS_STATE
+                        .DORMANT;
+
+                boss.confirmed =
+                    false;
+            } else if (
+                boss.id ===
+                "vaelkor"
+            ) {
+                boss.state =
+                    BOSS_STATE
+                        .DORMANT;
+            } else {
+                boss.state =
+                    BOSS_STATE
+                        .NEUTRAL;
+
+                boss.confirmed =
+                    false;
+            }
+        }
+
+        if (
+            world.altarArenaBarrier
+        ) {
+            world
+                .altarArenaBarrier
+                .solid =
+                false;
+
+            world
+                .altarArenaBarrier
+                .active =
+                false;
+        }
+
+        if (
+            world.vaelkorArenaBarrier
+        ) {
+            world
+                .vaelkorArenaBarrier
+                .solid =
+                false;
+
+            world
+                .vaelkorArenaBarrier
+                .active =
+                false;
+        }
+
+        rebuildDynamicWorldObstacles(
+            world
+        );
+    }
+
+
+    function killPlayer(
+        source = {}
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            player.dead
+        ) {
+            return false;
+        }
+
+        gameplayRuntime
+            .deathSafeSnapshot =
+            getSafeStoredSave();
+
+        player.dead =
+            true;
+
+        player.hp =
+            0;
+
+        /*
+            SOMENTE CALCULA.
+
+            NÃO REMOVE NADA.
+        */
+        const losses =
+            calculateDeathMaterialLoss(
+                player
+            );
+
+        state.deathState = {
+            timer:
+                0,
+
+            losses,
+
+            lossesApplied:
+                false,
+
+            appliedLosses:
+                [],
+
+            source,
+
+            title:
+                "A QUIETUDE TOMOU CONTA DE VOCÊ",
+
+            subtitle:
+                "Até a memória do caminho parece distante."
+        };
+
+        state.bossBarTarget =
+            null;
+
+        state.cutscene =
+            null;
+
+        state.dialogue =
+            null;
+
+        state.fragmentMinigame =
+            null;
+
+        state.holdAction =
+            null;
+
+        state.activePanel =
+            null;
+
+        state.battle =
+            null;
+
+        if (
+            state.world
+        ) {
+            ensureWorldCombatArrays(
+                state.world
+            );
+
+            state.world.projectiles =
+                [];
+
+            state.world.hazards =
+                [];
+        }
+
+        spawnTransientEffect(
+            "playerDeath",
+            player.x,
+            player.y,
+            {
+                duration:
+                    1.2,
+
+                characterId:
+                    player.characterId
+            }
+        );
+
+        return true;
+    }
+
+
+    function respawnPlayerAtHome() {
+        const player =
+            state.player;
+
+        const death =
+            state.deathState;
+
+        if (
+            !player ||
+            !death
+        ) {
+            return false;
+        }
+
+        /*
+            Só RENASCER aplica a perda.
+        */
+        const applied =
+            applyPendingDeathLosses(
+                death,
+                player
+            );
+
+        resetActiveEncounterAfterDeath(
+            state.world
+        );
+
+        if (
+            player.miguelQuest &&
+            !player
+                .miguelQuest
+                .vaelkorDefeated
+        ) {
+            player
+                .miguelQuest
+                .vaelkorActivated =
+                false;
+
+            player
+                .miguelQuest
+                .vaelkorPhaseTwoSeen =
+                false;
+        }
+
+        if (
+            player.monarch &&
+            !player
+                .monarch
+                .defeated
+        ) {
+            player.monarch
+                .altarAccepted =
+                false;
+
+            player.monarch
+                .battleStarted =
+                false;
+
+            player.monarch
+                .stagger =
+                0;
+
+            player.monarch
+                .stunned =
+                false;
+        }
+
+        if (
+            !loadPlayerHome(
+                true
+            )
+        ) {
+            return false;
+        }
+
+        player.hp =
+            player.maxHp;
+
+        player.energy =
+            player.maxEnergy;
+
+        player.exhaustion =
+            Math.min(
+                player.exhaustion,
+                player.maxExhaustion *
+                    0.2
+            );
+
+        player.attackCooldown =
+            0;
+
+        player.universalDashCooldown =
+            0;
+
+        player.skillCooldowns.q =
+            0;
+
+        player.skillCooldowns.r =
+            0;
+
+        player.skillCooldowns.f =
+            0;
+
+        player.dashRuntime =
+            null;
+
+        player.poisonEffect =
+            null;
+
+        player.dead =
+            false;
+
+        state.deathState =
+            null;
+
+        state.camera.x =
+            player.x;
+
+        state.camera.y =
+            player.y;
+
+        state.camera.targetX =
+            player.x;
+
+        state.camera.targetY =
+            player.y;
+
+        state.transition = {
+            type:
+                "respawn",
+
+            timer:
+                0,
+
+            duration:
+                1.15,
+
+            title:
+                "SUA CASA"
+        };
+
+        if (
+            applied.length >
+            0
+        ) {
+            const text =
+                applied
+                    .map(
+                        loss =>
+                            `${ITEMS[loss.itemId]?.name || loss.itemId} -${loss.amount}`
+                    )
+                    .join(
+                        " • "
+                    );
+
+            pushNotification(
+                "MATERIAIS PERDIDOS",
+                text,
+                "warning",
+                3.2
+            );
+        }
+
+        /*
+            Só agora o novo estado
+            é salvo.
+        */
+        saveGame({
+            silent:
+                true,
+            safe:
+                true
+        });
+
+        return true;
+    }
+
+
+    function restoreSafeSnapshotAfterDeath() {
+        const raw =
+            gameplayRuntime
+                .deathSafeSnapshot ||
+            getSafeStoredSave();
+
+        if (
+            !raw?.player
+        ) {
+            return false;
+        }
+
+        const data =
+            migrateSaveData(
+                raw
+            );
+
+        const restored =
+            restorePlayerFromSave(
+                data.player
+            );
+
+        if (
+            !restored
+        ) {
+            return false;
+        }
+
+        state.player =
+            restored;
+
+        state.selectedCharacter =
+            restored.characterId;
+
+        state.area =
+            data.area ||
+            "village";
+
+        state.houseMode =
+            Boolean(
+                data.houseMode
+            );
+
+        state.currentHouse =
+            data.currentHouse ||
+            null;
+
+        state.houseReturn =
+            data.houseReturn ||
+            null;
+
+        state.deathState =
+            null;
+
+        state.dialogue =
+            null;
+
+        state.battle =
+            null;
+
+        state.activePanel =
+            null;
+
+        state.cutscene =
+            null;
+
+        state.fragmentMinigame =
+            null;
+
+        state.holdAction =
+            null;
+
+        state.bossBarTarget =
+            null;
+
+        if (
+            state.houseMode &&
+            state.currentHouse &&
+            V.HOUSE_INTERIORS[
+                state.currentHouse
+            ]
+        ) {
+            state.world =
+                V.createHouseWorld(
+                    state.currentHouse
+                );
+        } else {
+            state.houseMode =
+                false;
+
+            state.currentHouse =
+                null;
+
+            /*
+                Reconstrói o runtime da região
+                para não voltar para boss
+                pela metade.
+            */
+            state.world =
+                V.buildWorldFresh(
+                    state.area
+                );
+
+            if (
+                V.REGION_META[
+                    state.area
+                ]?.procedural
+            ) {
+                state.sessionWorldCache =
+                    state.sessionWorldCache ||
+                    Object.create(
+                        null
+                    );
+
+                state
+                    .sessionWorldCache[
+                        state.area
+                    ] =
+                    state.world;
+            }
+        }
+
+        if (
+            state.world
+        ) {
+            rebuildDynamicWorldObstacles(
+                state.world
+            );
+
+            const safe =
+                findSafePosition(
+                    restored.x,
+                    restored.y,
+                    restored.radius,
+                    state.world
+                );
+
+            restored.x =
+                safe.x;
+
+            restored.y =
+                safe.y;
+        }
+
+        state.camera.x =
+            restored.x;
+
+        state.camera.y =
+            restored.y;
+
+        state.camera.targetX =
+            restored.x;
+
+        state.camera.targetY =
+            restored.y;
+
+        return true;
+    }
+
+
+    function abandonAfterDeath() {
+        if (
+            !state.deathState
+        ) {
+            return false;
+        }
+
+        /*
+            DESISTIR:
+            não chama applyPendingDeathLosses().
+        */
+        const restored =
+            restoreSafeSnapshotAfterDeath();
+
+        if (
+            !restored &&
+            state.player
+        ) {
+            state.player.dead =
+                false;
+
+            state.player.hp =
+                state.player.maxHp;
+
+            state.player.energy =
+                state.player.maxEnergy;
+
+            state.deathState =
+                null;
+
+            loadPlayerHome(
+                true
+            );
+        }
+
+        state.running =
+            false;
+
+        state.paused =
+            false;
+
+        state.requestedScreen =
+            "main";
+
+        gameplayRuntime
+            .deathSafeSnapshot =
+            null;
+
+        return true;
+    }
+
+
+    function getDeathLossPreview() {
+        return safeArray(
+            state.deathState
+                ?.losses
+        )
+            .map(
+                loss => ({
+                    ...loss,
+
+                    name:
+                        ITEMS[
+                            loss.itemId
+                        ]?.name ||
+                        loss.itemId
+                })
+            );
+    }
+
+
+    /* ============================================================
+       ESCURIDÃO DE SEGURANÇA
+       ============================================================ */
+
+    function updateMazeDarknessBarrier() {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world ||
+            world.id !==
+                "monarchMaze"
+        ) {
+            return;
+        }
+
+        const lighting =
+            getLanternLightingState(
+                player.x,
+                player.y,
+                world
+            );
+
+        /*
+            Sala do altar:
+            luz normal.
+            Lanterna não ilumina.
+        */
+        if (
+            lighting.ambient
+        ) {
+            return;
+        }
+
+        if (
+            !player.lanternOwned
+        ) {
+            if (
+                player.x >
+                175
+            ) {
+                player.x =
+                    163;
+            }
+
+            if (
+                state.time -
+                    state
+                        .darknessWarningAt >
+                2
+            ) {
+                state.darknessWarningAt =
+                    state.time;
+
+                pushNotification(
+                    "ESTÁ ESCURO DEMAIS",
+                    "O caminho à frente é escuro demais. Não podemos seguir.",
+                    "warning",
+                    2.5
+                );
+            }
+        }
+    }
+
+
+    function updateVoidDarknessBarrier() {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            state.area !==
+                "voidDungeon"
+        ) {
+            return;
+        }
+
+        if (
+            !player.lanternOwned &&
+            player.x >
+                610 &&
+            !isPlayerInsideVaelkorArena(
+                player,
+                state.world
+            )
+        ) {
+            player.x =
+                600;
+
+            if (
+                state.time -
+                    state
+                        .darknessWarningAt >
+                2
+            ) {
+                state.darknessWarningAt =
+                    state.time;
+
+                pushNotification(
+                    "ESTÁ ESCURO DEMAIS",
+                    "A primeira parte da Dungeon exige uma fonte de luz.",
+                    "warning",
+                    2.3
+                );
+            }
+        }
+    }
+
+
+    /* ============================================================
+       ENCOUNTERS
+       ============================================================ */
+
+    function updateEncounterTriggers() {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world ||
+            player.dead
+        ) {
+            return;
+        }
+
+        const zone =
+            getZoneAtPoint(
+                world,
+                player.x,
+                player.y
+            );
+
+        state.currentZoneId =
+            zone?.id ||
+            null;
+
+        if (
+            world.id ===
+                "voidDungeon" &&
+            zone?.id ===
+                "vaelkor_arena" &&
+            !player
+                .miguelQuest
+                ?.vaelkorDefeated &&
+            !player
+                .miguelQuest
+                ?.vaelkorActivated
+        ) {
+            beginVaelkorEncounter();
+        }
+    }
+
+
+    /* ============================================================
+       BOSS RUNES / PROGRESSÃO
+       ============================================================ */
+
+    const AREA_PATH_BOSS =
+        Object.freeze({
+            road:
+                "road_guardian",
+
+            forest:
+                "forest_warden",
+
+            grove:
+                "grove_heart",
+
+            mountains:
+                "mountain_titan",
+
+            ironRegion:
+                "iron_colossus",
+
+            rubyRegion:
+                "ruby_chimera",
+
+            celestialFrontier:
+                "path_guardian"
+        });
+
+
+    function ensureDefeatedBossRune(
+        world =
+            state.world
+    ) {
+        if (
+            !world
+        ) {
+            return null;
+        }
+
+        const bossId =
+            AREA_PATH_BOSS[
+                world.id
+            ];
+
+        if (
+            !bossId ||
+            !isBossDefeated(
+                bossId
+            )
+        ) {
+            return null;
+        }
+
+        const existing =
+            safeArray(
+                world.decorations
+            )
+                .find(
+                    item =>
+                        item.type ===
+                            "pathUnlockedRune" &&
+                        item.bossId ===
+                            bossId
+                );
+
+        if (
+            existing
+        ) {
+            return existing;
+        }
+
+        let x =
+            world.width /
+            2;
+
+        let y =
+            world.height /
+            2;
+
+        if (
+            safeArray(
+                world.pathNodes
+            ).length >=
+            2
+        ) {
+            const node =
+                world.pathNodes[
+                    world
+                        .pathNodes
+                        .length -
+                        2
+                ];
+
+            x =
+                node.x;
+
+            y =
+                node.y;
+        }
+
+        const rune = {
+            id:
+                `rune_${bossId}`,
+
+            type:
+                "pathUnlockedRune",
+
+            x,
+
+            y,
+
+            bossId,
+
+            timer:
+                Infinity,
+
+            pulse:
+                0,
+
+            color:
+                "#77a7c7"
+        };
+
+        world.decorations.push(
+            rune
+        );
+
+        return rune;
+    }
+
+
+    function repairWorldProgressionState(
+        world =
+            state.world
+    ) {
+        if (
+            !world
+        ) {
+            return;
+        }
+
+        repairWorldBossBarriers(
+            world
+        );
+
+        ensureDefeatedBossRune(
+            world
+        );
+
+        if (
+            world.id ===
+                "village" &&
+            state.player
+                ?.gateUnlocks
+                ?.north
+        ) {
+            const gate =
+                world.gates
+                    ?.find(
+                        item =>
+                            item.id ===
+                            "north_gate"
+                    );
+
+            const exit =
+                world.exits
+                    ?.find(
+                        item =>
+                            item.id ===
+                            "village_to_gnome"
+                    );
+
+            if (
+                gate
+            ) {
+                gate.locked =
+                    false;
+
+                gate.solid =
+                    false;
+            }
+
+            if (
+                exit
+            ) {
+                exit.unlocked =
+                    true;
+            }
+
+            rebuildDynamicWorldObstacles(
+                world
+            );
+        }
+    }
+
+
+    function handleWorldRuntimeChanged() {
+        if (
+            gameplayRuntime
+                .lastWorldRef ===
+            state.world
+        ) {
+            return false;
+        }
+
+        gameplayRuntime
+            .lastWorldRef =
+            state.world;
+
+        if (
+            !state.world
+        ) {
+            return false;
+        }
+
+        ensureWorldCombatArrays(
+            state.world
+        );
+
+        repairWorldProgressionState(
+            state.world
+        );
+
+        if (
+            state.world.id ===
+                "voidDungeon" &&
+            state.player
+                ?.miguelQuest
+                ?.vaelkorDefeated &&
+            !state.player
+                ?.miguelQuest
+                ?.fragmentCollected
+        ) {
+            const boss =
+                getVaelkorBoss(
+                    state.world
+                ) || {
+                    spawnX:
+                        state.world.width *
+                        0.72,
+
+                    spawnY:
+                        state.world.height *
+                        0.5
+                };
+
+            spawnVoidFragmentAfterVaelkor(
+                boss
+            );
+        }
+
+        return true;
+    }
+
+
+    /* ============================================================
+       OUTROS UPDATES
+       ============================================================ */
+
+    function updateDeadEntities(
+        dt
+    ) {
+        const world =
+            state.world;
+
+        if (
+            !world
+        ) {
+            return;
+        }
+
+        for (
+            const enemy of
+            safeArray(
+                world.enemies
+            )
+        ) {
+            if (
+                enemy.dead
+            ) {
+                enemy.deathTimer =
+                    finiteNumber(
+                        enemy.deathTimer,
+                        0
+                    ) +
+                    dt;
+            }
+        }
+
+        world.enemies =
+            safeArray(
+                world.enemies
+            )
+                .filter(
+                    enemy =>
+                        !enemy.dead ||
+                        enemy.deathTimer <
+                            0.75
+                );
+    }
+
+
+    function updateRuntimeTransition(
+        dt
+    ) {
+        const transition =
+            state.transition;
+
+        if (
+            !transition ||
+            transition.type ===
+                "rest"
+        ) {
+            return;
+        }
+
+        transition.timer =
+            finiteNumber(
+                transition.timer,
+                0
+            ) +
+            dt;
+
+        if (
+            transition.timer >=
+            finiteNumber(
+                transition.duration,
+                1
+            )
+        ) {
+            state.transition =
+                null;
+        }
+    }
+
+
+    function updatePlayerVisualTimers(
+        dt
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player
+        ) {
+            return;
+        }
+
+        player.visual.attackTime =
+            Math.max(
+                0,
+                finiteNumber(
+                    player.visual
+                        .attackTime
+                ) -
+                dt
+            );
+    }
+
+
+    function updateAutosave() {
+        if (
+            !state.player ||
+            !state.running ||
+            state.player.dead ||
+            state.deathState ||
+            isInActiveBossCombat()
+        ) {
+            return;
+        }
+
+        if (
+            state.time -
+                gameplayRuntime
+                    .lastAutosaveAt <
+            GAME_CONFIG
+                .autosaveSeconds
+        ) {
+            return;
+        }
+
+        gameplayRuntime
+            .lastAutosaveAt =
+            state.time;
+
+        saveGame({
+            silent:
+                true,
+
+            safe:
+                true
+        });
+    }
+
+
+    function beginNewProceduralSession() {
+        state.sessionSeed =
+            V.createSessionSeed();
+
+        state.sessionAreaSeeds =
+            Object.create(
+                null
+            );
+
+        state.sessionExploration =
+            Object.create(
+                null
+            );
+
+        state.sessionWorldCache =
+            Object.create(
+                null
+            );
+
+        gameplayRuntime
+            .lastWorldRef =
+            null;
+
+        gameplayRuntime
+            .transientEffects =
+            [];
+
+        gameplayRuntime
+            .bossRunes =
+            [];
+
+        gameplayRuntime.monarch = {
+            awakened:
+                false,
+
+            endingStarted:
+                false,
+
+            endingCompleted:
+                false,
+
+            summonSerial:
+                0
+        };
+
+        gameplayRuntime.vaelkor = {
+            arenaEntered:
+                false,
+
+            entranceLocked:
+                false,
+
+            endingStarted:
+                false,
+
+            endingCompleted:
+                false,
+
+            attackPatternIndex:
+                0
+        };
+
+        return state.sessionSeed;
+    }
+
+
+    /* ============================================================
+       UPDATE PRINCIPAL
+       ============================================================ */
+
+    function updateGameplay(
+        dt
+    ) {
+        const safeDt =
+            clamp(
+                finiteNumber(
+                    dt,
+                    0
+                ),
+                0,
+                GAME_CONFIG
+                    .maxDeltaTime
+            );
+
+        state.time +=
+            safeDt;
+
+        handleWorldRuntimeChanged();
+
+        updateNotifications(
+            safeDt
+        );
+
+        updateTransientEffects(
+            safeDt
+        );
+
+        updateRuntimeTransition(
+            safeDt
+        );
+
+        updatePlayerVisualTimers(
+            safeDt
+        );
+
+        updateDialogue(
+            safeDt
+        );
+
+        if (
+            state.deathState
+        ) {
+            state.deathState.timer +=
+                safeDt;
+        }
+
+        updateResting(
+            safeDt
+        );
+
+        updateFragmentMinigame(
+            safeDt
+        );
+
+        updatePlayerCooldowns(
+            safeDt
+        );
+
+        updatePotionBuffs(
+            safeDt
+        );
+
+        updateDoorAnimations(
+            safeDt
+        );
+
+        updateTreeRespawns(
+            safeDt
+        );
+
+        updateResourceRespawns(
+            safeDt
+        );
+
+        if (
+            state.running &&
+            state.player &&
+            !state.player.dead &&
+            !state.deathState
+        ) {
+            updatePlayerDash(
+                safeDt
+            );
+
+            updatePlayerMovement(
+                safeDt
+            );
+
+            if (
+                !state.activePanel &&
+                !state.dialogue &&
+                !state.battle &&
+                !state.cutscene &&
+                !state.fragmentMinigame
+                    ?.active
+            ) {
+                updateSurvival(
+                    safeDt
+                );
+            }
+
+            updateHoldInteraction(
+                safeDt
+            );
+
+            updateEncounterTriggers();
+
+            updateMazeDarknessBarrier();
+
+            updateVoidDarknessBarrier();
+
+            if (
+                !state.dialogue &&
+                !state.activePanel &&
+                !state.battle &&
+                !state.cutscene &&
+                !state.fragmentMinigame
+                    ?.active
+            ) {
+                updateEnemies(
+                    safeDt
+                );
+
+                updateBosses(
+                    safeDt
+                );
+
+                updateProjectiles(
+                    safeDt
+                );
+
+                updateHazards(
+                    safeDt
+                );
+            }
+
+            updateWorldDrops(
+                safeDt
+            );
+
+            updateDeadEntities(
+                safeDt
+            );
+
+            updateInteractionTargets();
+
+            markMapExploredAt(
+                state.area,
+                state.player.x,
+                state.player.y,
+
+                state.area ===
+                    "monarchMaze"
+                    ? 135
+                    : 190
+            );
+
+            updateAutosave();
+        }
+
+        updateCamera(
+            safeDt
+        );
+    }
+
+
+    /* ============================================================
+       VALIDAÇÃO
+       ============================================================ */
+
+    function validatePart3Data() {
+        const errors =
+            [];
+
+        if (
+            typeof handleGameplayAttackInput !==
+            "function"
+        ) {
+            errors.push(
+                "Ataque básico ausente."
+            );
+        }
+
+        if (
+            typeof handleGameplaySkillInput !==
+            "function"
+        ) {
+            errors.push(
+                "Sistema Q/R/F ausente."
+            );
+        }
+
+        if (
+            typeof handleGameplayDashInput !==
+            "function"
+        ) {
+            errors.push(
+                "Dash ausente."
+            );
+        }
+
+        if (
+            BOSS_REGISTRY
+                .monarch
+                .stagger
+                .threshold !==
+            15
+        ) {
+            errors.push(
+                "Threshold do Monarca deve ser 15."
+            );
+        }
+
+        if (
+            BOSS_REGISTRY
+                .monarch
+                .stagger
+                .basicAttackValue !==
+            1
+        ) {
+            errors.push(
+                "Ataque básico deve somar +1."
+            );
+        }
+
+        if (
+            BOSS_REGISTRY
+                .monarch
+                .stagger
+                .skillValue !==
+            3
+        ) {
+            errors.push(
+                "Q/R/F devem somar +3."
+            );
+        }
+
+        for (
+            const characterId of
+            Object.keys(
+                V.CHARACTERS
+            )
+        ) {
+            for (
+                const key of
+                [
+                    "q",
+                    "r",
+                    "f"
+                ]
+            ) {
+                const skill =
+                    CLASS_SKILLS[
+                        characterId
+                    ]?.[
+                        key
+                    ];
+
+                if (
+                    !skill ||
+                    !Number.isFinite(
+                        skill.energyCost
+                    )
+                ) {
+                    errors.push(
+                        `${characterId}/${key} precisa usar Energia.`
+                    );
+                }
+
+                if (
+                    skill &&
+                    Object.prototype
+                        .hasOwnProperty
+                        .call(
+                            skill,
+                            "magicCost"
+                        )
+                ) {
+                    errors.push(
+                        `${characterId}/${key} ainda possui magicCost.`
+                    );
+                }
+            }
+        }
+
+        if (
+            errors.length
+        ) {
+            console.error(
+                "VEYRA V32 — ERROS NA PARTE 3:",
+                errors
+            );
+
+            return {
+                ok:
+                    false,
+
+                errors
+            };
+        }
+
+        console.log(
+            "VEYRA V32 — Parte 3 validada."
+        );
+
+        return {
+            ok:
+                true,
+
+            errors:
+                []
+        };
+    }
+
+
+    /* ============================================================
+       EXPORTAÇÃO
+       ============================================================ */
+
+    Object.assign(
+        V,
+        {
+            gameplayRuntime,
+
+            NPC_DIALOGUES,
+            SHOP_CATALOG,
+            AREA_PATH_BOSS,
+
+            pushNotification,
+            spawnTransientEffect,
+
+            startDialogue,
+            getCurrentDialogueLine,
+            updateDialogue,
+            advanceDialogue,
+
+            getFacingVector,
+            getMovementInputVector,
+            updatePlayerFacingFromVector,
+            isPlayerControlBlocked,
+
+            moveCircleWithCollision,
+            moveEntityIgnoringSoftCollision,
+
+            getExhaustionSpeedMultiplier,
+            getExhaustionDamageMultiplier,
+            changeExhaustion,
+            updateSurvival,
+            updatePlayerMovement,
+
+            updatePlayerCooldowns,
+            addOrRefreshPotionBuff,
+            addClassBuff,
+            updatePotionBuffs,
+            useInventoryItem,
+
+            updateCamera,
+
+            calculateDamageAfterDefense,
+            getPlayerCombatDefense,
+
+            canBossBecomeAggressive,
+            canBossDamagePlayer,
+            canPlayerDamageBoss,
+
+            applyDamageToPlayer,
+            applyDamageToEnemy,
+
+            createAttackToken,
+            applyMonarchStagger,
+
+            ensureWorldCombatArrays,
+            createProjectile,
+            createHazard,
+            projectileHitsSolid,
+            getAllCombatEnemies,
+            applyProjectileSecondaryEffect,
+            updateProjectiles,
+            pointToSegmentDistance,
+            playerInsideHazard,
+            updateHazards,
+
+            getPlayerAimVector,
+            angleBetween,
+            performMeleeArcAttack,
+            damageEnemiesInRadius,
+            performSplashAttack,
+            handleGameplayAttackInput,
+
+            canPaySkillCost,
+            paySkillCost,
+            performForwardSkillMovement,
+            executeClassSkill,
+            handleGameplaySkillInput,
+
+            canUseDash,
+            handleGameplayDashInput,
+            updatePlayerDash,
+
+            updateEnemies,
+            updateEnemyIdle,
+            updateEnemyAbility,
+            updateWolfCharge,
+            updateBoarCharge,
+            updateBasicMeleeEnemy,
+            updateRangedEnemy,
+            updateGroundSlamEnemy,
+            updateOreBurstEnemy,
+            updateBurningChargeEnemy,
+            updateWebEnemy,
+            updatePoisonEnemy,
+            updateDiveEnemy,
+            updateShadowStrikeEnemy,
+            updateVoidBlinkEnemy,
+
+            getNearbyUnconfirmedBoss,
+            openBossConfirmation,
+            acceptBossFight,
+            retreatBossFight,
+            activateBossCombat,
+
+            bossBasicMelee,
+            chaseBossPlayer,
+            fireRadialBossProjectiles,
+
+            updateStandardBossAI,
+            updateRoadGuardianAI,
+            updateForestWardenAI,
+            updateGroveHeartAI,
+            updateMountainTitanAI,
+            updateIronColossusAI,
+            updateRubyChimeraAI,
+            updateCelestialGuardianAI,
+            updatePathBossAI,
+
+            getMonarchBoss,
+            closeMonarchArena,
+            openMonarchArena,
+            requestMonarchAltarInteraction,
+            awakenMonarchFromAltar,
+            acceptMonarchAltar,
+            declineMonarchAltar,
+            spawnMonarchSummon,
+            updateMonarch,
+            claimDashV1Reward,
+
+            getVaelkorBoss,
+            isPlayerInsideVaelkorArena,
+            beginVaelkorEncounter,
+            spawnVaelkorSummon,
+            updateVaelkor,
+
+            updateBosses,
+
+            spawnWorldDrop,
+            pickupWorldDrop,
+            updateWorldDrops,
+            killEnemy,
+
+            createUnlockedPathRune,
+            repairWorldBossBarriers,
+
+            startMonarchDeathSequence,
+            completeMonarchDeathSequence,
+            startVaelkorDeathSequence,
+            spawnVoidFragmentAfterVaelkor,
+            completeVaelkorDeathSequence,
+
+            killBoss,
+            updateBossDeathVisual,
+
+            beginFragmentMinigame,
+            resetFragmentRoundToFirst,
+            updateFragmentMinigame,
+            attemptFragmentMinigame,
+            completeFragmentMinigame,
+
+            buyShopItem,
+            sellInventoryItem,
+            getNextArmorUpgrade,
+            buyArmorUpgrade,
+
+            interactBasicQuest,
+
+            updateMiguelQuestObjective,
+            interactWithMiguel,
+            acceptMiguelQuest,
+            declineMiguelQuest,
+            deliverVoidFragmentToMiguel,
+
+            openShopPanel,
+            closeActivePanel,
+            interactWithNPC,
+
+            beginHoldInteraction,
+            handlePrimaryHoldInteractionEnd,
+            getHoldActionProgress,
+            harvestTree,
+            harvestResource,
+            updateHoldInteraction,
+            updateTreeRespawns,
+            updateResourceRespawns,
+
+            updateDoorAnimations,
+            handleDoorInteraction,
+
+            beginBedRest,
+            updateResting,
+
+            updateInteractionTargets,
+            getInteractionPrompt,
+
+            performAreaTravel,
+
+            requestNorthGateUnlock,
+            acceptNorthGateUnlock,
+
+            interactWithExit,
+            interactWithSecretDoor,
+
+            handlePrimaryInteractionPress,
+            acceptCurrentChoice,
+            retreatCurrentChoice,
+
+            calculateDeathMaterialLoss,
+            applyPendingDeathLosses,
+            isInActiveBossCombat,
+            resetActiveEncounterAfterDeath,
+
+            killPlayer,
+            respawnPlayerAtHome,
+            restoreSafeSnapshotAfterDeath,
+            abandonAfterDeath,
+            getDeathLossPreview,
+
+            updateMazeDarknessBarrier,
+            updateVoidDarknessBarrier,
+            updateEncounterTriggers,
+
+            updateDeadEntities,
+
+            ensureDefeatedBossRune,
+            repairWorldProgressionState,
+            handleWorldRuntimeChanged,
+
+            updateRuntimeTransition,
+            updatePlayerVisualTimers,
+            updateAutosave,
+
+            beginNewProceduralSession,
+
+            updateGameplay,
+
+            validatePart3Data
+        }
+    );
+
+    V.__part3Loaded =
+        true;
+
+    V.__part3Validation =
+        validatePart3Data();
+
+})();

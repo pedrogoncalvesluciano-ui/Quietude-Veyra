@@ -65150,94 +65150,119 @@ function beginAreaTransition(
        TRANSIÇÃO RUNTIME
        ============================================================ */
 
-    function updateTransition(
-        dt
-    ) {
-        const transition =
-            state.transition;
-
-
-        if (
-            !transition
-        ) {
-            return;
-        }
-
-
-        transition.timer =
-            finite(
-                transition.timer,
-                0
-            ) +
-            dt;
-
-
-      /*
-    TRANSIÇÃO DE ÁREA.
-
-    Aos 50%:
-    tela está escura e o mapa troca.
-*/
-if (
-    transition.type ===
-        "area" &&
-    !transition.midpointDone &&
-    transition.timer >=
-        duration *
-            0.5
+  function updateTransition(
+    dt
 ) {
-    transition.midpointDone =
-        true;
+    const transition =
+        state.transition;
 
 
     if (
-        typeof transition
-            .onMidpoint ===
-        "function"
+        !transition
     ) {
-        try {
+        return;
+    }
 
-            transition
-                .onMidpoint();
 
-        } catch (
-            error
+    transition.timer =
+        finite(
+            transition.timer,
+            0
+        ) +
+        dt;
+
+
+    const duration =
+        Math.max(
+            0.01,
+            finite(
+                transition.duration,
+                1
+            )
+        );
+
+
+    /*
+        TRANSIÇÃO DE ÁREA.
+
+        Aos 50%:
+        tela está escura e o mapa troca.
+    */
+    if (
+        transition.type ===
+            "area" &&
+        !transition.midpointDone &&
+        transition.timer >=
+            duration *
+                0.5
+    ) {
+        transition.midpointDone =
+            true;
+
+
+        if (
+            typeof transition
+                .onMidpoint ===
+            "function"
         ) {
+            try {
 
-            console.error(
-                "VEYRA — erro ao trocar de cenário:",
+                transition
+                    .onMidpoint();
+
+            } catch (
                 error
-            );
+            ) {
 
+                console.error(
+                    "VEYRA — erro ao trocar de cenário:",
+                    error
+                );
+
+            }
+        }
+    }
+
+
+    /*
+        FIM DA TRANSIÇÃO.
+    */
+    if (
+        transition.timer >=
+        duration
+    ) {
+        if (
+            typeof transition
+                .onComplete ===
+            "function"
+        ) {
+            try {
+
+                transition
+                    .onComplete();
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    "VEYRA — erro ao finalizar transição:",
+                    error
+                );
+
+            }
+        }
+
+
+        if (
+            state.transition ===
+            transition
+        ) {
+            state.transition =
+                null;
         }
     }
 }
-            if (
-                typeof transition.onComplete ===
-                "function"
-            ) {
-                try {
-                    transition.onComplete();
-                } catch (
-                    error
-                ) {
-                    console.error(
-                        "VEYRA — erro ao finalizar transição:",
-                        error
-                    );
-                }
-            }
-
-
-            if (
-                state.transition ===
-                transition
-            ) {
-                state.transition =
-                    null;
-            }
-        }
-    }
 
 
     /* ============================================================

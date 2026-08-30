@@ -191,7 +191,7 @@
                 100,
 
             bossConfirmationDistance:
-                205,
+                285,
 
 
             doorOpenDistance:
@@ -18798,10 +18798,10 @@ world.staticObstacles.push(
 const bossIndex =
     config.areaId ===
     "road"
-        ? Math.max(
-            1,
+        ? Math.min(
+            2,
             route.length -
-                3
+                2
         )
         : route.length -
             2;
@@ -18936,7 +18936,110 @@ const bossNode =
             }
         );
 
+       /*
+    CAMINHO 1.
 
+    Animais garantidos perto
+    do começo da Estrada.
+*/
+if (
+    config.areaId ===
+    "road"
+) {
+    const anchor =
+        route[
+            Math.min(
+                1,
+                route.length - 1
+            )
+        ];
+
+
+    const guaranteedAnimals = [
+
+        {
+            species:
+                "wolf",
+
+            dx:
+                90,
+
+            dy:
+                -70
+        },
+
+        {
+            species:
+                "boar",
+
+            dx:
+                190,
+
+            dy:
+                70
+        },
+
+        {
+            species:
+                "wolf",
+
+            dx:
+                300,
+
+            dy:
+                -55
+        },
+
+        {
+            species:
+                "boar",
+
+            dx:
+                410,
+
+            dy:
+                70
+        }
+
+    ];
+
+
+    guaranteedAnimals.forEach(
+        (
+            data,
+            index
+        ) => {
+
+            const enemy =
+                createEnemy(
+                    data.species,
+                    {
+                        entityId:
+                            `road_animal_${index}`,
+
+                        x:
+                            anchor.x +
+                            data.dx,
+
+                        y:
+                            anchor.y +
+                            data.dy
+                    }
+                );
+
+
+            if (
+                enemy
+            ) {
+                world.enemies.push(
+                    enemy
+                );
+            }
+
+        }
+    );
+}
+       
         for (
             const resourceConfig of
             config.resources ||
@@ -19037,23 +19140,51 @@ const bossNode =
                 13,
 
 
-            resources: [
+           resources: [
 
-                {
-                    itemId: "madeira",
-                    type: "tree",
-                    count: 7,
-                    salt: "road_wood"
-                },
+    {
+        itemId:
+            "madeira",
 
-                {
-                    itemId: "pedra",
-                    type: "rock",
-                    count: 5,
-                    salt: "road_stone"
-                }
+        type:
+            "tree",
 
-            ]
+        count:
+            7,
+
+        salt:
+            "road_wood"
+    },
+
+    {
+        itemId:
+            "pedra",
+
+        type:
+            "rock",
+
+        count:
+            5,
+
+        salt:
+            "road_stone"
+    },
+
+    {
+        itemId:
+            "carvao",
+
+        type:
+            "ore",
+
+        count:
+            8,
+
+        salt:
+            "road_coal"
+    }
+
+]
 
         });
 
@@ -38672,12 +38803,11 @@ const bossNode =
         tree.harvested =
             true;
 
-        tree.respawnTimer =
-            random(
-                70,
-                105
-            );
-
+      tree.respawnTimer =
+    random(
+        25,
+        40
+    );
         /*
             Não existe mais gasto de Magia.
             Coletar aumenta levemente a Exaustão.
@@ -38963,16 +39093,19 @@ const bossNode =
             tree.respawnTimer -=
                 dt;
 
-            if (
-                tree.respawnTimer <=
-                0
-            ) {
-                tree.harvested =
-                    false;
+          if (
+    tree.respawnTimer <=
+    0
+) {
+    tree.harvested =
+        false;
 
-                changed =
-                    true;
-            }
+    tree.respawnTimer =
+        0;
+
+    changed =
+        true;
+}
         }
 
         if (
@@ -44010,14 +44143,14 @@ function drawDoorwayOpenings(
             "#0c0a09";
 
 
-        roundRectPath(
-            ctx,
-            screen.x - 8,
-            screen.y - 10,
-            door.w + 16,
-            door.h + 22,
-            5
-        );
+     roundRectPath(
+    ctx,
+    screen.x - 5,
+    screen.y - 6,
+    door.w + 10,
+    door.h + 14,
+    5
+);
 
 
         ctx.fill();
@@ -44382,6 +44515,170 @@ function drawGate(
     ctx.restore();
 }
 
+   function drawBossBarriers(
+    ctx
+) {
+    const world =
+        state.world;
+
+
+    if (
+        !world
+    ) {
+        return;
+    }
+
+
+    for (
+        const barrier of
+        safeArray(
+            world.bossBarriers
+        )
+    ) {
+        /*
+            Boss derrotado =
+            barreira sem colisão.
+        */
+        if (
+            barrier.solid ===
+            false
+        ) {
+            continue;
+        }
+
+
+        if (
+            !isRectVisible(
+                barrier,
+                180
+            )
+        ) {
+            continue;
+        }
+
+
+        const screen =
+            worldToScreen(
+                barrier.x,
+                barrier.y
+            );
+
+
+        ctx.save();
+
+
+        /*
+            CAMPO ROXO.
+        */
+        ctx.fillStyle =
+            "rgba(77,45,94,0.25)";
+
+
+        ctx.fillRect(
+            screen.x,
+            screen.y,
+            barrier.w,
+            barrier.h
+        );
+
+
+        /*
+            BORDA MÁGICA.
+        */
+        ctx.strokeStyle =
+            "rgba(178,115,207,0.88)";
+
+        ctx.lineWidth =
+            3;
+
+
+        ctx.setLineDash(
+            [
+                12,
+                8
+            ]
+        );
+
+
+        ctx.strokeRect(
+            screen.x,
+            screen.y,
+            barrier.w,
+            barrier.h
+        );
+
+
+        ctx.setLineDash(
+            []
+        );
+
+
+        /*
+            Linhas da energia.
+        */
+        ctx.strokeStyle =
+            "rgba(181,133,204,0.35)";
+
+        ctx.lineWidth =
+            2;
+
+
+        if (
+            barrier.h >
+            barrier.w
+        ) {
+            for (
+                let y = 12;
+                y <
+                    barrier.h;
+                y += 30
+            ) {
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    screen.x,
+                    screen.y + y
+                );
+
+                ctx.lineTo(
+                    screen.x +
+                        barrier.w,
+                    screen.y + y
+                );
+
+                ctx.stroke();
+            }
+        }
+
+        else {
+            for (
+                let x = 12;
+                x <
+                    barrier.w;
+                x += 30
+            ) {
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    screen.x + x,
+                    screen.y
+                );
+
+                ctx.lineTo(
+                    screen.x + x,
+                    screen.y +
+                        barrier.h
+                );
+
+                ctx.stroke();
+            }
+        }
+
+
+        ctx.restore();
+    }
+}
+   
     /* ============================================================
        PORTAS
        ============================================================ */

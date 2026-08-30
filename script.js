@@ -42026,3 +42026,11856 @@
         validatePart3Data();
 
 })();
+/* ============================================================
+   VEYRA: A QUIETUDE
+   SCRIPT.JS — PARTE 4/5
+
+   RENDERIZAÇÃO / PROFUNDIDADE / ILUMINAÇÃO / MINIMAPA / HUD
+
+   REQUER:
+   - PARTE 1/5
+   - PARTE 2/5
+   - PARTE 3/5
+   ============================================================ */
+
+(() => {
+    "use strict";
+
+    const V = window.VEYRA;
+
+    if (
+        !V ||
+        !V.__part1Loaded ||
+        !V.__part2Loaded ||
+        !V.__part3Loaded
+    ) {
+        throw new Error(
+            "VEYRA — carregue as Partes 1/5, 2/5 e 3/5 antes da Parte 4/5."
+        );
+    }
+
+    if (V.__part4Loaded) {
+        console.warn(
+            "VEYRA — Parte 4 já foi carregada; ignorando duplicação."
+        );
+
+        return;
+    }
+
+
+    /* ============================================================
+       IMPORTAÇÕES DAS PARTES ANTERIORES
+       ============================================================ */
+
+    const {
+        state,
+
+        clamp,
+        lerp,
+        finiteNumber,
+        integer,
+        distance,
+        safeArray,
+
+        GAME_CONFIG,
+
+        CHARACTERS,
+        ITEMS,
+        ARMOR_DATA,
+        BOSS_REGISTRY,
+
+        currentCharacter,
+        getCharacterById,
+
+        REGION_META,
+        BIOME_STYLE,
+        PATH_STYLE_CONFIG,
+
+        getBiomeStyle,
+        getPathStyle,
+
+        getLanternLightingState,
+        isMinimapSignalAvailable,
+        isMapCellExplored,
+
+        getEntityDepthY,
+        compareDepth,
+
+        getDashVersion,
+
+        gameplayRuntime,
+
+        getInteractionPrompt,
+        getHoldActionProgress,
+        getDeathLossPreview
+    } = V;
+
+
+    /* ============================================================
+       RUNTIME DE RENDERIZAÇÃO
+
+       O canvas principal será conectado na Parte 5.
+       ============================================================ */
+
+    const renderRuntime = {
+        canvas: null,
+        ctx: null,
+
+        width: 1280,
+        height: 720,
+        dpr: 1,
+
+        darknessCanvas:
+            document.createElement(
+                "canvas"
+            ),
+
+        darknessCtx: null,
+
+        minimapCanvas:
+            document.createElement(
+                "canvas"
+            ),
+
+        minimapCtx: null,
+
+        worldMapCanvas:
+            document.createElement(
+                "canvas"
+            ),
+
+        worldMapCtx: null,
+
+        cameraShakeX: 0,
+        cameraShakeY: 0,
+
+        visibleWorldRect: {
+            x: 0,
+            y: 0,
+            w: 1280,
+            h: 720
+        },
+
+        lastFrameTime: 0,
+
+        ambientTime: 0,
+
+        lanternPolygon: [],
+
+        depthEntries: [],
+
+        frameStats: {
+            drawnEntities: 0,
+            drawnTrees: 0,
+            lightRays: 0
+        }
+    };
+
+
+    renderRuntime.darknessCtx =
+        renderRuntime
+            .darknessCanvas
+            .getContext(
+                "2d"
+            );
+
+
+    renderRuntime.minimapCtx =
+        renderRuntime
+            .minimapCanvas
+            .getContext(
+                "2d"
+            );
+
+
+    renderRuntime.worldMapCtx =
+        renderRuntime
+            .worldMapCanvas
+            .getContext(
+                "2d"
+            );
+
+
+    /* ============================================================
+       CONFIGURAÇÃO
+       ============================================================ */
+
+    function configureRenderer(
+        canvas
+    ) {
+        if (
+            !(canvas instanceof HTMLCanvasElement)
+        ) {
+            return false;
+        }
+
+        const ctx =
+            canvas.getContext(
+                "2d"
+            );
+
+        if (!ctx) {
+            return false;
+        }
+
+        renderRuntime.canvas =
+            canvas;
+
+        renderRuntime.ctx =
+            ctx;
+
+        resizeRenderer();
+
+        return true;
+    }
+
+
+    function resizeRenderer() {
+        const canvas =
+            renderRuntime.canvas;
+
+        if (!canvas) {
+            return false;
+        }
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+        const dpr =
+            clamp(
+                window.devicePixelRatio ||
+                1,
+                1,
+                2
+            );
+
+        const width =
+            Math.max(
+                640,
+                Math.floor(
+                    rect.width ||
+                    window.innerWidth ||
+                    1280
+                )
+            );
+
+        const height =
+            Math.max(
+                360,
+                Math.floor(
+                    rect.height ||
+                    window.innerHeight ||
+                    720
+                )
+            );
+
+        renderRuntime.width =
+            width;
+
+        renderRuntime.height =
+            height;
+
+        renderRuntime.dpr =
+            dpr;
+
+        canvas.width =
+            Math.floor(
+                width *
+                dpr
+            );
+
+        canvas.height =
+            Math.floor(
+                height *
+                dpr
+            );
+
+        renderRuntime
+            .darknessCanvas
+            .width =
+            canvas.width;
+
+        renderRuntime
+            .darknessCanvas
+            .height =
+            canvas.height;
+
+        renderRuntime
+            .minimapCanvas
+            .width =
+            220 *
+            dpr;
+
+        renderRuntime
+            .minimapCanvas
+            .height =
+            170 *
+            dpr;
+
+        renderRuntime
+            .worldMapCanvas
+            .width =
+            900 *
+            dpr;
+
+        renderRuntime
+            .worldMapCanvas
+            .height =
+            620 *
+            dpr;
+
+        ctx.setTransform(
+            dpr,
+            0,
+            0,
+            dpr,
+            0,
+            0
+        );
+
+        renderRuntime
+            .darknessCtx
+            .setTransform(
+                dpr,
+                0,
+                0,
+                dpr,
+                0,
+                0
+            );
+
+        return true;
+    }
+
+
+    /* ============================================================
+       CÂMERA / COORDENADAS
+       ============================================================ */
+
+    function getCameraOffset() {
+        const camera =
+            state.camera;
+
+        return {
+            x:
+                renderRuntime.width /
+                    2 -
+                finiteNumber(
+                    camera?.x,
+                    0
+                ) +
+                renderRuntime
+                    .cameraShakeX,
+
+            y:
+                renderRuntime.height /
+                    2 -
+                finiteNumber(
+                    camera?.y,
+                    0
+                ) +
+                renderRuntime
+                    .cameraShakeY
+        };
+    }
+
+
+    function worldToScreen(
+        x,
+        y
+    ) {
+        const offset =
+            getCameraOffset();
+
+        return {
+            x:
+                x +
+                offset.x,
+
+            y:
+                y +
+                offset.y
+        };
+    }
+
+
+    function screenToWorld(
+        x,
+        y
+    ) {
+        const offset =
+            getCameraOffset();
+
+        return {
+            x:
+                x -
+                offset.x,
+
+            y:
+                y -
+                offset.y
+        };
+    }
+
+
+    function updateVisibleWorldRect() {
+        const topLeft =
+            screenToWorld(
+                0,
+                0
+            );
+
+        renderRuntime.visibleWorldRect = {
+            x:
+                topLeft.x -
+                160,
+
+            y:
+                topLeft.y -
+                160,
+
+            w:
+                renderRuntime.width +
+                320,
+
+            h:
+                renderRuntime.height +
+                320
+        };
+    }
+
+
+    function isPointVisible(
+        x,
+        y,
+        margin = 100
+    ) {
+        const rect =
+            renderRuntime
+                .visibleWorldRect;
+
+        return (
+            x >=
+                rect.x -
+                    margin &&
+            x <=
+                rect.x +
+                    rect.w +
+                    margin &&
+            y >=
+                rect.y -
+                    margin &&
+            y <=
+                rect.y +
+                    rect.h +
+                    margin
+        );
+    }
+
+
+    function isRectVisible(
+        rect,
+        margin = 100
+    ) {
+        const view =
+            renderRuntime
+                .visibleWorldRect;
+
+        return !(
+            rect.x +
+                rect.w <
+                view.x -
+                    margin ||
+            rect.x >
+                view.x +
+                    view.w +
+                    margin ||
+            rect.y +
+                rect.h <
+                view.y -
+                    margin ||
+            rect.y >
+                view.y +
+                    view.h +
+                    margin
+        );
+    }
+
+
+    /* ============================================================
+       SCREEN SHAKE
+       ============================================================ */
+
+    function updateRenderShake(
+        dt
+    ) {
+        renderRuntime.ambientTime +=
+            dt;
+
+        if (
+            state.screenShake >
+            0
+        ) {
+            const power =
+                finiteNumber(
+                    state.screenShakePower,
+                    5
+                );
+
+            renderRuntime.cameraShakeX =
+                (
+                    Math.random() -
+                    0.5
+                ) *
+                power;
+
+            renderRuntime.cameraShakeY =
+                (
+                    Math.random() -
+                    0.5
+                ) *
+                power;
+
+            state.screenShake =
+                Math.max(
+                    0,
+                    state.screenShake -
+                        dt
+                );
+
+            if (
+                state.screenShake <=
+                0
+            ) {
+                state.screenShakePower =
+                    0;
+            }
+        } else {
+            renderRuntime.cameraShakeX =
+                0;
+
+            renderRuntime.cameraShakeY =
+                0;
+        }
+    }
+
+
+    /* ============================================================
+       CORES
+       ============================================================ */
+
+    function colorWithAlpha(
+        color,
+        alpha
+    ) {
+        if (
+            typeof color !==
+            "string"
+        ) {
+            return `rgba(255,255,255,${alpha})`;
+        }
+
+        if (
+            color.startsWith(
+                "#"
+            )
+        ) {
+            let hex =
+                color.slice(
+                    1
+                );
+
+            if (
+                hex.length ===
+                3
+            ) {
+                hex =
+                    hex
+                        .split(
+                            ""
+                        )
+                        .map(
+                            value =>
+                                value +
+                                value
+                        )
+                        .join(
+                            ""
+                        );
+            }
+
+            const number =
+                Number.parseInt(
+                    hex,
+                    16
+                );
+
+            const r =
+                (
+                    number >>
+                    16
+                ) &
+                255;
+
+            const g =
+                (
+                    number >>
+                    8
+                ) &
+                255;
+
+            const b =
+                number &
+                255;
+
+            return (
+                `rgba(${r},${g},${b},${clamp(alpha, 0, 1)})`
+            );
+        }
+
+        return color;
+    }
+
+
+    /* ============================================================
+       FUNDO / TERRENO
+       ============================================================ */
+
+    function drawWorldBackground(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        const style =
+            getBiomeStyle(
+                world.biome
+            );
+
+        ctx.fillStyle =
+            style.ground;
+
+        ctx.fillRect(
+            0,
+            0,
+            renderRuntime.width,
+            renderRuntime.height
+        );
+
+        drawGroundTexture(
+            ctx,
+            style
+        );
+    }
+
+
+    function drawGroundTexture(
+        ctx,
+        style
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        const grid =
+            90;
+
+        const startX =
+            Math.floor(
+                renderRuntime
+                    .visibleWorldRect
+                    .x /
+                    grid
+            ) *
+            grid;
+
+        const startY =
+            Math.floor(
+                renderRuntime
+                    .visibleWorldRect
+                    .y /
+                    grid
+            ) *
+            grid;
+
+        ctx.save();
+
+        ctx.globalAlpha =
+            0.14;
+
+        for (
+            let x = startX;
+            x <
+            renderRuntime
+                .visibleWorldRect
+                .x +
+                renderRuntime
+                    .visibleWorldRect
+                    .w;
+            x += grid
+        ) {
+            for (
+                let y = startY;
+                y <
+                renderRuntime
+                    .visibleWorldRect
+                    .y +
+                    renderRuntime
+                        .visibleWorldRect
+                        .h;
+                y += grid
+            ) {
+                const seed =
+                    Math.sin(
+                        x *
+                            0.017 +
+                        y *
+                            0.011
+                    );
+
+                if (
+                    seed <
+                    -0.2
+                ) {
+                    continue;
+                }
+
+                const screen =
+                    worldToScreen(
+                        x +
+                            seed *
+                                25,
+                        y +
+                            seed *
+                                18
+                    );
+
+                ctx.fillStyle =
+                    seed >
+                    0.5
+                        ? style.accent
+                        : style.detail;
+
+                ctx.beginPath();
+
+                ctx.ellipse(
+                    screen.x,
+                    screen.y,
+                    13 +
+                        Math.abs(
+                            seed
+                        ) *
+                            12,
+                    5 +
+                        Math.abs(
+                            seed
+                        ) *
+                            4,
+                    seed,
+                    0,
+                    Math.PI *
+                        2
+                );
+
+                ctx.fill();
+            }
+        }
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       CAMINHOS
+
+       Vila:
+       cruz central ligada aos 4 portões,
+       passando pela fonte.
+
+       Fases:
+       cada bioma mantém seu próprio caminho.
+       ============================================================ */
+
+    function drawWorldPaths(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const path of
+            safeArray(
+                world.paths
+            )
+        ) {
+            if (
+                !isRectVisible(
+                    path,
+                    60
+                )
+            ) {
+                continue;
+            }
+
+            drawPathRect(
+                ctx,
+                path,
+                world
+            );
+        }
+    }
+
+
+    function drawPathRect(
+        ctx,
+        path,
+        world
+    ) {
+        const style =
+            getPathStyle(
+                path.style ||
+                world.pathStyle ||
+                world.biome
+            );
+
+        const screen =
+            worldToScreen(
+                path.x,
+                path.y
+            );
+
+        ctx.save();
+
+        ctx.fillStyle =
+            style.base;
+
+        roundRectPath(
+            ctx,
+            screen.x,
+            screen.y,
+            path.w,
+            path.h,
+            Math.min(
+                18,
+                Math.min(
+                    path.w,
+                    path.h
+                ) *
+                    0.25
+            )
+        );
+
+        ctx.fill();
+
+        ctx.globalAlpha =
+            0.36;
+
+        ctx.strokeStyle =
+            style.edge;
+
+        ctx.lineWidth =
+            3;
+
+        ctx.stroke();
+
+        drawPathDetails(
+            ctx,
+            path,
+            style
+        );
+
+        ctx.restore();
+    }
+
+
+    function drawPathDetails(
+        ctx,
+        path,
+        style
+    ) {
+        const horizontal =
+            path.w >
+            path.h;
+
+        const length =
+            horizontal
+                ? path.w
+                : path.h;
+
+        const count =
+            Math.max(
+                2,
+                Math.floor(
+                    length /
+                    95
+                )
+            );
+
+        for (
+            let index = 0;
+            index < count;
+            index += 1
+        ) {
+            const t =
+                (
+                    index +
+                    0.5
+                ) /
+                count;
+
+            const seed =
+                Math.sin(
+                    (
+                        path.x +
+                        path.y +
+                        index *
+                            137
+                    ) *
+                    0.013
+                );
+
+            const wx =
+                horizontal
+                    ? path.x +
+                        path.w *
+                            t
+                    : path.x +
+                        path.w /
+                            2 +
+                        seed *
+                            path.w *
+                            0.22;
+
+            const wy =
+                horizontal
+                    ? path.y +
+                        path.h /
+                            2 +
+                        seed *
+                            path.h *
+                            0.22
+                    : path.y +
+                        path.h *
+                            t;
+
+            const screen =
+                worldToScreen(
+                    wx,
+                    wy
+                );
+
+            ctx.globalAlpha =
+                0.34;
+
+            ctx.fillStyle =
+                style.detail;
+
+            ctx.beginPath();
+
+            ctx.ellipse(
+                screen.x,
+                screen.y,
+                7 +
+                    Math.abs(
+                        seed
+                    ) *
+                        4,
+                4,
+                seed,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+    }
+
+
+    /* ============================================================
+       PAREDES / BARREIRAS
+       ============================================================ */
+
+    function drawWalls(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const wall of
+            safeArray(
+                world.walls
+            )
+        ) {
+            if (
+                !isRectVisible(
+                    wall,
+                    80
+                )
+            ) {
+                continue;
+            }
+
+            const screen =
+                worldToScreen(
+                    wall.x,
+                    wall.y
+                );
+
+            const style =
+                getBiomeStyle(
+                    world.biome
+                );
+
+            ctx.save();
+
+            ctx.fillStyle =
+                wall.color ||
+                style.wall;
+
+            ctx.fillRect(
+                screen.x,
+                screen.y,
+                wall.w,
+                wall.h
+            );
+
+            ctx.fillStyle =
+                colorWithAlpha(
+                    "#ffffff",
+                    0.06
+                );
+
+            ctx.fillRect(
+                screen.x,
+                screen.y,
+                wall.w,
+                Math.min(
+                    7,
+                    wall.h
+                )
+            );
+
+            ctx.fillStyle =
+                colorWithAlpha(
+                    "#000000",
+                    0.26
+                );
+
+            ctx.fillRect(
+                screen.x,
+                screen.y +
+                    wall.h -
+                    Math.min(
+                        8,
+                        wall.h
+                    ),
+                wall.w,
+                Math.min(
+                    8,
+                    wall.h
+                )
+            );
+
+            ctx.restore();
+        }
+    }
+
+
+    /* ============================================================
+       PRÉDIOS
+       ============================================================ */
+
+    function drawBuildings(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const building of
+            safeArray(
+                world.buildings
+            )
+        ) {
+            if (
+                !isRectVisible(
+                    building,
+                    150
+                )
+            ) {
+                continue;
+            }
+
+            drawBuilding(
+                ctx,
+                building
+            );
+        }
+    }
+
+
+    function drawBuilding(
+        ctx,
+        building
+    ) {
+        const screen =
+            worldToScreen(
+                building.x,
+                building.y
+            );
+
+        const style =
+            building.style ||
+            {};
+
+        ctx.save();
+
+        /*
+            Sombra.
+        */
+        ctx.fillStyle =
+            "rgba(0,0,0,0.26)";
+
+        roundRectPath(
+            ctx,
+            screen.x +
+                12,
+            screen.y +
+                18,
+            building.w,
+            building.h,
+            18
+        );
+
+        ctx.fill();
+
+        /*
+            Parede.
+        */
+        ctx.fillStyle =
+            style.wall ||
+            "#6e6253";
+
+        roundRectPath(
+            ctx,
+            screen.x,
+            screen.y,
+            building.w,
+            building.h,
+            14
+        );
+
+        ctx.fill();
+
+        /*
+            Telhado.
+        */
+        ctx.fillStyle =
+            style.roof ||
+            "#40383b";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screen.x -
+                18,
+            screen.y +
+                18
+        );
+
+        ctx.lineTo(
+            screen.x +
+                building.w /
+                    2,
+            screen.y -
+                50
+        );
+
+        ctx.lineTo(
+            screen.x +
+                building.w +
+                18,
+            screen.y +
+                18
+        );
+
+        ctx.lineTo(
+            screen.x +
+                building.w -
+                6,
+            screen.y +
+                building.h *
+                    0.42
+        );
+
+        ctx.lineTo(
+            screen.x +
+                6,
+            screen.y +
+                building.h *
+                    0.42
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        /*
+            Textura do telhado.
+        */
+        ctx.globalAlpha =
+            0.18;
+
+        ctx.strokeStyle =
+            "#efe4cf";
+
+        ctx.lineWidth =
+            2;
+
+        for (
+            let x = 15;
+            x <
+            building.w -
+                10;
+            x += 30
+        ) {
+            ctx.beginPath();
+
+            ctx.moveTo(
+                screen.x +
+                    x,
+                screen.y +
+                    5
+            );
+
+            ctx.lineTo(
+                screen.x +
+                    x +
+                    10,
+                screen.y +
+                    building.h *
+                        0.31
+            );
+
+            ctx.stroke();
+        }
+
+        ctx.globalAlpha =
+            1;
+
+        drawBuildingWindows(
+            ctx,
+            building,
+            screen
+        );
+
+        ctx.restore();
+    }
+
+
+    function drawBuildingWindows(
+        ctx,
+        building,
+        screen
+    ) {
+        const windowWidth =
+            28;
+
+        const windowHeight =
+            36;
+
+        const y =
+            screen.y +
+            building.h *
+                0.62;
+
+        for (
+            const t of
+            [
+                0.22,
+                0.78
+            ]
+        ) {
+            const x =
+                screen.x +
+                building.w *
+                    t -
+                windowWidth /
+                    2;
+
+            ctx.fillStyle =
+                "#26262c";
+
+            ctx.fillRect(
+                x,
+                y,
+                windowWidth,
+                windowHeight
+            );
+
+            ctx.fillStyle =
+                "rgba(218,190,118,0.42)";
+
+            ctx.fillRect(
+                x +
+                    4,
+                y +
+                    4,
+                windowWidth -
+                    8,
+                windowHeight -
+                    8
+            );
+        }
+    }
+
+
+    /* ============================================================
+       PORTAS
+       ============================================================ */
+
+    function drawDoors(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const door of
+            safeArray(
+                world.doors
+            )
+        ) {
+            drawDoor(
+                ctx,
+                door
+            );
+        }
+    }
+
+
+    function drawDoor(
+        ctx,
+        door
+    ) {
+        const cx =
+            finiteNumber(
+                door.centerX,
+                door.x +
+                    door.w /
+                        2
+            );
+
+        const cy =
+            finiteNumber(
+                door.centerY,
+                door.y +
+                    door.h /
+                        2
+            );
+
+        if (
+            !isPointVisible(
+                cx,
+                cy,
+                100
+            )
+        ) {
+            return;
+        }
+
+        const screen =
+            worldToScreen(
+                cx,
+                cy
+            );
+
+        const width =
+            finiteNumber(
+                door.width,
+                door.w ||
+                    42
+            );
+
+        const height =
+            finiteNumber(
+                door.height,
+                door.h ||
+                    72
+            );
+
+        ctx.save();
+
+        ctx.translate(
+            screen.x,
+            screen.y
+        );
+
+        ctx.rotate(
+            finiteNumber(
+                door.angle,
+                0
+            )
+        );
+
+        /*
+            Folha da porta gira.
+            Não encolhe.
+        */
+        ctx.fillStyle =
+            door.locked
+                ? "#40352f"
+                : "#5a4432";
+
+        roundRectPath(
+            ctx,
+            -width /
+                2,
+            -height /
+                2,
+            width,
+            height,
+            5
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "#241b18";
+
+        ctx.lineWidth =
+            4;
+
+        ctx.stroke();
+
+        ctx.fillStyle =
+            "#b59b62";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            width *
+                0.28,
+            0,
+            3.5,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       FONTE CENTRAL
+       ============================================================ */
+
+    function drawFountain(
+        ctx,
+        fountain
+    ) {
+        if (
+            !fountain ||
+            !isPointVisible(
+                fountain.x,
+                fountain.y,
+                180
+            )
+        ) {
+            return;
+        }
+
+        const screen =
+            worldToScreen(
+                fountain.x,
+                fountain.y
+            );
+
+        const radius =
+            fountain.radius ||
+            92;
+
+        const wave =
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    2.2
+            );
+
+        ctx.save();
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.22)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            screen.x +
+                8,
+            screen.y +
+                15,
+            radius +
+                14,
+            radius *
+                0.5,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#817c72";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screen.x,
+            screen.y,
+            radius +
+                12,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#393d40";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screen.x,
+            screen.y,
+            radius,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        const waterGradient =
+            ctx.createRadialGradient(
+                screen.x -
+                    18,
+                screen.y -
+                    22,
+                10,
+
+                screen.x,
+                screen.y,
+                radius
+            );
+
+        waterGradient.addColorStop(
+            0,
+            "rgba(132,183,193,0.85)"
+        );
+
+        waterGradient.addColorStop(
+            1,
+            "rgba(48,91,105,0.88)"
+        );
+
+        ctx.fillStyle =
+            waterGradient;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screen.x,
+            screen.y,
+            radius -
+                12,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Ondas.
+        */
+        ctx.strokeStyle =
+            "rgba(210,235,235,0.34)";
+
+        ctx.lineWidth =
+            2;
+
+        for (
+            let index = 0;
+            index < 3;
+            index += 1
+        ) {
+            ctx.beginPath();
+
+            ctx.ellipse(
+                screen.x,
+                screen.y +
+                    8,
+                26 +
+                    index *
+                        17 +
+                    wave *
+                        3,
+                10 +
+                    index *
+                        5,
+                0,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.stroke();
+        }
+
+        /*
+            Pilar.
+        */
+        ctx.fillStyle =
+            "#8e897d";
+
+        ctx.fillRect(
+            screen.x -
+                17,
+            screen.y -
+                86,
+            34,
+            89
+        );
+
+        ctx.fillStyle =
+            "#aaa397";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screen.x,
+            screen.y -
+                89,
+            28,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Água caindo.
+        */
+        ctx.strokeStyle =
+            "rgba(185,224,230,0.72)";
+
+        ctx.lineWidth =
+            4;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screen.x -
+                15,
+            screen.y -
+                80
+        );
+
+        ctx.quadraticCurveTo(
+            screen.x -
+                42 +
+                wave *
+                    3,
+            screen.y -
+                43,
+            screen.x -
+                38,
+            screen.y -
+                12
+        );
+
+        ctx.moveTo(
+            screen.x +
+                15,
+            screen.y -
+                80
+        );
+
+        ctx.quadraticCurveTo(
+            screen.x +
+                42 -
+                wave *
+                    3,
+            screen.y -
+                43,
+            screen.x +
+                38,
+            screen.y -
+                12
+        );
+
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       GRAMA
+       ============================================================ */
+
+    function drawGrassPatches(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const grass of
+            safeArray(
+                world.grass
+            )
+        ) {
+            if (
+                !isPointVisible(
+                    grass.x,
+                    grass.y,
+                    40
+                )
+            ) {
+                continue;
+            }
+
+            const screen =
+                worldToScreen(
+                    grass.x,
+                    grass.y
+                );
+
+            const sway =
+                Math.sin(
+                    renderRuntime
+                        .ambientTime *
+                        1.7 +
+                    grass.x *
+                        0.011 +
+                    grass.y *
+                        0.008
+                ) *
+                2.8;
+
+            ctx.save();
+
+            ctx.strokeStyle =
+                grass.color ||
+                "rgba(75,106,66,0.72)";
+
+            ctx.lineWidth =
+                2;
+
+            for (
+                let index = -2;
+                index <= 2;
+                index += 1
+            ) {
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    screen.x +
+                        index *
+                            3,
+                    screen.y +
+                        6
+                );
+
+                ctx.quadraticCurveTo(
+                    screen.x +
+                        index *
+                            3 +
+                        sway,
+                    screen.y -
+                        4,
+                    screen.x +
+                        index *
+                            4 +
+                        sway *
+                            1.4,
+                    screen.y -
+                        11 -
+                        Math.abs(
+                            index
+                        )
+                );
+
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+    }
+
+
+    /* ============================================================
+       FLORES
+       ============================================================ */
+
+    function drawFlowers(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const flower of
+            safeArray(
+                world.flowers
+            )
+        ) {
+            if (
+                !isPointVisible(
+                    flower.x,
+                    flower.y,
+                    40
+                )
+            ) {
+                continue;
+            }
+
+            const screen =
+                worldToScreen(
+                    flower.x,
+                    flower.y
+                );
+
+            const sway =
+                Math.sin(
+                    renderRuntime
+                        .ambientTime *
+                        1.4 +
+                    flower.x *
+                        0.02
+                ) *
+                1.8;
+
+            ctx.save();
+
+            ctx.strokeStyle =
+                "#526b4a";
+
+            ctx.lineWidth =
+                2;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                screen.x,
+                screen.y +
+                    6
+            );
+
+            ctx.lineTo(
+                screen.x +
+                    sway,
+                screen.y -
+                    7
+            );
+
+            ctx.stroke();
+
+            ctx.translate(
+                sway,
+                0
+            );
+
+            ctx.fillStyle =
+                flower.color ||
+                "#bc9bb8";
+
+            for (
+                let index = 0;
+                index < 5;
+                index += 1
+            ) {
+                const angle =
+                    (
+                        index /
+                        5
+                    ) *
+                    Math.PI *
+                    2;
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    screen.x +
+                        Math.cos(
+                            angle
+                        ) *
+                            4,
+
+                    screen.y -
+                        9 +
+                        Math.sin(
+                            angle
+                        ) *
+                            4,
+
+                    2.7,
+
+                    0,
+
+                    Math.PI *
+                        2
+                );
+
+                ctx.fill();
+            }
+
+            ctx.fillStyle =
+                "#d7c789";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                screen.x,
+                screen.y -
+                    9,
+                2.2,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+
+            ctx.restore();
+        }
+    }
+
+
+    /* ============================================================
+       COGUMELOS
+       ============================================================ */
+
+    function drawMushrooms(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const mushroom of
+            safeArray(
+                world.mushrooms
+            )
+        ) {
+            if (
+                !isPointVisible(
+                    mushroom.x,
+                    mushroom.y,
+                    70
+                )
+            ) {
+                continue;
+            }
+
+            drawMushroom(
+                ctx,
+                mushroom
+            );
+        }
+    }
+
+
+    function drawMushroom(
+        ctx,
+        mushroom
+    ) {
+        const screen =
+            worldToScreen(
+                mushroom.x,
+                mushroom.y
+            );
+
+        const scale =
+            mushroom.scale ||
+            1;
+
+        const sway =
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    1.15 +
+                mushroom.x *
+                    0.013
+            ) *
+            0.035;
+
+        ctx.save();
+
+        ctx.translate(
+            screen.x,
+            screen.y
+        );
+
+        ctx.rotate(
+            sway
+        );
+
+        ctx.scale(
+            scale,
+            scale
+        );
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.2)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            4,
+            9,
+            17,
+            6,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#d2c1a1";
+
+        roundRectPath(
+            ctx,
+            -5,
+            -7,
+            10,
+            18,
+            5
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            mushroom.color ||
+            "#527f88";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            0,
+            -10,
+            18,
+            10,
+            0,
+            Math.PI,
+            Math.PI *
+                2
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "rgba(225,241,234,0.5)";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            -6,
+            -14,
+            2.5,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.arc(
+            5,
+            -12,
+            2,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       PEDRAS / RECURSOS
+       ============================================================ */
+
+    function drawRocks(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const rock of
+            safeArray(
+                world.rocks
+            )
+        ) {
+            if (
+                !isPointVisible(
+                    rock.x,
+                    rock.y,
+                    80
+                )
+            ) {
+                continue;
+            }
+
+            const screen =
+                worldToScreen(
+                    rock.x,
+                    rock.y
+                );
+
+            const radius =
+                rock.radius ||
+                26;
+
+            ctx.save();
+
+            ctx.fillStyle =
+                "rgba(0,0,0,0.23)";
+
+            ctx.beginPath();
+
+            ctx.ellipse(
+                screen.x +
+                    4,
+                screen.y +
+                    8,
+                radius,
+                radius *
+                    0.42,
+                0,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+
+            ctx.fillStyle =
+                rock.color ||
+                "#676b68";
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                screen.x -
+                    radius,
+                screen.y +
+                    5
+            );
+
+            ctx.lineTo(
+                screen.x -
+                    radius *
+                        0.55,
+                screen.y -
+                    radius *
+                        0.72
+            );
+
+            ctx.lineTo(
+                screen.x +
+                    radius *
+                        0.45,
+                screen.y -
+                    radius
+            );
+
+            ctx.lineTo(
+                screen.x +
+                    radius,
+                screen.y +
+                    radius *
+                        0.18
+            );
+
+            ctx.lineTo(
+                screen.x +
+                    radius *
+                        0.45,
+                screen.y +
+                    radius *
+                        0.62
+            );
+
+            ctx.lineTo(
+                screen.x -
+                    radius *
+                        0.7,
+                screen.y +
+                    radius *
+                        0.55
+            );
+
+            ctx.closePath();
+
+            ctx.fill();
+
+            ctx.restore();
+        }
+    }
+
+
+    function drawResources(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const resource of
+            safeArray(
+                world.resources
+            )
+        ) {
+            if (
+                resource.harvested ||
+                !isPointVisible(
+                    resource.x,
+                    resource.y,
+                    80
+                )
+            ) {
+                continue;
+            }
+
+            const screen =
+                worldToScreen(
+                    resource.x,
+                    resource.y
+                );
+
+            const item =
+                ITEMS[
+                    resource.itemId
+                ];
+
+            const pulse =
+                0.85 +
+                Math.sin(
+                    renderRuntime
+                        .ambientTime *
+                        2.1 +
+                    resource.x *
+                        0.015
+                ) *
+                    0.08;
+
+            ctx.save();
+
+            ctx.translate(
+                screen.x,
+                screen.y
+            );
+
+            ctx.scale(
+                pulse,
+                pulse
+            );
+
+            ctx.shadowBlur =
+                12;
+
+            ctx.shadowColor =
+                resource.glow ||
+                "rgba(255,255,255,0.2)";
+
+            if (
+                resource.type ===
+                    "ore" ||
+                resource.itemId ===
+                    "ferro" ||
+                resource.itemId ===
+                    "ouro" ||
+                resource.itemId ===
+                    "diamante" ||
+                resource.itemId ===
+                    "rubi" ||
+                resource.itemId ===
+                    "carvao"
+            ) {
+                drawOreNode(
+                    ctx,
+                    resource
+                );
+            } else {
+                ctx.fillStyle =
+                    "#827766";
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    0,
+                    0,
+                    18,
+                    0,
+                    Math.PI *
+                        2
+                );
+
+                ctx.fill();
+            }
+
+            ctx.shadowBlur =
+                0;
+
+            if (
+                item
+            ) {
+                ctx.fillStyle =
+                    "rgba(235,230,215,0.72)";
+
+                ctx.font =
+                    "10px serif";
+
+                ctx.textAlign =
+                    "center";
+
+                ctx.fillText(
+                    item.name,
+                    0,
+                    36
+                );
+            }
+
+            ctx.restore();
+        }
+    }
+
+
+    function drawOreNode(
+        ctx,
+        resource
+    ) {
+        const colors = {
+            carvao:
+                "#343438",
+
+            ferro:
+                "#959b9c",
+
+            ouro:
+                "#c5a34c",
+
+            diamante:
+                "#8bc1cc",
+
+            rubi:
+                "#b14d63"
+        };
+
+        const color =
+            colors[
+                resource.itemId
+            ] ||
+            "#8b8176";
+
+        ctx.fillStyle =
+            "#494747";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -23,
+            10
+        );
+
+        ctx.lineTo(
+            -15,
+            -15
+        );
+
+        ctx.lineTo(
+            4,
+            -25
+        );
+
+        ctx.lineTo(
+            23,
+            -10
+        );
+
+        ctx.lineTo(
+            19,
+            14
+        );
+
+        ctx.lineTo(
+            -7,
+            21
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            color;
+
+        for (
+            const point of
+            [
+                [-10, -8],
+                [8, -13],
+                [12, 5],
+                [-5, 8]
+            ]
+        ) {
+            ctx.beginPath();
+
+            ctx.arc(
+                point[0],
+                point[1],
+                4,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+    }
+
+
+    /* ============================================================
+       ÁRVORES
+
+       TRONCO = COLISÃO
+       COPA = SEM COLISÃO
+
+       A árvore entra no MESMO Y-SORT
+       de player/NPC/inimigo/boss.
+       ============================================================ */
+
+    function drawTree(
+        ctx,
+        tree
+    ) {
+        if (
+            tree.harvested ||
+            !isPointVisible(
+                tree.x,
+                tree.y,
+                150
+            )
+        ) {
+            return;
+        }
+
+        const screen =
+            worldToScreen(
+                tree.x,
+                tree.y
+            );
+
+        const style =
+            tree.style ||
+            {};
+
+        const scale =
+            tree.scale ||
+            1;
+
+        const sway =
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    1.1 +
+                tree.x *
+                    0.009 +
+                tree.y *
+                    0.007
+            ) *
+            0.035;
+
+        ctx.save();
+
+        ctx.translate(
+            screen.x,
+            screen.y
+        );
+
+        ctx.scale(
+            scale,
+            scale
+        );
+
+        /*
+            Sombra no solo.
+        */
+        ctx.fillStyle =
+            "rgba(0,0,0,0.24)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            12,
+            15,
+            45,
+            17,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Tronco.
+        */
+        const trunkGradient =
+            ctx.createLinearGradient(
+                -12,
+                0,
+                15,
+                0
+            );
+
+        trunkGradient.addColorStop(
+            0,
+            style.trunkDark ||
+                "#34271f"
+        );
+
+        trunkGradient.addColorStop(
+            0.5,
+            style.trunk ||
+                "#604833"
+        );
+
+        trunkGradient.addColorStop(
+            1,
+            style.trunkLight ||
+                "#75583c"
+        );
+
+        ctx.fillStyle =
+            trunkGradient;
+
+        roundRectPath(
+            ctx,
+            -12,
+            -58,
+            24,
+            76,
+            8
+        );
+
+        ctx.fill();
+
+        /*
+            Galhos.
+        */
+        ctx.strokeStyle =
+            style.trunk ||
+            "#604833";
+
+        ctx.lineWidth =
+            10;
+
+        ctx.lineCap =
+            "round";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -3,
+            -42
+        );
+
+        ctx.lineTo(
+            -26,
+            -72
+        );
+
+        ctx.moveTo(
+            4,
+            -48
+        );
+
+        ctx.lineTo(
+            27,
+            -78
+        );
+
+        ctx.stroke();
+
+        /*
+            Copa balançando.
+        */
+        ctx.translate(
+            sway *
+                55,
+            0
+        );
+
+        ctx.rotate(
+            sway
+        );
+
+        const canopy =
+            style.canopy ||
+            "#435f42";
+
+        const canopyDark =
+            style.canopyDark ||
+            "#2f4833";
+
+        ctx.fillStyle =
+            canopyDark;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            -22,
+            -91,
+            38,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.arc(
+            22,
+            -95,
+            43,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.arc(
+            0,
+            -120,
+            47,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.arc(
+            0,
+            -80,
+            45,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            canopy;
+
+        ctx.globalAlpha =
+            0.92;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            -17,
+            -101,
+            31,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.arc(
+            18,
+            -105,
+            34,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.arc(
+            0,
+            -129,
+            35,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.globalAlpha =
+            1;
+
+        /*
+            Pequenos brilhos/reflexos.
+        */
+        ctx.fillStyle =
+            "rgba(205,225,187,0.13)";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            -15,
+            -124,
+            12,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.arc(
+            17,
+            -105,
+            9,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.restore();
+
+        renderRuntime
+            .frameStats
+            .drawnTrees +=
+            1;
+    }
+
+
+    /* ============================================================
+       NPC
+       ============================================================ */
+
+    function drawNPC(
+        ctx,
+        npc
+    ) {
+        if (
+            !npc ||
+            !isPointVisible(
+                npc.x,
+                npc.y,
+                100
+            )
+        ) {
+            return;
+        }
+
+        const screen =
+            worldToScreen(
+                npc.x,
+                npc.y
+            );
+
+        const bob =
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    2 +
+                npc.x *
+                    0.01
+            ) *
+            1.5;
+
+        ctx.save();
+
+        ctx.translate(
+            screen.x,
+            screen.y +
+                bob
+        );
+
+        /*
+            Sombra.
+        */
+        ctx.fillStyle =
+            "rgba(0,0,0,0.24)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            0,
+            17,
+            16,
+            6,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Corpo.
+        */
+        ctx.fillStyle =
+            npc.color ||
+            "#7a6857";
+
+        roundRectPath(
+            ctx,
+            -11,
+            -9,
+            22,
+            31,
+            8
+        );
+
+        ctx.fill();
+
+        /*
+            Cabeça.
+        */
+        ctx.fillStyle =
+            npc.skinColor ||
+            "#c3a98e";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -18,
+            11,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Cabelo/capuz.
+        */
+        ctx.fillStyle =
+            npc.hairColor ||
+            "#3c342e";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -22,
+            11,
+            Math.PI,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Nome.
+        */
+        ctx.font =
+            "600 11px serif";
+
+        ctx.textAlign =
+            "center";
+
+        ctx.fillStyle =
+            "rgba(237,229,211,0.88)";
+
+        ctx.fillText(
+            npc.name ||
+                "",
+            0,
+            -39
+        );
+
+        ctx.restore();
+
+        renderRuntime
+            .frameStats
+            .drawnEntities +=
+            1;
+    }
+
+
+    /* ============================================================
+       PLAYER — BASE
+       ============================================================ */
+
+    function drawPlayer(
+        ctx
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            player.dead
+        ) {
+            return;
+        }
+
+        const screen =
+            worldToScreen(
+                player.x,
+                player.y
+            );
+
+        const character =
+            currentCharacter();
+
+        const profile =
+            character
+                .visualProfile ||
+            {};
+
+        const walk =
+            Math.sin(
+                finiteNumber(
+                    player.visual
+                        ?.walkTime,
+                    0
+                ) *
+                    12
+            );
+
+        ctx.save();
+
+        ctx.translate(
+            screen.x,
+            screen.y
+        );
+
+        /*
+            Sombra.
+        */
+        ctx.fillStyle =
+            "rgba(0,0,0,0.27)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            0,
+            17,
+            18,
+            7,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        switch (
+            character.id
+        ) {
+            case "theron":
+                drawTheron(
+                    ctx,
+                    player,
+                    profile,
+                    walk
+                );
+                break;
+
+            case "grumgar":
+                drawGrumgar(
+                    ctx,
+                    player,
+                    profile,
+                    walk
+                );
+                break;
+
+            case "lirael":
+                drawLirael(
+                    ctx,
+                    player,
+                    profile,
+                    walk
+                );
+                break;
+
+            case "zephyr":
+                drawZephyr(
+                    ctx,
+                    player,
+                    profile,
+                    walk
+                );
+                break;
+
+            case "kaelion":
+            default:
+                drawKaelion(
+                    ctx,
+                    player,
+                    profile,
+                    walk
+                );
+                break;
+        }
+
+        drawPlayerArmorOverlay(
+            ctx,
+            player
+        );
+
+        if (
+            player.hurtAnim >
+            0
+        ) {
+            ctx.globalCompositeOperation =
+                "source-atop";
+
+            ctx.fillStyle =
+                `rgba(255,235,225,${clamp(
+                    player.hurtAnim *
+                        2.8,
+                    0,
+                    0.65
+                )})`;
+
+            ctx.fillRect(
+                -30,
+                -50,
+                60,
+                80
+            );
+        }
+
+        ctx.restore();
+
+        renderRuntime
+            .frameStats
+            .drawnEntities +=
+            1;
+    }
+
+
+    /* ============================================================
+       KAELION
+       ============================================================ */
+
+    function drawKaelion(
+        ctx,
+        player,
+        profile,
+        walk
+    ) {
+        ctx.save();
+
+        ctx.translate(
+            0,
+            Math.abs(
+                walk
+            ) *
+                -1
+        );
+
+        /*
+            Robe.
+        */
+        ctx.fillStyle =
+            profile.robeColor ||
+            "#6d3725";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -12,
+            -5
+        );
+
+        ctx.lineTo(
+            -18,
+            20
+        );
+
+        ctx.lineTo(
+            17,
+            20
+        );
+
+        ctx.lineTo(
+            11,
+            -5
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        /*
+            Cinto.
+        */
+        ctx.fillStyle =
+            "#33241d";
+
+        ctx.fillRect(
+            -12,
+            1,
+            24,
+            5
+        );
+
+        /*
+            Cabeça.
+        */
+        ctx.fillStyle =
+            "#c6a287";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -17,
+            11,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Capuz/cabelo.
+        */
+        ctx.fillStyle =
+            "#39291f";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -21,
+            12,
+            Math.PI,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Cajado.
+        */
+        ctx.strokeStyle =
+            "#67462e";
+
+        ctx.lineWidth =
+            4;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            14,
+            -4
+        );
+
+        ctx.lineTo(
+            20,
+            -36
+        );
+
+        ctx.stroke();
+
+        ctx.fillStyle =
+            "#d57a42";
+
+        ctx.shadowColor =
+            "#d57a42";
+
+        ctx.shadowBlur =
+            12;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            21,
+            -40,
+            5,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.shadowBlur =
+            0;
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       THERON
+       ============================================================ */
+
+    function drawTheron(
+        ctx,
+        player,
+        profile,
+        walk
+    ) {
+        ctx.save();
+
+        /*
+            Pernas.
+        */
+        ctx.strokeStyle =
+            "#6f7478";
+
+        ctx.lineWidth =
+            7;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -6,
+            9
+        );
+
+        ctx.lineTo(
+            -7 +
+                walk *
+                    2,
+            22
+        );
+
+        ctx.moveTo(
+            6,
+            9
+        );
+
+        ctx.lineTo(
+            7 -
+                walk *
+                    2,
+            22
+        );
+
+        ctx.stroke();
+
+        /*
+            Armadura.
+        */
+        ctx.fillStyle =
+            profile.armorColor ||
+            "#a9afb2";
+
+        roundRectPath(
+            ctx,
+            -14,
+            -12,
+            28,
+            31,
+            7
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "#4c545a";
+
+        ctx.lineWidth =
+            3;
+
+        ctx.stroke();
+
+        /*
+            Capacete.
+        */
+        ctx.fillStyle =
+            "#8e969b";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -20,
+            12,
+            Math.PI,
+            Math.PI *
+                2
+        );
+
+        ctx.lineTo(
+            11,
+            -12
+        );
+
+        ctx.lineTo(
+            -11,
+            -12
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        /*
+            Espada.
+        */
+        ctx.strokeStyle =
+            "#d4d7d5";
+
+        ctx.lineWidth =
+            4;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            14,
+            3
+        );
+
+        ctx.lineTo(
+            28,
+            -23
+        );
+
+        ctx.stroke();
+
+        /*
+            Escudo.
+        */
+        ctx.fillStyle =
+            "#66727a";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -18,
+            -5
+        );
+
+        ctx.lineTo(
+            -29,
+            0
+        );
+
+        ctx.lineTo(
+            -26,
+            15
+        );
+
+        ctx.lineTo(
+            -18,
+            22
+        );
+
+        ctx.lineTo(
+            -11,
+            15
+        );
+
+        ctx.lineTo(
+            -9,
+            0
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       GRUMGAR
+       ============================================================ */
+
+    function drawGrumgar(
+        ctx,
+        player,
+        profile,
+        walk
+    ) {
+        ctx.save();
+
+        ctx.scale(
+            1.15,
+            1.15
+        );
+
+        /*
+            Corpo grande.
+        */
+        ctx.fillStyle =
+            profile.skinColor ||
+            "#6b7d4a";
+
+        roundRectPath(
+            ctx,
+            -17,
+            -12,
+            34,
+            34,
+            11
+        );
+
+        ctx.fill();
+
+        /*
+            Cabeça.
+        */
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -22,
+            14,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Ombros.
+        */
+        ctx.fillStyle =
+            "#463e30";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            -17,
+            -5,
+            9,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.arc(
+            17,
+            -5,
+            9,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Presas.
+        */
+        ctx.fillStyle =
+            "#e0d4b4";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -7,
+            -16
+        );
+
+        ctx.lineTo(
+            -3,
+            -8
+        );
+
+        ctx.lineTo(
+            -1,
+            -17
+        );
+
+        ctx.closePath();
+
+        ctx.moveTo(
+            7,
+            -16
+        );
+
+        ctx.lineTo(
+            3,
+            -8
+        );
+
+        ctx.lineTo(
+            1,
+            -17
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       LIRAEL
+       ============================================================ */
+
+    function drawLirael(
+        ctx,
+        player,
+        profile,
+        walk
+    ) {
+        ctx.save();
+
+        const wing =
+            0.8 +
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    8
+            ) *
+                0.12;
+
+        /*
+            Asas.
+        */
+        ctx.fillStyle =
+            "rgba(235,190,230,0.48)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            -16,
+            -7,
+            9 *
+                wing,
+            19,
+            -0.45,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.ellipse(
+            16,
+            -7,
+            9 *
+                wing,
+            19,
+            0.45,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Corpo.
+        */
+        ctx.fillStyle =
+            profile.dressColor ||
+            "#ba779e";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -9,
+            -4
+        );
+
+        ctx.lineTo(
+            -14,
+            20
+        );
+
+        ctx.lineTo(
+            14,
+            20
+        );
+
+        ctx.lineTo(
+            9,
+            -4
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        /*
+            Cabeça.
+        */
+        ctx.fillStyle =
+            "#d9baa4";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -17,
+            10,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Cabelo.
+        */
+        ctx.fillStyle =
+            "#ead1df";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -21,
+            11,
+            Math.PI,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Brilho.
+        */
+        ctx.shadowColor =
+            "#efb4df";
+
+        ctx.shadowBlur =
+            16;
+
+        ctx.strokeStyle =
+            "rgba(239,180,223,0.5)";
+
+        ctx.lineWidth =
+            2;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            24,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.stroke();
+
+        ctx.shadowBlur =
+            0;
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       ZEPHYR
+       ============================================================ */
+
+    function drawZephyr(
+        ctx,
+        player,
+        profile,
+        walk
+    ) {
+        ctx.save();
+
+        /*
+            Rastro instável.
+        */
+        ctx.globalAlpha =
+            0.2;
+
+        ctx.fillStyle =
+            "#74548c";
+
+        for (
+            let index = 1;
+            index <= 3;
+            index += 1
+        ) {
+            ctx.beginPath();
+
+            ctx.arc(
+                -index *
+                    7,
+                index *
+                    2,
+                11 -
+                    index *
+                        2,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+
+        ctx.globalAlpha =
+            1;
+
+        /*
+            Corpo.
+        */
+        ctx.fillStyle =
+            profile.bodyColor ||
+            "#665078";
+
+        roundRectPath(
+            ctx,
+            -12,
+            -10,
+            24,
+            31,
+            9
+        );
+
+        ctx.fill();
+
+        /*
+            Manto assimétrico.
+        */
+        ctx.fillStyle =
+            "#3e334b";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -12,
+            -3
+        );
+
+        ctx.lineTo(
+            -23,
+            19
+        );
+
+        ctx.lineTo(
+            4,
+            13
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        /*
+            Cabeça.
+        */
+        ctx.fillStyle =
+            "#b79d91";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -19,
+            10,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Olho de fenda.
+        */
+        ctx.fillStyle =
+            "#b592d2";
+
+        ctx.shadowColor =
+            "#9a71ba";
+
+        ctx.shadowBlur =
+            10;
+
+        ctx.fillRect(
+            2,
+            -21,
+            5,
+            2
+        );
+
+        ctx.shadowBlur =
+            0;
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       ARMADURA DO PLAYER
+       ============================================================ */
+
+    function drawPlayerArmorOverlay(
+        ctx,
+        player
+    ) {
+        const armorId =
+            player.equipment
+                ?.armor;
+
+        const armor =
+            ARMOR_DATA[
+                armorId
+            ];
+
+        if (!armor) {
+            return;
+        }
+
+        const armorColors = {
+            armaduraFolha:
+                "#59734b",
+
+            armaduraAlgodao:
+                "#d5d1c6",
+
+            armaduraMadeira:
+                "#78553c",
+
+            armaduraCouro:
+                "#6e4935",
+
+            armaduraFerro:
+                "#8e9699",
+
+            armaduraOuro:
+                "#b89a4b",
+
+            armaduraDiamante:
+                "#78aab4",
+
+            armaduraRubi:
+                "#a94d5c"
+        };
+
+        ctx.save();
+
+        ctx.strokeStyle =
+            armorColors[
+                armorId
+            ] ||
+            "#aaa";
+
+        ctx.lineWidth =
+            3;
+
+        ctx.globalAlpha =
+            0.75;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            2,
+            17,
+            0.3,
+            Math.PI -
+                0.3
+        );
+
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       INIMIGOS
+       ============================================================ */
+
+    function drawEnemy(
+        ctx,
+        enemy
+    ) {
+        if (
+            !enemy ||
+            (
+                enemy.dead &&
+                enemy.deathTimer >
+                    0.7
+            ) ||
+            !isPointVisible(
+                enemy.x,
+                enemy.y,
+                120
+            )
+        ) {
+            return;
+        }
+
+        const screen =
+            worldToScreen(
+                enemy.x,
+                enemy.y
+            );
+
+        let alpha =
+            1;
+
+        if (
+            enemy.dead
+        ) {
+            alpha =
+                clamp(
+                    1 -
+                    finiteNumber(
+                        enemy.deathTimer,
+                        0
+                    ) /
+                        0.75,
+                    0,
+                    1
+                );
+        }
+
+        ctx.save();
+
+        ctx.globalAlpha =
+            alpha;
+
+        ctx.translate(
+            screen.x,
+            screen.y
+        );
+
+        drawEnemyShadow(
+            ctx,
+            enemy
+        );
+
+        switch (
+            enemy.speciesId
+        ) {
+            case "wolf":
+                drawWolfEnemy(
+                    ctx,
+                    enemy
+                );
+                break;
+
+            case "boar":
+                drawBoarEnemy(
+                    ctx,
+                    enemy
+                );
+                break;
+
+            case "bat":
+                drawBatEnemy(
+                    ctx,
+                    enemy
+                );
+                break;
+
+            case "spider":
+            case "voidSpider":
+                drawSpiderEnemy(
+                    ctx,
+                    enemy
+                );
+                break;
+
+            case "goblin":
+            case "voidGoblin":
+                drawGoblinEnemy(
+                    ctx,
+                    enemy
+                );
+                break;
+
+            default:
+                drawGenericEnemy(
+                    ctx,
+                    enemy
+                );
+                break;
+        }
+
+        if (
+            enemy.hurtAnim >
+            0
+        ) {
+            ctx.globalCompositeOperation =
+                "source-atop";
+
+            ctx.fillStyle =
+                `rgba(255,245,238,${clamp(
+                    enemy.hurtAnim *
+                        3,
+                    0,
+                    0.7
+                )})`;
+
+            ctx.fillRect(
+                -45,
+                -45,
+                90,
+                90
+            );
+        }
+
+        ctx.restore();
+
+        drawEnemyTelegraph(
+            ctx,
+            enemy
+        );
+
+        drawEnemyHealthBar(
+            ctx,
+            enemy
+        );
+
+        renderRuntime
+            .frameStats
+            .drawnEntities +=
+            1;
+    }
+
+
+    function drawEnemyShadow(
+        ctx,
+        enemy
+    ) {
+        ctx.fillStyle =
+            "rgba(0,0,0,0.25)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            0,
+            enemy.radius *
+                0.55,
+            enemy.radius *
+                0.8,
+            enemy.radius *
+                0.32,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+    }
+
+
+    function drawWolfEnemy(
+        ctx,
+        enemy
+    ) {
+        const facing =
+            state.player
+                ? Math.atan2(
+                    state.player.y -
+                        enemy.y,
+                    state.player.x -
+                        enemy.x
+                )
+                : 0;
+
+        ctx.rotate(
+            facing
+        );
+
+        ctx.fillStyle =
+            enemy.color ||
+            "#575d58";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            0,
+            0,
+            25,
+            14,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.beginPath();
+
+        ctx.arc(
+            21,
+            -5,
+            12,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Orelhas.
+        */
+        ctx.beginPath();
+
+        ctx.moveTo(
+            16,
+            -13
+        );
+
+        ctx.lineTo(
+            19,
+            -25
+        );
+
+        ctx.lineTo(
+            24,
+            -14
+        );
+
+        ctx.moveTo(
+            25,
+            -13
+        );
+
+        ctx.lineTo(
+            29,
+            -24
+        );
+
+        ctx.lineTo(
+            32,
+            -10
+        );
+
+        ctx.fill();
+
+        /*
+            Olho.
+        */
+        ctx.fillStyle =
+            "#d1a65d";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            27,
+            -7,
+            2.4,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+    }
+
+
+    function drawBoarEnemy(
+        ctx,
+        enemy
+    ) {
+        ctx.fillStyle =
+            enemy.color ||
+            "#674e3e";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            0,
+            0,
+            29,
+            18,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.beginPath();
+
+        ctx.arc(
+            22,
+            1,
+            13,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#d7ccb4";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            29,
+            5
+        );
+
+        ctx.lineTo(
+            39,
+            10
+        );
+
+        ctx.lineTo(
+            31,
+            0
+        );
+
+        ctx.fill();
+    }
+
+
+    function drawBatEnemy(
+        ctx,
+        enemy
+    ) {
+        const flap =
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    11 +
+                enemy.x *
+                    0.01
+            );
+
+        ctx.fillStyle =
+            enemy.color ||
+            "#50475c";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -3,
+            0
+        );
+
+        ctx.quadraticCurveTo(
+            -22,
+            -15 -
+                flap *
+                    8,
+            -31,
+            3
+        );
+
+        ctx.quadraticCurveTo(
+            -20,
+            -2,
+            -6,
+            9
+        );
+
+        ctx.moveTo(
+            3,
+            0
+        );
+
+        ctx.quadraticCurveTo(
+            22,
+            -15 -
+                flap *
+                    8,
+            31,
+            3
+        );
+
+        ctx.quadraticCurveTo(
+            20,
+            -2,
+            6,
+            9
+        );
+
+        ctx.fill();
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            0,
+            0,
+            9,
+            13,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+    }
+
+
+    function drawSpiderEnemy(
+        ctx,
+        enemy
+    ) {
+        ctx.strokeStyle =
+            enemy.color ||
+            "#4b4449";
+
+        ctx.lineWidth =
+            4;
+
+        for (
+            let index = -1;
+            index <= 1;
+            index += 2
+        ) {
+            for (
+                let leg = 0;
+                leg < 4;
+                leg += 1
+            ) {
+                const y =
+                    -10 +
+                    leg *
+                        7;
+
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    index *
+                        7,
+                    y
+                );
+
+                ctx.lineTo(
+                    index *
+                        (
+                            20 +
+                            leg *
+                                2
+                        ),
+                    y -
+                        7 +
+                        leg *
+                            4
+                );
+
+                ctx.lineTo(
+                    index *
+                        (
+                            27 +
+                            leg *
+                                2
+                        ),
+                    y +
+                        2
+                );
+
+                ctx.stroke();
+            }
+        }
+
+        ctx.fillStyle =
+            enemy.color ||
+            "#4b4449";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            0,
+            4,
+            13,
+            17,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.arc(
+            0,
+            -10,
+            9,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+    }
+
+
+    function drawGoblinEnemy(
+        ctx,
+        enemy
+    ) {
+        ctx.fillStyle =
+            enemy.color ||
+            "#657352";
+
+        roundRectPath(
+            ctx,
+            -11,
+            -6,
+            22,
+            27,
+            7
+        );
+
+        ctx.fill();
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -15,
+            12,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Orelhas pontudas.
+        */
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -10,
+            -18
+        );
+
+        ctx.lineTo(
+            -23,
+            -14
+        );
+
+        ctx.lineTo(
+            -9,
+            -10
+        );
+
+        ctx.moveTo(
+            10,
+            -18
+        );
+
+        ctx.lineTo(
+            23,
+            -14
+        );
+
+        ctx.lineTo(
+            9,
+            -10
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#c8aa68";
+
+        ctx.fillRect(
+            -7,
+            -18,
+            3,
+            2
+        );
+
+        ctx.fillRect(
+            4,
+            -18,
+            3,
+            2
+        );
+    }
+
+
+    function drawGenericEnemy(
+        ctx,
+        enemy
+    ) {
+        const radius =
+            enemy.radius ||
+            18;
+
+        ctx.fillStyle =
+            enemy.color ||
+            "#71645e";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            radius,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "rgba(255,220,180,0.6)";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            radius *
+                0.3,
+            -radius *
+                0.2,
+            2.5,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+    }
+
+
+    function drawEnemyTelegraph(
+        ctx,
+        enemy
+    ) {
+        const telegraph =
+            enemy.telegraph;
+
+        if (
+            !telegraph ||
+            telegraph.timer <=
+                0
+        ) {
+            return;
+        }
+
+        const from =
+            worldToScreen(
+                enemy.x,
+                enemy.y
+            );
+
+        const target =
+            worldToScreen(
+                telegraph.x,
+                telegraph.y
+            );
+
+        ctx.save();
+
+        ctx.strokeStyle =
+            "rgba(210,105,85,0.5)";
+
+        ctx.lineWidth =
+            telegraph.type ===
+            "heavyCharge"
+                ? 6
+                : 4;
+
+        ctx.setLineDash(
+            [
+                10,
+                8
+            ]
+        );
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            from.x,
+            from.y
+        );
+
+        ctx.lineTo(
+            target.x,
+            target.y
+        );
+
+        ctx.stroke();
+
+        ctx.setLineDash(
+            []
+        );
+
+        ctx.restore();
+    }
+
+
+    function drawEnemyHealthBar(
+        ctx,
+        enemy
+    ) {
+        if (
+            enemy.hp >=
+                enemy.maxHp ||
+            enemy.dead
+        ) {
+            return;
+        }
+
+        const screen =
+            worldToScreen(
+                enemy.x,
+                enemy.y
+            );
+
+        const width =
+            38;
+
+        const ratio =
+            clamp(
+                enemy.hp /
+                    enemy.maxHp,
+                0,
+                1
+            );
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.55)";
+
+        ctx.fillRect(
+            screen.x -
+                width /
+                    2,
+            screen.y -
+                enemy.radius -
+                20,
+            width,
+            5
+        );
+
+        ctx.fillStyle =
+            "#a35353";
+
+        ctx.fillRect(
+            screen.x -
+                width /
+                    2,
+            screen.y -
+                enemy.radius -
+                20,
+            width *
+                ratio,
+            5
+        );
+    }
+
+
+    /* ============================================================
+       BOSSES
+       ============================================================ */
+
+    function drawBoss(
+        ctx,
+        boss
+    ) {
+        if (
+            !boss ||
+            (
+                boss.dead &&
+                boss.fade <=
+                    0
+            ) ||
+            !isPointVisible(
+                boss.x,
+                boss.y,
+                220
+            )
+        ) {
+            return;
+        }
+
+        const screen =
+            worldToScreen(
+                boss.x,
+                boss.y
+            );
+
+        ctx.save();
+
+        ctx.globalAlpha =
+            clamp(
+                finiteNumber(
+                    boss.fade,
+                    1
+                ),
+                0,
+                1
+            );
+
+        ctx.translate(
+            screen.x,
+            screen.y
+        );
+
+        /*
+            Aura.
+        */
+        const aura =
+            boss.definition
+                ?.aura ||
+            BOSS_REGISTRY[
+                boss.id
+            ]?.aura ||
+            "#806878";
+
+        const pulse =
+            1 +
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    2.5
+            ) *
+                0.07;
+
+        ctx.strokeStyle =
+            colorWithAlpha(
+                aura,
+                0.33
+            );
+
+        ctx.lineWidth =
+            4;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            boss.radius *
+                1.45 *
+                pulse,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.stroke();
+
+        if (
+            boss.id ===
+            "monarch"
+        ) {
+            drawMonarchBoss(
+                ctx,
+                boss
+            );
+        } else if (
+            boss.id ===
+            "vaelkor"
+        ) {
+            drawVaelkorBoss(
+                ctx,
+                boss
+            );
+        } else {
+            drawPathBoss(
+                ctx,
+                boss
+            );
+        }
+
+        ctx.restore();
+
+        renderRuntime
+            .frameStats
+            .drawnEntities +=
+            1;
+    }
+
+
+    function drawPathBoss(
+        ctx,
+        boss
+    ) {
+        const aura =
+            boss.definition
+                ?.aura ||
+            "#75808a";
+
+        /*
+            Silhueta maior, nada de bolinha genérica.
+        */
+        ctx.fillStyle =
+            "rgba(0,0,0,0.28)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            7,
+            boss.radius *
+                0.55,
+            boss.radius *
+                0.8,
+            boss.radius *
+                0.3,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            colorWithAlpha(
+                aura,
+                0.76
+            );
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -boss.radius *
+                0.5,
+            boss.radius *
+                0.45
+        );
+
+        ctx.lineTo(
+            -boss.radius *
+                0.36,
+            -boss.radius *
+                0.45
+        );
+
+        ctx.quadraticCurveTo(
+            0,
+            -boss.radius *
+                0.85,
+            boss.radius *
+                0.36,
+            -boss.radius *
+                0.45
+        );
+
+        ctx.lineTo(
+            boss.radius *
+                0.5,
+            boss.radius *
+                0.45
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#29252a";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -boss.radius *
+                0.42,
+            boss.radius *
+                0.38,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Olhos.
+        */
+        ctx.shadowBlur =
+            12;
+
+        ctx.shadowColor =
+            aura;
+
+        ctx.fillStyle =
+            aura;
+
+        ctx.fillRect(
+            -boss.radius *
+                0.18,
+            -boss.radius *
+                0.47,
+            6,
+            3
+        );
+
+        ctx.fillRect(
+            boss.radius *
+                0.08,
+            -boss.radius *
+                0.47,
+            6,
+            3
+        );
+
+        ctx.shadowBlur =
+            0;
+
+        /*
+            Arma específica.
+        */
+        drawBossWeapon(
+            ctx,
+            boss
+        );
+    }
+
+
+    function drawBossWeapon(
+        ctx,
+        boss
+    ) {
+        ctx.strokeStyle =
+            "#a6a39d";
+
+        ctx.lineWidth =
+            6;
+
+        ctx.lineCap =
+            "round";
+
+        switch (
+            boss.id
+        ) {
+            case "road_guardian":
+            case "iron_colossus":
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    25,
+                    -10
+                );
+
+                ctx.lineTo(
+                    50,
+                    26
+                );
+
+                ctx.stroke();
+
+                break;
+
+            case "forest_warden":
+            case "grove_heart":
+                ctx.strokeStyle =
+                    "#735943";
+
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    28,
+                    -28
+                );
+
+                ctx.lineTo(
+                    38,
+                    32
+                );
+
+                ctx.stroke();
+
+                break;
+
+            case "ruby_chimera":
+                ctx.fillStyle =
+                    "#a34b5c";
+
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    -20,
+                    -28
+                );
+
+                ctx.lineTo(
+                    -31,
+                    -50
+                );
+
+                ctx.lineTo(
+                    -7,
+                    -34
+                );
+
+                ctx.moveTo(
+                    20,
+                    -28
+                );
+
+                ctx.lineTo(
+                    31,
+                    -50
+                );
+
+                ctx.lineTo(
+                    7,
+                    -34
+                );
+
+                ctx.fill();
+
+                break;
+        }
+    }
+
+
+    /* ============================================================
+       MONARCA
+       ============================================================ */
+
+    function drawMonarchBoss(
+        ctx,
+        boss
+    ) {
+        const stagger =
+            finiteNumber(
+                boss.stagger,
+                0
+            );
+
+        const threshold =
+            boss.definition
+                ?.stagger
+                ?.threshold ||
+            15;
+
+        const crackRatio =
+            clamp(
+                stagger /
+                    threshold,
+                0,
+                1
+            );
+
+        const float =
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    1.8
+            ) *
+            4;
+
+        ctx.translate(
+            0,
+            float
+        );
+
+        /*
+            Sombra.
+        */
+        ctx.fillStyle =
+            "rgba(0,0,0,0.36)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            0,
+            38,
+            42,
+            15,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Corpo sombrio.
+        */
+        const gradient =
+            ctx.createLinearGradient(
+                0,
+                -75,
+                0,
+                50
+            );
+
+        gradient.addColorStop(
+            0,
+            "#27212e"
+        );
+
+        gradient.addColorStop(
+            0.65,
+            "#17131d"
+        );
+
+        gradient.addColorStop(
+            1,
+            "rgba(16,12,20,0.18)"
+        );
+
+        ctx.fillStyle =
+            gradient;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -28,
+            -36
+        );
+
+        ctx.quadraticCurveTo(
+            -42,
+            10,
+            -52,
+            48
+        );
+
+        ctx.quadraticCurveTo(
+            -18,
+            34,
+            0,
+            51
+        );
+
+        ctx.quadraticCurveTo(
+            20,
+            34,
+            52,
+            48
+        );
+
+        ctx.quadraticCurveTo(
+            41,
+            6,
+            28,
+            -36
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        /*
+            Cabeça/coroa.
+        */
+        ctx.fillStyle =
+            "#211b27";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -52,
+            27,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "#4e4157";
+
+        ctx.lineWidth =
+            5;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -20,
+            -69
+        );
+
+        ctx.lineTo(
+            -28,
+            -93
+        );
+
+        ctx.lineTo(
+            -10,
+            -76
+        );
+
+        ctx.lineTo(
+            0,
+            -99
+        );
+
+        ctx.lineTo(
+            11,
+            -76
+        );
+
+        ctx.lineTo(
+            29,
+            -93
+        );
+
+        ctx.lineTo(
+            20,
+            -69
+        );
+
+        ctx.stroke();
+
+        /*
+            Olhos.
+        */
+        ctx.shadowColor =
+            "#c4bec9";
+
+        ctx.shadowBlur =
+            10;
+
+        ctx.fillStyle =
+            "rgba(224,220,228,0.85)";
+
+        ctx.fillRect(
+            -12,
+            -56,
+            7,
+            2.5
+        );
+
+        ctx.fillRect(
+            5,
+            -56,
+            7,
+            2.5
+        );
+
+        ctx.shadowBlur =
+            0;
+
+        /*
+            STAGGER VISUAL:
+            sem barra numérica horrorosa.
+            As rachaduras aumentam.
+        */
+        if (
+            crackRatio >
+            0
+        ) {
+            ctx.strokeStyle =
+                `rgba(220,218,225,${
+                    0.25 +
+                    crackRatio *
+                        0.65
+                })`;
+
+            ctx.lineWidth =
+                1.5 +
+                crackRatio *
+                    2;
+
+            const crackCount =
+                Math.ceil(
+                    crackRatio *
+                    8
+                );
+
+            for (
+                let index = 0;
+                index < crackCount;
+                index += 1
+            ) {
+                const angle =
+                    (
+                        index /
+                        Math.max(
+                            1,
+                            crackCount
+                        )
+                    ) *
+                    Math.PI *
+                    2;
+
+                const start =
+                    25;
+
+                const end =
+                    37 +
+                    index *
+                        2;
+
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    Math.cos(
+                        angle
+                    ) *
+                        start,
+                    Math.sin(
+                        angle
+                    ) *
+                        start -
+                        22
+                );
+
+                ctx.lineTo(
+                    Math.cos(
+                        angle +
+                        0.18
+                    ) *
+                        (
+                            start +
+                            8
+                        ),
+                    Math.sin(
+                        angle +
+                        0.18
+                    ) *
+                        (
+                            start +
+                            8
+                        ) -
+                        22
+                );
+
+                ctx.lineTo(
+                    Math.cos(
+                        angle
+                    ) *
+                        end,
+                    Math.sin(
+                        angle
+                    ) *
+                        end -
+                        22
+                );
+
+                ctx.stroke();
+            }
+        }
+
+        if (
+            boss.state ===
+            V.BOSS_STATE.STUNNED
+        ) {
+            ctx.strokeStyle =
+                "rgba(238,235,232,0.7)";
+
+            ctx.lineWidth =
+                4;
+
+            ctx.setLineDash(
+                [
+                    5,
+                    8
+                ]
+            );
+
+            ctx.beginPath();
+
+            ctx.arc(
+                0,
+                -20,
+                62,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.stroke();
+
+            ctx.setLineDash(
+                []
+            );
+        }
+    }
+
+
+    /* ============================================================
+       VAELKOR
+       ============================================================ */
+
+    function drawVaelkorBoss(
+        ctx,
+        boss
+    ) {
+        const float =
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    2
+            ) *
+            7;
+
+        ctx.translate(
+            0,
+            float
+        );
+
+        /*
+            Aura do Vazio.
+        */
+        const aura =
+            ctx.createRadialGradient(
+                0,
+                0,
+                10,
+                0,
+                0,
+                85
+            );
+
+        aura.addColorStop(
+            0,
+            "rgba(122,83,146,0.28)"
+        );
+
+        aura.addColorStop(
+            1,
+            "rgba(31,20,40,0)"
+        );
+
+        ctx.fillStyle =
+            aura;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            85,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Manto.
+        */
+        ctx.fillStyle =
+            "#2c2235";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -24,
+            -36
+        );
+
+        ctx.lineTo(
+            -42,
+            48
+        );
+
+        ctx.quadraticCurveTo(
+            0,
+            30,
+            42,
+            48
+        );
+
+        ctx.lineTo(
+            24,
+            -36
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        /*
+            Cabeça.
+        */
+        ctx.fillStyle =
+            "#18141e";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -47,
+            24,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        /*
+            Fenda.
+        */
+        ctx.strokeStyle =
+            "#a17aba";
+
+        ctx.shadowColor =
+            "#81589b";
+
+        ctx.shadowBlur =
+            15;
+
+        ctx.lineWidth =
+            4;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -12,
+            -49
+        );
+
+        ctx.quadraticCurveTo(
+            0,
+            -43,
+            12,
+            -49
+        );
+
+        ctx.stroke();
+
+        ctx.shadowBlur =
+            0;
+
+        /*
+            Fragmentos orbitais.
+        */
+        for (
+            let index = 0;
+            index < 3;
+            index += 1
+        ) {
+            const angle =
+                renderRuntime
+                    .ambientTime *
+                    (
+                        0.9 +
+                        index *
+                            0.12
+                    ) +
+                index *
+                    (
+                        Math.PI *
+                        2 /
+                        3
+                    );
+
+            ctx.fillStyle =
+                "rgba(132,94,153,0.7)";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                Math.cos(
+                    angle
+                ) *
+                    49,
+                -16 +
+                Math.sin(
+                    angle
+                ) *
+                    22,
+                5,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+    }
+
+
+    /* ============================================================
+       ALTAR
+       ============================================================ */
+
+    function drawMonarchAltar(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        const altar =
+            world
+                ?.altar;
+
+        if (
+            !altar ||
+            !isPointVisible(
+                altar.x,
+                altar.y,
+                200
+            )
+        ) {
+            return;
+        }
+
+        const screen =
+            worldToScreen(
+                altar.x,
+                altar.y
+            );
+
+        const awakened =
+            state.player
+                ?.monarch
+                ?.defeated;
+
+        const pulse =
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    2.2
+            );
+
+        ctx.save();
+
+        ctx.translate(
+            screen.x,
+            screen.y
+        );
+
+        /*
+            Base.
+        */
+        ctx.fillStyle =
+            "#39343b";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            0,
+            20,
+            82,
+            35,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "#69616c";
+
+        ctx.lineWidth =
+            5;
+
+        ctx.stroke();
+
+        /*
+            Degraus.
+        */
+        ctx.fillStyle =
+            "#484248";
+
+        ctx.fillRect(
+            -58,
+            -5,
+            116,
+            28
+        );
+
+        ctx.fillStyle =
+            "#514b52";
+
+        ctx.fillRect(
+            -43,
+            -28,
+            86,
+            27
+        );
+
+        /*
+            Pedra central.
+        */
+        ctx.fillStyle =
+            awakened
+                ? "#a5aba9"
+                : "#656169";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -24,
+            -28
+        );
+
+        ctx.lineTo(
+            -16,
+            -92
+        );
+
+        ctx.lineTo(
+            16,
+            -92
+        );
+
+        ctx.lineTo(
+            24,
+            -28
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+        /*
+            Símbolo.
+        */
+        ctx.strokeStyle =
+            awakened
+                ? `rgba(226,232,229,${
+                    0.65 +
+                    pulse *
+                        0.15
+                })`
+                : "rgba(129,112,138,0.55)";
+
+        ctx.shadowColor =
+            awakened
+                ? "#e1e8e4"
+                : "#70577b";
+
+        ctx.shadowBlur =
+            awakened
+                ? 20
+                : 8;
+
+        ctx.lineWidth =
+            3;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -56,
+            14,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.moveTo(
+            0,
+            -72
+        );
+
+        ctx.lineTo(
+            0,
+            -40
+        );
+
+        ctx.moveTo(
+            -13,
+            -56
+        );
+
+        ctx.lineTo(
+            13,
+            -56
+        );
+
+        ctx.stroke();
+
+        ctx.shadowBlur =
+            0;
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       DECORAÇÕES
+       ============================================================ */
+
+    function drawDecoration(
+        ctx,
+        decoration
+    ) {
+        if (
+            !decoration ||
+            !isPointVisible(
+                decoration.x,
+                decoration.y,
+                150
+            )
+        ) {
+            return;
+        }
+
+        switch (
+            decoration.type
+        ) {
+            case "fountain":
+                drawFountain(
+                    ctx,
+                    decoration
+                );
+                break;
+
+            case "pathUnlockedRune":
+                drawPathUnlockedRune(
+                    ctx,
+                    decoration
+                );
+                break;
+
+            case "cloud":
+            case "skyCloud":
+                drawCloud(
+                    ctx,
+                    decoration
+                );
+                break;
+
+            case "bed":
+                drawBed(
+                    ctx,
+                    decoration
+                );
+                break;
+
+            case "table":
+            case "archiveTable":
+            case "workbench":
+                drawTable(
+                    ctx,
+                    decoration
+                );
+                break;
+
+            case "bookshelf":
+            case "shelves":
+                drawShelf(
+                    ctx,
+                    decoration
+                );
+                break;
+
+            case "anvil":
+                drawAnvil(
+                    ctx,
+                    decoration
+                );
+                break;
+
+            case "forgeFire":
+                drawForgeFire(
+                    ctx,
+                    decoration
+                );
+                break;
+
+            case "crates":
+            case "woodStack":
+            case "coalPile":
+                drawMaterialPile(
+                    ctx,
+                    decoration
+                );
+                break;
+
+            case "voidFragmentGlow":
+                drawVoidFragmentGlow(
+                    ctx,
+                    decoration
+                );
+                break;
+
+            default:
+                drawGenericDecoration(
+                    ctx,
+                    decoration
+                );
+                break;
+        }
+    }
+
+
+    function drawPathUnlockedRune(
+        ctx,
+        rune
+    ) {
+        const screen =
+            worldToScreen(
+                rune.x,
+                rune.y
+            );
+
+        const pulse =
+            1 +
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    2.5 +
+                finiteNumber(
+                    rune.pulse,
+                    0
+                )
+            ) *
+                0.08;
+
+        ctx.save();
+
+        ctx.translate(
+            screen.x,
+            screen.y
+        );
+
+        ctx.scale(
+            pulse,
+            pulse *
+                0.55
+        );
+
+        ctx.strokeStyle =
+            "rgba(104,161,194,0.72)";
+
+        ctx.shadowColor =
+            "#5f91ad";
+
+        ctx.shadowBlur =
+            13;
+
+        ctx.lineWidth =
+            3;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            28,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.stroke();
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -18,
+            0
+        );
+
+        ctx.lineTo(
+            0,
+            -18
+        );
+
+        ctx.lineTo(
+            18,
+            0
+        );
+
+        ctx.lineTo(
+            0,
+            18
+        );
+
+        ctx.closePath();
+
+        ctx.stroke();
+
+        ctx.shadowBlur =
+            0;
+
+        ctx.restore();
+    }
+
+
+    function drawCloud(
+        ctx,
+        cloud
+    ) {
+        const screen =
+            worldToScreen(
+                cloud.x,
+                cloud.y
+            );
+
+        const scale =
+            cloud.scale ||
+            1;
+
+        ctx.save();
+
+        ctx.translate(
+            screen.x,
+            screen.y
+        );
+
+        ctx.scale(
+            scale,
+            scale
+        );
+
+        ctx.fillStyle =
+            cloud.color ||
+            "rgba(235,241,241,0.72)";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            -18,
+            3,
+            19,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.arc(
+            0,
+            -5,
+            25,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.arc(
+            22,
+            4,
+            18,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+
+    function drawBed(
+        ctx,
+        bed
+    ) {
+        const screen =
+            worldToScreen(
+                bed.x,
+                bed.y
+            );
+
+        const w =
+            bed.w ||
+            115;
+
+        const h =
+            bed.h ||
+            62;
+
+        ctx.fillStyle =
+            "#463830";
+
+        roundRectPath(
+            ctx,
+            screen.x -
+                w /
+                    2,
+            screen.y -
+                h /
+                    2,
+            w,
+            h,
+            8
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#8d7a69";
+
+        roundRectPath(
+            ctx,
+            screen.x -
+                w /
+                    2 +
+                6,
+            screen.y -
+                h /
+                    2 +
+                6,
+            w -
+                12,
+            h -
+                12,
+            6
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#c5bbae";
+
+        roundRectPath(
+            ctx,
+            screen.x -
+                w /
+                    2 +
+                12,
+            screen.y -
+                h /
+                    2 +
+                10,
+            35,
+            22,
+            5
+        );
+
+        ctx.fill();
+    }
+
+
+    function drawTable(
+        ctx,
+        table
+    ) {
+        const screen =
+            worldToScreen(
+                table.x,
+                table.y
+            );
+
+        const w =
+            table.w ||
+            90;
+
+        const h =
+            table.h ||
+            48;
+
+        ctx.fillStyle =
+            "#674b34";
+
+        roundRectPath(
+            ctx,
+            screen.x -
+                w /
+                    2,
+            screen.y -
+                h /
+                    2,
+            w,
+            h,
+            6
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#39291f";
+
+        ctx.fillRect(
+            screen.x -
+                w /
+                    2 +
+                6,
+            screen.y +
+                h /
+                    2 -
+                3,
+            8,
+            19
+        );
+
+        ctx.fillRect(
+            screen.x +
+                w /
+                    2 -
+                14,
+            screen.y +
+                h /
+                    2 -
+                3,
+            8,
+            19
+        );
+    }
+
+
+    function drawShelf(
+        ctx,
+        shelf
+    ) {
+        const screen =
+            worldToScreen(
+                shelf.x,
+                shelf.y
+            );
+
+        const w =
+            shelf.w ||
+            70;
+
+        const h =
+            shelf.h ||
+            100;
+
+        ctx.fillStyle =
+            "#493429";
+
+        ctx.fillRect(
+            screen.x -
+                w /
+                    2,
+            screen.y -
+                h /
+                    2,
+            w,
+            h
+        );
+
+        for (
+            let y = 1;
+            y <= 3;
+            y += 1
+        ) {
+            ctx.fillStyle =
+                "#2b211c";
+
+            ctx.fillRect(
+                screen.x -
+                    w /
+                        2 +
+                    5,
+                screen.y -
+                    h /
+                        2 +
+                    y *
+                        25,
+                w -
+                    10,
+                4
+            );
+
+            for (
+                let book = 0;
+                book < 5;
+                book += 1
+            ) {
+                const tones = [
+                    "#725c54",
+                    "#4d6170",
+                    "#746a4e",
+                    "#604c68"
+                ];
+
+                ctx.fillStyle =
+                    tones[
+                        (
+                            book +
+                            y
+                        ) %
+                        tones.length
+                    ];
+
+                ctx.fillRect(
+                    screen.x -
+                        w /
+                            2 +
+                        9 +
+                        book *
+                            10,
+
+                    screen.y -
+                        h /
+                            2 +
+                        y *
+                            25 -
+                        15,
+
+                    7,
+
+                    14
+                );
+            }
+        }
+    }
+
+
+    function drawAnvil(
+        ctx,
+        anvil
+    ) {
+        const screen =
+            worldToScreen(
+                anvil.x,
+                anvil.y
+            );
+
+        ctx.fillStyle =
+            "#56595a";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screen.x -
+                28,
+            screen.y -
+                13
+        );
+
+        ctx.lineTo(
+            screen.x +
+                28,
+            screen.y -
+                13
+        );
+
+        ctx.lineTo(
+            screen.x +
+                17,
+            screen.y
+        );
+
+        ctx.lineTo(
+            screen.x +
+                9,
+            screen.y +
+                22
+        );
+
+        ctx.lineTo(
+            screen.x -
+                9,
+            screen.y +
+                22
+        );
+
+        ctx.lineTo(
+            screen.x -
+                13,
+            screen.y
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+    }
+
+
+    function drawForgeFire(
+        ctx,
+        forge
+    ) {
+        const screen =
+            worldToScreen(
+                forge.x,
+                forge.y
+            );
+
+        const pulse =
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    7 +
+                forge.x *
+                    0.01
+            );
+
+        ctx.save();
+
+        ctx.shadowBlur =
+            20;
+
+        ctx.shadowColor =
+            "#d47a3f";
+
+        ctx.fillStyle =
+            "#9d4932";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screen.x,
+            screen.y -
+                24 -
+                pulse *
+                    4
+        );
+
+        ctx.quadraticCurveTo(
+            screen.x -
+                16,
+            screen.y -
+                2,
+            screen.x,
+            screen.y +
+                15
+        );
+
+        ctx.quadraticCurveTo(
+            screen.x +
+                17,
+            screen.y -
+                3,
+            screen.x,
+            screen.y -
+                24 -
+                pulse *
+                    4
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#e4a253";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screen.x,
+            screen.y -
+                13 -
+                pulse *
+                    2
+        );
+
+        ctx.quadraticCurveTo(
+            screen.x -
+                8,
+            screen.y,
+            screen.x,
+            screen.y +
+                10
+        );
+
+        ctx.quadraticCurveTo(
+            screen.x +
+                8,
+            screen.y,
+            screen.x,
+            screen.y -
+                13 -
+                pulse *
+                    2
+        );
+
+        ctx.fill();
+
+        ctx.shadowBlur =
+            0;
+
+        ctx.restore();
+    }
+
+
+    function drawMaterialPile(
+        ctx,
+        pile
+    ) {
+        const screen =
+            worldToScreen(
+                pile.x,
+                pile.y
+            );
+
+        ctx.fillStyle =
+            pile.type ===
+                "coalPile"
+                ? "#343335"
+                : "#6a4b32";
+
+        for (
+            let index = 0;
+            index < 5;
+            index += 1
+        ) {
+            const x =
+                screen.x -
+                    22 +
+                (
+                    index %
+                    3
+                ) *
+                    19;
+
+            const y =
+                screen.y +
+                Math.floor(
+                    index /
+                    3
+                ) *
+                    13;
+
+            roundRectPath(
+                ctx,
+                x,
+                y,
+                25,
+                10,
+                4
+            );
+
+            ctx.fill();
+        }
+    }
+
+
+    function drawVoidFragmentGlow(
+        ctx,
+        decoration
+    ) {
+        const screen =
+            worldToScreen(
+                decoration.x,
+                decoration.y
+            );
+
+        const pulse =
+            0.7 +
+            Math.sin(
+                renderRuntime
+                    .ambientTime *
+                    3
+            ) *
+                0.18;
+
+        const gradient =
+            ctx.createRadialGradient(
+                screen.x,
+                screen.y,
+                0,
+                screen.x,
+                screen.y,
+                65
+            );
+
+        gradient.addColorStop(
+            0,
+            `rgba(132,88,155,${pulse})`
+        );
+
+        gradient.addColorStop(
+            1,
+            "rgba(86,58,105,0)"
+        );
+
+        ctx.fillStyle =
+            gradient;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screen.x,
+            screen.y,
+            65,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+    }
+
+
+    function drawGenericDecoration(
+        ctx,
+        decoration
+    ) {
+        if (
+            decoration.hidden
+        ) {
+            return;
+        }
+
+        const screen =
+            worldToScreen(
+                decoration.x,
+                decoration.y
+            );
+
+        if (
+            decoration.type ===
+            "lantern"
+        ) {
+            ctx.fillStyle =
+                "#5c4936";
+
+            ctx.fillRect(
+                screen.x -
+                    2,
+                screen.y -
+                    36,
+                4,
+                38
+            );
+
+            ctx.fillStyle =
+                "#d2aa58";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                screen.x,
+                screen.y -
+                    38,
+                6,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+    }
+
+
+    /* ============================================================
+       DEPTH SORT
+
+       CORREÇÃO IMPORTANTE:
+       NÃO desenhar todas as árvores depois do player.
+
+       Tudo com altura relevante entra aqui.
+       ============================================================ */
+
+    function buildDepthEntries() {
+        const world =
+            state.world;
+
+        const player =
+            state.player;
+
+        const entries =
+            [];
+
+        if (
+            !world
+        ) {
+            return entries;
+        }
+
+        for (
+            const tree of
+            safeArray(
+                world.trees
+            )
+        ) {
+            if (
+                tree.harvested
+            ) {
+                continue;
+            }
+
+            entries.push({
+                kind:
+                    "tree",
+
+                entity:
+                    tree,
+
+                depth:
+                    getEntityDepthY(
+                        tree
+                    )
+            });
+        }
+
+        for (
+            const npc of
+            safeArray(
+                world.npcs
+            )
+        ) {
+            entries.push({
+                kind:
+                    "npc",
+
+                entity:
+                    npc,
+
+                depth:
+                    getEntityDepthY(
+                        npc
+                    )
+            });
+        }
+
+        for (
+            const enemy of
+            safeArray(
+                world.enemies
+            )
+        ) {
+            entries.push({
+                kind:
+                    "enemy",
+
+                entity:
+                    enemy,
+
+                depth:
+                    getEntityDepthY(
+                        enemy
+                    )
+            });
+        }
+
+        for (
+            const boss of
+            safeArray(
+                world.bosses
+            )
+        ) {
+            entries.push({
+                kind:
+                    "boss",
+
+                entity:
+                    boss,
+
+                depth:
+                    getEntityDepthY(
+                        boss
+                    )
+            });
+        }
+
+        if (
+            player &&
+            !player.dead
+        ) {
+            entries.push({
+                kind:
+                    "player",
+
+                entity:
+                    player,
+
+                depth:
+                    getEntityDepthY(
+                        player
+                    )
+            });
+        }
+
+        for (
+            const decoration of
+            safeArray(
+                world.decorations
+            )
+        ) {
+            if (
+                !decoration.depthSorted
+            ) {
+                continue;
+            }
+
+            entries.push({
+                kind:
+                    "decoration",
+
+                entity:
+                    decoration,
+
+                depth:
+                    getEntityDepthY(
+                        decoration
+                    )
+            });
+        }
+
+        entries.sort(
+            (
+                a,
+                b
+            ) => {
+                const result =
+                    compareDepth(
+                        a.entity,
+                        b.entity
+                    );
+
+                if (
+                    Number.isFinite(
+                        result
+                    )
+                ) {
+                    return result;
+                }
+
+                return (
+                    a.depth -
+                    b.depth
+                );
+            }
+        );
+
+        renderRuntime.depthEntries =
+            entries;
+
+        return entries;
+    }
+
+
+    function drawDepthSortedEntities(
+        ctx
+    ) {
+        const entries =
+            buildDepthEntries();
+
+        for (
+            const entry of
+            entries
+        ) {
+            switch (
+                entry.kind
+            ) {
+                case "tree":
+                    drawTree(
+                        ctx,
+                        entry.entity
+                    );
+                    break;
+
+                case "npc":
+                    drawNPC(
+                        ctx,
+                        entry.entity
+                    );
+                    break;
+
+                case "enemy":
+                    drawEnemy(
+                        ctx,
+                        entry.entity
+                    );
+                    break;
+
+                case "boss":
+                    drawBoss(
+                        ctx,
+                        entry.entity
+                    );
+                    break;
+
+                case "player":
+                    drawPlayer(
+                        ctx
+                    );
+                    break;
+
+                case "decoration":
+                    drawDecoration(
+                        ctx,
+                        entry.entity
+                    );
+                    break;
+            }
+        }
+    }
+
+
+    /* ============================================================
+       DECORAÇÕES NÃO Y-SORT
+       ============================================================ */
+
+    function drawStaticDecorations(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const decoration of
+            safeArray(
+                world.decorations
+            )
+        ) {
+            if (
+                decoration.depthSorted
+            ) {
+                continue;
+            }
+
+            drawDecoration(
+                ctx,
+                decoration
+            );
+        }
+    }
+
+
+    /* ============================================================
+       DROPS
+       ============================================================ */
+
+    function drawWorldDrops(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const drop of
+            safeArray(
+                world.droppedItems
+            )
+        ) {
+            if (
+                drop.picked ||
+                !isPointVisible(
+                    drop.x,
+                    drop.y,
+                    70
+                )
+            ) {
+                continue;
+            }
+
+            const screen =
+                worldToScreen(
+                    drop.x,
+                    drop.y
+                );
+
+            const bob =
+                Math.sin(
+                    finiteNumber(
+                        drop.bobTime,
+                        0
+                    )
+                ) *
+                4;
+
+            const item =
+                ITEMS[
+                    drop.itemId
+                ];
+
+            ctx.save();
+
+            ctx.translate(
+                screen.x,
+                screen.y +
+                    bob
+            );
+
+            ctx.shadowBlur =
+                drop.questDrop
+                    ? 16
+                    : 8;
+
+            ctx.shadowColor =
+                drop.questDrop
+                    ? "#73518b"
+                    : "rgba(220,210,180,0.5)";
+
+            ctx.fillStyle =
+                getItemWorldColor(
+                    drop.itemId
+                );
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                0,
+                -10
+            );
+
+            ctx.lineTo(
+                9,
+                -2
+            );
+
+            ctx.lineTo(
+                6,
+                9
+            );
+
+            ctx.lineTo(
+                -6,
+                9
+            );
+
+            ctx.lineTo(
+                -9,
+                -2
+            );
+
+            ctx.closePath();
+
+            ctx.fill();
+
+            ctx.shadowBlur =
+                0;
+
+            if (
+                item &&
+                distance(
+                    state.player
+                        ?.x ||
+                        0,
+                    state.player
+                        ?.y ||
+                        0,
+                    drop.x,
+                    drop.y
+                ) <
+                130
+            ) {
+                ctx.font =
+                    "10px serif";
+
+                ctx.textAlign =
+                    "center";
+
+                ctx.fillStyle =
+                    "rgba(240,233,218,0.84)";
+
+                ctx.fillText(
+                    `${item.name} x${drop.amount}`,
+                    0,
+                    -19
+                );
+            }
+
+            ctx.restore();
+        }
+    }
+
+
+    function getItemWorldColor(
+        itemId
+    ) {
+        const colors = {
+            madeira:
+                "#8b6544",
+
+            pedra:
+                "#88847e",
+
+            carvao:
+                "#343238",
+
+            ferro:
+                "#a1a5a3",
+
+            ouro:
+                "#c6a548",
+
+            diamante:
+                "#79b7c4",
+
+            rubi:
+                "#b04b60",
+
+            carne:
+                "#9f554f",
+
+            essenciaSombria:
+                "#68477c",
+
+            chaveObscura:
+                "#59446c",
+
+            fragmentoVazio:
+                "#81589a"
+        };
+
+        return (
+            colors[
+                itemId
+            ] ||
+            "#b9aa8c"
+        );
+    }
+
+
+    /* ============================================================
+       PROJÉTEIS
+       ============================================================ */
+
+    function drawProjectiles(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const projectile of
+            safeArray(
+                world.projectiles
+            )
+        ) {
+            if (
+                projectile.dead ||
+                !isPointVisible(
+                    projectile.x,
+                    projectile.y,
+                    50
+                )
+            ) {
+                continue;
+            }
+
+            const screen =
+                worldToScreen(
+                    projectile.x,
+                    projectile.y
+                );
+
+            ctx.save();
+
+            ctx.shadowColor =
+                projectile.color;
+
+            ctx.shadowBlur =
+                12;
+
+            ctx.fillStyle =
+                projectile.color;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                screen.x,
+                screen.y,
+                projectile.radius,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+
+            /*
+                Rastro.
+            */
+            const velocityLength =
+                Math.hypot(
+                    projectile.vx,
+                    projectile.vy
+                ) ||
+                1;
+
+            const nx =
+                projectile.vx /
+                velocityLength;
+
+            const ny =
+                projectile.vy /
+                velocityLength;
+
+            const gradient =
+                ctx.createLinearGradient(
+                    screen.x,
+                    screen.y,
+                    screen.x -
+                        nx *
+                            35,
+                    screen.y -
+                        ny *
+                            35
+                );
+
+            gradient.addColorStop(
+                0,
+                colorWithAlpha(
+                    projectile.color,
+                    0.65
+                )
+            );
+
+            gradient.addColorStop(
+                1,
+                colorWithAlpha(
+                    projectile.color,
+                    0
+                )
+            );
+
+            ctx.strokeStyle =
+                gradient;
+
+            ctx.lineWidth =
+                projectile.radius *
+                1.3;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                screen.x,
+                screen.y
+            );
+
+            ctx.lineTo(
+                screen.x -
+                    nx *
+                        35,
+                screen.y -
+                    ny *
+                        35
+            );
+
+            ctx.stroke();
+
+            ctx.shadowBlur =
+                0;
+
+            ctx.restore();
+        }
+    }
+
+
+    /* ============================================================
+       HAZARDS / TELEGRAPHS
+       ============================================================ */
+
+    function drawHazards(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        for (
+            const hazard of
+            safeArray(
+                world.hazards
+            )
+        ) {
+            if (
+                hazard.dead
+            ) {
+                continue;
+            }
+
+            const screen =
+                worldToScreen(
+                    hazard.x,
+                    hazard.y
+                );
+
+            const telegraphRatio =
+                hazard.active
+                    ? 1
+                    : clamp(
+                        hazard.timer /
+                        Math.max(
+                            0.001,
+                            hazard.telegraph
+                        ),
+                        0,
+                        1
+                    );
+
+            ctx.save();
+
+            if (
+                hazard.type ===
+                "beam"
+            ) {
+                ctx.translate(
+                    screen.x,
+                    screen.y
+                );
+
+                ctx.rotate(
+                    hazard.angle
+                );
+
+                ctx.fillStyle =
+                    hazard.active
+                        ? colorWithAlpha(
+                            hazard.color,
+                            0.52
+                        )
+                        : colorWithAlpha(
+                            hazard.color,
+                            0.12 +
+                                telegraphRatio *
+                                    0.18
+                        );
+
+                ctx.fillRect(
+                    0,
+                    -hazard.width /
+                        2,
+                    hazard.length,
+                    hazard.width
+                );
+
+                ctx.strokeStyle =
+                    colorWithAlpha(
+                        hazard.color,
+                        0.5
+                    );
+
+                ctx.lineWidth =
+                    2;
+
+                ctx.strokeRect(
+                    0,
+                    -hazard.width /
+                        2,
+                    hazard.length,
+                    hazard.width
+                );
+            } else {
+                ctx.fillStyle =
+                    hazard.active
+                        ? colorWithAlpha(
+                            hazard.color,
+                            0.4
+                        )
+                        : colorWithAlpha(
+                            hazard.color,
+                            0.08 +
+                                telegraphRatio *
+                                    0.15
+                        );
+
+                ctx.strokeStyle =
+                    colorWithAlpha(
+                        hazard.color,
+                        0.55
+                    );
+
+                ctx.lineWidth =
+                    3;
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    screen.x,
+                    screen.y,
+                    hazard.radius,
+                    0,
+                    Math.PI *
+                        2
+                );
+
+                ctx.fill();
+
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+    }
+
+
+    /* ============================================================
+       EFEITOS TRANSITÓRIOS
+       ============================================================ */
+
+    function drawTransientEffects(
+        ctx
+    ) {
+        for (
+            const effect of
+            gameplayRuntime
+                .transientEffects
+        ) {
+            const screen =
+                worldToScreen(
+                    finiteNumber(
+                        effect.x,
+                        0
+                    ),
+                    finiteNumber(
+                        effect.y,
+                        0
+                    )
+                );
+
+            const progress =
+                1 -
+                clamp(
+                    effect.timer /
+                    effect.maxTimer,
+                    0,
+                    1
+                );
+
+            const alpha =
+                1 -
+                progress;
+
+            ctx.save();
+
+            ctx.globalAlpha =
+                alpha;
+
+            switch (
+                effect.type
+            ) {
+                case "dashV1Trail":
+                case "dashV1Start":
+                case "dashV1End":
+                    drawDashEffect(
+                        ctx,
+                        screen,
+                        effect,
+                        progress,
+                        false
+                    );
+                    break;
+
+                case "dashV2Trail":
+                case "dashV2Start":
+                case "dashV2End":
+                case "dashV2Unlock":
+                    drawDashEffect(
+                        ctx,
+                        screen,
+                        effect,
+                        progress,
+                        true
+                    );
+                    break;
+
+                case "hitSpark":
+                case "playerHit":
+                case "voidHit":
+                case "projectileImpact":
+                    drawHitEffect(
+                        ctx,
+                        screen,
+                        effect,
+                        progress
+                    );
+                    break;
+
+                case "groundImpact":
+                case "earthBreaker":
+                case "stoneRoar":
+                case "hazardActivate":
+                    drawRingEffect(
+                        ctx,
+                        screen,
+                        effect,
+                        progress
+                    );
+                    break;
+
+                case "monarchCrack":
+                case "monarchStaggerBreak":
+                case "monarchRecover":
+                    drawMonarchEffect(
+                        ctx,
+                        screen,
+                        effect,
+                        progress
+                    );
+                    break;
+
+                case "monarchDissolve":
+                case "altarSoulAbsorb":
+                    drawMonarchDeathEffect(
+                        ctx,
+                        screen,
+                        effect,
+                        progress
+                    );
+                    break;
+
+                case "pathBossFade":
+                case "enemyDeath":
+                    drawDeathParticles(
+                        ctx,
+                        screen,
+                        effect,
+                        progress
+                    );
+                    break;
+
+                default:
+                    drawGenericEffect(
+                        ctx,
+                        screen,
+                        effect,
+                        progress
+                    );
+                    break;
+            }
+
+            ctx.restore();
+        }
+    }
+
+
+    function drawDashEffect(
+        ctx,
+        screen,
+        effect,
+        progress,
+        voidVersion
+    ) {
+        const radius =
+            18 +
+            progress *
+                42;
+
+        ctx.strokeStyle =
+            voidVersion
+                ? "rgba(107,73,133,0.68)"
+                : "rgba(238,244,246,0.72)";
+
+        ctx.lineWidth =
+            5 *
+            (
+                1 -
+                progress *
+                    0.6
+            );
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            screen.x,
+            screen.y,
+            radius,
+            radius *
+                0.42,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.stroke();
+    }
+
+
+    function drawHitEffect(
+        ctx,
+        screen,
+        effect,
+        progress
+    ) {
+        const color =
+            effect.color ||
+            "#d9c8aa";
+
+        ctx.strokeStyle =
+            colorWithAlpha(
+                color,
+                0.8
+            );
+
+        ctx.lineWidth =
+            3;
+
+        for (
+            let index = 0;
+            index < 6;
+            index += 1
+        ) {
+            const angle =
+                (
+                    index /
+                    6
+                ) *
+                Math.PI *
+                2;
+
+            const start =
+                progress *
+                10;
+
+            const end =
+                8 +
+                progress *
+                    28;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                screen.x +
+                    Math.cos(
+                        angle
+                    ) *
+                        start,
+                screen.y +
+                    Math.sin(
+                        angle
+                    ) *
+                        start
+            );
+
+            ctx.lineTo(
+                screen.x +
+                    Math.cos(
+                        angle
+                    ) *
+                        end,
+                screen.y +
+                    Math.sin(
+                        angle
+                    ) *
+                        end
+            );
+
+            ctx.stroke();
+        }
+    }
+
+
+    function drawRingEffect(
+        ctx,
+        screen,
+        effect,
+        progress
+    ) {
+        const radius =
+            finiteNumber(
+                effect.radius,
+                80
+            ) *
+            (
+                0.25 +
+                progress *
+                    0.75
+            );
+
+        ctx.strokeStyle =
+            colorWithAlpha(
+                effect.color ||
+                    "#b7a58b",
+                0.7
+            );
+
+        ctx.lineWidth =
+            4 *
+            (
+                1 -
+                progress *
+                    0.7
+            );
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            screen.x,
+            screen.y,
+            radius,
+            radius *
+                0.46,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.stroke();
+    }
+
+
+    function drawMonarchEffect(
+        ctx,
+        screen,
+        effect,
+        progress
+    ) {
+        ctx.strokeStyle =
+            `rgba(232,229,235,${
+                0.8 *
+                (
+                    1 -
+                    progress
+                )
+            })`;
+
+        ctx.lineWidth =
+            4;
+
+        const radius =
+            35 +
+            progress *
+                75;
+
+        ctx.setLineDash(
+            [
+                8,
+                9
+            ]
+        );
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screen.x,
+            screen.y,
+            radius,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.stroke();
+
+        ctx.setLineDash(
+            []
+        );
+    }
+
+
+    function drawMonarchDeathEffect(
+        ctx,
+        screen,
+        effect,
+        progress
+    ) {
+        const target =
+            effect.targetX !==
+            undefined
+                ? worldToScreen(
+                    effect.targetX,
+                    effect.targetY
+                )
+                : null;
+
+        const count =
+            effect.count ||
+            24;
+
+        for (
+            let index = 0;
+            index < count;
+            index += 1
+        ) {
+            const seed =
+                index *
+                12.9898;
+
+            const angle =
+                seed %
+                (
+                    Math.PI *
+                    2
+                );
+
+            const radius =
+                20 +
+                (
+                    index %
+                    7
+                ) *
+                    7;
+
+            let x =
+                screen.x +
+                Math.cos(
+                    angle
+                ) *
+                    radius;
+
+            let y =
+                screen.y +
+                Math.sin(
+                    angle
+                ) *
+                    radius;
+
+            if (target) {
+                x =
+                    lerp(
+                        x,
+                        target.x,
+                        progress
+                    );
+
+                y =
+                    lerp(
+                        y,
+                        target.y,
+                        progress
+                    );
+            } else {
+                y -=
+                    progress *
+                    70;
+            }
+
+            ctx.fillStyle =
+                `rgba(222,224,220,${
+                    0.7 *
+                    (
+                        1 -
+                        progress
+                    )
+                })`;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                x,
+                y,
+                2 +
+                    (
+                        index %
+                        3
+                    ),
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+    }
+
+
+    function drawDeathParticles(
+        ctx,
+        screen,
+        effect,
+        progress
+    ) {
+        const count =
+            effect.particleCount ||
+            8;
+
+        for (
+            let index = 0;
+            index < count;
+            index += 1
+        ) {
+            const angle =
+                (
+                    index /
+                    count
+                ) *
+                Math.PI *
+                2;
+
+            const radius =
+                progress *
+                35;
+
+            ctx.fillStyle =
+                colorWithAlpha(
+                    effect.color ||
+                    "#c8c0b4",
+                    0.75 *
+                        (
+                            1 -
+                            progress
+                        )
+                );
+
+            ctx.beginPath();
+
+            ctx.arc(
+                screen.x +
+                    Math.cos(
+                        angle
+                    ) *
+                        radius,
+
+                screen.y -
+                    progress *
+                        30 +
+                    Math.sin(
+                        angle
+                    ) *
+                        radius *
+                        0.45,
+
+                3,
+
+                0,
+
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+    }
+
+
+    function drawGenericEffect(
+        ctx,
+        screen,
+        effect,
+        progress
+    ) {
+        ctx.strokeStyle =
+            colorWithAlpha(
+                effect.color ||
+                    "#d6cbb7",
+                0.6 *
+                    (
+                        1 -
+                        progress
+                    )
+            );
+
+        ctx.lineWidth =
+            3;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screen.x,
+            screen.y,
+            15 +
+                progress *
+                    35,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.stroke();
+    }
+
+
+    /* ============================================================
+       ILUMINAÇÃO COM OCLUSÃO REAL
+
+       O objetivo:
+       - escuridão fica em canvas separado;
+       - luz é recortada no offscreen;
+       - paredes blocksLight interrompem raios;
+       - nada de destination-out no canvas principal.
+       ============================================================ */
+
+    function getLightBlockingRects(
+        world =
+            state.world
+    ) {
+        if (!world) {
+            return [];
+        }
+
+        const blockers =
+            [];
+
+        for (
+            const obstacle of
+            safeArray(
+                world.obstacles
+            )
+        ) {
+            if (
+                obstacle.blocksLight &&
+                obstacle.shape !==
+                    "circle"
+            ) {
+                blockers.push({
+                    x:
+                        obstacle.x,
+
+                    y:
+                        obstacle.y,
+
+                    w:
+                        obstacle.w,
+
+                    h:
+                        obstacle.h
+                });
+            }
+        }
+
+        for (
+            const wall of
+            safeArray(
+                world.walls
+            )
+        ) {
+            if (
+                wall.blocksLight !==
+                false
+            ) {
+                blockers.push({
+                    x:
+                        wall.x,
+
+                    y:
+                        wall.y,
+
+                    w:
+                        wall.w,
+
+                    h:
+                        wall.h
+                });
+            }
+        }
+
+        return blockers;
+    }
+
+
+    function rayRectIntersectionDistance(
+        ox,
+        oy,
+        dx,
+        dy,
+        rect,
+        maxDistance
+    ) {
+        let tMin =
+            0;
+
+        let tMax =
+            maxDistance;
+
+        const axes = [
+            {
+                origin:
+                    ox,
+                direction:
+                    dx,
+                min:
+                    rect.x,
+                max:
+                    rect.x +
+                    rect.w
+            },
+
+            {
+                origin:
+                    oy,
+                direction:
+                    dy,
+                min:
+                    rect.y,
+                max:
+                    rect.y +
+                    rect.h
+            }
+        ];
+
+        for (
+            const axis of
+            axes
+        ) {
+            if (
+                Math.abs(
+                    axis.direction
+                ) <
+                0.000001
+            ) {
+                if (
+                    axis.origin <
+                        axis.min ||
+                    axis.origin >
+                        axis.max
+                ) {
+                    return null;
+                }
+
+                continue;
+            }
+
+            let t1 =
+                (
+                    axis.min -
+                    axis.origin
+                ) /
+                axis.direction;
+
+            let t2 =
+                (
+                    axis.max -
+                    axis.origin
+                ) /
+                axis.direction;
+
+            if (
+                t1 >
+                t2
+            ) {
+                const temp =
+                    t1;
+
+                t1 =
+                    t2;
+
+                t2 =
+                    temp;
+            }
+
+            tMin =
+                Math.max(
+                    tMin,
+                    t1
+                );
+
+            tMax =
+                Math.min(
+                    tMax,
+                    t2
+                );
+
+            if (
+                tMin >
+                tMax
+            ) {
+                return null;
+            }
+        }
+
+        if (
+            tMin <
+            0
+        ) {
+            if (
+                tMax <
+                0
+            ) {
+                return null;
+            }
+
+            return tMax;
+        }
+
+        return tMin;
+    }
+
+
+    function castLightRay(
+        ox,
+        oy,
+        angle,
+        maxDistance,
+        blockers
+    ) {
+        const dx =
+            Math.cos(
+                angle
+            );
+
+        const dy =
+            Math.sin(
+                angle
+            );
+
+        let nearest =
+            maxDistance;
+
+        for (
+            const rect of
+            blockers
+        ) {
+            const result =
+                rayRectIntersectionDistance(
+                    ox,
+                    oy,
+                    dx,
+                    dy,
+                    rect,
+                    nearest
+                );
+
+            if (
+                result !==
+                    null &&
+                result <
+                    nearest
+            ) {
+                nearest =
+                    Math.max(
+                        0,
+                        result -
+                            2
+                    );
+            }
+        }
+
+        return {
+            x:
+                ox +
+                dx *
+                    nearest,
+
+            y:
+                oy +
+                dy *
+                    nearest,
+
+            distance:
+                nearest,
+
+            angle
+        };
+    }
+
+
+    function buildVisibilityPolygon(
+        x,
+        y,
+        radius,
+        world =
+            state.world
+    ) {
+        const blockers =
+            getLightBlockingRects(
+                world
+            );
+
+        const points =
+            [];
+
+        /*
+            Raios regulares.
+        */
+        const baseRayCount =
+            150;
+
+        for (
+            let index = 0;
+            index < baseRayCount;
+            index += 1
+        ) {
+            const angle =
+                (
+                    index /
+                    baseRayCount
+                ) *
+                Math.PI *
+                2;
+
+            points.push(
+                castLightRay(
+                    x,
+                    y,
+                    angle,
+                    radius,
+                    blockers
+                )
+            );
+        }
+
+        /*
+            Raios extras nos cantos das paredes.
+            Isso deixa sombra mais precisa.
+        */
+        for (
+            const rect of
+            blockers
+        ) {
+            const corners = [
+                [
+                    rect.x,
+                    rect.y
+                ],
+
+                [
+                    rect.x +
+                        rect.w,
+                    rect.y
+                ],
+
+                [
+                    rect.x,
+                    rect.y +
+                        rect.h
+                ],
+
+                [
+                    rect.x +
+                        rect.w,
+                    rect.y +
+                        rect.h
+                ]
+            ];
+
+            for (
+                const [
+                    cx,
+                    cy
+                ] of
+                corners
+            ) {
+                if (
+                    distance(
+                        x,
+                        y,
+                        cx,
+                        cy
+                    ) >
+                    radius +
+                        80
+                ) {
+                    continue;
+                }
+
+                const angle =
+                    Math.atan2(
+                        cy -
+                            y,
+                        cx -
+                            x
+                    );
+
+                for (
+                    const offset of
+                    [
+                        -0.0008,
+                        0,
+                        0.0008
+                    ]
+                ) {
+                    points.push(
+                        castLightRay(
+                            x,
+                            y,
+                            angle +
+                                offset,
+                            radius,
+                            blockers
+                        )
+                    );
+                }
+            }
+        }
+
+        points.sort(
+            (
+                a,
+                b
+            ) =>
+                a.angle -
+                b.angle
+        );
+
+        renderRuntime
+            .frameStats
+            .lightRays =
+            points.length;
+
+        renderRuntime.lanternPolygon =
+            points;
+
+        return points;
+    }
+
+
+    function drawDarknessLayer(
+        mainCtx
+    ) {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world
+        ) {
+            return;
+        }
+
+        const lighting =
+            getLanternLightingState(
+                player.x,
+                player.y,
+                world
+            );
+
+        /*
+            SALA DO ALTAR:
+            iluminação normal.
+
+            A lanterna some visualmente aqui.
+        */
+        if (
+            !lighting.darkness
+        ) {
+            return;
+        }
+
+        const canvas =
+            renderRuntime
+                .darknessCanvas;
+
+        const ctx =
+            renderRuntime
+                .darknessCtx;
+
+        if (
+            !canvas ||
+            !ctx
+        ) {
+            return;
+        }
+
+        const dpr =
+            renderRuntime.dpr;
+
+        ctx.save();
+
+        ctx.setTransform(
+            dpr,
+            0,
+            0,
+            dpr,
+            0,
+            0
+        );
+
+        ctx.clearRect(
+            0,
+            0,
+            renderRuntime.width,
+            renderRuntime.height
+        );
+
+        /*
+            Base escura.
+        */
+        const baseDarkness =
+            world.id ===
+            "voidDungeon"
+                ? 0.94
+                : 0.91;
+
+        ctx.fillStyle =
+            `rgba(5,5,9,${baseDarkness})`;
+
+        ctx.fillRect(
+            0,
+            0,
+            renderRuntime.width,
+            renderRuntime.height
+        );
+
+        const radius =
+            lighting.lantern
+                ? finiteNumber(
+                    GAME_CONFIG
+                        .lanternVisionRadius,
+                    255
+                )
+                : finiteNumber(
+                    GAME_CONFIG
+                        .noLanternVisionRadius,
+                    70
+                );
+
+        const polygon =
+            buildVisibilityPolygon(
+                player.x,
+                player.y,
+                radius,
+                world
+            );
+
+        if (
+            polygon.length <
+            3
+        ) {
+            ctx.restore();
+            return;
+        }
+
+        const playerScreen =
+            worldToScreen(
+                player.x,
+                player.y
+            );
+
+        /*
+            IMPORTANTE:
+            destination-out apenas no offscreen.
+        */
+        ctx.globalCompositeOperation =
+            "destination-out";
+
+        ctx.beginPath();
+
+        const first =
+            worldToScreen(
+                polygon[0].x,
+                polygon[0].y
+            );
+
+        ctx.moveTo(
+            first.x,
+            first.y
+        );
+
+        for (
+            let index = 1;
+            index <
+            polygon.length;
+            index += 1
+        ) {
+            const point =
+                worldToScreen(
+                    polygon[index].x,
+                    polygon[index].y
+                );
+
+            ctx.lineTo(
+                point.x,
+                point.y
+            );
+        }
+
+        ctx.closePath();
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.92)";
+
+        ctx.fill();
+
+        /*
+            Núcleo suave da luz.
+        */
+        const gradient =
+            ctx.createRadialGradient(
+                playerScreen.x,
+                playerScreen.y,
+                radius *
+                    0.15,
+
+                playerScreen.x,
+                playerScreen.y,
+                radius
+            );
+
+        gradient.addColorStop(
+            0,
+            "rgba(0,0,0,1)"
+        );
+
+        gradient.addColorStop(
+            0.55,
+            "rgba(0,0,0,0.72)"
+        );
+
+        gradient.addColorStop(
+            1,
+            "rgba(0,0,0,0)"
+        );
+
+        ctx.fillStyle =
+            gradient;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            playerScreen.x,
+            playerScreen.y,
+            radius,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.globalCompositeOperation =
+            "source-over";
+
+        /*
+            Pequeno tom quente da Lanterna Antiga.
+        */
+        if (
+            lighting.lantern
+        ) {
+            const warm =
+                ctx.createRadialGradient(
+                    playerScreen.x,
+                    playerScreen.y,
+                    0,
+
+                    playerScreen.x,
+                    playerScreen.y,
+                    radius *
+                        0.62
+                );
+
+            warm.addColorStop(
+                0,
+                "rgba(195,164,103,0.07)"
+            );
+
+            warm.addColorStop(
+                1,
+                "rgba(195,164,103,0)"
+            );
+
+            ctx.fillStyle =
+                warm;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                playerScreen.x,
+                playerScreen.y,
+                radius *
+                    0.62,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+
+        ctx.restore();
+
+        mainCtx.drawImage(
+            canvas,
+            0,
+            0,
+            canvas.width,
+            canvas.height,
+
+            0,
+            0,
+            renderRuntime.width,
+            renderRuntime.height
+        );
+    }
+
+
+    /* ============================================================
+       MINIMAPA
+
+       Moldura SEMPRE existe.
+
+       Sem comprar:
+       SEM SINAL.
+
+       Void:
+       SEM SINAL.
+
+       Labirinto:
+       só mostra corredores explorados.
+       ============================================================ */
+
+    function drawMinimap(
+        ctx
+    ) {
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+        if (
+            !player ||
+            !world
+        ) {
+            return;
+        }
+
+        const width =
+            205;
+
+        const height =
+            155;
+
+        const x =
+            renderRuntime.width -
+                width -
+                22;
+
+        const y =
+            22;
+
+        ctx.save();
+
+        /*
+            Sombra.
+        */
+        ctx.fillStyle =
+            "rgba(0,0,0,0.38)";
+
+        roundRectPath(
+            ctx,
+            x +
+                5,
+            y +
+                6,
+            width,
+            height,
+            12
+        );
+
+        ctx.fill();
+
+        /*
+            Moldura.
+        */
+        ctx.fillStyle =
+            "rgba(17,16,21,0.88)";
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            width,
+            height,
+            12
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "rgba(185,164,119,0.42)";
+
+        ctx.lineWidth =
+            2;
+
+        ctx.stroke();
+
+        ctx.font =
+            "600 10px serif";
+
+        ctx.fillStyle =
+            "rgba(215,203,178,0.78)";
+
+        ctx.textAlign =
+            "left";
+
+        ctx.fillText(
+            REGION_META[
+                state.area
+            ]?.name ||
+                state.area
+                    ?.toUpperCase() ||
+                "LOCALIZAÇÃO",
+
+            x +
+                12,
+
+            y +
+                17
+        );
+
+        const hasSignal =
+            isMinimapSignalAvailable(
+                state.area,
+                player
+            );
+
+        if (
+            !hasSignal
+        ) {
+            ctx.textAlign =
+                "center";
+
+            ctx.fillStyle =
+                "rgba(173,164,160,0.72)";
+
+            ctx.font =
+                "700 13px serif";
+
+            ctx.fillText(
+                "SEM SINAL",
+                x +
+                    width /
+                        2,
+                y +
+                    height /
+                        2 -
+                    4
+            );
+
+            ctx.font =
+                "10px serif";
+
+            ctx.fillStyle =
+                "rgba(140,134,132,0.65)";
+
+            ctx.fillText(
+                state.area ===
+                    "voidDungeon"
+                    ? "LOCALIZAÇÃO DESCONHECIDA"
+                    : player.minimapOwned
+                        ? "SINAL INDISPONÍVEL"
+                        : "ADQUIRA O MINIMAPA",
+
+                x +
+                    width /
+                        2,
+
+                y +
+                    height /
+                        2 +
+                    15
+            );
+
+            ctx.restore();
+
+            return;
+        }
+
+        const mapX =
+            x +
+                10;
+
+        const mapY =
+            y +
+                25;
+
+        const mapW =
+            width -
+                20;
+
+        const mapH =
+            height -
+                35;
+
+        ctx.save();
+
+        ctx.beginPath();
+
+        ctx.rect(
+            mapX,
+            mapY,
+            mapW,
+            mapH
+        );
+
+        ctx.clip();
+
+        ctx.fillStyle =
+            "rgba(38,43,40,0.82)";
+
+        ctx.fillRect(
+            mapX,
+            mapY,
+            mapW,
+            mapH
+        );
+
+        const scaleX =
+            mapW /
+            world.width;
+
+        const scaleY =
+            mapH /
+            world.height;
+
+        /*
+            Caminhos.
+        */
+        for (
+            const path of
+            safeArray(
+                world.paths
+            )
+        ) {
+            if (
+                world.id ===
+                "monarchMaze" &&
+                !isMazePathExplored(
+                    path,
+                    world
+                )
+            ) {
+                continue;
+            }
+
+            ctx.fillStyle =
+                "rgba(163,151,126,0.54)";
+
+            ctx.fillRect(
+                mapX +
+                    path.x *
+                        scaleX,
+
+                mapY +
+                    path.y *
+                        scaleY,
+
+                Math.max(
+                    1,
+                    path.w *
+                        scaleX
+                ),
+
+                Math.max(
+                    1,
+                    path.h *
+                        scaleY
+                )
+            );
+        }
+
+        /*
+            Áreas importantes só se já foram alcançadas/
+            conhecidas no mapa atual.
+        */
+        for (
+            const exit of
+            safeArray(
+                world.exits
+            )
+        ) {
+            if (
+                !exit.unlocked &&
+                !exit.discovered
+            ) {
+                continue;
+            }
+
+            ctx.fillStyle =
+                "rgba(117,157,180,0.8)";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                mapX +
+                    (
+                        exit.x +
+                        exit.w /
+                            2
+                    ) *
+                        scaleX,
+
+                mapY +
+                    (
+                        exit.y +
+                        exit.h /
+                            2
+                    ) *
+                        scaleY,
+
+                2.5,
+
+                0,
+
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+
+        /*
+            Player.
+        */
+        ctx.fillStyle =
+            "#f0e2b9";
+
+        ctx.shadowColor =
+            "#f0e2b9";
+
+        ctx.shadowBlur =
+            5;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            mapX +
+                player.x *
+                    scaleX,
+
+            mapY +
+                player.y *
+                    scaleY,
+
+            3.4,
+
+            0,
+
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.shadowBlur =
+            0;
+
+        ctx.restore();
+
+        ctx.restore();
+    }
+
+
+    function isMazePathExplored(
+        path,
+        world
+    ) {
+        if (
+            world.id !==
+            "monarchMaze"
+        ) {
+            return true;
+        }
+
+        const sampleCount =
+            5;
+
+        for (
+            let xIndex = 0;
+            xIndex < sampleCount;
+            xIndex += 1
+        ) {
+            for (
+                let yIndex = 0;
+                yIndex < sampleCount;
+                yIndex += 1
+            ) {
+                const x =
+                    path.x +
+                    path.w *
+                        (
+                            xIndex +
+                            0.5
+                        ) /
+                        sampleCount;
+
+                const y =
+                    path.y +
+                    path.h *
+                        (
+                            yIndex +
+                            0.5
+                        ) /
+                        sampleCount;
+
+                if (
+                    isMapCellExplored(
+                        state.area,
+                        x,
+                        y
+                    )
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+    /* ============================================================
+       HUD
+       ============================================================ */
+
+    function drawHUD(
+        ctx
+    ) {
+        const player =
+            state.player;
+
+        if (
+            !player ||
+            !state.running
+        ) {
+            return;
+        }
+
+        drawPlayerHUD(
+            ctx,
+            player
+        );
+
+        drawSkillHUD(
+            ctx,
+            player
+        );
+
+        drawBossHUD(
+            ctx
+        );
+
+        drawInteractionHUD(
+            ctx
+        );
+
+        drawHoldHUD(
+            ctx
+        );
+
+        drawNotifications(
+            ctx
+        );
+
+        drawMinimap(
+            ctx
+        );
+
+        drawQuestTracker(
+            ctx,
+            player
+        );
+    }
+
+
+    function drawPlayerHUD(
+        ctx,
+        player
+    ) {
+        const x =
+            22;
+
+        const y =
+            22;
+
+        const width =
+            280;
+
+        const character =
+            getCharacterById(
+                player.characterId
+            ) ||
+            currentCharacter();
+
+        ctx.save();
+
+        ctx.fillStyle =
+            "rgba(14,13,17,0.82)";
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            width,
+            105,
+            12
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "rgba(181,161,116,0.25)";
+
+        ctx.lineWidth =
+            1.5;
+
+        ctx.stroke();
+
+        ctx.fillStyle =
+            "#ddd0b4";
+
+        ctx.font =
+            "700 13px serif";
+
+        ctx.textAlign =
+            "left";
+
+        ctx.fillText(
+            player.name ||
+                character.name,
+            x +
+                14,
+            y +
+                19
+        );
+
+        ctx.font =
+            "10px serif";
+
+        ctx.fillStyle =
+            "rgba(190,180,163,0.76)";
+
+        ctx.fillText(
+            `NÍVEL ${player.level}`,
+            x +
+                14,
+            y +
+                34
+        );
+
+        drawHUDBar(
+            ctx,
+            x +
+                14,
+            y +
+                43,
+            width -
+                28,
+            13,
+            player.hp,
+            player.maxHp,
+            "#914e55",
+            "VIDA"
+        );
+
+        drawHUDBar(
+            ctx,
+            x +
+                14,
+            y +
+                63,
+            width -
+                28,
+            11,
+            player.energy,
+            player.maxEnergy,
+            "#597ea0",
+            "ENERGIA"
+        );
+
+        drawHUDBar(
+            ctx,
+            x +
+                14,
+            y +
+                81,
+            width -
+                28,
+            9,
+            player.exhaustion,
+            player.maxExhaustion,
+            "#a77f55",
+            "EXAUSTÃO",
+            true
+        );
+
+        /*
+            XP.
+        */
+        const required =
+            typeof V.getXPRequiredForLevel ===
+            "function"
+                ? V.getXPRequiredForLevel(
+                    player.level
+                )
+                : Math.max(
+                    1,
+                    player.xp +
+                        1
+                );
+
+        drawHUDBar(
+            ctx,
+            x +
+                14,
+            y +
+                96,
+            width -
+                28,
+            4,
+            player.xp,
+            required,
+            "#8d729a",
+            "",
+            false,
+            false
+        );
+
+        ctx.restore();
+    }
+
+
+    function drawHUDBar(
+        ctx,
+        x,
+        y,
+        w,
+        h,
+        value,
+        max,
+        color,
+        label,
+        reverse = false,
+        showText = true
+    ) {
+        const ratio =
+            clamp(
+                finiteNumber(
+                    value,
+                    0
+                ) /
+                Math.max(
+                    1,
+                    finiteNumber(
+                        max,
+                        1
+                    )
+                ),
+                0,
+                1
+            );
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.48)";
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            w,
+            h,
+            h /
+                2
+        );
+
+        ctx.fill();
+
+        const fill =
+            reverse
+                ? ratio
+                : ratio;
+
+        ctx.fillStyle =
+            color;
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            w *
+                fill,
+            h,
+            h /
+                2
+        );
+
+        ctx.fill();
+
+        if (
+            showText &&
+            label
+        ) {
+            ctx.font =
+                "600 8px sans-serif";
+
+            ctx.textAlign =
+                "left";
+
+            ctx.fillStyle =
+                "rgba(245,239,226,0.88)";
+
+            ctx.fillText(
+                label,
+                x +
+                    4,
+                y +
+                    h -
+                    3
+            );
+
+            ctx.textAlign =
+                "right";
+
+            ctx.fillText(
+                `${Math.ceil(value)}/${Math.ceil(max)}`,
+                x +
+                    w -
+                    4,
+                y +
+                    h -
+                    3
+            );
+        }
+    }
+
+
+    /* ============================================================
+       HABILIDADES
+       ============================================================ */
+
+    function drawSkillHUD(
+        ctx,
+        player
+    ) {
+        const width =
+            230;
+
+        const x =
+            renderRuntime.width /
+                2 -
+                width /
+                    2;
+
+        const y =
+            renderRuntime.height -
+                72;
+
+        ctx.save();
+
+        ctx.fillStyle =
+            "rgba(14,13,17,0.78)";
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            width,
+            50,
+            12
+        );
+
+        ctx.fill();
+
+        const buttons = [
+            {
+                key:
+                    "Q",
+                skill:
+                    "q",
+                unlocked:
+                    true
+            },
+
+            {
+                key:
+                    "R",
+                skill:
+                    "r",
+                unlocked:
+                    player.level >=
+                    5
+            },
+
+            {
+                key:
+                    "F",
+                skill:
+                    "f",
+                unlocked:
+                    player.level >=
+                    10
+            },
+
+            {
+                key:
+                    "ESPAÇO",
+                skill:
+                    "dash",
+                unlocked:
+                    getDashVersion(
+                        player
+                    ) >
+                    0
+            }
+        ];
+
+        let bx =
+            x +
+                10;
+
+        for (
+            const button of
+            buttons
+        ) {
+            const bw =
+                button.skill ===
+                "dash"
+                    ? 65
+                    : 42;
+
+            drawSkillButton(
+                ctx,
+                bx,
+                y +
+                    7,
+                bw,
+                36,
+                button,
+                player
+            );
+
+            bx +=
+                bw +
+                7;
+        }
+
+        ctx.restore();
+    }
+
+
+    function drawSkillButton(
+        ctx,
+        x,
+        y,
+        w,
+        h,
+        button,
+        player
+    ) {
+        let cooldown =
+            0;
+
+        if (
+            button.skill ===
+            "dash"
+        ) {
+            cooldown =
+                finiteNumber(
+                    player
+                        .universalDashCooldown,
+                    0
+                );
+        } else {
+            cooldown =
+                finiteNumber(
+                    player
+                        .skillCooldowns[
+                            button.skill
+                        ],
+                    0
+                );
+        }
+
+        ctx.fillStyle =
+            button.unlocked
+                ? "rgba(64,59,70,0.9)"
+                : "rgba(31,30,34,0.9)";
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            w,
+            h,
+            7
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            button.unlocked
+                ? "rgba(182,165,129,0.32)"
+                : "rgba(120,115,110,0.22)";
+
+        ctx.lineWidth =
+            1;
+
+        ctx.stroke();
+
+        if (
+            cooldown >
+            0
+        ) {
+            ctx.fillStyle =
+                "rgba(0,0,0,0.58)";
+
+            roundRectPath(
+                ctx,
+                x,
+                y,
+                w,
+                h,
+                7
+            );
+
+            ctx.fill();
+        }
+
+        ctx.textAlign =
+            "center";
+
+        ctx.font =
+            button.skill ===
+            "dash"
+                ? "700 8px sans-serif"
+                : "700 12px sans-serif";
+
+        ctx.fillStyle =
+            button.unlocked
+                ? "#ddd0b5"
+                : "#68635c";
+
+        ctx.fillText(
+            button.key,
+            x +
+                w /
+                    2,
+            y +
+                15
+        );
+
+        ctx.font =
+            "9px sans-serif";
+
+        if (
+            !button.unlocked
+        ) {
+            ctx.fillStyle =
+                "#736d66";
+
+            ctx.fillText(
+                button.skill ===
+                    "r"
+                    ? "NV.5"
+                    : button.skill ===
+                        "f"
+                        ? "NV.10"
+                        : "BLOQ.",
+
+                x +
+                    w /
+                        2,
+
+                y +
+                    29
+            );
+        } else if (
+            cooldown >
+            0
+        ) {
+            ctx.fillStyle =
+                "#c8bba2";
+
+            ctx.fillText(
+                cooldown.toFixed(
+                    1
+                ),
+
+                x +
+                    w /
+                        2,
+
+                y +
+                    29
+            );
+        } else {
+            ctx.fillStyle =
+                "#918571";
+
+            ctx.fillText(
+                button.skill ===
+                    "dash"
+                    ? getDashVersion(
+                        player
+                    ) ===
+                        2
+                        ? "V2"
+                        : "V1"
+                    : "",
+
+                x +
+                    w /
+                        2,
+
+                y +
+                    29
+            );
+        }
+    }
+
+
+    /* ============================================================
+       BOSS HUD
+       ============================================================ */
+
+    function drawBossHUD(
+        ctx
+    ) {
+        const boss =
+            state.bossBarTarget;
+
+        if (
+            !boss ||
+            boss.dead
+        ) {
+            return;
+        }
+
+        const width =
+            Math.min(
+                520,
+                renderRuntime.width *
+                    0.46
+            );
+
+        const x =
+            renderRuntime.width /
+                2 -
+            width /
+                2;
+
+        const y =
+            24;
+
+        const ratio =
+            clamp(
+                boss.hp /
+                    boss.maxHp,
+                0,
+                1
+            );
+
+        ctx.save();
+
+        ctx.textAlign =
+            "center";
+
+        ctx.font =
+            "700 13px serif";
+
+        ctx.fillStyle =
+            "#ded2bc";
+
+        ctx.fillText(
+            boss.name ||
+                "BOSS",
+            renderRuntime.width /
+                2,
+            y
+        );
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.65)";
+
+        roundRectPath(
+            ctx,
+            x,
+            y +
+                10,
+            width,
+            14,
+            7
+        );
+
+        ctx.fill();
+
+        const color =
+            boss.id ===
+                "monarch"
+                ? "#68526f"
+                : boss.id ===
+                    "vaelkor"
+                    ? "#664779"
+                    : "#874e55";
+
+        ctx.fillStyle =
+            color;
+
+        roundRectPath(
+            ctx,
+            x,
+            y +
+                10,
+            width *
+                ratio,
+            14,
+            7
+        );
+
+        ctx.fill();
+
+        if (
+            boss.id ===
+            "monarch"
+        ) {
+            drawMonarchStaggerCracksHUD(
+                ctx,
+                boss,
+                x,
+                y +
+                    32,
+                width
+            );
+        }
+
+        ctx.restore();
+    }
+
+
+    function drawMonarchStaggerCracksHUD(
+        ctx,
+        boss,
+        x,
+        y,
+        width
+    ) {
+        const threshold =
+            boss.definition
+                ?.stagger
+                ?.threshold ||
+            15;
+
+        const ratio =
+            clamp(
+                finiteNumber(
+                    boss.stagger,
+                    0
+                ) /
+                threshold,
+                0,
+                1
+            );
+
+        /*
+            Não mostra número 14/15.
+            Só rachaduras ficando fortes.
+        */
+        const segments =
+            8;
+
+        for (
+            let index = 0;
+            index < segments;
+            index += 1
+        ) {
+            const active =
+                index /
+                    segments <
+                ratio;
+
+            const sx =
+                x +
+                width *
+                (
+                    index +
+                    0.5
+                ) /
+                segments;
+
+            ctx.strokeStyle =
+                active
+                    ? "rgba(220,218,224,0.76)"
+                    : "rgba(120,112,125,0.16)";
+
+            ctx.lineWidth =
+                active
+                    ? 2
+                    : 1;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                sx -
+                    7,
+                y
+            );
+
+            ctx.lineTo(
+                sx -
+                    1,
+                y +
+                    5
+            );
+
+            ctx.lineTo(
+                sx -
+                    4,
+                y +
+                    11
+            );
+
+            ctx.lineTo(
+                sx +
+                    6,
+                y +
+                    17
+            );
+
+            ctx.stroke();
+        }
+    }
+
+
+    /* ============================================================
+       INTERAÇÃO
+       ============================================================ */
+
+    function drawInteractionHUD(
+        ctx
+    ) {
+        const prompt =
+            getInteractionPrompt();
+
+        if (!prompt) {
+            return;
+        }
+
+        const text =
+            `${prompt.key}  ${prompt.text}`;
+
+        ctx.save();
+
+        ctx.font =
+            "600 12px sans-serif";
+
+        const width =
+            Math.min(
+                renderRuntime.width -
+                    40,
+
+                ctx.measureText(
+                    text
+                ).width +
+                    40
+            );
+
+        const x =
+            renderRuntime.width /
+                2 -
+            width /
+                2;
+
+        const y =
+            renderRuntime.height -
+                122;
+
+        ctx.fillStyle =
+            "rgba(13,12,16,0.78)";
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            width,
+            34,
+            10
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "rgba(190,170,126,0.28)";
+
+        ctx.stroke();
+
+        ctx.fillStyle =
+            "#d9ccb2";
+
+        ctx.textAlign =
+            "center";
+
+        ctx.fillText(
+            text,
+            renderRuntime.width /
+                2,
+            y +
+                22
+        );
+
+        ctx.restore();
+    }
+
+
+    function drawHoldHUD(
+        ctx
+    ) {
+        const progress =
+            getHoldActionProgress();
+
+        if (
+            progress ===
+            null
+        ) {
+            return;
+        }
+
+        const width =
+            230;
+
+        const height =
+            8;
+
+        const x =
+            renderRuntime.width /
+                2 -
+            width /
+                2;
+
+        const y =
+            renderRuntime.height -
+                158;
+
+        ctx.save();
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.65)";
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            width,
+            height,
+            4
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#b5a16f";
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            width *
+                progress,
+            height,
+            4
+        );
+
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       NOTIFICAÇÕES
+       ============================================================ */
+
+    function drawNotifications(
+        ctx
+    ) {
+        const notifications =
+            safeArray(
+                state.notifications
+            );
+
+        if (
+            !notifications.length
+        ) {
+            return;
+        }
+
+        ctx.save();
+
+        let y =
+            145;
+
+        for (
+            const notification of
+            notifications
+        ) {
+            const ratio =
+                clamp(
+                    notification.timer /
+                    notification.maxTimer,
+                    0,
+                    1
+                );
+
+            const alpha =
+                Math.min(
+                    1,
+                    ratio *
+                        3
+                );
+
+            const width =
+                300;
+
+            const x =
+                renderRuntime.width -
+                    width -
+                    22;
+
+            ctx.globalAlpha =
+                alpha;
+
+            ctx.fillStyle =
+                "rgba(15,14,18,0.88)";
+
+            roundRectPath(
+                ctx,
+                x,
+                y,
+                width,
+                48,
+                10
+            );
+
+            ctx.fill();
+
+            ctx.strokeStyle =
+                notification.type ===
+                "warning"
+                    ? "rgba(173,111,86,0.55)"
+                    : notification.type ===
+                        "special"
+                        ? "rgba(123,91,145,0.55)"
+                        : notification.type ===
+                            "success"
+                            ? "rgba(102,139,109,0.5)"
+                            : "rgba(174,158,122,0.35)";
+
+            ctx.stroke();
+
+            ctx.fillStyle =
+                "#d9cdb7";
+
+            ctx.font =
+                "700 10px serif";
+
+            ctx.textAlign =
+                "left";
+
+            ctx.fillText(
+                notification.title,
+                x +
+                    12,
+                y +
+                    17
+            );
+
+            ctx.fillStyle =
+                "rgba(190,181,167,0.82)";
+
+            ctx.font =
+                "10px sans-serif";
+
+            ctx.fillText(
+                notification.text,
+                x +
+                    12,
+                y +
+                    34
+            );
+
+            y +=
+                56;
+        }
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       QUEST TRACKER
+       ============================================================ */
+
+    function drawQuestTracker(
+        ctx,
+        player
+    ) {
+        const quest =
+            player
+                .miguelQuest;
+
+        if (
+            !quest ||
+            !quest.trackerVisible ||
+            !quest.trackerObjective
+        ) {
+            return;
+        }
+
+        const x =
+            22;
+
+        const y =
+            145;
+
+        const width =
+            280;
+
+        ctx.save();
+
+        ctx.fillStyle =
+            "rgba(14,13,17,0.72)";
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            width,
+            70,
+            10
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "rgba(106,76,126,0.38)";
+
+        ctx.stroke();
+
+        ctx.fillStyle =
+            "#b89bc4";
+
+        ctx.font =
+            "700 10px serif";
+
+        ctx.fillText(
+            "A PROVAÇÃO DO VAZIO",
+            x +
+                12,
+            y +
+                18
+        );
+
+        drawWrappedText(
+            ctx,
+            quest.trackerObjective,
+            x +
+                12,
+            y +
+                36,
+            width -
+                24,
+            13,
+            2
+        );
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       MORTE
+       ============================================================ */
+
+    function drawDeathOverlay(
+        ctx
+    ) {
+        const death =
+            state.deathState;
+
+        if (!death) {
+            return;
+        }
+
+        const alpha =
+            clamp(
+                death.timer /
+                    0.8,
+                0,
+                0.86
+            );
+
+        ctx.save();
+
+        ctx.fillStyle =
+            `rgba(5,4,7,${alpha})`;
+
+        ctx.fillRect(
+            0,
+            0,
+            renderRuntime.width,
+            renderRuntime.height
+        );
+
+        ctx.textAlign =
+            "center";
+
+        ctx.fillStyle =
+            "#d2c8ba";
+
+        ctx.font =
+            "700 28px serif";
+
+        ctx.fillText(
+            death.title ||
+                "A QUIETUDE O ALCANÇOU",
+
+            renderRuntime.width /
+                2,
+
+            renderRuntime.height *
+                0.34
+        );
+
+        ctx.font =
+            "13px serif";
+
+        ctx.fillStyle =
+            "rgba(185,177,168,0.75)";
+
+        ctx.fillText(
+            death.subtitle ||
+                "",
+            renderRuntime.width /
+                2,
+            renderRuntime.height *
+                0.34 +
+                30
+        );
+
+        const losses =
+            getDeathLossPreview();
+
+        if (
+            losses.length
+        ) {
+            ctx.font =
+                "700 10px sans-serif";
+
+            ctx.fillStyle =
+                "rgba(181,142,118,0.8)";
+
+            ctx.fillText(
+                "AO RENASCER, VOCÊ PERDERÁ:",
+                renderRuntime.width /
+                    2,
+                renderRuntime.height *
+                    0.47
+            );
+
+            ctx.font =
+                "11px sans-serif";
+
+            ctx.fillStyle =
+                "rgba(201,190,176,0.76)";
+
+            ctx.fillText(
+                losses
+                    .map(
+                        loss =>
+                            `${loss.name} -${loss.amount}`
+                    )
+                    .join(
+                        "   •   "
+                    ),
+
+                renderRuntime.width /
+                    2,
+
+                renderRuntime.height *
+                    0.47 +
+                    25
+            );
+        }
+
+        /*
+            Os botões reais serão ligados
+            pelo DOM na Parte 5.
+        */
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       TRANSIÇÕES
+       ============================================================ */
+
+    function drawTransitionOverlay(
+        ctx
+    ) {
+        const transition =
+            state.transition;
+
+        if (!transition) {
+            return;
+        }
+
+        const duration =
+            Math.max(
+                0.01,
+                finiteNumber(
+                    transition.duration,
+                    1
+                )
+            );
+
+        const progress =
+            clamp(
+                finiteNumber(
+                    transition.timer,
+                    0
+                ) /
+                duration,
+                0,
+                1
+            );
+
+        let alpha;
+
+        if (
+            transition.type ===
+            "rest"
+        ) {
+            alpha =
+                Math.sin(
+                    progress *
+                    Math.PI
+                ) *
+                0.88;
+        } else {
+            alpha =
+                progress <
+                    0.5
+                    ? progress *
+                        2
+                    : (
+                        1 -
+                        progress
+                    ) *
+                        2;
+        }
+
+        ctx.save();
+
+        ctx.fillStyle =
+            `rgba(5,4,7,${clamp(
+                alpha,
+                0,
+                0.94
+            )})`;
+
+        ctx.fillRect(
+            0,
+            0,
+            renderRuntime.width,
+            renderRuntime.height
+        );
+
+        if (
+            transition.title &&
+            alpha >
+                0.35
+        ) {
+            ctx.textAlign =
+                "center";
+
+            ctx.fillStyle =
+                `rgba(220,210,192,${clamp(
+                    alpha,
+                    0,
+                    1
+                )})`;
+
+            ctx.font =
+                "700 22px serif";
+
+            ctx.fillText(
+                transition.title,
+                renderRuntime.width /
+                    2,
+                renderRuntime.height /
+                    2
+            );
+        }
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       DIÁLOGO CANVAS FALLBACK
+
+       O painel definitivo do HTML/CSS
+       continua tendo prioridade.
+       ============================================================ */
+
+    function drawDialogueFallback(
+        ctx
+    ) {
+        const dialogue =
+            state.dialogue;
+
+        if (!dialogue) {
+            return;
+        }
+
+        /*
+            Se o HTML possui painel próprio,
+            a Parte 5 pode desligar este fallback.
+        */
+        if (
+            renderRuntime
+                .useDOMDialogue
+        ) {
+            return;
+        }
+
+        const width =
+            Math.min(
+                760,
+                renderRuntime.width -
+                    60
+            );
+
+        const height =
+            130;
+
+        const x =
+            renderRuntime.width /
+                2 -
+            width /
+                2;
+
+        const y =
+            renderRuntime.height -
+                height -
+                28;
+
+        ctx.save();
+
+        ctx.fillStyle =
+            "rgba(10,9,13,0.9)";
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            width,
+            height,
+            14
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "rgba(181,158,116,0.33)";
+
+        ctx.lineWidth =
+            1.5;
+
+        ctx.stroke();
+
+        ctx.fillStyle =
+            "#cdbb96";
+
+        ctx.font =
+            "700 12px serif";
+
+        ctx.fillText(
+            String(
+                dialogue.speaker ||
+                ""
+            ),
+            x +
+                20,
+            y +
+                24
+        );
+
+        const line =
+            dialogue.lines[
+                dialogue.index
+            ] ||
+            "";
+
+        const visible =
+            line.slice(
+                0,
+                Math.floor(
+                    dialogue
+                        .visibleCharacters
+                )
+            );
+
+        ctx.fillStyle =
+            "rgba(226,220,208,0.88)";
+
+        ctx.font =
+            "14px serif";
+
+        drawWrappedText(
+            ctx,
+            visible,
+            x +
+                20,
+            y +
+                50,
+            width -
+                40,
+            21,
+            3
+        );
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       FRAGMENT MINIGAME
+       ============================================================ */
+
+    function drawFragmentMinigame(
+        ctx
+    ) {
+        const game =
+            state.fragmentMinigame;
+
+        if (
+            !game?.active
+        ) {
+            return;
+        }
+
+        const width =
+            460;
+
+        const x =
+            renderRuntime.width /
+                2 -
+            width /
+                2;
+
+        const y =
+            renderRuntime.height *
+                0.62;
+
+        const config =
+            V.VOID_MISSION_CONFIG
+                .fragmentMinigameRounds[
+                    game.round
+                ];
+
+        if (!config) {
+            return;
+        }
+
+        ctx.save();
+
+        ctx.fillStyle =
+            "rgba(8,6,11,0.88)";
+
+        roundRectPath(
+            ctx,
+            x -
+                22,
+            y -
+                45,
+            width +
+                44,
+            110,
+            14
+        );
+
+        ctx.fill();
+
+        ctx.textAlign =
+            "center";
+
+        ctx.font =
+            "700 13px serif";
+
+        ctx.fillStyle =
+            "#b794c8";
+
+        ctx.fillText(
+            `FRAGMENTO DO VAZIO — RODADA ${game.round + 1}/3`,
+            renderRuntime.width /
+                2,
+            y -
+                18
+        );
+
+        /*
+            Barra.
+        */
+        ctx.fillStyle =
+            "#211a29";
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            width,
+            18,
+            9
+        );
+
+        ctx.fill();
+
+        const targetWidth =
+            width *
+            config.targetSize;
+
+        const targetX =
+            x +
+            width *
+                game.targetCenter -
+            targetWidth /
+                2;
+
+        ctx.fillStyle =
+            "rgba(126,88,148,0.72)";
+
+        roundRectPath(
+            ctx,
+            targetX,
+            y,
+            targetWidth,
+            18,
+            9
+        );
+
+        ctx.fill();
+
+        const cursorX =
+            x +
+            width *
+                game.cursor;
+
+        ctx.fillStyle =
+            "#e1d9e4";
+
+        ctx.fillRect(
+            cursorX -
+                2,
+            y -
+                7,
+            4,
+            32
+        );
+
+        ctx.font =
+            "10px sans-serif";
+
+        ctx.fillStyle =
+            "rgba(200,192,205,0.74)";
+
+        ctx.fillText(
+            "E para acertar o ritmo",
+            renderRuntime.width /
+                2,
+            y +
+                44
+        );
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       VOID / SKY ATMOSPHERE
+       ============================================================ */
+
+    function drawBiomeAtmosphere(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (!world) {
+            return;
+        }
+
+        if (
+            world.biome ===
+                "sky" ||
+            world.id ===
+                "celestialStair"
+        ) {
+            drawSkyAtmosphere(
+                ctx
+            );
+        }
+
+        if (
+            world.biome ===
+                "fairy"
+        ) {
+            drawFairyAtmosphere(
+                ctx
+            );
+        }
+
+        if (
+            world.biome ===
+                "gnome"
+        ) {
+            drawGnomeAtmosphere(
+                ctx
+            );
+        }
+
+        if (
+            world.id ===
+                "voidDungeon"
+        ) {
+            drawVoidAtmosphere(
+                ctx
+            );
+        }
+    }
+
+
+    function drawSkyAtmosphere(
+        ctx
+    ) {
+        ctx.save();
+
+        ctx.globalAlpha =
+            0.22;
+
+        ctx.fillStyle =
+            "#dce9ec";
+
+        for (
+            let index = 0;
+            index < 10;
+            index += 1
+        ) {
+            const x =
+                (
+                    index *
+                        173 +
+                    renderRuntime
+                        .ambientTime *
+                        9
+                ) %
+                    (
+                        renderRuntime.width +
+                            180
+                    ) -
+                90;
+
+            const y =
+                70 +
+                (
+                    index *
+                    91
+                ) %
+                    (
+                        renderRuntime.height -
+                            100
+                    );
+
+            ctx.beginPath();
+
+            ctx.ellipse(
+                x,
+                y,
+                28,
+                8,
+                0,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+
+        ctx.restore();
+    }
+
+
+    function drawFairyAtmosphere(
+        ctx
+    ) {
+        ctx.save();
+
+        for (
+            let index = 0;
+            index < 22;
+            index += 1
+        ) {
+            const t =
+                renderRuntime
+                    .ambientTime *
+                    0.25 +
+                index *
+                    0.73;
+
+            const x =
+                (
+                    Math.sin(
+                        t *
+                            1.7
+                    ) *
+                        0.5 +
+                    0.5
+                ) *
+                renderRuntime.width;
+
+            const y =
+                (
+                    Math.cos(
+                        t *
+                            1.2 +
+                        index
+                    ) *
+                        0.5 +
+                    0.5
+                ) *
+                renderRuntime.height;
+
+            ctx.fillStyle =
+                index %
+                2
+                    ? "rgba(236,151,211,0.28)"
+                    : "rgba(176,137,211,0.24)";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                x,
+                y,
+                2 +
+                    (
+                        index %
+                        3
+                    ),
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+
+        ctx.restore();
+    }
+
+
+    function drawGnomeAtmosphere(
+        ctx
+    ) {
+        ctx.save();
+
+        for (
+            let index = 0;
+            index < 14;
+            index += 1
+        ) {
+            const t =
+                renderRuntime
+                    .ambientTime *
+                    0.4 +
+                index *
+                    1.7;
+
+            const x =
+                (
+                    Math.sin(
+                        t
+                    ) *
+                        0.5 +
+                    0.5
+                ) *
+                renderRuntime.width;
+
+            const y =
+                (
+                    Math.cos(
+                        t *
+                            0.8 +
+                        index
+                    ) *
+                        0.5 +
+                    0.5
+                ) *
+                renderRuntime.height;
+
+            ctx.fillStyle =
+                "rgba(110,188,190,0.19)";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                x,
+                y,
+                2,
+                0,
+                Math.PI *
+                    2
+            );
+
+            ctx.fill();
+        }
+
+        ctx.restore();
+    }
+
+
+    function drawVoidAtmosphere(
+        ctx
+    ) {
+        ctx.save();
+
+        ctx.strokeStyle =
+            "rgba(104,74,123,0.12)";
+
+        ctx.lineWidth =
+            1;
+
+        for (
+            let index = 0;
+            index < 10;
+            index += 1
+        ) {
+            const x =
+                (
+                    index *
+                        151 +
+                    Math.sin(
+                        renderRuntime
+                            .ambientTime +
+                        index
+                    ) *
+                        30
+                ) %
+                renderRuntime.width;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                x,
+                0
+            );
+
+            ctx.quadraticCurveTo(
+                x +
+                    45,
+                renderRuntime.height /
+                    2,
+
+                x -
+                    20,
+                renderRuntime.height
+            );
+
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
+
+    /* ============================================================
+       MAIN WORLD RENDER
+       ============================================================ */
+
+    function renderWorld(
+        ctx
+    ) {
+        const world =
+            state.world;
+
+        if (
+            !ctx ||
+            !world
+        ) {
+            return;
+        }
+
+        renderRuntime
+            .frameStats
+            .drawnEntities =
+            0;
+
+        renderRuntime
+            .frameStats
+            .drawnTrees =
+            0;
+
+        updateVisibleWorldRect();
+
+        drawWorldBackground(
+            ctx
+        );
+
+        /*
+            Base do cenário.
+        */
+        drawWorldPaths(
+            ctx
+        );
+
+        drawGrassPatches(
+            ctx
+        );
+
+        drawFlowers(
+            ctx
+        );
+
+        drawMushrooms(
+            ctx
+        );
+
+        drawRocks(
+            ctx
+        );
+
+        /*
+            Objetos fixos que precisam ficar
+            atrás de entidades.
+        */
+        drawBuildings(
+            ctx
+        );
+
+        drawWalls(
+            ctx
+        );
+
+        drawStaticDecorations(
+            ctx
+        );
+
+        drawResources(
+            ctx
+        );
+
+        /*
+            Fonte específica, caso armazenada
+            fora de decorations.
+        */
+        if (
+            world.fountain
+        ) {
+            drawFountain(
+                ctx,
+                world.fountain
+            );
+        }
+
+        /*
+            Altar.
+        */
+        if (
+            world.id ===
+            "monarchMaze"
+        ) {
+            drawMonarchAltar(
+                ctx
+            );
+        }
+
+        /*
+            Y-SORT REAL.
+        */
+        drawDepthSortedEntities(
+            ctx
+        );
+
+        /*
+            Portas por cima das paredes/casas,
+            mas mantendo folha real.
+        */
+        drawDoors(
+            ctx
+        );
+
+        /*
+            Ataques e drops.
+        */
+        drawWorldDrops(
+            ctx
+        );
+
+        drawHazards(
+            ctx
+        );
+
+        drawProjectiles(
+            ctx
+        );
+
+        drawTransientEffects(
+            ctx
+        );
+
+        drawBiomeAtmosphere(
+            ctx
+        );
+
+        /*
+            ESCURIDÃO POR ÚLTIMO NO MUNDO,
+            mas antes do HUD.
+        */
+        drawDarknessLayer(
+            ctx
+        );
+    }
+
+
+    /* ============================================================
+       MAIN FRAME
+       ============================================================ */
+
+    function renderGame(
+        dt = 0
+    ) {
+        const ctx =
+            renderRuntime.ctx;
+
+        if (
+            !ctx ||
+            !renderRuntime.canvas
+        ) {
+            return false;
+        }
+
+        updateRenderShake(
+            clamp(
+                finiteNumber(
+                    dt,
+                    0
+                ),
+                0,
+                0.1
+            )
+        );
+
+        ctx.save();
+
+        ctx.setTransform(
+            renderRuntime.dpr,
+            0,
+            0,
+            renderRuntime.dpr,
+            0,
+            0
+        );
+
+        ctx.clearRect(
+            0,
+            0,
+            renderRuntime.width,
+            renderRuntime.height
+        );
+
+        if (
+            state.running &&
+            state.world
+        ) {
+            renderWorld(
+                ctx
+            );
+
+            drawHUD(
+                ctx
+            );
+
+            drawDialogueFallback(
+                ctx
+            );
+
+            drawFragmentMinigame(
+                ctx
+            );
+
+            drawTransitionOverlay(
+                ctx
+            );
+
+            drawDeathOverlay(
+                ctx
+            );
+
+            if (
+                state.damageFlash >
+                0
+            ) {
+                ctx.fillStyle =
+                    `rgba(130,45,45,${clamp(
+                        state.damageFlash *
+                            0.5,
+                        0,
+                        0.18
+                    )})`;
+
+                ctx.fillRect(
+                    0,
+                    0,
+                    renderRuntime.width,
+                    renderRuntime.height
+                );
+
+                state.damageFlash =
+                    Math.max(
+                        0,
+                        state.damageFlash -
+                            dt *
+                                1.8
+                    );
+            }
+        }
+
+        ctx.restore();
+
+        return true;
+    }
+
+
+    /* ============================================================
+       HELPERS DE TEXTO / FORMAS
+       ============================================================ */
+
+    function roundRectPath(
+        ctx,
+        x,
+        y,
+        width,
+        height,
+        radius
+    ) {
+        const r =
+            Math.max(
+                0,
+                Math.min(
+                    radius,
+                    Math.abs(
+                        width
+                    ) /
+                        2,
+                    Math.abs(
+                        height
+                    ) /
+                        2
+                )
+            );
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x +
+                r,
+            y
+        );
+
+        ctx.lineTo(
+            x +
+                width -
+                r,
+            y
+        );
+
+        ctx.quadraticCurveTo(
+            x +
+                width,
+            y,
+            x +
+                width,
+            y +
+                r
+        );
+
+        ctx.lineTo(
+            x +
+                width,
+            y +
+                height -
+                r
+        );
+
+        ctx.quadraticCurveTo(
+            x +
+                width,
+            y +
+                height,
+            x +
+                width -
+                r,
+            y +
+                height
+        );
+
+        ctx.lineTo(
+            x +
+                r,
+            y +
+                height
+        );
+
+        ctx.quadraticCurveTo(
+            x,
+            y +
+                height,
+            x,
+            y +
+                height -
+                r
+        );
+
+        ctx.lineTo(
+            x,
+            y +
+                r
+        );
+
+        ctx.quadraticCurveTo(
+            x,
+            y,
+            x +
+                r,
+            y
+        );
+
+        ctx.closePath();
+
+        return ctx;
+    }
+
+
+    function drawWrappedText(
+        ctx,
+        text,
+        x,
+        y,
+        maxWidth,
+        lineHeight,
+        maxLines =
+            Infinity
+    ) {
+        const words =
+            String(
+                text ||
+                ""
+            )
+                .split(
+                    /\s+/
+                );
+
+        let line =
+            "";
+
+        let lineIndex =
+            0;
+
+        for (
+            let index = 0;
+            index < words.length;
+            index += 1
+        ) {
+            const test =
+                line
+                    ? `${line} ${words[index]}`
+                    : words[index];
+
+            if (
+                ctx.measureText(
+                    test
+                ).width >
+                    maxWidth &&
+                line
+            ) {
+                ctx.fillText(
+                    line,
+                    x,
+                    y +
+                        lineIndex *
+                            lineHeight
+                );
+
+                lineIndex +=
+                    1;
+
+                if (
+                    lineIndex >=
+                    maxLines
+                ) {
+                    return;
+                }
+
+                line =
+                    words[index];
+            } else {
+                line =
+                    test;
+            }
+        }
+
+        if (
+            line &&
+            lineIndex <
+            maxLines
+        ) {
+            ctx.fillText(
+                line,
+                x,
+                y +
+                    lineIndex *
+                        lineHeight
+            );
+        }
+    }
+
+
+    /* ============================================================
+       VALIDAÇÃO PARTE 4
+       ============================================================ */
+
+    function validatePart4Data() {
+        const errors =
+            [];
+
+        if (
+            typeof renderGame !==
+            "function"
+        ) {
+            errors.push(
+                "Render principal ausente."
+            );
+        }
+
+        if (
+            typeof drawDepthSortedEntities !==
+            "function"
+        ) {
+            errors.push(
+                "Y-sort ausente."
+            );
+        }
+
+        if (
+            typeof buildVisibilityPolygon !==
+            "function"
+        ) {
+            errors.push(
+                "Iluminação com oclusão ausente."
+            );
+        }
+
+        if (
+            typeof drawMinimap !==
+            "function"
+        ) {
+            errors.push(
+                "Minimapa ausente."
+            );
+        }
+
+        if (
+            typeof drawTree !==
+            "function"
+        ) {
+            errors.push(
+                "Renderer de árvores ausente."
+            );
+        }
+
+        if (
+            typeof drawMonarchBoss !==
+            "function"
+        ) {
+            errors.push(
+                "Renderer do Monarca ausente."
+            );
+        }
+
+        if (
+            typeof drawVaelkorBoss !==
+            "function"
+        ) {
+            errors.push(
+                "Renderer de Vaelkor ausente."
+            );
+        }
+
+        if (
+            typeof getLanternLightingState !==
+            "function"
+        ) {
+            errors.push(
+                "Estado de iluminação da Parte 2 não foi encontrado."
+            );
+        }
+
+        if (
+            typeof getEntityDepthY !==
+            "function" ||
+            typeof compareDepth !==
+            "function"
+        ) {
+            errors.push(
+                "Funções de profundidade da Parte 2 ausentes."
+            );
+        }
+
+        /*
+            Confirma comportamento do altar:
+            esse teste não altera o jogo,
+            apenas checa a função disponível.
+        */
+        if (
+            state.world
+                ?.id ===
+                "monarchMaze" &&
+            state.world
+                ?.mazeData
+                ?.altarRoom
+        ) {
+            const room =
+                state.world
+                    .mazeData
+                    .altarRoom;
+
+            const light =
+                getLanternLightingState(
+                    room.x +
+                        room.w /
+                            2,
+
+                    room.y +
+                        room.h /
+                            2,
+
+                    state.world
+                );
+
+            if (
+                light.darkness ||
+                light.lantern ||
+                !light.ambient
+            ) {
+                errors.push(
+                    "Sala do altar não está usando iluminação ambiente normal."
+                );
+            }
+        }
+
+        if (
+            errors.length
+        ) {
+            console.error(
+                "VEYRA V32 — ERROS NA PARTE 4:",
+                errors
+            );
+
+            return {
+                ok:
+                    false,
+
+                errors
+            };
+        }
+
+        console.log(
+            "VEYRA V32 — Parte 4 validada."
+        );
+
+        return {
+            ok:
+                true,
+
+            errors:
+                []
+        };
+    }
+
+
+    /* ============================================================
+       EXPORTAÇÃO
+       ============================================================ */
+
+    Object.assign(
+        V,
+        {
+            renderRuntime,
+
+            configureRenderer,
+            resizeRenderer,
+
+            getCameraOffset,
+            worldToScreen,
+            screenToWorld,
+
+            updateVisibleWorldRect,
+            isPointVisible,
+            isRectVisible,
+
+            updateRenderShake,
+
+            colorWithAlpha,
+
+            drawWorldBackground,
+            drawGroundTexture,
+
+            drawWorldPaths,
+            drawPathRect,
+            drawPathDetails,
+
+            drawWalls,
+
+            drawBuildings,
+            drawBuilding,
+            drawBuildingWindows,
+
+            drawDoors,
+            drawDoor,
+
+            drawFountain,
+
+            drawGrassPatches,
+            drawFlowers,
+
+            drawMushrooms,
+            drawMushroom,
+
+            drawRocks,
+            drawResources,
+            drawOreNode,
+
+            drawTree,
+
+            drawNPC,
+
+            drawPlayer,
+            drawKaelion,
+            drawTheron,
+            drawGrumgar,
+            drawLirael,
+            drawZephyr,
+            drawPlayerArmorOverlay,
+
+            drawEnemy,
+            drawEnemyShadow,
+            drawWolfEnemy,
+            drawBoarEnemy,
+            drawBatEnemy,
+            drawSpiderEnemy,
+            drawGoblinEnemy,
+            drawGenericEnemy,
+            drawEnemyTelegraph,
+            drawEnemyHealthBar,
+
+            drawBoss,
+            drawPathBoss,
+            drawBossWeapon,
+            drawMonarchBoss,
+            drawVaelkorBoss,
+
+            drawMonarchAltar,
+
+            drawDecoration,
+            drawPathUnlockedRune,
+            drawCloud,
+            drawBed,
+            drawTable,
+            drawShelf,
+            drawAnvil,
+            drawForgeFire,
+            drawMaterialPile,
+            drawVoidFragmentGlow,
+            drawGenericDecoration,
+
+            buildDepthEntries,
+            drawDepthSortedEntities,
+            drawStaticDecorations,
+
+            drawWorldDrops,
+            getItemWorldColor,
+
+            drawProjectiles,
+            drawHazards,
+
+            drawTransientEffects,
+            drawDashEffect,
+            drawHitEffect,
+            drawRingEffect,
+            drawMonarchEffect,
+            drawMonarchDeathEffect,
+            drawDeathParticles,
+            drawGenericEffect,
+
+            getLightBlockingRects,
+            rayRectIntersectionDistance,
+            castLightRay,
+            buildVisibilityPolygon,
+            drawDarknessLayer,
+
+            drawMinimap,
+            isMazePathExplored,
+
+            drawHUD,
+            drawPlayerHUD,
+            drawHUDBar,
+
+            drawSkillHUD,
+            drawSkillButton,
+
+            drawBossHUD,
+            drawMonarchStaggerCracksHUD,
+
+            drawInteractionHUD,
+            drawHoldHUD,
+
+            drawNotifications,
+            drawQuestTracker,
+
+            drawDeathOverlay,
+            drawTransitionOverlay,
+            drawDialogueFallback,
+            drawFragmentMinigame,
+
+            drawBiomeAtmosphere,
+            drawSkyAtmosphere,
+            drawFairyAtmosphere,
+            drawGnomeAtmosphere,
+            drawVoidAtmosphere,
+
+            renderWorld,
+            renderGame,
+
+            roundRectPath,
+            drawWrappedText,
+
+            validatePart4Data
+        }
+    );
+
+
+    V.__part4Loaded =
+        true;
+
+
+    V.__part4Validation =
+        validatePart4Data();
+
+})();

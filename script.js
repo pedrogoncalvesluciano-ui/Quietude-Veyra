@@ -20766,12 +20766,84 @@ if (
             Corredor do último
             quadrado até a sala.
         */
-        addPathRect(
-            world,
-            {
+     /*
+    ÚNICO CORREDOR ENTRE
+    LABIRINTO E ALTAR.
+*/
+const altarCorridor = {
 
-                id:
-                    "maze_to_altar_corridor",
+    id:
+        "maze_to_altar_corridor",
+
+    x:
+        mazeX +
+        mazeWidth -
+        10,
+
+    y:
+        goalCenterY -
+        78,
+
+    w:
+        altarX -
+        (
+            mazeX +
+            mazeWidth
+        ) +
+        90,
+
+    h:
+        156
+
+};
+
+
+addPathRect(
+    world,
+    altarCorridor
+);
+
+
+/*
+    PAREDE DE CIMA.
+*/
+addMazeWall(
+
+    world,
+
+    "altar_corridor_wall_top",
+
+    altarCorridor.x,
+
+    altarCorridor.y -
+        wallThickness,
+
+    altarCorridor.w,
+
+    wallThickness
+
+);
+
+
+/*
+    PAREDE DE BAIXO.
+*/
+addMazeWall(
+
+    world,
+
+    "altar_corridor_wall_bottom",
+
+    altarCorridor.x,
+
+    altarCorridor.y +
+        altarCorridor.h,
+
+    altarCorridor.w,
+
+    wallThickness
+
+);
 
                 x:
                     mazeX +
@@ -20883,7 +20955,7 @@ if (
 
 
         const altarDoorGap =
-            170;
+            156;
 
 
         const upperHeight =
@@ -21073,17 +21145,28 @@ if (
         );
 
 
-        /*
-            Monarca nasce DORMANT.
+     /*
+    O MONARCA AINDA NÃO EXISTE.
 
-            Parte 3 só o torna ativo
-            depois do SIM no altar.
-        */
-        if (
-            !isBossDefeated(
-                "monarch"
-            )
-        ) {
+    Apenas guardamos a posição
+    onde ele aparecerá.
+*/
+world.monarchSpawn = {
+
+    x:
+        altarRoom.x +
+        altarRoom.w *
+            0.44,
+
+    y:
+        altarRoom.y +
+        altarRoom.h /
+            2,
+
+    arenaId:
+        "monarch_altar_room"
+
+};
 
             const monarch =
                 addBossIfAlive(
@@ -26961,11 +27044,17 @@ function updateBloodMarks(
             completeLine:
                 false,
 
-            onComplete:
-                typeof options.onComplete ===
-                "function"
-                    ? options.onComplete
-                    : null
+          onComplete:
+    typeof options.onComplete ===
+    "function"
+        ? options.onComplete
+        : null,
+
+
+choices:
+    safeArray(
+        options.choices
+    )
         };
 
         return true;
@@ -27086,6 +27175,19 @@ function updateBloodMarks(
             return true;
         }
 
+       /*
+    Se houver SIM/NÃO,
+    espera a escolha.
+*/
+if (
+    safeArray(
+        dialogue.choices
+    ).length >
+    0
+) {
+    return true;
+}
+
         const onComplete =
             dialogue.onComplete;
 
@@ -27102,11 +27204,67 @@ function updateBloodMarks(
         return true;
     }
 
+/* ============================================================
+   CONTROLE / MOVIMENTO*/
 
-    /* ============================================================
-       CONTROLE / MOVIMENTO
-       ============================================================ */
+   function chooseDialogueOption(
+    index
+) {
+    const dialogue =
+        state.dialogue;
 
+
+    if (
+        !dialogue ||
+        !dialogue.completeLine
+    ) {
+        return false;
+    }
+
+
+    if (
+        dialogue.index <
+        dialogue.lines.length -
+            1
+    ) {
+        return false;
+    }
+
+
+    const choices =
+        safeArray(
+            dialogue.choices
+        );
+
+
+    const choice =
+        choices[
+            index
+        ];
+
+
+    if (
+        !choice
+    ) {
+        return false;
+    }
+
+
+    state.dialogue =
+        null;
+
+
+    if (
+        typeof choice.onSelect ===
+        "function"
+    ) {
+        choice.onSelect();
+    }
+
+
+    return true;
+}
+   
     function getFacingVector(
         facing
     ) {
@@ -38190,12 +38348,18 @@ for (
     player.money <
         entry.price
 ) {
-            pushNotification(
-                "MOEDAS INSUFICIENTES",
-                `Você precisa de ${entry.price} moedas.`,
-                "warning",
-                1.8
-            );
+          pushNotification(
+
+    item.unique
+        ? "ITEM ADQUIRIDO"
+        : "ITEM COMPRADO",
+
+    item.name,
+
+    "success",
+
+    2
+);
 
             return false;
         }
@@ -38339,12 +38503,15 @@ for (
         player.money +=
             earned;
 
-        pushNotification(
-            "ITEM VENDIDO",
-            `+${earned} moedas`,
-            "success",
-            1.5
-        );
+      pushNotification(
+    "ITEM VENDIDO",
+
+    `${item.name} • +${earned} moedas`,
+
+    "success",
+
+    1.8
+);
 
         return true;
     }
@@ -40165,13 +40332,29 @@ if (
                     npc.y
                 );
 
-            if (
-                dist <=
-                    GAME_CONFIG
-                        .npcInteractionDistance &&
-                dist <
-                    npcDistance
-            ) {
+       /*
+    Doran fica atrás da bancada.
+
+    Ele recebe distância maior para
+    não precisar atravessar o balcão.
+*/
+const interactionDistance =
+    npc.id ===
+        "doran"
+
+        ? 235
+
+        : GAME_CONFIG
+            .npcInteractionDistance;
+
+
+if (
+    dist <=
+        interactionDistance &&
+
+    dist <
+        npcDistance
+) {
                 nearestNPC =
                     npc;
 
@@ -42944,10 +43127,11 @@ updateRuntimeTransition(
             pushNotification,
             spawnTransientEffect,
 
-            startDialogue,
-            getCurrentDialogueLine,
-            updateDialogue,
-            advanceDialogue,
+           startDialogue,
+getCurrentDialogueLine,
+updateDialogue,
+advanceDialogue,
+chooseDialogueOption,
 
             getFacingVector,
             getMovementInputVector,
@@ -55145,163 +55329,127 @@ function drawMagicSparkEffect(
                 player.y
             );
 
-        /*
-            IMPORTANTE:
-            destination-out apenas no offscreen.
-        */
-        ctx.globalCompositeOperation =
-            "destination-out";
+     /*
+    LUZ PRESA AO POLÍGONO
+    DE VISIBILIDADE.
 
-        ctx.beginPath();
+    Nada atravessa parede.
+*/
+ctx.save();
 
-        const first =
-            worldToScreen(
-                polygon[0].x,
-                polygon[0].y
-            );
 
-        ctx.moveTo(
-            first.x,
-            first.y
+ctx.beginPath();
+
+
+const first =
+    worldToScreen(
+        polygon[0].x,
+        polygon[0].y
+    );
+
+
+ctx.moveTo(
+    first.x,
+    first.y
+);
+
+
+for (
+    let index = 1;
+
+    index <
+        polygon.length;
+
+    index += 1
+) {
+    const point =
+        worldToScreen(
+            polygon[index].x,
+            polygon[index].y
         );
 
-        for (
-            let index = 1;
-            index <
-            polygon.length;
-            index += 1
-        ) {
-            const point =
-                worldToScreen(
-                    polygon[index].x,
-                    polygon[index].y
-                );
 
-            ctx.lineTo(
-                point.x,
-                point.y
-            );
-        }
-
-        ctx.closePath();
-
-        ctx.fillStyle =
-            "rgba(0,0,0,0.92)";
-
-        ctx.fill();
-
-        /*
-            Núcleo suave da luz.
-        */
-        const gradient =
-            ctx.createRadialGradient(
-                playerScreen.x,
-                playerScreen.y,
-                radius *
-                    0.15,
-
-                playerScreen.x,
-                playerScreen.y,
-                radius
-            );
-
-        gradient.addColorStop(
-            0,
-            "rgba(0,0,0,1)"
-        );
-
-        gradient.addColorStop(
-            0.55,
-            "rgba(0,0,0,0.72)"
-        );
-
-        gradient.addColorStop(
-            1,
-            "rgba(0,0,0,0)"
-        );
-
-        ctx.fillStyle =
-            gradient;
-
-        ctx.beginPath();
-
-        ctx.arc(
-            playerScreen.x,
-            playerScreen.y,
-            radius,
-            0,
-            Math.PI *
-                2
-        );
-
-        ctx.fill();
-
-        ctx.globalCompositeOperation =
-            "source-over";
-
-        /*
-            Pequeno tom quente da Lanterna Antiga.
-        */
-        if (
-            lighting.lantern
-        ) {
-            const warm =
-                ctx.createRadialGradient(
-                    playerScreen.x,
-                    playerScreen.y,
-                    0,
-
-                    playerScreen.x,
-                    playerScreen.y,
-                    radius *
-                        0.62
-                );
-
-            warm.addColorStop(
-                0,
-                "rgba(195,164,103,0.07)"
-            );
-
-            warm.addColorStop(
-                1,
-                "rgba(195,164,103,0)"
-            );
-
-            ctx.fillStyle =
-                warm;
-
-            ctx.beginPath();
-
-            ctx.arc(
-                playerScreen.x,
-                playerScreen.y,
-                radius *
-                    0.62,
-                0,
-                Math.PI *
-                    2
-            );
-
-            ctx.fill();
-        }
-
-        ctx.restore();
-
-        mainCtx.drawImage(
-            canvas,
-            0,
-            0,
-            canvas.width,
-            canvas.height,
-
-            0,
-            0,
-            renderRuntime.width,
-            renderRuntime.height
-        );
-    }
+    ctx.lineTo(
+        point.x,
+        point.y
+    );
+}
 
 
+ctx.closePath();
+
+
+/*
+    Recorta exatamente onde
+    o player consegue enxergar.
+*/
+ctx.clip();
+
+
+ctx.globalCompositeOperation =
+    "destination-out";
+
+
+const visibilityGradient =
+    ctx.createRadialGradient(
+
+        playerScreen.x,
+        playerScreen.y,
+        radius *
+            0.08,
+
+        playerScreen.x,
+        playerScreen.y,
+        radius
+
+    );
+
+
+visibilityGradient.addColorStop(
+    0,
+    "rgba(0,0,0,1)"
+);
+
+
+visibilityGradient.addColorStop(
+    0.70,
+    "rgba(0,0,0,0.95)"
+);
+
+
+visibilityGradient.addColorStop(
+    1,
+    "rgba(0,0,0,0.55)"
+);
+
+
+ctx.fillStyle =
+    visibilityGradient;
+
+
+ctx.fillRect(
+
+    playerScreen.x -
+        radius,
+
+    playerScreen.y -
+        radius,
+
+    radius *
+        2,
+
+    radius *
+        2
+
+);
+
+
+ctx.restore();
+
+
+ctx.globalCompositeOperation =
+    "source-over";
+       
     /* ============================================================
        MINIMAPA
 
@@ -64708,106 +64856,154 @@ firstAvailableCall(
     }
 
 
-    function shopItemHTML(
-        entry,
-        mode
-    ) {
-        return `
-            <div class="shop-item">
+ function shopItemHTML(
+    entry,
+    mode
+) {
+    const player =
+        state.player;
 
-                <div class="shop-item-icon">
+
+    const obtained =
+        Boolean(
+
+            mode ===
+                "buy" &&
+
+            entry.item
+                ?.unique &&
+
+            (
+                safeArray(
+                    player
+                        ?.purchasedUniqueItems
+                ).includes(
+                    entry.id
+                ) ||
+
+                (
+                    entry.id ===
+                        "minimapa" &&
+                    player
+                        ?.minimapOwned
+                ) ||
+
+                (
+                    entry.id ===
+                        "lanterna" &&
+                    player
+                        ?.lanternOwned
+                )
+            )
+
+        );
+
+
+    return `
+        <div class="shop-item">
+
+            <div class="shop-item-icon">
+                ${escapeHTML(
+                    entry.item.icon ||
+                    getItemSymbol(
+                        entry.id
+                    )
+                )}
+            </div>
+
+
+            <div class="shop-item-info">
+
+                <strong>
                     ${escapeHTML(
-                        entry.item.icon ||
-                        getItemSymbol(
-                            entry.id
-                        )
+                        entry.item.name ||
+                        entry.id
                     )}
-                </div>
+                </strong>
 
-                <div class="shop-item-info">
 
-                    <strong>
-                        ${escapeHTML(
-                            entry.item.name ||
-                            entry.id
-                        )}
-                    </strong>
+                <span>
+                    ${escapeHTML(
+                        entry.item.description ||
+                        ""
+                    )}
+                </span>
 
-                    <span>
-                        ${escapeHTML(
-                            entry.item.description ||
-                            ""
-                        )}
-                    </span>
 
-                    ${
-                        mode ===
-                            "sell"
+                ${
+                    mode ===
+                        "sell"
+
+                        ? `
+                            <span>
+                                POSSUI: ${entry.amount}
+                            </span>
+                        `
+
+                        : obtained
+
                             ? `
                                 <span>
-                                    POSSUI: ${entry.amount}
+                                    ITEM ÚNICO ADQUIRIDO
                                 </span>
                             `
+
                             : ""
-                    }
-
-                </div>
-
-                <button
-                    type="button"
-                    ${
-                        mode ===
-                        "sell"
-                            ? `data-shop-sell="${escapeHTML(entry.id)}"`
-                            : `data-shop-buy="${escapeHTML(entry.id)}"`
-                    }
-                >
-                    ${
-                        mode ===
-                        "sell"
-                            ? "VENDER"
-                            : "COMPRAR"
-                    }
-                    •
-                    ${Math.floor(entry.price)}
-                </button>
+                }
 
             </div>
-        `;
-    }
 
 
-    function closeShop() {
-        firstAvailableCall(
-            [
-                "closeShop"
-            ],
-            true
-        );
+            <button
+                type="button"
 
+                ${
+                    obtained
 
-        state.shopNPC =
-            null;
+                        ? `
+                            disabled
+                            class="obtained"
+                        `
 
+                        : mode ===
+                            "sell"
 
-        if (
-            state.activePanel ===
-            "shop"
-        ) {
-            state.activePanel =
-                null;
-        }
+                            ? `
+                                data-shop-sell="${escapeHTML(
+                                    entry.id
+                                )}"
+                            `
 
+                            : `
+                                data-shop-buy="${escapeHTML(
+                                    entry.id
+                                )}"
+                            `
+                }
+            >
 
-        state.paused =
-            false;
+                ${
+                    obtained
 
+                        ? "OBTIDO"
 
-        setVisible(
-            DOM.panels.shop,
-            false
-        );
-    }
+                        : mode ===
+                            "sell"
+
+                            ? `VENDER • ${Math.floor(
+                                entry.price
+                            )}`
+
+                            : `COMPRAR • ${Math.floor(
+                                entry.price
+                            )}`
+                }
+
+            </button>
+
+        </div>
+    `;
+}
 
    /* ============================================================
    COMANDOS PRIVADOS DE TESTE
@@ -67359,6 +67555,20 @@ safeCall(
 
 safeCall(
     "drawHoldHUD",
+    ctx
+);
+
+
+/*
+    NOTIFICAÇÕES DO JOGO.
+
+    Ex:
+    ITEM COMPRADO
+    ITEM VENDIDO
+    ITEM ADQUIRIDO
+*/
+safeCall(
+    "drawNotifications",
     ctx
 );
 

@@ -5791,3 +5791,1092 @@ button {
     }
 
 }
+
+/* ================================================================
+   VEYRA V32
+   POLIMENTO VISUAL + RESPONSIVIDADE
+   ================================================================ */
+
+
+/* ================================================================
+   SEGURANÇA DE CLIQUE
+   ================================================================ */
+
+.screen {
+
+    pointer-events:
+        none;
+
+}
+
+
+.screen.active {
+
+    pointer-events:
+        auto;
+
+}
+
+
+.screen:not(.active) {
+
+    pointer-events:
+        none !important;
+
+}
+
+
+.menu-shell,
+.info-shell,
+.credits-shell,
+.character-select-shell {
+
+    position:
+        relative;
+
+    z-index:
+        10;
+
+    pointer-events:
+        auto;
+
+}
+
+
+button,
+input,
+select,
+textarea {
+
+    pointer-events:
+        auto;
+
+    touch-action:
+        manipulation;
+
+}
+
+
+/*
+    Nenhum efeito decorativo
+    pode roubar clique.
+*/
+.ambient-bg,
+.ambient-bg *,
+.menu-atmosphere,
+.menu-atmosphere *,
+.menu-screen::before,
+.menu-main-btn::before,
+.character-card::before,
+.character-card::after {
+
+    pointer-events:
+        none !important;
+
+}
+
+
+button {
+
+    position:
+        relative;
+
+    z-index:
+        2;
+
+}
+
+
+/* ================================================================
+   LUZ PRINCIPAL DA TELA INICIAL
+   ================================================================ */
+
+.menu-screen {
+
+    background:
+
+        linear-gradient(
+            rgba(
+                2,
+                4,
+                6,
+                .10
+            ),
+            rgba(
+                2,
+                4,
+                6,
+                .48
+            )
+        ),
+
+        radial-gradient(
+            ellipse at
+                50%
+                34%,
+
+            rgba(
+                154,
+                131,
+                82,
+                .27
+            )
+            0%,
+
+            rgba(
+                112,
+                96,
+                66,
+                .12
+            )
+            31%,
+
+            transparent
+            61%
+        ),
+
+        #07090b;
+
+}
+
+
+/*
+    Luz central respirando.
+
+    É discreta, não vira neon.
+*/
+.menu-screen::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    left:
+        50%;
+
+    top:
+        34%;
+
+    width:
+        min(
+            900px,
+            90vw
+        );
+
+    height:
+        min(
+            620px,
+            72vh
+        );
+
+    border-radius:
+        50%;
+
+    background:
+
+        radial-gradient(
+            ellipse,
+
+            rgba(
+                200,
+                168,
+                99,
+                .12
+            )
+            0%,
+
+            rgba(
+                139,
+                115,
+                72,
+                .055
+            )
+            42%,
+
+            transparent
+            72%
+        );
+
+    filter:
+        blur(
+            30px
+        );
+
+    transform:
+        translate(
+            -50%,
+            -50%
+        );
+
+    animation:
+        veyraMenuLightBreath
+        6s
+        ease-in-out
+        infinite;
+
+}
+
+
+@keyframes veyraMenuLightBreath {
+
+    0%,
+    100% {
+
+        opacity:
+            .66;
+
+        transform:
+            translate(
+                -50%,
+                -50%
+            )
+            scale(
+                .96
+            );
+
+    }
+
+
+    50% {
+
+        opacity:
+            1;
+
+        transform:
+            translate(
+                -50%,
+                -50%
+            )
+            scale(
+                1.05
+            );
+
+    }
+
+}
+
+
+/*
+    Glows das extremidades
+    um pouco mais presentes.
+*/
+.ambient-glow {
+
+    width:
+        700px;
+
+    height:
+        700px;
+
+    opacity:
+        .11;
+
+    filter:
+        blur(
+            120px
+        );
+
+}
+
+
+/*
+    Névoa um pouco mais visível.
+*/
+.menu-mist {
+
+    opacity:
+        .075;
+
+}
+
+
+/*
+    Partículas ganham um
+    brilho bem discreto.
+*/
+.menu-particle-field i {
+
+    width:
+        3px;
+
+    height:
+        3px;
+
+    background:
+        rgba(
+            225,
+            203,
+            149,
+            .42
+        );
+
+    box-shadow:
+
+        0
+        0
+        9px
+        rgba(
+            199,
+            165,
+            98,
+            .23
+        );
+
+}
+
+
+/* ================================================================
+   LEGIBILIDADE GERAL
+   ================================================================ */
+
+.menu-eyebrow,
+.section-kicker,
+.panel-kicker,
+.modal-eyebrow {
+
+    font-size:
+        clamp(
+            10px,
+            .62vw,
+            12px
+        );
+
+    color:
+        #a3977d;
+
+}
+
+
+.menu-intro {
+
+    font-size:
+        clamp(
+            13px,
+            .82vw,
+            15px
+        );
+
+    color:
+        #aaa69d;
+
+    line-height:
+        1.75;
+
+}
+
+
+.btn-small {
+
+    font-size:
+        9px;
+
+    color:
+        #918a7d;
+
+}
+
+
+.menu-main-btn strong {
+
+    font-size:
+        clamp(
+            13px,
+            .8vw,
+            15px
+        );
+
+}
+
+
+.menu-small-actions button {
+
+    min-height:
+        40px;
+
+    padding:
+        8px
+        12px;
+
+    color:
+        #969188;
+
+    font-size:
+        10px;
+
+}
+
+
+.menu-small-actions button:hover {
+
+    color:
+        #d0bc89;
+
+}
+
+
+/* ================================================================
+   COMO JOGAR
+   ================================================================ */
+
+.help-card strong {
+
+    font-size:
+        12px;
+
+    color:
+        #d2cbc0;
+
+}
+
+
+.help-card p {
+
+    font-size:
+        13px;
+
+    color:
+        #99958d;
+
+    line-height:
+        1.6;
+
+}
+
+
+.info-footer {
+
+    font-size:
+        11px;
+
+    color:
+        #817c71;
+
+}
+
+
+/* ================================================================
+   CRÉDITOS
+   ================================================================ */
+
+.credits-block span {
+
+    font-size:
+        9px;
+
+    color:
+        #898278;
+
+}
+
+
+.credits-block strong {
+
+    font-size:
+        20px;
+
+}
+
+
+.credits-note {
+
+    font-size:
+        13px;
+
+    color:
+        #928d84;
+
+    line-height:
+        1.7;
+
+}
+
+
+/* ================================================================
+   SELEÇÃO DE PERSONAGEM
+   ================================================================ */
+
+.back-text-btn {
+
+    min-height:
+        42px;
+
+    font-size:
+        10px;
+
+    color:
+        #969187;
+
+}
+
+
+.character-select-header p {
+
+    font-size:
+        13px;
+
+    color:
+        #97938b;
+
+}
+
+
+.character-description {
+
+    font-size:
+        12px;
+
+    color:
+        #99958c;
+
+    line-height:
+        1.6;
+
+}
+
+
+.character-card {
+
+    transition:
+
+        transform
+        .2s
+        ease,
+
+        border-color
+        .2s
+        ease,
+
+        box-shadow
+        .2s
+        ease;
+
+}
+
+
+/* ================================================================
+   HUD DO JOGO
+   ================================================================ */
+
+.hud-player-copy span,
+.hud-level span {
+
+    font-size:
+        8px;
+
+}
+
+
+.hud-player-copy strong {
+
+    font-size:
+        13px;
+
+}
+
+
+.game-hotbar strong {
+
+    font-size:
+        9px;
+
+}
+
+
+.game-hotbar button {
+
+    min-height:
+        42px;
+
+}
+
+
+/* ================================================================
+   LOJA / PAINÉIS
+   ================================================================ */
+
+.shop-item-info strong {
+
+    font-size:
+        12px;
+
+}
+
+
+.shop-item-info span {
+
+    font-size:
+        10px;
+
+    color:
+        #89857c;
+
+}
+
+
+.shop-item > button {
+
+    min-height:
+        38px;
+
+    font-size:
+        9px;
+
+}
+
+
+/*
+    Todos os botões importantes
+    terão área boa para mouse/toque.
+*/
+.menu-main-btn,
+.start-journey-btn,
+.modal-actions button,
+.shop-item > button {
+
+    min-height:
+        44px;
+
+}
+
+
+/* ================================================================
+   MONITOR GRANDE / PC
+   ================================================================ */
+
+@media
+(
+    min-width:
+        1600px
+)
+and
+(
+    pointer:
+        fine
+) {
+
+    .menu-shell {
+
+        transform:
+            scale(
+                1.06
+            );
+
+    }
+
+
+    .info-shell {
+
+        width:
+            min(
+                1080px,
+                calc(
+                    100vw -
+                    100px
+                )
+            );
+
+    }
+
+
+    .credits-shell {
+
+        transform:
+            scale(
+                1.05
+            );
+
+    }
+
+
+    .character-select-shell {
+
+        width:
+            min(
+                1480px,
+                calc(
+                    100vw -
+                    70px
+                )
+            );
+
+    }
+
+
+    .player-hud {
+
+        transform:
+            scale(
+                1.08
+            );
+
+        transform-origin:
+            top
+            left;
+
+    }
+
+
+    .money-hud {
+
+        transform:
+            scale(
+                1.08
+            );
+
+        transform-origin:
+            top
+            right;
+
+    }
+
+
+    .game-hotbar {
+
+        transform:
+
+            translateX(
+                -50%
+            )
+
+            scale(
+                1.08
+            );
+
+        transform-origin:
+            bottom
+            center;
+
+    }
+
+
+    .large-game-panel {
+
+        width:
+
+            min(
+                1180px,
+                calc(
+                    100vw -
+                    90px
+                )
+            );
+
+    }
+
+}
+
+
+/* ================================================================
+   TABLET / TELAS MÉDIAS
+   ================================================================ */
+
+@media
+(
+    max-width:
+        900px
+) {
+
+    .screen {
+
+        min-height:
+            100dvh;
+
+    }
+
+
+    .menu-screen,
+    .info-screen,
+    .character-screen {
+
+        overflow-y:
+            auto;
+
+    }
+
+
+    .menu-shell {
+
+        width:
+            calc(
+                100vw -
+                24px
+            );
+
+        padding:
+
+            26px
+            16px
+            24px;
+
+    }
+
+
+    .main-logo {
+
+        font-size:
+
+            clamp(
+                50px,
+                11vw,
+                72px
+            );
+
+    }
+
+
+    .menu-actions {
+
+        width:
+
+            min(
+                520px,
+                100%
+            );
+
+    }
+
+
+    .menu-main-btn {
+
+        min-height:
+            64px;
+
+    }
+
+
+    .info-shell,
+    .credits-shell {
+
+        max-height:
+
+            calc(
+                100dvh -
+                24px
+            );
+
+        overflow-y:
+            auto;
+
+    }
+
+
+    .character-card {
+
+        min-height:
+            auto;
+
+    }
+
+}
+
+
+/* ================================================================
+   CELULAR
+   ================================================================ */
+
+@media
+(
+    max-width:
+        520px
+) {
+
+    .menu-shell {
+
+        justify-content:
+            center;
+
+        min-height:
+            100dvh;
+
+    }
+
+
+    .veyra-emblem {
+
+        width:
+            64px;
+
+        height:
+            64px;
+
+    }
+
+
+    .main-logo {
+
+        font-size:
+
+            clamp(
+                42px,
+                15vw,
+                58px
+            );
+
+    }
+
+
+    .main-subtitle {
+
+        font-size:
+            10px;
+
+        letter-spacing:
+            .32em;
+
+    }
+
+
+    .menu-intro {
+
+        font-size:
+            13px;
+
+        line-height:
+            1.6;
+
+    }
+
+
+    .menu-main-btn {
+
+        min-height:
+            62px;
+
+    }
+
+
+    .menu-small-actions {
+
+        width:
+            100%;
+
+        justify-content:
+            center;
+
+    }
+
+
+    .menu-small-actions button {
+
+        min-height:
+            44px;
+
+        font-size:
+            10px;
+
+    }
+
+
+    .close-circle-btn {
+
+        width:
+            44px;
+
+        height:
+            44px;
+
+    }
+
+
+    .info-shell {
+
+        padding:
+            18px;
+
+    }
+
+
+    .help-card {
+
+        grid-template-columns:
+            46px
+            1fr;
+
+        padding:
+            14px;
+
+    }
+
+
+    .help-card p {
+
+        font-size:
+            12px;
+
+    }
+
+
+    .credits-shell {
+
+        width:
+
+            calc(
+                100vw -
+                20px
+            );
+
+        padding:
+
+            52px
+            20px
+            28px;
+
+    }
+
+
+    .character-select-shell {
+
+        width:
+            100%;
+
+        padding:
+
+            20px
+            12px
+            30px;
+
+    }
+
+
+    .character-select-header h2 {
+
+        font-size:
+            25px;
+
+    }
+
+
+    .character-description {
+
+        min-height:
+            0;
+
+    }
+
+
+    /*
+        Mantém HUD legível
+        sem ocupar a tela inteira.
+    */
+    .player-hud {
+
+        transform:
+            scale(
+                .82
+            );
+
+    }
+
+
+    .money-hud {
+
+        transform:
+            scale(
+                .86
+            );
+
+    }
+
+}

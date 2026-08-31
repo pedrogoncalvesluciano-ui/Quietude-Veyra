@@ -43695,25 +43695,103 @@ function resizeRenderer() {
                 2
             );
 
-        const width =
-            Math.max(
-                640,
-                Math.floor(
-                    rect.width ||
-                    window.innerWidth ||
-                    1280
-                )
-            );
+       /*
+    TAMANHO REAL QUE O JOGO
+    OCUPA NA TELA.
+*/
+const cssWidth =
+    Math.max(
+        640,
 
-        const height =
-            Math.max(
-                360,
-                Math.floor(
-                    rect.height ||
-                    window.innerHeight ||
-                    720
-                )
-            );
+        Math.floor(
+            rect.width ||
+            window.innerWidth ||
+            1280
+        )
+    );
+
+
+const cssHeight =
+    Math.max(
+        360,
+
+        Math.floor(
+            rect.height ||
+            window.innerHeight ||
+            720
+        )
+    );
+
+
+/*
+    IDENTIFICA TELA GRANDE.
+
+    Não precisamos descobrir
+    se é literalmente notebook
+    ou computador.
+
+    O importante é detectar:
+    - resolução grande;
+    - mouse/touchpad preciso.
+*/
+const largeDesktop =
+    cssWidth >=
+        1600 &&
+    window.matchMedia(
+        "(pointer: fine)"
+    ).matches;
+
+
+/*
+    ESCALA LÓGICA.
+
+    Em monitor grande o jogo usa
+    uma resolução lógica menor.
+
+    Isso faz:
+    - player maior;
+    - inimigos maiores;
+    - árvores maiores;
+    - casas maiores;
+    - mundo menos "minúsculo".
+*/
+const logicalScale =
+    largeDesktop
+
+        ? Math.min(
+            1,
+
+            1440 /
+                cssWidth
+        )
+
+        : 1;
+
+
+/*
+    RESOLUÇÃO QUE O JOGO
+    REALMENTE USA.
+*/
+const width =
+    Math.max(
+        640,
+
+        Math.floor(
+            cssWidth *
+            logicalScale
+        )
+    );
+
+
+const height =
+    Math.max(
+        360,
+
+        Math.floor(
+            cssHeight *
+            logicalScale
+        )
+    );
 
         renderRuntime.width =
             width;
@@ -68392,7 +68470,9 @@ updateTransition(
         }
 
 
-        renderMainCanvas();
+    renderMainCanvas(
+    dt
+);
     }
 
 

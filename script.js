@@ -5301,17 +5301,17 @@
                         "altarSoulAbsorb",
 
 
-                    hp:
-                        1850,
+                  hp:
+    3000,
 
-                    damage:
-                        44,
+damage:
+    52,
 
-                    defense:
-                        31,
+defense:
+    38,
 
-                    speed:
-                        0,
+speed:
+    0,
 
                     radius:
                         60,
@@ -20845,30 +20845,6 @@ addMazeWall(
 
 );
 
-                x:
-                    mazeX +
-                    mazeWidth -
-                    10,
-
-                y:
-                    goalCenterY -
-                    78,
-
-                w:
-                    altarX -
-                    (
-                        mazeX +
-                        mazeWidth
-                    ) +
-                    90,
-
-                h:
-                    156
-
-            }
-        );
-
-
         addZone(
             world,
             {
@@ -21151,7 +21127,8 @@ addMazeWall(
     Apenas guardamos a posição
     onde ele aparecerá.
 */
-world.monarchSpawn = {
+
+       world.monarchSpawn = {
 
     x:
         altarRoom.x +
@@ -21167,46 +21144,6 @@ world.monarchSpawn = {
         "monarch_altar_room"
 
 };
-
-            const monarch =
-                addBossIfAlive(
-                    world,
-                    "monarch",
-                    {
-
-                        x:
-                            altarRoom.x +
-                            altarRoom.w *
-                                0.44,
-
-                        y:
-                            altarRoom.y +
-                            altarRoom.h /
-                                2,
-
-                        arenaId:
-                            "monarch_altar_room"
-
-                    }
-                );
-
-
-            if (
-                monarch
-            ) {
-
-                monarch.state =
-                    V.BOSS_STATE
-                        .DORMANT;
-
-
-                monarch.confirmed =
-                    false;
-
-            }
-
-        }
-
 
         /* ========================================================
            INIMIGOS DO LABIRINTO
@@ -29470,10 +29407,32 @@ const damage =
 
             dead:
                 false,
+color:
+    config.color ||
+    "#80668f",
 
-            color:
-                config.color ||
-                "#80668f"
+
+/*
+    Quando true,
+    o círculo é apenas aviso.
+*/
+visualOnly:
+    Boolean(
+        config.visualOnly
+    ),
+
+
+/*
+    Função executada quando
+    o telegraph terminar.
+*/
+onActivate:
+    typeof config.onActivate ===
+    "function"
+
+        ? config.onActivate
+
+        : null
         };
 
         world.hazards.push(
@@ -30049,6 +30008,30 @@ const damage =
                             hazard.color
                     }
                 );
+
+               /*
+    Se o círculo tiver alguma
+    ação programada, executa agora.
+*/
+if (
+    typeof hazard.onActivate ===
+    "function"
+) {
+    const callback =
+        hazard.onActivate;
+
+
+    /*
+        Impede executar duas vezes.
+    */
+    hazard.onActivate =
+        null;
+
+
+    callback(
+        hazard
+    );
+}
             }
 
             if (
@@ -30060,9 +30043,10 @@ const damage =
             const player =
                 state.player;
 
-            if (
-                !hazard.damageApplied &&
-                player &&
+           if (
+    !hazard.visualOnly &&
+    !hazard.damageApplied &&
+    player &&
                 !player.dead &&
                 playerInsideHazard(
                     hazard,
@@ -34952,27 +34936,77 @@ const damage =
             return false;
         }
 
-        state.battle = {
-            type:
-                "monarchAltarConfirmation",
+   return startDialogue(
 
-            title:
-                "ALTAR DO MONARCA",
+    [
+        "Deseja adquirir a habilidade secreta?"
+    ],
 
-            subtitle:
-                "A oferenda não será consumida até a vitória.",
+    {
+        speaker:
+            "ALTAR",
 
-            acceptLabel:
-                "SIM",
 
-            retreatLabel:
-                "NÃO",
+        choices: [
 
-            requirements:
-                DASH_V1_OFFERING
-        };
+            {
+                text:
+                    "SIM",
 
-        return true;
+                onSelect:
+                    () => {
+
+                        startDialogue(
+
+                            [
+                                "Ops... ele acordou."
+                            ],
+
+                            {
+                                speaker:
+                                    "ALTAR",
+
+                                onComplete:
+                                    () => {
+
+                                        awakenMonarchFromAltar();
+
+                                    }
+                            }
+
+                        );
+
+                    }
+            },
+
+
+            {
+                text:
+                    "NÃO",
+
+                onSelect:
+                    () => {
+
+                        startDialogue(
+
+                            [
+                                "O altar volta ao silêncio."
+                            ],
+
+                            {
+                                speaker:
+                                    "ALTAR"
+                            }
+
+                        );
+
+                    }
+            }
+
+        ]
+    }
+
+);
     }
 
 
@@ -35005,17 +35039,51 @@ const damage =
             return false;
         }
 
-        const boss =
-            getMonarchBoss(
-                world
-            );
+      /*
+    O boss não existe
+    antes da cena do altar.
+*/
+let boss =
+    getMonarchBoss(
+        world
+    );
 
-        if (
-            !boss ||
-            boss.dead
-        ) {
-            return false;
-        }
+
+if (
+    !boss
+) {
+    const spawn =
+        world.monarchSpawn ||
+        {
+
+            x:
+                world.altar.x -
+                250,
+
+            y:
+                world.altar.y,
+
+            arenaId:
+                "monarch_altar_room"
+
+        };
+
+
+    boss =
+        V.addBossIfAlive(
+            world,
+            "monarch",
+            spawn
+        );
+}
+
+
+if (
+    !boss ||
+    boss.dead
+) {
+    return false;
+}
 
         /*
             Salva antes da luta.
@@ -35177,175 +35245,270 @@ const damage =
     }
 
 
-    function spawnMonarchSummon(
-        boss
+function spawnMonarchSummon(
+    boss
+) {
+    const world =
+        state.world;
+
+
+    if (
+        !world ||
+        !boss ||
+        boss.dead
     ) {
-        const world =
-            state.world;
-
-        if (
-            !world ||
-            !boss ||
-            boss.dead
-        ) {
-            return false;
-        }
-
-        const config =
-            boss.definition
-                .summon;
-
-        const alive =
-            safeArray(
-                world.enemies
-            )
-                .filter(
-                    enemy =>
-                        !enemy.dead &&
-                        enemy.summonedBy ===
-                        "monarch"
-                );
-
-        if (
-            alive.length >=
-            config.maxAlive
-        ) {
-            return false;
-        }
-
-        const species =
-            config.species[
-                randomInt(
-                    0,
-                    config.species.length -
-                        1
-                )
-            ];
-
-        const angle =
-            random(
-                0,
-                Math.PI *
-                    2
-            );
-
-        const radius =
-            random(
-                150,
-                245
-            );
-
-        const room =
-            world.mazeData
-                ?.altarRoom;
-
-        let x =
-            boss.x +
-            Math.cos(
-                angle
-            ) *
-                radius;
-
-        let y =
-            boss.y +
-            Math.sin(
-                angle
-            ) *
-                radius;
-
-        if (
-            room
-        ) {
-            x =
-                clamp(
-                    x,
-                    room.x +
-                        65,
-                    room.x +
-                        room.w -
-                        65
-                );
-
-            y =
-                clamp(
-                    y,
-                    room.y +
-                        65,
-                    room.y +
-                        room.h -
-                        65
-                );
-        }
-
-        const safe =
-            findSafePosition(
-                x,
-                y,
-                ENEMY_SPECIES[
-                    species
-                ].radius,
-                world
-            );
-
-        const enemy =
-            V.createEnemy(
-                species,
-                {
-                    entityId:
-                        `monarch_summon_${gameplayRuntime.monarch.summonSerial++}`,
-
-                    x:
-                        safe.x,
-
-                    y:
-                        safe.y
-                }
-            );
-
-        if (
-            !enemy
-        ) {
-            return false;
-        }
-
-        enemy.summonedBy =
-            "monarch";
-
-        enemy.noDrops =
-            true;
-
-        enemy.aggro =
-            true;
-
-        enemy.state =
-            "chase";
-
-        enemy.xp =
-            Math.round(
-                enemy.xp *
-                0.45
-            );
-
-        world.enemies.push(
-            enemy
-        );
-
-        spawnTransientEffect(
-            "shadowSummon",
-            enemy.x,
-            enemy.y,
-            {
-                duration:
-                    0.8,
-
-                radius:
-                    50
-            }
-        );
-
-        return true;
+        return false;
     }
 
+
+    const config =
+        boss.definition
+            .summon;
+
+
+    const alive =
+        safeArray(
+            world.enemies
+        )
+            .filter(
+                enemy =>
+                    !enemy.dead &&
+                    enemy.summonedBy ===
+                    "monarch"
+            );
+
+
+    if (
+        alive.length >=
+        config.maxAlive
+    ) {
+        return false;
+    }
+
+
+    const species =
+        config.species[
+            randomInt(
+                0,
+                config.species.length -
+                    1
+            )
+        ];
+
+
+    const angle =
+        random(
+            0,
+            Math.PI *
+                2
+        );
+
+
+    const spawnRadius =
+        random(
+            150,
+            245
+        );
+
+
+    const room =
+        world.mazeData
+            ?.altarRoom;
+
+
+    let x =
+        boss.x +
+        Math.cos(
+            angle
+        ) *
+        spawnRadius;
+
+
+    let y =
+        boss.y +
+        Math.sin(
+            angle
+        ) *
+        spawnRadius;
+
+
+    /*
+        Mantém o spawn dentro
+        da arena do altar.
+    */
+    if (
+        room
+    ) {
+        x =
+            clamp(
+                x,
+                room.x + 65,
+                room.x +
+                    room.w -
+                    65
+            );
+
+
+        y =
+            clamp(
+                y,
+                room.y + 65,
+                room.y +
+                    room.h -
+                    65
+            );
+    }
+
+
+    /*
+        Define a posição segura
+        ANTES de mostrar o aviso.
+    */
+    const safe =
+        findSafePosition(
+            x,
+            y,
+            ENEMY_SPECIES[
+                species
+            ].radius,
+            world
+        );
+
+
+    /*
+        CÍRCULO VERMELHO.
+    */
+    createHazard({
+
+        type:
+            "monarchSummon",
+
+        source:
+            boss,
+
+        x:
+            safe.x,
+
+        y:
+            safe.y,
+
+        radius:
+            52,
+
+        damage:
+            1,
+
+        telegraph:
+            1.05,
+
+        activeDuration:
+            0.10,
+
+        color:
+            "#c1383f",
+
+        visualOnly:
+            true,
+
+
+        /*
+            Quando o círculo termina,
+            aí sim o inimigo nasce.
+        */
+        onActivate:
+            () => {
+
+                if (
+                    boss.dead ||
+                    !state.player
+                        ?.monarch
+                        ?.battleStarted
+                ) {
+                    return;
+                }
+
+
+                const enemy =
+                    V.createEnemy(
+                        species,
+                        {
+
+                            entityId:
+                                `monarch_summon_${gameplayRuntime.monarch.summonSerial++}`,
+
+                            x:
+                                safe.x,
+
+                            y:
+                                safe.y
+
+                        }
+                    );
+
+
+                if (
+                    !enemy
+                ) {
+                    return;
+                }
+
+
+                enemy.summonedBy =
+                    "monarch";
+
+
+                enemy.noDrops =
+                    true;
+
+
+                enemy.aggro =
+                    true;
+
+
+                enemy.state =
+                    "chase";
+
+
+                enemy.xp =
+                    Math.round(
+                        enemy.xp *
+                        0.45
+                    );
+
+
+                world.enemies.push(
+                    enemy
+                );
+
+
+                /*
+                    Explosão/sombra na hora
+                    que ele nasce.
+                */
+                spawnTransientEffect(
+
+                    "shadowSummon",
+
+                    enemy.x,
+                    enemy.y,
+
+                    {
+                        duration:
+                            0.8,
+
+                        radius:
+                            50
+                    }
+
+                );
+
+            }
+
+    });
+
+
+    return true;
+}
 
     function updateMonarch(
         boss,
@@ -35491,198 +35654,144 @@ const damage =
             boss.hp /
             boss.maxHp;
 
-        if (
-            boss.abilityCooldown <=
-            0
+   if (
+    boss.abilityCooldown <=
+    0
+) {
+    const hpRatio =
+        boss.hp /
+        boss.maxHp;
+
+
+    const pattern =
+        randomInt(
+            0,
+            2
+        );
+
+
+    /*
+        ATAQUES QUE CAEM DO ALTO.
+
+        Primeiro surge um círculo
+        vermelho no chão indicando
+        onde o golpe vai cair.
+    */
+    if (
+        pattern ===
+        0 ||
+        pattern ===
+        1
+    ) {
+        const amount =
+            hpRatio >
+                0.5
+
+                ? 3
+
+                : 5;
+
+
+        for (
+            let index = 0;
+
+            index <
+                amount;
+
+            index += 1
         ) {
-            const patterns =
-                hpRatio >
-                    0.5
-                    ? 3
-                    : 4;
-
-            const pattern =
-                randomInt(
-                    0,
-                    patterns -
-                        1
+            const targetX =
+                player.x +
+                random(
+                    -115,
+                    115
                 );
 
-            if (
-                pattern ===
-                0
-            ) {
-                fireRadialBossProjectiles(
+
+            const targetY =
+                player.y +
+                random(
+                    -115,
+                    115
+                );
+
+
+            createHazard({
+
+                type:
+                    "monarchMeteor",
+
+                source:
                     boss,
+
+                x:
+                    targetX,
+
+                y:
+                    targetY,
+
+                radius:
                     hpRatio >
                         0.5
-                        ? 9
-                        : 13,
-                    {
-                        speed:
-                            hpRatio >
-                                0.5
-                                ? 205
-                                : 235,
+                        ? 62
+                        : 72,
 
-                        multiplier:
-                            0.55,
+                damage:
+                    boss.damage *
+                    0.88,
 
-                        color:
-                            "#7f638d",
+                telegraph:
+                    1 +
+                    index *
+                        0.10,
 
-                        type:
-                            "shadowOrb"
-                    }
-                );
+                activeDuration:
+                    0.18,
 
-                boss.abilityCooldown =
-                    hpRatio >
-                        0.5
-                        ? 2.8
-                        : 2.35;
-            } else if (
-                pattern ===
-                1
-            ) {
-                const amount =
-                    hpRatio >
-                        0.5
-                        ? 2
-                        : 3;
+                color:
+                    "#c1383f"
 
-                for (
-                    let index = 0;
-                    index < amount;
-                    index += 1
-                ) {
-                    createHazard({
-                        type:
-                            "circle",
-
-                        source:
-                            boss,
-
-                        x:
-                            player.x +
-                            random(
-                                -95,
-                                95
-                            ),
-
-                        y:
-                            player.y +
-                            random(
-                                -95,
-                                95
-                            ),
-
-                        radius:
-                            68,
-
-                        damage:
-                            boss.damage *
-                            0.76,
-
-                        telegraph:
-                            0.85 +
-                            index *
-                                0.12,
-
-                        activeDuration:
-                            0.25,
-
-                        color:
-                            "#72547e"
-                    });
-                }
-
-                boss.abilityCooldown =
-                    3;
-            } else if (
-                pattern ===
-                2
-            ) {
-                createHazard({
-                    type:
-                        "beam",
-
-                    source:
-                        boss,
-
-                    x:
-                        boss.x,
-
-                    y:
-                        boss.y,
-
-                    angle:
-                        Math.atan2(
-                            player.y -
-                                boss.y,
-                            player.x -
-                                boss.x
-                        ),
-
-                    width:
-                        hpRatio >
-                            0.5
-                            ? 78
-                            : 95,
-
-                    length:
-                        720,
-
-                    damage:
-                        boss.damage *
-                        1.05,
-
-                    telegraph:
-                        hpRatio >
-                            0.5
-                            ? 1.05
-                            : 0.82,
-
-                    activeDuration:
-                        0.34,
-
-                    color:
-                        "#a184b0"
-                });
-
-                boss.abilityCooldown =
-                    3.35;
-            } else {
-                spawnMonarchSummon(
-                    boss
-                );
-
-                spawnMonarchSummon(
-                    boss
-                );
-
-                fireRadialBossProjectiles(
-                    boss,
-                    8,
-                    {
-                        speed:
-                            220,
-
-                        multiplier:
-                            0.45,
-
-                        color:
-                            "#80648e",
-
-                        type:
-                            "shadowOrb"
-                    }
-                );
-
-                boss.abilityCooldown =
-                    3.7;
-            }
+            });
         }
+
+
+        boss.abilityCooldown =
+            hpRatio >
+                0.5
+
+                ? 2.8
+
+                : 2.25;
+    }
+
+
+    /*
+        INVOCAR CRIATURAS.
+    */
+    else {
+        spawnMonarchSummon(
+            boss
+        );
+
+
+        /*
+            Com menos da metade da vida,
+            invoca duas criaturas.
+        */
+        if (
+            hpRatio <
+            0.55
+        ) {
+            spawnMonarchSummon(
+                boss
+            );
+        }
+
+
+        boss.abilityCooldown =
+            4.1;
+    }
+}
 
         if (
             boss.attackCooldown <=
@@ -53307,6 +53416,85 @@ for (
                 ctx.fill();
 
                 ctx.stroke();
+
+               /*
+    PROJÉTIL DO MONARCA
+    CAINDO DO ALTO.
+*/
+if (
+    hazard.type ===
+        "monarchMeteor" &&
+    !hazard.active
+) {
+    const fallingY =
+        screen.y -
+        (
+            165 *
+            (
+                1 -
+                telegraphRatio
+            )
+        );
+
+
+    /*
+        SOMBRA NO LOCAL
+        DA QUEDA.
+    */
+    ctx.fillStyle =
+        "rgba(40,8,12,0.35)";
+
+
+    ctx.beginPath();
+
+
+    ctx.ellipse(
+        screen.x,
+        screen.y,
+        23,
+        9,
+        0,
+        0,
+        Math.PI *
+            2
+    );
+
+
+    ctx.fill();
+
+
+    /*
+        ESFERA DESCENDO.
+    */
+    ctx.fillStyle =
+        "#5c1920";
+
+
+    ctx.strokeStyle =
+        "#d9555d";
+
+
+    ctx.lineWidth =
+        3;
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+        screen.x,
+        fallingY,
+        17,
+        0,
+        Math.PI *
+            2
+    );
+
+
+    ctx.fill();
+
+    ctx.stroke();
+}
             }
 
             ctx.restore();
@@ -55449,6 +55637,34 @@ ctx.restore();
 
 ctx.globalCompositeOperation =
     "source-over";
+
+/*
+    Finaliza a camada
+    de escuridão.
+*/
+ctx.restore();
+
+
+/*
+    Joga a camada de escuridão
+    sobre o canvas principal.
+*/
+mainCtx.drawImage(
+    canvas,
+
+    0,
+    0,
+
+    canvas.width,
+    canvas.height,
+
+    0,
+    0,
+
+    renderRuntime.width,
+    renderRuntime.height
+);
+}
        
     /* ============================================================
        MINIMAPA
@@ -63635,6 +63851,32 @@ drawDoors(
                 dialogue.choices
             );
 
+       const lines =
+    safeArray(
+        dialogue.lines
+    );
+
+
+const lastLine =
+    dialogue.index >=
+    lines.length -
+        1;
+
+
+/*
+    SIM/NÃO só aparecem quando
+    a última frase terminou.
+*/
+if (
+    !dialogue.completeLine ||
+    !lastLine
+) {
+    container.innerHTML =
+        "";
+
+    return;
+}
+
 
         if (
             choices.length ===
@@ -67490,7 +67732,160 @@ if (
        e desenhamos SOMENTE O MUNDO no canvas.
        ============================================================ */
 
-    function renderMainCanvas() {
+   function drawDamageScreenOverlay(
+    ctx,
+    dt
+) {
+    if (
+        state.damageFlash <=
+        0
+    ) {
+        return;
+    }
+
+
+    const strength =
+        clamp(
+            state.damageFlash,
+            0,
+            1
+        );
+
+
+    ctx.save();
+
+
+    /*
+        TOM VERMELHO GERAL.
+    */
+    ctx.fillStyle =
+        `rgba(100,8,12,${
+            0.11 *
+            strength
+        })`;
+
+
+    ctx.fillRect(
+        0,
+        0,
+        renderRuntime.width,
+        renderRuntime.height
+    );
+
+
+    /*
+        MANCHAS DE SANGUE
+        NAS BORDAS.
+    */
+    const edgeAlpha =
+        0.70 *
+        strength;
+
+
+    ctx.fillStyle =
+        `rgba(92,5,10,${
+            edgeAlpha
+        })`;
+
+
+    const spots = [
+
+        [
+            10,
+            60,
+            58
+        ],
+
+        [
+            renderRuntime.width -
+                10,
+            110,
+            74
+        ],
+
+        [
+            70,
+            renderRuntime.height -
+                12,
+            72
+        ],
+
+        [
+            renderRuntime.width -
+                80,
+            renderRuntime.height -
+                10,
+            82
+        ]
+
+    ];
+
+
+    for (
+        const [
+            x,
+            y,
+            r
+        ] of
+        spots
+    ) {
+        ctx.beginPath();
+
+
+        ctx.arc(
+            x,
+            y,
+            r,
+            0,
+            Math.PI *
+                2
+        );
+
+
+        ctx.fill();
+    }
+
+
+    /*
+        SANGUE ESCORRENDO
+        PELO TOPO.
+    */
+    ctx.fillRect(
+        20,
+        0,
+        11,
+        125
+    );
+
+
+    ctx.fillRect(
+        renderRuntime.width -
+            38,
+        0,
+        8,
+        95
+    );
+
+
+    ctx.restore();
+
+
+    /*
+        DESAPARECE DEVAGAR.
+    */
+    state.damageFlash =
+        Math.max(
+            0,
+
+            state.damageFlash -
+            dt *
+                1.25
+        );
+}
+
+  function renderMainCanvas(
+    dt = 0
+) {
         const ctx =
             renderRuntime.ctx;
 
@@ -67600,6 +67995,17 @@ if (
             drawTitleCard(
                 ctx
             );
+
+           /*
+    SANGUE / DANO NA TELA.
+
+    É desenhado por cima
+    do mundo inteiro.
+*/
+drawDamageScreenOverlay(
+    ctx,
+    dt
+);
         }
 
 

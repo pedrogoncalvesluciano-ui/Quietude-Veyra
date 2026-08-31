@@ -69074,6 +69074,77 @@ for (
         );
     }
 
+   function closeShop() {
+
+    /*
+        Fecha o estado lógico
+        da loja na Parte 3.
+    */
+    safeCall(
+        "closeActivePanel"
+    );
+
+
+    /*
+        Garante também que a
+        Parte 5 esqueça o vendedor.
+    */
+    state.shopNPC =
+        null;
+
+
+    state.shopMode =
+        "buy";
+
+
+    /*
+        Fecha visualmente
+        o painel da loja.
+    */
+    setVisible(
+        DOM.panels.shop,
+        false
+    );
+
+
+    /*
+        Limpa formatos antigos
+        e novos de activePanel.
+    */
+    if (
+        state.activePanel ===
+            "shop" ||
+
+        state.activePanel
+            ?.type ===
+            "shop" ||
+
+        state.activePanel
+            ?.type ===
+            "forge"
+    ) {
+        state.activePanel =
+            null;
+    }
+
+
+    /*
+        Só despausa se não houver
+        outro modal importante aberto.
+    */
+    if (
+        !state.dialogue &&
+        !state.battle &&
+        !state.travel &&
+        !state.deathState
+    ) {
+        state.paused =
+            false;
+    }
+
+
+    return true;
+}
 
     function bindGameButtons() {
         bindButton(

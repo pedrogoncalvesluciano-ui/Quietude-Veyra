@@ -60458,55 +60458,259 @@ drawDoors(
         return button;
     }
 
-
-    /* ============================================================
-       TELAS
-       ============================================================ */
-
-    function showScreen(
-        target
+function repairScreenInteractivity(
+    target
+) {
+    /*
+        Garante que somente a tela
+        atualmente aberta possa
+        receber mouse/toque.
+    */
+    for (
+        const [
+            name,
+            screen
+        ] of
+        Object.entries(
+            DOM.screens
+        )
     ) {
-        for (
-            const [
-                name,
-                screen
-            ] of
-            Object.entries(
-                DOM.screens
-            )
+        if (
+            !screen
         ) {
-            if (
-                !screen
-            ) {
-                continue;
-            }
-
-            screen.classList
-                .toggle(
-                    "active",
-                    name ===
-                        target
-                );
+            continue;
         }
 
-        state.currentScreen =
+
+        const active =
+            name ===
             target;
 
+
+        /*
+            Tela invisível NÃO pode
+            interceptar clique.
+        */
+        screen.style.pointerEvents =
+            active
+                ? "auto"
+                : "none";
+
+
+        /*
+            Menu / créditos / seleção
+            ficam acima do canvas.
+        */
+        screen.style.zIndex =
+            active
+                ? (
+                    name ===
+                        "game"
+                        ? "20"
+                        : "100"
+                )
+                : "0";
+
+
+        screen.setAttribute(
+            "aria-hidden",
+            active
+                ? "false"
+                : "true"
+        );
+
+
         if (
-            target ===
-            "game"
+            !active
         ) {
-            requestAnimationFrame(
-                () => {
-                    safeCall(
-                        "resizeRenderer"
-                    );
-                }
+            continue;
+        }
+
+
+        /*
+            Controles da tela ativa.
+        */
+        const controls =
+            screen.querySelectorAll(
+                `
+                    button,
+                    input,
+                    select,
+                    textarea,
+                    [role="button"]
+                `
             );
+
+
+        for (
+            const control of
+            controls
+        ) {
+            control.style.pointerEvents =
+                "auto";
+
+
+            /*
+                Melhora clique/toque
+                em notebook, PC,
+                tablet e celular.
+            */
+            control.style.touchAction =
+                "manipulation";
+
+
+            /*
+                Mantém os controles
+                acima dos elementos
+                decorativos.
+            */
+            if (
+                control.tagName ===
+                    "BUTTON" ||
+                control.getAttribute(
+                    "role"
+                ) ===
+                    "button"
+            ) {
+                control.style.position =
+                    "relative";
+
+                control.style.zIndex =
+                    "30";
+            }
         }
     }
 
 
+    /*
+        Canvas só recebe mouse
+        enquanto estamos no jogo.
+
+        Na tela inicial ele NÃO pode
+        ficar invisivelmente em cima
+        dos botões.
+    */
+    if (
+        DOM.canvas.game
+    ) {
+        const gameActive =
+            target ===
+            "game";
+
+
+        DOM.canvas.game
+            .style
+            .pointerEvents =
+            gameActive
+                ? "auto"
+                : "none";
+
+
+        DOM.canvas.game
+            .style
+            .zIndex =
+            gameActive
+                ? "1"
+                : "0";
+    }
+}
+   
+    /* ============================================================
+       TELAS
+       ============================================================ */
+       
+   function showScreen(
+    target
+) {
+    const targetScreen =
+        DOM.screens[
+            target
+        ];
+
+
+    if (
+        !targetScreen
+    ) {
+        console.warn(
+            "VEYRA — tela não encontrada:",
+            target
+        );
+
+        return false;
+    }
+
+
+    for (
+        const [
+            name,
+            screen
+        ] of
+        Object.entries(
+            DOM.screens
+        )
+    ) {
+        if (
+            !screen
+        ) {
+            continue;
+        }
+
+
+        const active =
+            name ===
+            target;
+
+
+        screen.classList
+            .toggle(
+                "active",
+                active
+            );
+    }
+
+
+    /*
+        Impede telas escondidas,
+        canvas e camadas decorativas
+        de roubarem o clique.
+    */
+    repairScreenInteractivity(
+        target
+    );
+
+
+    state.currentScreen =
+        target;
+
+
+    if (
+        target ===
+        "game"
+    ) {
+        requestAnimationFrame(
+            () => {
+
+                safeCall(
+                    "resizeRenderer"
+                );
+
+
+                /*
+                    Depois do resize,
+                    garante novamente
+                    a camada correta.
+                */
+                repairScreenInteractivity(
+                    "game"
+                );
+
+            }
+        );
+    }
+
+
+    return true;
+}
     function returnToMainScreen() {
         closeAllPanels();
 
@@ -68659,20 +68863,81 @@ updateTransition(
 
 
     /*
-        onclick evita acumular listeners
-        duplicados quando o jogo reinicia
-        ou inicializa novamente.
+        Evita botão agir como
+        submit caso esteja dentro
+        de algum formulário.
     */
-    button.onclick =
-        handler;
+    button.setAttribute(
+        "type",
+        "button"
+    );
 
 
     /*
-        Garante que o botão possa
-        receber clique.
+        onclick evita duplicar
+        listeners quando reinicia
+        ou volta para o menu.
     */
+    button.onclick =
+        event => {
+
+            /*
+                Botão realmente
+                desativado continua
+                sem executar.
+            */
+            if (
+                button.disabled
+            ) {
+                return false;
+            }
+
+
+            if (
+                event
+            ) {
+                event.preventDefault();
+
+                event.stopPropagation();
+            }
+
+
+            try {
+
+                return handler(
+                    event
+                );
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    "VEYRA — erro ao executar botão:",
+                    button.id ||
+                        button.textContent,
+                    error
+                );
+
+
+                return false;
+            }
+
+        };
+
+
     button.style.pointerEvents =
         "auto";
+
+
+    button.style.touchAction =
+        "manipulation";
+
+
+    button.style.cursor =
+        button.disabled
+            ? "default"
+            : "pointer";
 
 
     return true;
@@ -69490,6 +69755,28 @@ bindMenuButtons();
         showScreen(
             "menu"
         );
+
+       /*
+    GARANTIA FINAL DE CLIQUE.
+
+    Útil principalmente quando CSS,
+    transições ou canvas criam novas
+    camadas durante a inicialização.
+*/
+repairScreenInteractivity(
+    "menu"
+);
+
+
+/*
+    Reaplica os eventos.
+
+    bindButton usa onclick,
+    então isso NÃO duplica eventos.
+*/
+bindMenuButtons();
+
+bindGameButtons();
 
 
         UI_RUNTIME.initialized =

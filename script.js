@@ -69771,176 +69771,428 @@ function enhanceHowToCards() {
         Cada chave abaixo corresponde
         ao texto antigo do card.
     */
-    const CONTROL_VISUALS = {
+   const CONTROL_VISUALS = {
 
-        "W A S D / SETAS": {
-            emoji:
-                "⌨️",
+    /*
+        MOVIMENTO
+    */
+    "MOVIMENTO": {
+        emoji:
+            "⌨️",
 
-            title:
-                "MOVIMENTO",
+        title:
+            "MOVIMENTO",
 
-            key:
-                "WASD / SETAS"
-        },
-
-
-        "WASD / SETAS": {
-            emoji:
-                "⌨️",
-
-            title:
-                "MOVIMENTO",
-
-            key:
-                "WASD / SETAS"
-        },
+        key:
+            "WASD / SETAS"
+    },
 
 
-        "CLIQUE": {
-            emoji:
-                "🖱️",
+    "W A S D / SETAS": {
+        emoji:
+            "⌨️",
 
-            title:
-                "ATAQUE BÁSICO",
+        title:
+            "MOVIMENTO",
 
-            key:
-                "CLIQUE ESQUERDO"
-        },
-
-
-        "Q / R / F": {
-            emoji:
-                "✨",
-
-            title:
-                "HABILIDADES",
-
-            key:
-                "Q • R • F"
-        },
+        key:
+            "WASD / SETAS"
+    },
 
 
-        "E": {
-            emoji:
-                "🤝",
+    "WASD / SETAS": {
+        emoji:
+            "⌨️",
 
-            title:
-                "INTERAGIR",
+        title:
+            "MOVIMENTO",
 
-            key:
-                "E"
-        },
-
-
-        "SEGURE E": {
-            emoji:
-                "⛏️",
-
-            title:
-                "COLETAR",
-
-            key:
-                "SEGURE E"
-        },
+        key:
+            "WASD / SETAS"
+    },
 
 
-        "Z": {
-            emoji:
-                "🚪",
+    /*
+        ATAQUE
+    */
+    "ATAQUE BÁSICO": {
+        emoji:
+            "🖱️",
 
-            title:
-                "PORTAS",
+        title:
+            "ATAQUE BÁSICO",
 
-            key:
-                "Z"
-        },
-
-
-        "I": {
-            emoji:
-                "🎒",
-
-            title:
-                "MOCHILA",
-
-            key:
-                "I"
-        },
+        key:
+            "CLIQUE ESQUERDO"
+    },
 
 
-        "M": {
-            emoji:
-                "🗺️",
+    "CLIQUE": {
+        emoji:
+            "🖱️",
 
-            title:
-                "MAPA",
+        title:
+            "ATAQUE BÁSICO",
 
-            key:
-                "M"
-        },
-
-
-        "L": {
-            emoji:
-                "📖",
-
-            title:
-                "LIVRO DE VEYRA",
-
-            key:
-                "L"
-        },
+        key:
+            "CLIQUE ESQUERDO"
+    },
 
 
-        "C": {
-            emoji:
-                "📊",
+    /*
+        INTERAÇÃO
+    */
+    "INTERAÇÃO": {
+        emoji:
+            "🤝",
 
-            title:
-                "STATUS",
+        title:
+            "INTERAÇÃO",
 
-            key:
-                "C"
-        },
-
-
-        "SPACE": {
-            emoji:
-                "💨",
-
-            title:
-                "DASH",
-
-            key:
-                "ESPAÇO"
-        },
+        key:
+            "E"
+    },
 
 
-        "ESPAÇO": {
-            emoji:
-                "💨",
+    "INTERAGIR": {
+        emoji:
+            "🤝",
 
-            title:
-                "DASH",
+        title:
+            "INTERAÇÃO",
 
-            key:
-                "ESPAÇO"
-        },
+        key:
+            "E"
+    },
 
 
-        "ESC": {
-            emoji:
-                "⚙️",
+    "E": {
+        emoji:
+            "🤝",
 
-            title:
-                "MENU",
+        title:
+            "INTERAÇÃO",
 
-            key:
-                "ESC"
-        }
+        key:
+            "E"
+    },
 
-    };
+
+    /*
+        PORTAS
+    */
+    "PORTAS": {
+        emoji:
+            "🚪",
+
+        title:
+            "PORTAS",
+
+        key:
+            "Z"
+    },
+
+
+    "Z": {
+        emoji:
+            "🚪",
+
+        title:
+            "PORTAS",
+
+        key:
+            "Z"
+    },
+
+
+    /*
+        HABILIDADES
+    */
+    "PRIMEIRA HABILIDADE": {
+        emoji:
+            "✨",
+
+        title:
+            "PRIMEIRA HABILIDADE",
+
+        key:
+            "Q"
+    },
+
+
+    "SEGUNDA HABILIDADE": {
+        emoji:
+            "⚡",
+
+        title:
+            "SEGUNDA HABILIDADE",
+
+        key:
+            "R • NÍVEL 5"
+    },
+
+
+    "TERCEIRA HABILIDADE": {
+        emoji:
+            "💫",
+
+        title:
+            "TERCEIRA HABILIDADE",
+
+        key:
+            "F • NÍVEL 10"
+    },
+
+
+    "HABILIDADES": {
+        emoji:
+            "✨",
+
+        title:
+            "HABILIDADES",
+
+        key:
+            "Q • R • F"
+    },
+
+
+    "Q / R / F": {
+        emoji:
+            "✨",
+
+        title:
+            "HABILIDADES",
+
+        key:
+            "Q • R • F"
+    },
+
+
+    /*
+        DASH
+    */
+    "DASH": {
+        emoji:
+            "💨",
+
+        title:
+            "DASH",
+
+        key:
+            "ESPAÇO"
+    },
+
+
+    "SPACE": {
+        emoji:
+            "💨",
+
+        title:
+            "DASH",
+
+        key:
+            "ESPAÇO"
+    },
+
+
+    "ESPAÇO": {
+        emoji:
+            "💨",
+
+        title:
+            "DASH",
+
+        key:
+            "ESPAÇO"
+    },
+
+
+    /*
+        COLETA
+    */
+    "COLETAR": {
+        emoji:
+            "⛏️",
+
+        title:
+            "COLETAR",
+
+        key:
+            "SEGURE E"
+    },
+
+
+    "COLETA": {
+        emoji:
+            "⛏️",
+
+        title:
+            "COLETAR",
+
+        key:
+            "SEGURE E"
+    },
+
+
+    "SEGURE E": {
+        emoji:
+            "⛏️",
+
+        title:
+            "COLETAR",
+
+        key:
+            "SEGURE E"
+    },
+
+
+    /*
+        MOCHILA
+    */
+    "MOCHILA": {
+        emoji:
+            "🎒",
+
+        title:
+            "MOCHILA",
+
+        key:
+            "I"
+    },
+
+
+    "I": {
+        emoji:
+            "🎒",
+
+        title:
+            "MOCHILA",
+
+        key:
+            "I"
+    },
+
+
+    /*
+        MAPA
+    */
+    "MAPA": {
+        emoji:
+            "🗺️",
+
+        title:
+            "MAPA",
+
+        key:
+            "M"
+    },
+
+
+    "M": {
+        emoji:
+            "🗺️",
+
+        title:
+            "MAPA",
+
+        key:
+            "M"
+    },
+
+
+    /*
+        LIVRO
+    */
+    "LIVRO": {
+        emoji:
+            "📖",
+
+        title:
+            "LIVRO DE VEYRA",
+
+        key:
+            "L"
+    },
+
+
+    "LIVRO DE VEYRA": {
+        emoji:
+            "📖",
+
+        title:
+            "LIVRO DE VEYRA",
+
+        key:
+            "L"
+    },
+
+
+    "L": {
+        emoji:
+            "📖",
+
+        title:
+            "LIVRO DE VEYRA",
+
+        key:
+            "L"
+    },
+
+
+    /*
+        STATUS
+    */
+    "STATUS": {
+        emoji:
+            "📊",
+
+        title:
+            "STATUS",
+
+        key:
+            "C"
+    },
+
+
+    "C": {
+        emoji:
+            "📊",
+
+        title:
+            "STATUS",
+
+        key:
+            "C"
+    },
+
+
+    /*
+        MENU
+    */
+    "MENU": {
+        emoji:
+            "⚙️",
+
+        title:
+            "MENU",
+
+        key:
+            "ESC"
+    },
+
+
+    "ESC": {
+        emoji:
+            "⚙️",
+
+        title:
+            "MENU",
+
+        key:
+            "ESC"
+    }
+
+};
 
 
     for (
@@ -69989,21 +70241,26 @@ function enhanceHowToCards() {
                 );
 
 
-        const visual =
-            CONTROL_VISUALS[
-                originalLabel
-            ] || {
+       const visual =
+    CONTROL_VISUALS[
+        originalLabel
+    ] || {
 
-                emoji:
-                    "✦",
+        /*
+            Caso apareça algum controle
+            novo no futuro, pelo menos
+            continua usando emoji.
+        */
+        emoji:
+            "🎮",
 
-                title:
-                    originalLabel,
+        title:
+            originalLabel,
 
-                key:
-                    ""
+        key:
+            ""
 
-            };
+    };
 
 
         const description =

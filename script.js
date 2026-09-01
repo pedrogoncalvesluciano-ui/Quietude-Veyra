@@ -65337,6 +65337,103 @@ if (
         renderShop();
     }
 
+   function showShopToast(
+    title,
+    text = "",
+    type = "success"
+) {
+    let toast =
+        document.getElementById(
+            "veyraShopToast"
+        );
+
+
+    if (
+        !toast
+    ) {
+        toast =
+            document.createElement(
+                "div"
+            );
+
+
+        toast.id =
+            "veyraShopToast";
+
+
+        toast.className =
+            "veyra-shop-toast";
+
+
+        document.body.appendChild(
+            toast
+        );
+    }
+
+
+    toast.dataset.type =
+        type;
+
+
+    const titleElement =
+        document.createElement(
+            "strong"
+        );
+
+
+    titleElement.textContent =
+        title;
+
+
+    const textElement =
+        document.createElement(
+            "span"
+        );
+
+
+    textElement.textContent =
+        text;
+
+
+    toast.replaceChildren(
+        titleElement,
+        textElement
+    );
+
+
+    toast.classList.remove(
+        "show"
+    );
+
+
+    requestAnimationFrame(
+        () => {
+
+            toast.classList.add(
+                "show"
+            );
+
+        }
+    );
+
+
+    clearTimeout(
+        toast._veyraTimer
+    );
+
+
+    toast._veyraTimer =
+        setTimeout(
+            () => {
+
+                toast.classList.remove(
+                    "show"
+                );
+
+            },
+            1900
+        );
+}
 
     function renderShop() {
         const container =
@@ -65394,19 +65491,57 @@ if (
         }
 
 
-        container.innerHTML =
-            entries
-                .map(
-                    entry =>
-                        shopItemHTML(
-                            entry,
-                            mode
-                        )
-                )
-                .join(
-                    ""
-                );
+       /*
+    BOTÃO EXTRA DA ABA VENDER.
 
+    Só aparece quando a loja
+    estiver no modo de venda.
+*/
+const sellAllHTML =
+    mode ===
+        "sell"
+
+        ? `
+            <div class="shop-sell-all-row">
+
+                <div>
+                    <strong>
+                        VENDER INVENTÁRIO
+                    </strong>
+
+                    <span>
+                        Itens únicos e itens de missão serão preservados.
+                    </span>
+                </div>
+
+
+                <button
+                    type="button"
+                    data-shop-sell-all
+                >
+                    VENDER TUDO
+                </button>
+
+            </div>
+        `
+
+        : "";
+
+
+container.innerHTML =
+    sellAllHTML +
+
+    entries
+        .map(
+            entry =>
+                shopItemHTML(
+                    entry,
+                    mode
+                )
+        )
+        .join(
+            ""
+        );
 
         for (
             const button of
@@ -65434,14 +65569,39 @@ if (
         );
 
 
-firstAvailableCall(
-    [
-        "buyShopItem",
-        "buyItem"
-    ],
-    vendorId,
-    itemId
-);
+const purchased =
+    firstAvailableCall(
+        [
+            "buyShopItem",
+            "buyItem"
+        ],
+
+        vendorId,
+        itemId
+    );
+
+
+if (
+    purchased
+) {
+    const item =
+        V.ITEMS
+            ?.[
+                itemId
+            ];
+
+
+    showShopToast(
+
+        item?.unique
+            ? "ITEM ADQUIRIDO"
+            : "ITEM COMPRADO",
+
+        item?.name ||
+            itemId
+
+    );
+}
 
 
                     renderShop();
@@ -65468,15 +65628,35 @@ firstAvailableCall(
                             .shopSell;
 
 
-        firstAvailableCall(
-    [
-        "sellInventoryItem",
-        "sellShopItem",
-        "sellItem"
-    ],
-    itemId,
-    1
-);
+      const sold =
+    firstAvailableCall(
+        [
+            "sellInventoryItem",
+            "sellShopItem",
+            "sellItem"
+        ],
+
+        itemId,
+        1
+    );
+
+
+if (
+    sold
+) {
+    showShopToast(
+
+        "ITEM VENDIDO",
+
+        V.ITEMS
+            ?.[
+                itemId
+            ]
+            ?.name ||
+        itemId
+
+    );
+}
 
 
                     renderShop();
@@ -65487,6 +65667,51 @@ firstAvailableCall(
                 }
             );
         }
+       /*
+    VENDER TUDO.
+*/
+const sellAllButton =
+    container.querySelector(
+        "[data-shop-sell-all]"
+    );
+
+
+if (
+    sellAllButton
+) {
+    sellAllButton.addEventListener(
+        "click",
+        () => {
+
+            const result =
+                firstAvailableCall(
+                    [
+                        "sellAllInventoryItems"
+                    ]
+                );
+
+
+            if (
+                result
+            ) {
+                showShopToast(
+                    "ITENS VENDIDOS",
+
+                    `${result.count} itens • +${result.total} moedas`
+                );
+            }
+
+
+            renderShop();
+
+
+            updateHTMLHUD(
+                true
+            );
+
+        }
+    );
+}
     }
 
 

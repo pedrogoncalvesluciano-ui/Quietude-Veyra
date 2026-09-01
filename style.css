@@ -11481,3 +11481,309 @@ word-break:
 .shop-sell-all-row span
 .shop-sell-all-row button
 .shop-sell-all-row button:hover
+
+/* ================================================================
+   MENSAGEM DA LOJA
+   ================================================================ */
+
+.veyra-shop-toast {
+
+    position:
+        fixed;
+
+    left:
+        50%;
+
+    top:
+        26px;
+
+    z-index:
+        999999;
+
+    display:
+        grid;
+
+    min-width:
+        270px;
+
+    max-width:
+        calc(
+            100vw -
+            30px
+        );
+
+    padding:
+        13px
+        18px;
+
+    border:
+        1px solid
+        rgba(
+            211,
+            174,
+            91,
+            .34
+        );
+
+    border-radius:
+        8px;
+
+    color:
+        #e5dcc8;
+
+    background:
+        rgba(
+            8,
+            10,
+            12,
+            .97
+        );
+
+    box-shadow:
+
+        0
+        12px
+        36px
+        rgba(
+            0,
+            0,
+            0,
+            .45
+        ),
+
+        0
+        0
+        20px
+        rgba(
+            197,
+            155,
+            69,
+            .08
+        );
+
+    opacity:
+        0;
+
+    pointer-events:
+        none;
+
+    transform:
+
+        translate(
+            -50%,
+            -12px
+        );
+
+    transition:
+
+        opacity
+        .18s
+        ease,
+
+        transform
+        .18s
+        ease;
+
+}
+
+
+.veyra-shop-toast.show {
+
+    opacity:
+        1;
+
+    transform:
+
+        translate(
+            -50%,
+            0
+        );
+
+}
+
+
+.veyra-shop-toast strong {
+
+    color:
+        #e4c77e;
+
+    font-size:
+        12px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        .12em;
+
+    text-align:
+        center;
+
+}
+
+
+.veyra-shop-toast span {
+
+    margin-top:
+        5px;
+
+    color:
+        #aaa397;
+
+    font-size:
+        12px;
+
+    text-align:
+        center;
+
+}
+
+
+/* ================================================================
+   VENDER TUDO
+   ================================================================ */
+
+.shop-sell-all-row {
+
+    display:
+        grid;
+
+    grid-template-columns:
+
+        1fr
+        auto;
+
+    align-items:
+        center;
+
+    gap:
+        16px;
+
+    padding:
+        14px
+        15px;
+
+    margin-bottom:
+        8px;
+
+    border:
+        1px solid
+        rgba(
+            195,
+            159,
+            80,
+            .17
+        );
+
+    border-radius:
+        7px;
+
+    background:
+
+        linear-gradient(
+            135deg,
+
+            rgba(
+                190,
+                149,
+                65,
+                .055
+            ),
+
+            rgba(
+                255,
+                255,
+                255,
+                .01
+            )
+        );
+
+}
+
+
+.shop-sell-all-row strong {
+
+    display:
+        block;
+
+    color:
+        #d1bd8c;
+
+    font-size:
+        11px;
+
+}
+
+
+.shop-sell-all-row span {
+
+    display:
+        block;
+
+    margin-top:
+        4px;
+
+    color:
+        #817b70;
+
+    font-size:
+        10px;
+
+}
+
+
+.shop-sell-all-row button {
+
+    min-height:
+        40px;
+
+    padding:
+
+        0
+        16px;
+
+    border:
+        1px solid
+        rgba(
+            214,
+            171,
+            79,
+            .30
+        );
+
+    border-radius:
+        5px;
+
+    color:
+        #d6bd80;
+
+    background:
+        rgba(
+            192,
+            147,
+            54,
+            .05
+        );
+
+}
+
+
+.shop-sell-all-row button:hover {
+
+    border-color:
+        rgba(
+            229,
+            184,
+            87,
+            .56
+        );
+
+    background:
+        rgba(
+            196,
+            148,
+            52,
+            .10
+        );
+
+}

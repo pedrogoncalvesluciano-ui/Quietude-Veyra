@@ -65586,162 +65586,117 @@ container.innerHTML =
             ""
         );
 
-        for (
-            const button of
-            container.querySelectorAll(
-                "[data-shop-buy]"
-            )
-        ) {
-            button.addEventListener(
-                "click",
-                () => {
-                    const itemId =
-                        button.dataset
-                            .shopBuy;
+    /*
+    CLIQUE ÚNICO DA LOJA.
 
-
-                 const vendorId =
-    typeof state.shopNPC ===
-    "string"
-        ? state.shopNPC
-        : (
-            state.shopNPC
-                ?.vendor ||
-            state.shopNPC
-                ?.id
-        );
-
-
-const purchased =
-    firstAvailableCall(
-        [
-            "buyShopItem",
-            "buyItem"
-        ],
-
-        vendorId,
-        itemId
-    );
-
-
-if (
-    purchased
-) {
-    const item =
-        V.ITEMS
-            ?.[
-                itemId
-            ];
-
-
-    showShopToast(
-
-        item?.unique
-            ? "ITEM ADQUIRIDO"
-            : "ITEM COMPRADO",
-
-        item?.name ||
-            itemId
-
-    );
-}
-
-
-                    renderShop();
-
-                    updateHTMLHUD(
-                        true
-                    );
-                }
-            );
-        }
-
-
-        for (
-            const button of
-            container.querySelectorAll(
-                "[data-shop-sell]"
-            )
-        ) {
-            button.addEventListener(
-                "click",
-                () => {
-                    const itemId =
-                        button.dataset
-                            .shopSell;
-
-
-      const sold =
-    firstAvailableCall(
-        [
-            "sellInventoryItem",
-            "sellShopItem",
-            "sellItem"
-        ],
-
-        itemId,
-        1
-    );
-
-
-if (
-    sold
-) {
-    showShopToast(
-
-        "ITEM VENDIDO",
-
-        V.ITEMS
-            ?.[
-                itemId
-            ]
-            ?.name ||
-        itemId
-
-    );
-}
-
-
-                    renderShop();
-
-                    updateHTMLHUD(
-                        true
-                    );
-                }
-            );
-        }
-       /*
-    VENDER TUDO.
+    Como renderShop() recria o HTML,
+    usamos delegação de eventos.
 */
-const sellAllButton =
-    container.querySelector(
-        "[data-shop-sell-all]"
-    );
+container.onclick =
+    event => {
 
-
-if (
-    sellAllButton
-) {
-    sellAllButton.addEventListener(
-        "click",
-        () => {
-
-            const result =
-                firstAvailableCall(
-                    [
-                        "sellAllInventoryItems"
-                    ]
+        const button =
+            event.target
+                ?.closest?.(
+                    "button"
                 );
 
 
-            if (
-                result
+        if (
+            !button ||
+            !container.contains(
+                button
+            )
+        ) {
+            return;
+        }
+
+
+        const vendorId =
+            typeof state.shopNPC ===
+            "string"
+
+                ? state.shopNPC
+
+                : (
+                    state.shopNPC
+                        ?.vendor ||
+
+                    state.shopNPC
+                        ?.id
+                );
+
+
+        /* =====================================
+           COMPRAR
+           ===================================== */
+
+        const buyItemId =
+            button.dataset
+                .shopBuy;
+
+
+        if (
+            buyItemId
+        ) {
+
+            try {
+
+                const purchased =
+                    V.buyShopItem(
+                        vendorId,
+                        buyItemId
+                    );
+
+
+                if (
+                    purchased
+                ) {
+
+                    const item =
+                        V.ITEMS
+                            ?.[
+                                buyItemId
+                            ];
+
+
+                    showShopToast(
+
+                        item?.unique
+                            ? "ITEM ADQUIRIDO"
+                            : "ITEM COMPRADO",
+
+                        item?.name ||
+                            buyItemId
+
+                    );
+
+                } else {
+
+                    showShopToast(
+                        "COMPRA NÃO REALIZADA",
+                        "Verifique as moedas, a mochila ou se o item já foi obtido.",
+                        "warning"
+                    );
+
+                }
+
+            } catch (
+                error
             ) {
-                showShopToast(
-                    "ITENS VENDIDOS",
 
-                    `${result.count} itens • +${result.total} moedas`
+                console.error(
+                    "VEYRA — erro ao comprar:",
+                    error
                 );
+
+
+                showShopToast(
+                    "ERRO NA COMPRA",
+                    "Não foi possível processar o item.",
+                    "error"
+                );
+
             }
 
 
@@ -65752,11 +65707,158 @@ if (
                 true
             );
 
-        }
-    );
-}
-    }
 
+            return;
+        }
+
+
+        /* =====================================
+           VENDER 1
+           ===================================== */
+
+        const sellItemId =
+            button.dataset
+                .shopSell;
+
+
+        if (
+            sellItemId
+        ) {
+
+            try {
+
+                const sold =
+                    V.sellInventoryItem(
+                        sellItemId,
+                        1
+                    );
+
+
+                if (
+                    sold
+                ) {
+
+                    showShopToast(
+
+                        "ITEM VENDIDO",
+
+                        V.ITEMS
+                            ?.[
+                                sellItemId
+                            ]
+                            ?.name ||
+
+                        sellItemId
+
+                    );
+
+                } else {
+
+                    showShopToast(
+                        "VENDA NÃO REALIZADA",
+                        "Este item não pode ser vendido.",
+                        "warning"
+                    );
+
+                }
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    "VEYRA — erro ao vender:",
+                    error
+                );
+
+
+                showShopToast(
+                    "ERRO NA VENDA",
+                    "Não foi possível vender este item.",
+                    "error"
+                );
+
+            }
+
+
+            renderShop();
+
+
+            updateHTMLHUD(
+                true
+            );
+
+
+            return;
+        }
+
+
+        /* =====================================
+           VENDER TUDO
+           ===================================== */
+
+        if (
+            button.hasAttribute(
+                "data-shop-sell-all"
+            )
+        ) {
+
+            try {
+
+                const result =
+                    V.sellAllInventoryItems();
+
+
+                if (
+                    result
+                ) {
+
+                    showShopToast(
+
+                        "ITENS VENDIDOS",
+
+                        `${result.count} itens • +${result.total} moedas`
+
+                    );
+
+                } else {
+
+                    showShopToast(
+                        "NADA PARA VENDER",
+                        "Sua mochila não possui itens vendáveis.",
+                        "info"
+                    );
+
+                }
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    "VEYRA — erro ao vender inventário:",
+                    error
+                );
+
+
+                showShopToast(
+                    "ERRO NA VENDA",
+                    "Não foi possível vender o inventário.",
+                    "error"
+                );
+
+            }
+
+
+            renderShop();
+
+
+            updateHTMLHUD(
+                true
+            );
+        }
+
+    };
 
    function getShopBuyEntries(
     npc
@@ -66774,14 +66876,17 @@ function getDevPanel() {
         }
     );
 
-    panel
-        .querySelector(
-            "#veyraDevLogin"
-        )
-        .addEventListener(
-            "click",
-            authenticateDevPanel
-        );
+   /*
+    ESQUECI / ALTERAR SENHA.
+*/
+panel
+    .querySelector(
+        "#veyraDevChangePassword"
+    )
+    ?.addEventListener(
+        "click",
+        changeDevPassword
+    );
 
 
     panel
@@ -70298,177 +70403,224 @@ function enhanceHowToCards() {
         Cada chave abaixo corresponde
         ao texto antigo do card.
     */
-    const CONTROL_VISUALS = {
+  const CONTROL_VISUALS = {
 
-        "W A S D / SETAS": {
-            emoji:
-                "⌨️",
+    "MOVIMENTO": {
+        emoji:
+            "⌨️",
 
-            title:
-                "MOVIMENTO",
+        title:
+            "MOVIMENTO",
 
-            key:
-                "WASD / SETAS"
-        },
-
-
-        "WASD / SETAS": {
-            emoji:
-                "⌨️",
-
-            title:
-                "MOVIMENTO",
-
-            key:
-                "WASD / SETAS"
-        },
+        key:
+            "WASD / SETAS"
+    },
 
 
-        "CLIQUE": {
-            emoji:
-                "🖱️",
+    "ATAQUE BÁSICO": {
+        emoji:
+            "🖱️",
 
-            title:
-                "ATAQUE BÁSICO",
+        title:
+            "ATAQUE BÁSICO",
 
-            key:
-                "CLIQUE ESQUERDO"
-        },
-
-
-        "Q / R / F": {
-            emoji:
-                "✨",
-
-            title:
-                "HABILIDADES",
-
-            key:
-                "Q • R • F"
-        },
+        key:
+            "CLIQUE ESQUERDO"
+    },
 
 
-        "E": {
-            emoji:
-                "🤝",
+    "INTERAÇÃO": {
+        emoji:
+            "🤝",
 
-            title:
-                "INTERAGIR",
+        title:
+            "INTERAÇÃO",
 
-            key:
-                "E"
-        },
-
-
-        "SEGURE E": {
-            emoji:
-                "⛏️",
-
-            title:
-                "COLETAR",
-
-            key:
-                "SEGURE E"
-        },
+        key:
+            "E"
+    },
 
 
-        "Z": {
-            emoji:
-                "🚪",
+    "PORTAS": {
+        emoji:
+            "🚪",
 
-            title:
-                "PORTAS",
+        title:
+            "PORTAS",
 
-            key:
-                "Z"
-        },
-
-
-        "I": {
-            emoji:
-                "🎒",
-
-            title:
-                "MOCHILA",
-
-            key:
-                "I"
-        },
+        key:
+            "Z"
+    },
 
 
-        "M": {
-            emoji:
-                "🗺️",
+    "PRIMEIRA HABILIDADE": {
+        emoji:
+            "✨",
 
-            title:
-                "MAPA",
+        title:
+            "PRIMEIRA HABILIDADE",
 
-            key:
-                "M"
-        },
-
-
-        "L": {
-            emoji:
-                "📖",
-
-            title:
-                "LIVRO DE VEYRA",
-
-            key:
-                "L"
-        },
+        key:
+            "Q"
+    },
 
 
-        "C": {
-            emoji:
-                "📊",
+    "SEGUNDA HABILIDADE": {
+        emoji:
+            "⚡",
 
-            title:
-                "STATUS",
+        title:
+            "SEGUNDA HABILIDADE",
 
-            key:
-                "C"
-        },
-
-
-        "SPACE": {
-            emoji:
-                "💨",
-
-            title:
-                "DASH",
-
-            key:
-                "ESPAÇO"
-        },
+        key:
+            "R • NÍVEL 5"
+    },
 
 
-        "ESPAÇO": {
-            emoji:
-                "💨",
+    "TERCEIRA HABILIDADE": {
+        emoji:
+            "💫",
 
-            title:
-                "DASH",
+        title:
+            "TERCEIRA HABILIDADE",
 
-            key:
-                "ESPAÇO"
-        },
+        key:
+            "F • NÍVEL 10"
+    },
 
 
-        "ESC": {
-            emoji:
-                "⚙️",
+    "DASH": {
+        emoji:
+            "💨",
 
-            title:
-                "MENU",
+        title:
+            "DASH",
 
-            key:
-                "ESC"
-        }
+        key:
+            "ESPAÇO"
+    },
 
-    };
 
+    "MOCHILA": {
+        emoji:
+            "🎒",
+
+        title:
+            "MOCHILA",
+
+        key:
+            "I"
+    },
+
+
+    "STATUS": {
+        emoji:
+            "📊",
+
+        title:
+            "STATUS",
+
+        key:
+            "C"
+    },
+
+
+    "EXAUSTÃO": {
+        emoji:
+            "🌙",
+
+        title:
+            "EXAUSTÃO",
+
+        key:
+            "COMER / DORMIR"
+    },
+
+
+    "MORTE": {
+        emoji:
+            "💀",
+
+        title:
+            "MORTE",
+
+        key:
+            "RENASCER / DESISTIR"
+    },
+
+
+    "COLETA": {
+        emoji:
+            "⛏️",
+
+        title:
+            "COLETA",
+
+        key:
+            "SEGURE E"
+    },
+
+
+    "COLETAR": {
+        emoji:
+            "⛏️",
+
+        title:
+            "COLETAR",
+
+        key:
+            "SEGURE E"
+    },
+
+
+    "MAPA": {
+        emoji:
+            "🗺️",
+
+        title:
+            "MAPA",
+
+        key:
+            "M"
+    },
+
+
+    "LIVRO": {
+        emoji:
+            "📖",
+
+        title:
+            "LIVRO DE VEYRA",
+
+        key:
+            "L"
+    },
+
+
+    "LIVRO DE VEYRA": {
+        emoji:
+            "📖",
+
+        title:
+            "LIVRO DE VEYRA",
+
+        key:
+            "L"
+    },
+
+
+    "MENU": {
+        emoji:
+            "⚙️",
+
+        title:
+            "MENU",
+
+        key:
+            "ESC"
+    }
+
+};
 
     for (
         const card of
@@ -70515,14 +70667,30 @@ function enhanceHowToCards() {
                     " "
                 );
 
+       /*
+    MORTE = vermelho.
+    EXAUSTÃO = alerta dourado.
+*/
+card.classList.toggle(
+    "help-danger",
+    originalLabel ===
+        "MORTE"
+);
+
+
+card.classList.toggle(
+    "help-warning",
+    originalLabel ===
+        "EXAUSTÃO"
+);
 
         const visual =
             CONTROL_VISUALS[
                 originalLabel
             ] || {
 
-                emoji:
-                    "✦",
+emoji:
+    "🎮",
 
                 title:
                     originalLabel,

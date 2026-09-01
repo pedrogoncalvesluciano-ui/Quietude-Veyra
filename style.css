@@ -412,14 +412,12 @@ button {
         cover;
 
   opacity:
-    1;
+    .42;
 }
 
 .menu-screen::after {
 
     content: "";
-
-   display: none;
 
     position: absolute;
     inset: 0;

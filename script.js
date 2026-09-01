@@ -1,4 +1,4 @@
-/*CODIGO JAVA SCRIPT*/
+/*CODIGO JAVA SCRIPTT*/
 
 /* ============================================================
    VEYRA: A QUIETUDE

@@ -6882,3 +6882,1525 @@ and
     }
 
 }
+
+/* ================================================================
+   VEYRA — CRÉDITOS V2
+   ÁGUA / OURO / LEGIBILIDADE / EMBLEMA
+   ================================================================ */
+
+
+/* ================================================================
+   TELA DE CRÉDITOS
+   ================================================================ */
+
+.credits-shell {
+
+    position:
+        relative;
+
+    isolation:
+        isolate;
+
+    overflow:
+        hidden;
+
+    width:
+        min(
+            680px,
+            calc(100vw - 36px)
+        );
+
+    padding:
+        62px
+        64px
+        54px;
+
+    border:
+        1px solid
+        rgba(
+            198,
+            164,
+            92,
+            .30
+        );
+
+    border-radius:
+        14px;
+
+    /*
+        FUNDO:
+        preto elegante +
+        reflexo azulado de água.
+    */
+    background:
+
+        radial-gradient(
+            ellipse at
+                50%
+                108%,
+
+            rgba(
+                64,
+                143,
+                157,
+                .16
+            )
+            0%,
+
+            rgba(
+                38,
+                91,
+                104,
+                .07
+            )
+            33%,
+
+            transparent
+            62%
+        ),
+
+        radial-gradient(
+            circle at
+                50%
+                0%,
+
+            rgba(
+                194,
+                156,
+                78,
+                .07
+            ),
+
+            transparent
+            42%
+        ),
+
+        linear-gradient(
+            155deg,
+
+            rgba(
+                16,
+                19,
+                21,
+                .985
+            ),
+
+            rgba(
+                6,
+                9,
+                11,
+                .985
+            )
+        );
+
+    box-shadow:
+
+        /*
+            sombra externa
+        */
+        0
+        40px
+        120px
+        rgba(
+            0,
+            0,
+            0,
+            .68
+        ),
+
+        /*
+            brilho de água
+        */
+        0
+        0
+        55px
+        rgba(
+            77,
+            148,
+            161,
+            .055
+        ),
+
+        /*
+            borda interna dourada
+        */
+        inset
+        0
+        0
+        0
+        1px
+        rgba(
+            218,
+            180,
+            101,
+            .035
+        );
+
+    text-align:
+        center;
+
+}
+
+
+/*
+    Segunda moldura,
+    mais fina e elegante.
+*/
+.credits-shell::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    inset:
+        9px;
+
+    z-index:
+        0;
+
+    border:
+        1px solid
+        rgba(
+            191,
+            157,
+            85,
+            .09
+        );
+
+    border-radius:
+        9px;
+
+    pointer-events:
+        none;
+
+}
+
+
+/*
+    ÁGUA NA PARTE INFERIOR.
+
+    Não é uma imagem.
+    É feita completamente
+    com gradientes CSS.
+*/
+.credits-shell::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    z-index:
+        0;
+
+    left:
+        50%;
+
+    bottom:
+        -92px;
+
+    width:
+        86%;
+
+    height:
+        185px;
+
+    border-radius:
+        50%;
+
+    background:
+
+        repeating-radial-gradient(
+            ellipse at center,
+
+            transparent
+            0,
+
+            transparent
+            12px,
+
+            rgba(
+                124,
+                206,
+                214,
+                .08
+            )
+            13px,
+
+            transparent
+            15px
+        ),
+
+        radial-gradient(
+            ellipse,
+
+            rgba(
+                79,
+                171,
+                185,
+                .18
+            )
+            0%,
+
+            rgba(
+                39,
+                111,
+                125,
+                .08
+            )
+            35%,
+
+            transparent
+            70%
+        );
+
+    filter:
+        blur(
+            .25px
+        );
+
+    opacity:
+        .88;
+
+    animation:
+        creditsWaterMove
+        5.5s
+        ease-in-out
+        infinite;
+
+    pointer-events:
+        none;
+
+}
+
+
+@keyframes creditsWaterMove {
+
+    0%,
+    100% {
+
+        transform:
+            translateX(
+                -50%
+            )
+            scaleX(
+                1
+            );
+
+        opacity:
+            .72;
+
+    }
+
+
+    50% {
+
+        transform:
+            translateX(
+                -50%
+            )
+            scaleX(
+                1.045
+            );
+
+        opacity:
+            1;
+
+    }
+
+}
+
+
+/*
+    Todo conteúdo fica acima
+    dos efeitos da água.
+*/
+.credits-shell > * {
+
+    position:
+        relative;
+
+    z-index:
+        2;
+
+}
+
+
+/* ================================================================
+   BOTÃO X — ALINHAMENTO
+   ================================================================ */
+
+/*
+    Uso o ID também para garantir
+    que nenhuma regra anterior
+    jogue o botão para a esquerda.
+*/
+#closeCreditsBtn,
+.credits-close {
+
+    position:
+        absolute !important;
+
+    left:
+        auto !important;
+
+    right:
+        20px !important;
+
+    top:
+        20px !important;
+
+    margin:
+        0 !important;
+
+    z-index:
+        30;
+
+}
+
+
+#closeCreditsBtn {
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    width:
+        42px;
+
+    height:
+        42px;
+
+    padding:
+        0;
+
+    border:
+        1px solid
+        rgba(
+            199,
+            166,
+            96,
+            .19
+        );
+
+    border-radius:
+        50%;
+
+    color:
+        #aaa394;
+
+    background:
+        rgba(
+            11,
+            14,
+            16,
+            .82
+        );
+
+    box-shadow:
+
+        inset
+        0
+        0
+        14px
+        rgba(
+            194,
+            159,
+            87,
+            .025
+        );
+
+}
+
+
+#closeCreditsBtn:hover {
+
+    color:
+        #e1c98f;
+
+    border-color:
+        rgba(
+            216,
+            177,
+            92,
+            .48
+        );
+
+    background:
+        rgba(
+            190,
+            151,
+            71,
+            .055
+        );
+
+    box-shadow:
+
+        0
+        0
+        18px
+        rgba(
+            198,
+            158,
+            73,
+            .08
+        ),
+
+        inset
+        0
+        0
+        15px
+        rgba(
+            194,
+            159,
+            87,
+            .035
+        );
+
+}
+
+
+/* ================================================================
+   EMBLEMA VEYRA
+   ================================================================ */
+
+.credits-emblem {
+
+    position:
+        relative;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    width:
+        86px;
+
+    height:
+        86px;
+
+    margin:
+
+        0
+        auto
+        24px;
+
+    border:
+        1px solid
+        rgba(
+            207,
+            171,
+            92,
+            .31
+        );
+
+    border-radius:
+        50%;
+
+    color:
+        #d0ab5d;
+
+    background:
+
+        radial-gradient(
+            circle,
+
+            rgba(
+                189,
+                147,
+                63,
+                .09
+            )
+            0%,
+
+            rgba(
+                58,
+                92,
+                94,
+                .035
+            )
+            47%,
+
+            transparent
+            70%
+        );
+
+    font-size:
+        43px;
+
+    line-height:
+        1;
+
+    text-shadow:
+
+        0
+        0
+        14px
+        rgba(
+            220,
+            175,
+            82,
+            .20
+        ),
+
+        0
+        0
+        32px
+        rgba(
+            95,
+            176,
+            184,
+            .08
+        );
+
+    box-shadow:
+
+        0
+        0
+        26px
+        rgba(
+            193,
+            151,
+            68,
+            .07
+        ),
+
+        inset
+        0
+        0
+        24px
+        rgba(
+            214,
+            178,
+            94,
+            .035
+        );
+
+}
+
+
+/*
+    ARO EXTERNO DO EMBLEMA.
+*/
+.credits-emblem::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    inset:
+        -8px;
+
+    border-radius:
+        50%;
+
+    border:
+
+        1px solid
+        rgba(
+            205,
+            169,
+            91,
+            .13
+        );
+
+    border-top-color:
+        rgba(
+            229,
+            193,
+            111,
+            .56
+        );
+
+    border-bottom-color:
+        rgba(
+            80,
+            166,
+            175,
+            .25
+        );
+
+    animation:
+        creditsEmblemRing
+        10s
+        linear
+        infinite;
+
+    pointer-events:
+        none;
+
+}
+
+
+@keyframes creditsEmblemRing {
+
+    to {
+
+        transform:
+            rotate(
+                360deg
+            );
+
+    }
+
+}
+
+
+/*
+    Pequenos fragmentos /
+    gotas mágicas saindo
+    do símbolo.
+*/
+.credits-emblem::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    left:
+        50%;
+
+    top:
+        50%;
+
+    width:
+        4px;
+
+    height:
+        4px;
+
+    border-radius:
+        50%;
+
+    background:
+        #d1ab61;
+
+    box-shadow:
+
+        -43px
+        -18px
+        0
+        rgba(
+            206,
+            169,
+            91,
+            .48
+        ),
+
+        42px
+        -10px
+        0
+        rgba(
+            219,
+            182,
+            98,
+            .38
+        ),
+
+        -34px
+        30px
+        0
+        rgba(
+            91,
+            179,
+            188,
+            .40
+        ),
+
+        39px
+        31px
+        0
+        rgba(
+            100,
+            189,
+            198,
+            .32
+        ),
+
+        -8px
+        -47px
+        0
+        rgba(
+            223,
+            185,
+            99,
+            .35
+        );
+
+    animation:
+        creditsEmblemParticles
+        3.6s
+        ease-in-out
+        infinite;
+
+    pointer-events:
+        none;
+
+}
+
+
+@keyframes creditsEmblemParticles {
+
+    0%,
+    100% {
+
+        opacity:
+            .36;
+
+        transform:
+            translate(
+                -50%,
+                -50%
+            )
+            scale(
+                .8
+            );
+
+    }
+
+
+    50% {
+
+        opacity:
+            1;
+
+        transform:
+            translate(
+                -50%,
+                -50%
+            )
+            scale(
+                1.18
+            );
+
+    }
+
+}
+
+
+/* ================================================================
+   TÍTULO CRÉDITOS
+   ================================================================ */
+
+.credits-shell h2 {
+
+    margin:
+
+        7px
+        0
+        0;
+
+    color:
+        #eee5d1;
+
+    /*
+        Fonte mais elegante para título,
+        sem depender de baixar fonte.
+    */
+    font-family:
+
+        "Palatino Linotype",
+        Palatino,
+        "Book Antiqua",
+        Georgia,
+        serif;
+
+    font-size:
+
+        clamp(
+            34px,
+            4vw,
+            46px
+        );
+
+    font-weight:
+        600;
+
+    line-height:
+        1;
+
+    letter-spacing:
+        .16em;
+
+    text-indent:
+        .16em;
+
+    text-shadow:
+
+        0
+        2px
+        20px
+        rgba(
+            0,
+            0,
+            0,
+            .75
+        ),
+
+        0
+        0
+        24px
+        rgba(
+            205,
+            164,
+            79,
+            .08
+        );
+
+}
+
+
+/*
+    "VEYRA: A QUIETUDE"
+*/
+.credits-shell .section-kicker {
+
+    color:
+        #b9a87e;
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+        10px;
+
+    font-weight:
+        600;
+
+    letter-spacing:
+        .31em;
+
+}
+
+
+/* ================================================================
+   DIVISOR COMO REFLEXO DE ÁGUA
+   ================================================================ */
+
+.credits-divider {
+
+    position:
+        relative;
+
+    width:
+        190px;
+
+    height:
+        18px;
+
+    margin:
+
+        26px
+        auto
+        24px;
+
+    background:
+        none;
+
+}
+
+
+/*
+    Linha dourada central.
+*/
+.credits-divider::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    left:
+        0;
+
+    right:
+        0;
+
+    top:
+        3px;
+
+    height:
+        1px;
+
+    background:
+
+        linear-gradient(
+            to right,
+
+            transparent,
+
+            rgba(
+                201,
+                168,
+                94,
+                .20
+            ),
+
+            rgba(
+                222,
+                185,
+                99,
+                .65
+            ),
+
+            rgba(
+                201,
+                168,
+                94,
+                .20
+            ),
+
+            transparent
+        );
+
+}
+
+
+/*
+    Pequeno ripple de água.
+*/
+.credits-divider::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    left:
+        50%;
+
+    bottom:
+        0;
+
+    width:
+        92px;
+
+    height:
+        9px;
+
+    border:
+
+        1px solid
+        rgba(
+            95,
+            175,
+            185,
+            .22
+        );
+
+    border-top:
+        0;
+
+    border-radius:
+        0
+        0
+        50%
+        50%;
+
+    transform:
+        translateX(
+            -50%
+        )
+        scaleY(
+            .42
+        );
+
+    box-shadow:
+
+        0
+        5px
+        0
+        -1px
+        rgba(
+            90,
+            169,
+            181,
+            .08
+        );
+
+}
+
+
+/* ================================================================
+   TEXTOS DOS CRÉDITOS
+   ================================================================ */
+
+.credits-block {
+
+    position:
+        relative;
+
+    max-width:
+        470px;
+
+    margin:
+
+        24px
+        auto
+        0;
+
+    padding:
+        7px
+        12px;
+
+}
+
+
+/*
+    FUNÇÃO:
+    "CONCEITO E CRIAÇÃO..."
+*/
+.credits-block span {
+
+    display:
+        block;
+
+    color:
+        #a6a197;
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+
+        clamp(
+            10px,
+            .8vw,
+            12px
+        );
+
+    font-weight:
+        600;
+
+    line-height:
+        1.4;
+
+    letter-spacing:
+        .15em;
+
+    text-transform:
+        uppercase;
+
+}
+
+
+/*
+    NOME:
+    Pedro / ChatGPT
+*/
+.credits-block strong {
+
+    display:
+        block;
+
+    margin-top:
+        9px;
+
+    color:
+        #dfc88d;
+
+    font-family:
+
+        "Palatino Linotype",
+        Palatino,
+        "Book Antiqua",
+        Georgia,
+        serif;
+
+    font-size:
+
+        clamp(
+            21px,
+            2vw,
+            26px
+        );
+
+    font-weight:
+        500;
+
+    letter-spacing:
+        .025em;
+
+    text-shadow:
+
+        0
+        0
+        18px
+        rgba(
+            191,
+            149,
+            64,
+            .07
+        );
+
+}
+
+
+/* ================================================================
+   TEXTO FINAL
+   ================================================================ */
+
+.credits-note {
+
+    position:
+        relative;
+
+    max-width:
+        500px;
+
+    margin:
+
+        34px
+        auto
+        0;
+
+    padding-top:
+        24px;
+
+    color:
+        #aaa69e;
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+
+        clamp(
+            12px,
+            .92vw,
+            14px
+        );
+
+    font-weight:
+        400;
+
+    line-height:
+        1.75;
+
+}
+
+
+/*
+    Pequeno brilho de água
+    acima da frase final.
+*/
+.credits-note::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    left:
+        50%;
+
+    top:
+        0;
+
+    width:
+        155px;
+
+    height:
+        1px;
+
+    background:
+
+        linear-gradient(
+            to right,
+
+            transparent,
+
+            rgba(
+                75,
+                164,
+                177,
+                .22
+            ),
+
+            rgba(
+                205,
+                170,
+                93,
+                .22
+            ),
+
+            rgba(
+                75,
+                164,
+                177,
+                .22
+            ),
+
+            transparent
+        );
+
+    transform:
+        translateX(
+            -50%
+        );
+
+}
+
+
+/* ================================================================
+   PEQUENO EFEITO DE BRILHO NOS NOMES
+   ================================================================ */
+
+.credits-block strong::after {
+
+    content:
+        "";
+
+    display:
+        block;
+
+    width:
+        34px;
+
+    height:
+        1px;
+
+    margin:
+
+        8px
+        auto
+        0;
+
+    background:
+
+        linear-gradient(
+            to right,
+
+            transparent,
+
+            rgba(
+                204,
+                166,
+                82,
+                .30
+            ),
+
+            transparent
+        );
+
+}
+
+
+/* ================================================================
+   RESPONSIVIDADE DOS CRÉDITOS
+   ================================================================ */
+
+@media
+(
+    max-width:
+        700px
+) {
+
+    .credits-shell {
+
+        width:
+            calc(
+                100vw -
+                22px
+            );
+
+        max-height:
+            calc(
+                100dvh -
+                22px
+            );
+
+        padding:
+
+            62px
+            26px
+            38px;
+
+        overflow-y:
+            auto;
+
+    }
+
+
+    #closeCreditsBtn,
+    .credits-close {
+
+        right:
+            14px !important;
+
+        top:
+            14px !important;
+
+    }
+
+
+    .credits-emblem {
+
+        width:
+            74px;
+
+        height:
+            74px;
+
+        font-size:
+            37px;
+
+    }
+
+
+    .credits-shell h2 {
+
+        font-size:
+
+            clamp(
+                30px,
+                9vw,
+                38px
+            );
+
+        letter-spacing:
+            .11em;
+
+        text-indent:
+            .11em;
+
+    }
+
+
+    .credits-divider {
+
+        width:
+            150px;
+
+    }
+
+
+    .credits-block {
+
+        margin-top:
+            19px;
+
+    }
+
+}
+
+
+@media
+(
+    max-height:
+        650px
+)
+and
+(
+    min-width:
+        701px
+) {
+
+    .credits-shell {
+
+        max-height:
+            calc(
+                100vh -
+                24px
+            );
+
+        padding:
+
+            40px
+            52px
+            30px;
+
+        overflow-y:
+            auto;
+
+    }
+
+
+    .credits-emblem {
+
+        width:
+            66px;
+
+        height:
+            66px;
+
+        margin-bottom:
+            14px;
+
+        font-size:
+            34px;
+
+    }
+
+
+    .credits-divider {
+
+        margin:
+
+            17px
+            auto;
+
+    }
+
+
+    .credits-block {
+
+        margin-top:
+            14px;
+
+    }
+
+
+    .credits-note {
+
+        margin-top:
+            22px;
+
+    }
+
+}
+
+
+/* ================================================================
+   ACESSIBILIDADE
+   ================================================================ */
+
+@media
+(
+    prefers-reduced-motion:
+        reduce
+) {
+
+    .credits-shell::after,
+    .credits-emblem::before,
+    .credits-emblem::after {
+
+        animation:
+            none;
+
+    }
+
+}

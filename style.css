@@ -412,7 +412,7 @@ button {
         cover;
 
   opacity:
-    .42;
+    .68;
 }
 
 .menu-screen::after {
@@ -674,6 +674,8 @@ button {
 
     z-index: 4;
 
+   isolation: isolate;
+
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -693,6 +695,38 @@ button {
 
 }
 
+.menu-shell::before {
+
+    content: "";
+
+    position: absolute;
+
+    z-index: -1;
+
+    left: 50%;
+    top: 50%;
+
+    width: min(760px, 92vw);
+    height: 92%;
+
+    transform:
+        translate(-50%, -50%);
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(5, 6, 8, .48) 0%,
+            rgba(5, 6, 8, .30) 42%,
+            rgba(5, 6, 8, .10) 68%,
+            transparent 82%
+        );
+
+    filter:
+        blur(10px);
+
+}
 
 .veyra-emblem {
 
@@ -1026,6 +1060,46 @@ button {
 
 }
 
+.menu-main-btn {
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(9, 10, 12, .70),
+            rgba(14, 15, 17, .55)
+        );
+
+    border-color:
+        rgba(194, 160, 91, .38);
+
+    box-shadow:
+        0 8px 26px rgba(0, 0, 0, .32),
+        inset 0 0 24px rgba(255, 255, 255, .012);
+
+    backdrop-filter:
+        blur(3px);
+
+}
+
+.menu-main-btn strong {
+
+    color:
+        #e1d8c5;
+
+    text-shadow:
+        0 2px 6px rgba(0, 0, 0, .95);
+
+}
+
+.menu-small-actions button {
+
+    color:
+        #bbb4a7;
+
+    text-shadow:
+        0 2px 6px rgba(0, 0, 0, .95);
+
+}
 
 .menu-main-btn::before {
 
@@ -6178,6 +6252,17 @@ button {
 
     font-size:
         10px;
+
+}
+
+.menu-intro {
+
+    color:
+        #d0cbc0;
+
+    text-shadow:
+        0 2px 8px rgba(0, 0, 0, .95),
+        0 0 18px rgba(0, 0, 0, .72);
 
 }
 

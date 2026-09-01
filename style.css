@@ -10971,3 +10971,345 @@ and
     }
 
 }
+/* ================================================================
+   CRÉDITOS — ÁGUA DOURADA
+   ================================================================ */
+
+.credits-shell::after {
+
+    background:
+
+        repeating-radial-gradient(
+            ellipse at center,
+
+            transparent
+            0,
+
+            transparent
+            12px,
+
+            rgba(
+                204,
+                166,
+                82,
+                .10
+            )
+            13px,
+
+            transparent
+            15px
+        ),
+
+        radial-gradient(
+            ellipse,
+
+            rgba(
+                199,
+                157,
+                71,
+                .18
+            )
+            0%,
+
+            rgba(
+                136,
+                103,
+                49,
+                .08
+            )
+            38%,
+
+            rgba(
+                62,
+                92,
+                92,
+                .025
+            )
+            53%,
+
+            transparent
+            72%
+        );
+
+    filter:
+
+        blur(
+            .2px
+        )
+
+        drop-shadow(
+            0
+            0
+            10px
+            rgba(
+                202,
+                159,
+                72,
+                .08
+            )
+        );
+
+}
+
+/* ================================================================
+   CRÉDITOS — EMBLEMA ANIMADO
+   ================================================================ */
+
+.credits-emblem {
+
+    animation:
+
+        creditsEmblemFloat
+        4.2s
+        ease-in-out
+        infinite;
+
+    will-change:
+        transform,
+        filter;
+
+}
+
+
+/*
+    O círculo externo gira
+    lentamente.
+*/
+.credits-emblem::before {
+
+    animation:
+
+        creditsEmblemOrbit
+        12s
+        linear
+        infinite;
+
+}
+
+
+/*
+    Partículas respiram
+    separadamente.
+*/
+.credits-emblem::after {
+
+    animation:
+
+        creditsEmblemMagic
+        3.2s
+        ease-in-out
+        infinite;
+
+}
+
+
+/* ================================================================
+   EMBLEMA INTEIRO
+   ================================================================ */
+
+@keyframes creditsEmblemFloat {
+
+    0%,
+    100% {
+
+        transform:
+            translateY(
+                0
+            )
+            scale(
+                1
+            );
+
+        filter:
+
+            drop-shadow(
+                0
+                0
+                5px
+                rgba(
+                    190,
+                    147,
+                    65,
+                    .08
+                )
+            );
+
+    }
+
+
+    50% {
+
+        transform:
+
+            translateY(
+                -5px
+            )
+
+            scale(
+                1.035
+            );
+
+        filter:
+
+            drop-shadow(
+                0
+                0
+                16px
+                rgba(
+                    213,
+                    169,
+                    76,
+                    .22
+                )
+            );
+
+    }
+
+}
+
+
+/* ================================================================
+   ARO GIRANDO
+   ================================================================ */
+
+@keyframes creditsEmblemOrbit {
+
+    from {
+
+        transform:
+            rotate(
+                0deg
+            );
+
+    }
+
+
+    to {
+
+        transform:
+            rotate(
+                360deg
+            );
+
+    }
+
+}
+
+
+/* ================================================================
+   PARTÍCULAS
+   ================================================================ */
+
+@keyframes creditsEmblemMagic {
+
+    0%,
+    100% {
+
+        opacity:
+            .32;
+
+        transform:
+
+            translate(
+                -50%,
+                -50%
+            )
+
+            rotate(
+                0deg
+            )
+
+            scale(
+                .82
+            );
+
+    }
+
+
+    45% {
+
+        opacity:
+            1;
+
+        transform:
+
+            translate(
+                -50%,
+                -50%
+            )
+
+            rotate(
+                12deg
+            )
+
+            scale(
+                1.22
+            );
+
+    }
+
+
+    70% {
+
+        opacity:
+            .64;
+
+        transform:
+
+            translate(
+                -50%,
+                -50%
+            )
+
+            rotate(
+                -7deg
+            )
+
+            scale(
+                1.05
+            );
+
+    }
+
+}
+.credits-emblem {
+
+    transition:
+
+        transform
+        .25s
+        ease,
+
+        box-shadow
+        .25s
+        ease;
+
+}
+
+
+.credits-emblem:hover {
+
+    box-shadow:
+
+        0
+        0
+        34px
+        rgba(
+            211,
+            168,
+            75,
+            .13
+        ),
+
+        inset
+        0
+        0
+        25px
+        rgba(
+            215,
+            176,
+            92,
+            .05
+        );
+
+}

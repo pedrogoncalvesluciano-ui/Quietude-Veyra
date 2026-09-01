@@ -69735,7 +69735,337 @@ for (
         };
     }
 
+/* ============================================================
+   COMO JOGAR — VISUAL DOS CONTROLES
 
+   Estrutura:
+
+   [ EMOJI ] [ AÇÃO + TECLA ] [ EXPLICAÇÃO ]
+
+   Não altera nenhuma mecânica.
+   Apenas reorganiza a interface.
+   ============================================================ */
+
+function enhanceHowToCards() {
+
+    const screen =
+        document.getElementById(
+            "howScreen"
+        );
+
+
+    if (
+        !screen
+    ) {
+        return false;
+    }
+
+
+    const cards =
+        screen.querySelectorAll(
+            ".help-card"
+        );
+
+
+    /*
+        Cada chave abaixo corresponde
+        ao texto antigo do card.
+    */
+    const CONTROL_VISUALS = {
+
+        "W A S D / SETAS": {
+            emoji:
+                "⌨️",
+
+            title:
+                "MOVIMENTO",
+
+            key:
+                "WASD / SETAS"
+        },
+
+
+        "WASD / SETAS": {
+            emoji:
+                "⌨️",
+
+            title:
+                "MOVIMENTO",
+
+            key:
+                "WASD / SETAS"
+        },
+
+
+        "CLIQUE": {
+            emoji:
+                "🖱️",
+
+            title:
+                "ATAQUE BÁSICO",
+
+            key:
+                "CLIQUE ESQUERDO"
+        },
+
+
+        "Q / R / F": {
+            emoji:
+                "✨",
+
+            title:
+                "HABILIDADES",
+
+            key:
+                "Q • R • F"
+        },
+
+
+        "E": {
+            emoji:
+                "🤝",
+
+            title:
+                "INTERAGIR",
+
+            key:
+                "E"
+        },
+
+
+        "SEGURE E": {
+            emoji:
+                "⛏️",
+
+            title:
+                "COLETAR",
+
+            key:
+                "SEGURE E"
+        },
+
+
+        "Z": {
+            emoji:
+                "🚪",
+
+            title:
+                "PORTAS",
+
+            key:
+                "Z"
+        },
+
+
+        "I": {
+            emoji:
+                "🎒",
+
+            title:
+                "MOCHILA",
+
+            key:
+                "I"
+        },
+
+
+        "M": {
+            emoji:
+                "🗺️",
+
+            title:
+                "MAPA",
+
+            key:
+                "M"
+        },
+
+
+        "L": {
+            emoji:
+                "📖",
+
+            title:
+                "LIVRO DE VEYRA",
+
+            key:
+                "L"
+        },
+
+
+        "C": {
+            emoji:
+                "📊",
+
+            title:
+                "STATUS",
+
+            key:
+                "C"
+        },
+
+
+        "SPACE": {
+            emoji:
+                "💨",
+
+            title:
+                "DASH",
+
+            key:
+                "ESPAÇO"
+        },
+
+
+        "ESPAÇO": {
+            emoji:
+                "💨",
+
+            title:
+                "DASH",
+
+            key:
+                "ESPAÇO"
+        },
+
+
+        "ESC": {
+            emoji:
+                "⚙️",
+
+            title:
+                "MENU",
+
+            key:
+                "ESC"
+        }
+
+    };
+
+
+    for (
+        const card of
+        cards
+    ) {
+
+        /*
+            Evita processar duas vezes.
+        */
+        if (
+            card.dataset
+                .veyraEnhanced ===
+            "true"
+        ) {
+            continue;
+        }
+
+
+        const oldTitle =
+            card.querySelector(
+                "strong"
+            );
+
+
+        const oldDescription =
+            card.querySelector(
+                "p"
+            );
+
+
+        if (
+            !oldTitle
+        ) {
+            continue;
+        }
+
+
+        const originalLabel =
+            oldTitle.textContent
+                .trim()
+                .toUpperCase()
+                .replace(
+                    /\s+/g,
+                    " "
+                );
+
+
+        const visual =
+            CONTROL_VISUALS[
+                originalLabel
+            ] || {
+
+                emoji:
+                    "✦",
+
+                title:
+                    originalLabel,
+
+                key:
+                    ""
+
+            };
+
+
+        const description =
+            oldDescription
+                ?.textContent
+                ?.trim() ||
+            "";
+
+
+        /*
+            Mantém as classes originais
+            help-warning / help-danger etc.
+        */
+        card.innerHTML = `
+
+            <div
+                class="help-icon help-emoji"
+                aria-hidden="true"
+            >
+                ${visual.emoji}
+            </div>
+
+
+            <div class="help-main">
+
+                <strong>
+                    ${visual.title}
+                </strong>
+
+
+                ${
+                    visual.key
+
+                        ? `
+                            <span class="help-key">
+                                ${visual.key}
+                            </span>
+                        `
+
+                        : ""
+                }
+
+            </div>
+
+
+            <p class="help-secondary">
+                ${description}
+            </p>
+
+        `;
+
+
+        card.dataset
+            .veyraEnhanced =
+            "true";
+
+    }
+
+
+    return true;
+}
+   
     /* ============================================================
        INITIALIZE
        ============================================================ */
@@ -69748,17 +70078,18 @@ for (
         }
 
 
-        cacheDOM();
+     cacheDOM();
 
-       /*
+
+/*
+    Reorganiza visualmente
+    a tela Como Jogar.
+*/
+enhanceHowToCards();
+
+
+/*
     BOTÕES DA TELA INICIAL.
-
-    Registramos imediatamente depois
-    que o DOM foi encontrado.
-
-    Assim eles continuam funcionando
-    mesmo se alguma parte do renderer
-    apresentar problema depois.
 */
 bindMenuButtons();
 

@@ -38922,6 +38922,49 @@ function sellAllInventoryItems() {
             totalMoney
     };
 }
+
+   function getNextArmorUpgrade(
+    player =
+        state.player
+) {
+    if (
+        !player
+    ) {
+        return null;
+    }
+
+
+    const current =
+        player.equipment
+            ?.armor;
+
+
+    const currentTier =
+        current
+            ? V.ARMOR_DATA[
+                current
+            ]?.tier ||
+                0
+            : 0;
+
+
+    return (
+        V.ARMOR_PROGRESSION
+            .map(
+                id =>
+                    V.ARMOR_DATA[
+                        id
+                    ]
+            )
+            .find(
+                armor =>
+                    armor.tier ===
+                    currentTier +
+                        1
+            ) ||
+        null
+    );
+}
    
     function buyArmorUpgrade(
         armorId

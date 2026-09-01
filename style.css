@@ -8404,3 +8404,2048 @@ and
     }
 
 }
+
+/* ================================================================
+   VEYRA — COMO JOGAR + SELEÇÃO DE PERSONAGEM V2
+
+   Objetivo:
+   - mesmo acabamento premium dos Créditos
+   - ouro envelhecido
+   - leitura melhor
+   - brilho elegante
+   - hover nos personagens
+   - sem alterar nenhuma lógica
+   ================================================================ */
+
+
+/* ================================================================
+   COMO JOGAR — FUNDO
+   ================================================================ */
+
+#howScreen {
+
+    position:
+        relative;
+
+    background:
+
+        radial-gradient(
+            circle at
+                50%
+                18%,
+
+            rgba(
+                190,
+                151,
+                72,
+                .085
+            ),
+
+            transparent
+            37%
+        ),
+
+        radial-gradient(
+            ellipse at
+                50%
+                105%,
+
+            rgba(
+                73,
+                130,
+                137,
+                .07
+            ),
+
+            transparent
+            48%
+        ),
+
+        #080b0e;
+
+}
+
+
+/*
+    Luz dourada bem leve
+    atrás da janela.
+*/
+#howScreen::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    left:
+        50%;
+
+    top:
+        45%;
+
+    width:
+        min(
+            1050px,
+            95vw
+        );
+
+    height:
+        80vh;
+
+    border-radius:
+        50%;
+
+    background:
+
+        radial-gradient(
+            ellipse,
+
+            rgba(
+                198,
+                162,
+                86,
+                .075
+            ),
+
+            transparent
+            68%
+        );
+
+    filter:
+        blur(
+            34px
+        );
+
+    transform:
+        translate(
+            -50%,
+            -50%
+        );
+
+    pointer-events:
+        none;
+
+}
+
+
+/* ================================================================
+   PAINEL COMO JOGAR
+   ================================================================ */
+
+#howScreen .info-shell {
+
+    position:
+        relative;
+
+    isolation:
+        isolate;
+
+    width:
+        min(
+            990px,
+            calc(
+                100vw -
+                42px
+            )
+        );
+
+    max-height:
+        calc(
+            100dvh -
+            42px
+        );
+
+    padding:
+
+        42px
+        42px
+        34px;
+
+    overflow-y:
+        auto;
+
+    border:
+        1px solid
+        rgba(
+            206,
+            169,
+            91,
+            .31
+        );
+
+    border-radius:
+        14px;
+
+    background:
+
+        radial-gradient(
+            circle at
+                50%
+                0%,
+
+            rgba(
+                190,
+                149,
+                68,
+                .055
+            ),
+
+            transparent
+            38%
+        ),
+
+        linear-gradient(
+            150deg,
+
+            rgba(
+                20,
+                23,
+                27,
+                .985
+            ),
+
+            rgba(
+                8,
+                11,
+                14,
+                .985
+            )
+        );
+
+    box-shadow:
+
+        0
+        38px
+        110px
+        rgba(
+            0,
+            0,
+            0,
+            .66
+        ),
+
+        0
+        0
+        50px
+        rgba(
+            194,
+            157,
+            78,
+            .035
+        ),
+
+        inset
+        0
+        0
+        0
+        1px
+        rgba(
+            230,
+            195,
+            119,
+            .025
+        );
+
+}
+
+
+/*
+    Segunda borda interna.
+*/
+#howScreen .info-shell::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    inset:
+        8px;
+
+    z-index:
+        0;
+
+    border:
+        1px solid
+        rgba(
+            202,
+            169,
+            96,
+            .075
+        );
+
+    border-radius:
+        9px;
+
+    pointer-events:
+        none;
+
+}
+
+
+#howScreen .info-shell > * {
+
+    position:
+        relative;
+
+    z-index:
+        2;
+
+}
+
+
+/* ================================================================
+   SCROLLBAR DOURADA
+   ================================================================ */
+
+#howScreen .info-shell {
+
+    scrollbar-width:
+        thin;
+
+    scrollbar-color:
+
+        rgba(
+            193,
+            153,
+            69,
+            .72
+        )
+
+        rgba(
+            255,
+            255,
+            255,
+            .025
+        );
+
+}
+
+
+#howScreen .info-shell::-webkit-scrollbar {
+
+    width:
+        7px;
+
+}
+
+
+#howScreen .info-shell::-webkit-scrollbar-track {
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .02
+        );
+
+}
+
+
+#howScreen .info-shell::-webkit-scrollbar-thumb {
+
+    border-radius:
+        20px;
+
+    background:
+
+        linear-gradient(
+            to bottom,
+
+            #8b6c37,
+            #c49d52,
+            #80612f
+        );
+
+}
+
+
+/* ================================================================
+   CABEÇALHO COMO JOGAR
+   ================================================================ */
+
+#howScreen .info-header {
+
+    align-items:
+        center;
+
+    padding-bottom:
+        24px;
+
+    border-bottom:
+        1px solid
+        rgba(
+            195,
+            158,
+            82,
+            .11
+        );
+
+}
+
+
+#howScreen .info-header h2 {
+
+    color:
+        #ead79f;
+
+    font-family:
+
+        "Palatino Linotype",
+        Palatino,
+        "Book Antiqua",
+        Georgia,
+        serif;
+
+    font-size:
+
+        clamp(
+            28px,
+            3vw,
+            40px
+        );
+
+    font-weight:
+        600;
+
+    letter-spacing:
+        .13em;
+
+    text-shadow:
+
+        0
+        0
+        24px
+        rgba(
+            211,
+            170,
+            83,
+            .09
+        );
+
+}
+
+
+#howScreen .section-kicker {
+
+    color:
+        #b69b62;
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+        10px;
+
+    font-weight:
+        600;
+
+    letter-spacing:
+        .25em;
+
+}
+
+
+/* ================================================================
+   BOTÃO X
+   ================================================================ */
+
+#closeHowBtn {
+
+    width:
+        42px;
+
+    height:
+        42px;
+
+    border:
+        1px solid
+        rgba(
+            205,
+            169,
+            92,
+            .17
+        );
+
+    color:
+        #aaa59b;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .018
+        );
+
+}
+
+
+#closeHowBtn:hover {
+
+    color:
+        #efd28c;
+
+    border-color:
+        rgba(
+            222,
+            183,
+            94,
+            .50
+        );
+
+    background:
+        rgba(
+            201,
+            157,
+            70,
+            .065
+        );
+
+    box-shadow:
+
+        0
+        0
+        19px
+        rgba(
+            204,
+            162,
+            77,
+            .09
+        );
+
+}
+
+
+/* ================================================================
+   GRID COMO JOGAR
+   ================================================================ */
+
+#howScreen .help-grid {
+
+    gap:
+        14px;
+
+    margin-top:
+        30px;
+
+}
+
+
+/* ================================================================
+   CARDS DOS CONTROLES
+   ================================================================ */
+
+#howScreen .help-card {
+
+    position:
+        relative;
+
+    min-height:
+        106px;
+
+    padding:
+        18px;
+
+    overflow:
+        hidden;
+
+    border:
+        1px solid
+        rgba(
+            210,
+            174,
+            98,
+            .11
+        );
+
+    border-radius:
+        10px;
+
+    background:
+
+        linear-gradient(
+            145deg,
+
+            rgba(
+                255,
+                255,
+                255,
+                .025
+            ),
+
+            rgba(
+                255,
+                255,
+                255,
+                .008
+            )
+        );
+
+    transition:
+
+        transform
+        .22s
+        ease,
+
+        border-color
+        .22s
+        ease,
+
+        background
+        .22s
+        ease,
+
+        box-shadow
+        .22s
+        ease;
+
+}
+
+
+/*
+    Luz atravessando o card.
+*/
+#howScreen .help-card::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    top:
+        -80%;
+
+    left:
+        -50%;
+
+    width:
+        42%;
+
+    height:
+        260%;
+
+    opacity:
+        0;
+
+    background:
+
+        linear-gradient(
+            90deg,
+
+            transparent,
+
+            rgba(
+                230,
+                196,
+                123,
+                .10
+            ),
+
+            transparent
+        );
+
+    transform:
+        rotate(
+            18deg
+        );
+
+    transition:
+
+        left
+        .6s
+        ease,
+
+        opacity
+        .25s
+        ease;
+
+    pointer-events:
+        none;
+
+}
+
+
+/*
+    Linha dourada inferior.
+*/
+#howScreen .help-card::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    left:
+        12%;
+
+    right:
+        12%;
+
+    bottom:
+        0;
+
+    height:
+        1px;
+
+    opacity:
+        0;
+
+    background:
+
+        linear-gradient(
+            to right,
+
+            transparent,
+
+            rgba(
+                222,
+                184,
+                95,
+                .74
+            ),
+
+            transparent
+        );
+
+    box-shadow:
+
+        0
+        0
+        15px
+        rgba(
+            214,
+            172,
+            80,
+            .20
+        );
+
+    transition:
+        opacity
+        .2s
+        ease;
+
+    pointer-events:
+        none;
+
+}
+
+
+/* HOVER */
+
+#howScreen .help-card:hover {
+
+    transform:
+        translateY(
+            -4px
+        );
+
+    border-color:
+        rgba(
+            221,
+            183,
+            99,
+            .38
+        );
+
+    background:
+
+        linear-gradient(
+            145deg,
+
+            rgba(
+                201,
+                161,
+                77,
+                .055
+            ),
+
+            rgba(
+                255,
+                255,
+                255,
+                .012
+            )
+        );
+
+    box-shadow:
+
+        0
+        13px
+        30px
+        rgba(
+            0,
+            0,
+            0,
+            .25
+        ),
+
+        0
+        0
+        22px
+        rgba(
+            203,
+            162,
+            77,
+            .055
+        );
+
+}
+
+
+#howScreen .help-card:hover::before {
+
+    left:
+        120%;
+
+    opacity:
+        1;
+
+}
+
+
+#howScreen .help-card:hover::after {
+
+    opacity:
+        1;
+
+}
+
+
+/* ================================================================
+   ÍCONES DOS CONTROLES
+   ================================================================ */
+
+#howScreen .help-icon {
+
+    position:
+        relative;
+
+    width:
+        52px;
+
+    height:
+        52px;
+
+    border:
+        1px solid
+        rgba(
+            208,
+            170,
+            91,
+            .22
+        );
+
+    border-radius:
+        9px;
+
+    color:
+        #d6b56f;
+
+    background:
+
+        radial-gradient(
+            circle,
+
+            rgba(
+                201,
+                162,
+                77,
+                .12
+            ),
+
+            rgba(
+                255,
+                255,
+                255,
+                .015
+            )
+        );
+
+    box-shadow:
+
+        inset
+        0
+        0
+        16px
+        rgba(
+            211,
+            170,
+            80,
+            .035
+        );
+
+    transition:
+
+        transform
+        .22s
+        ease,
+
+        box-shadow
+        .22s
+        ease,
+
+        border-color
+        .22s
+        ease;
+
+}
+
+
+#howScreen .help-card:hover
+.help-icon {
+
+    transform:
+        scale(
+            1.08
+        );
+
+    border-color:
+        rgba(
+            226,
+            190,
+            108,
+            .46
+        );
+
+    box-shadow:
+
+        0
+        0
+        20px
+        rgba(
+            214,
+            172,
+            82,
+            .10
+        ),
+
+        inset
+        0
+        0
+        18px
+        rgba(
+            214,
+            172,
+            82,
+            .05
+        );
+
+}
+
+
+/* ================================================================
+   TEXTO COMO JOGAR
+   ================================================================ */
+
+#howScreen .help-card strong {
+
+    color:
+        #e2ca91;
+
+    font-family:
+
+        "Palatino Linotype",
+        Palatino,
+        Georgia,
+        serif;
+
+    font-size:
+        14px;
+
+    font-weight:
+        600;
+
+    letter-spacing:
+        .075em;
+
+}
+
+
+#howScreen .help-card p {
+
+    color:
+        #aaa69d;
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+        13px;
+
+    line-height:
+        1.6;
+
+}
+
+
+#howScreen .info-footer {
+
+    margin-top:
+        30px;
+
+    padding-top:
+        22px;
+
+    border-top:
+        1px solid
+        rgba(
+            203,
+            166,
+            88,
+            .10
+        );
+
+    color:
+        #9b9588;
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+        12px;
+
+}
+
+
+/* ================================================================
+   SELEÇÃO DE PERSONAGEM
+   ================================================================ */
+
+.character-screen {
+
+    background:
+
+        radial-gradient(
+            circle at
+                50%
+                13%,
+
+            rgba(
+                190,
+                153,
+                78,
+                .075
+            ),
+
+            transparent
+            34%
+        ),
+
+        radial-gradient(
+            ellipse at
+                50%
+                100%,
+
+            rgba(
+                74,
+                119,
+                125,
+                .045
+            ),
+
+            transparent
+            48%
+        ),
+
+        #080b0e;
+
+}
+
+
+/* ================================================================
+   TÍTULO DA SELEÇÃO
+   ================================================================ */
+
+.character-select-header {
+
+    position:
+        relative;
+
+    padding-bottom:
+        25px;
+
+    margin-bottom:
+        31px;
+
+}
+
+
+.character-select-header::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    left:
+        50%;
+
+    bottom:
+        0;
+
+    width:
+        min(
+            440px,
+            70%
+        );
+
+    height:
+        1px;
+
+    background:
+
+        linear-gradient(
+            to right,
+
+            transparent,
+
+            rgba(
+                207,
+                170,
+                90,
+                .42
+            ),
+
+            transparent
+        );
+
+    transform:
+        translateX(
+            -50%
+        );
+
+}
+
+
+.character-select-header h2 {
+
+    color:
+        #e8d8ad;
+
+    font-family:
+
+        "Palatino Linotype",
+        Palatino,
+        "Book Antiqua",
+        Georgia,
+        serif;
+
+    font-size:
+
+        clamp(
+            31px,
+            3vw,
+            42px
+        );
+
+    font-weight:
+        600;
+
+    text-shadow:
+
+        0
+        0
+        25px
+        rgba(
+            203,
+            162,
+            76,
+            .08
+        );
+
+}
+
+
+.character-select-header p {
+
+    color:
+        #a39f96;
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+        13px;
+
+}
+
+
+/* ================================================================
+   VOLTAR
+   ================================================================ */
+
+.back-text-btn {
+
+    padding:
+
+        10px
+        14px;
+
+    border:
+        1px solid
+        rgba(
+            197,
+            160,
+            81,
+            .10
+        );
+
+    border-radius:
+        7px;
+
+    color:
+        #999489;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .012
+        );
+
+    transition:
+        all
+        .2s
+        ease;
+
+}
+
+
+.back-text-btn:hover {
+
+    color:
+        #e6c77f;
+
+    border-color:
+        rgba(
+            216,
+            176,
+            88,
+            .38
+        );
+
+    background:
+        rgba(
+            192,
+            149,
+            64,
+            .055
+        );
+
+    box-shadow:
+
+        0
+        0
+        18px
+        rgba(
+            205,
+            162,
+            75,
+            .055
+        );
+
+}
+
+
+/* ================================================================
+   CARDS DOS PERSONAGENS
+   ================================================================ */
+
+.character-card {
+
+    position:
+        relative;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .07
+        );
+
+    border-radius:
+        11px;
+
+    background:
+
+        radial-gradient(
+            circle at
+                50%
+                0%,
+
+            color-mix(
+                in srgb,
+                var(--char-color)
+                3%,
+                transparent
+            ),
+
+            transparent
+            45%
+        ),
+
+        linear-gradient(
+            155deg,
+
+            rgba(
+                255,
+                255,
+                255,
+                .028
+            ),
+
+            rgba(
+                255,
+                255,
+                255,
+                .006
+            )
+        );
+
+    box-shadow:
+
+        0
+        12px
+        32px
+        rgba(
+            0,
+            0,
+            0,
+            .12
+        );
+
+    transition:
+
+        transform
+        .26s
+        cubic-bezier(
+            .2,
+            .75,
+            .25,
+            1
+        ),
+
+        border-color
+        .25s
+        ease,
+
+        box-shadow
+        .25s
+        ease,
+
+        background
+        .25s
+        ease;
+
+}
+
+
+/*
+    LUZ DA COR DO PERSONAGEM
+    NO FUNDO DO CARD.
+*/
+.character-card::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    inset:
+        -1px;
+
+    border-radius:
+        inherit;
+
+    opacity:
+        0;
+
+    background:
+
+        radial-gradient(
+            circle at
+                50%
+                20%,
+
+            color-mix(
+                in srgb,
+                var(--char-color)
+                19%,
+                transparent
+            ),
+
+            transparent
+            57%
+        );
+
+    transition:
+        opacity
+        .26s
+        ease;
+
+    pointer-events:
+        none;
+
+}
+
+
+/*
+    BRILHO INFERIOR.
+*/
+.character-card::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    left:
+        10%;
+
+    right:
+        10%;
+
+    bottom:
+        0;
+
+    height:
+        2px;
+
+    opacity:
+        0;
+
+    background:
+
+        linear-gradient(
+            to right,
+
+            transparent,
+
+            color-mix(
+                in srgb,
+                var(--char-color)
+                90%,
+                white
+            ),
+
+            transparent
+        );
+
+    box-shadow:
+
+        0
+        0
+        18px
+        var(--char-color),
+
+        0
+        -6px
+        32px
+        color-mix(
+            in srgb,
+            var(--char-color)
+            18%,
+            transparent
+        );
+
+    transition:
+        opacity
+        .25s
+        ease;
+
+    pointer-events:
+        none;
+
+}
+
+
+/* ================================================================
+   HOVER PERSONAGEM
+   ================================================================ */
+
+.character-card:hover {
+
+    transform:
+
+        translateY(
+            -8px
+        )
+
+        scale(
+            1.018
+        );
+
+    border-color:
+
+        color-mix(
+            in srgb,
+            var(--char-color)
+            58%,
+            #d6b96f
+        );
+
+    background:
+
+        radial-gradient(
+            circle at
+                50%
+                10%,
+
+            color-mix(
+                in srgb,
+                var(--char-color)
+                9%,
+                transparent
+            ),
+
+            transparent
+            50%
+        ),
+
+        linear-gradient(
+            155deg,
+
+            rgba(
+                255,
+                255,
+                255,
+                .045
+            ),
+
+            rgba(
+                255,
+                255,
+                255,
+                .008
+            )
+        );
+
+    box-shadow:
+
+        0
+        22px
+        44px
+        rgba(
+            0,
+            0,
+            0,
+            .32
+        ),
+
+        0
+        0
+        28px
+        color-mix(
+            in srgb,
+            var(--char-color)
+            13%,
+            transparent
+        ),
+
+        inset
+        0
+        0
+        28px
+        color-mix(
+            in srgb,
+            var(--char-color)
+            4%,
+            transparent
+        );
+
+}
+
+
+.character-card:hover::before {
+
+    opacity:
+        1;
+
+}
+
+
+.character-card:hover::after {
+
+    opacity:
+        1;
+
+}
+
+
+/* ================================================================
+   PERSONAGEM SELECIONADO
+   ================================================================ */
+
+.character-card.selected {
+
+    transform:
+        translateY(
+            -5px
+        );
+
+    border-color:
+
+        color-mix(
+            in srgb,
+            var(--char-color)
+            68%,
+            #e1c276
+        );
+
+    box-shadow:
+
+        0
+        17px
+        40px
+        rgba(
+            0,
+            0,
+            0,
+            .27
+        ),
+
+        0
+        0
+        32px
+        color-mix(
+            in srgb,
+            var(--char-color)
+            15%,
+            transparent
+        ),
+
+        inset
+        0
+        0
+        36px
+        color-mix(
+            in srgb,
+            var(--char-color)
+            5%,
+            transparent
+        );
+
+}
+
+
+.character-card.selected::before {
+
+    opacity:
+        1;
+
+}
+
+
+.character-card.selected::after {
+
+    opacity:
+        1;
+
+}
+
+
+/* ================================================================
+   ÍCONE DO PERSONAGEM
+   ================================================================ */
+
+.character-symbol {
+
+    transition:
+
+        transform
+        .25s
+        ease,
+
+        box-shadow
+        .25s
+        ease,
+
+        border-color
+        .25s
+        ease;
+
+}
+
+
+.character-card:hover
+.character-symbol,
+.character-card.selected
+.character-symbol {
+
+    transform:
+        scale(
+            1.10
+        );
+
+    border-color:
+
+        color-mix(
+            in srgb,
+            var(--char-color)
+            70%,
+            #d5b66b
+        );
+
+    box-shadow:
+
+        0
+        0
+        20px
+        color-mix(
+            in srgb,
+            var(--char-color)
+            20%,
+            transparent
+        ),
+
+        inset
+        0
+        0
+        18px
+        color-mix(
+            in srgb,
+            var(--char-color)
+            8%,
+            transparent
+        );
+
+}
+
+
+/* ================================================================
+   NOMES
+   ================================================================ */
+
+.character-card h3 {
+
+    font-family:
+
+        "Palatino Linotype",
+        Palatino,
+        Georgia,
+        serif;
+
+    font-size:
+        19px;
+
+    color:
+        #ded7c7;
+
+    transition:
+
+        color
+        .2s
+        ease,
+
+        text-shadow
+        .2s
+        ease;
+
+}
+
+
+.character-card:hover h3,
+.character-card.selected h3 {
+
+    color:
+        #f0e6cc;
+
+    text-shadow:
+
+        0
+        0
+        15px
+
+        color-mix(
+            in srgb,
+            var(--char-color)
+            23%,
+            transparent
+        );
+
+}
+
+
+.character-card .role {
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+        9px;
+
+    font-weight:
+        600;
+
+}
+
+
+.character-description {
+
+    color:
+        #99958d;
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+        12px;
+
+    line-height:
+        1.6;
+
+}
+
+
+/* ================================================================
+   BARRAS / STATUS
+   ================================================================ */
+
+.character-stat {
+
+    transition:
+        transform
+        .2s
+        ease;
+
+}
+
+
+.character-card:hover
+.character-stat {
+
+    transform:
+        translateX(
+            2px
+        );
+
+}
+
+
+/* ================================================================
+   RESPONSIVIDADE
+   ================================================================ */
+
+@media
+(
+    max-width:
+        900px
+) {
+
+    #howScreen {
+
+        padding:
+            12px;
+
+    }
+
+
+    #howScreen .info-shell {
+
+        width:
+            100%;
+
+        max-height:
+            calc(
+                100dvh -
+                24px
+            );
+
+        padding:
+
+            30px
+            22px
+            28px;
+
+    }
+
+
+    #howScreen .help-grid {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .character-select-shell {
+
+        width:
+            calc(
+                100vw -
+                24px
+            );
+
+    }
+
+
+    .character-cards {
+
+        grid-template-columns:
+
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+
+    }
+
+}
+
+
+@media
+(
+    max-width:
+        560px
+) {
+
+    #howScreen .info-header {
+
+        align-items:
+            flex-start;
+
+    }
+
+
+    #howScreen .info-header h2 {
+
+        font-size:
+            27px;
+
+    }
+
+
+    #howScreen .help-card {
+
+        grid-template-columns:
+
+            48px
+            1fr;
+
+        padding:
+            15px;
+
+    }
+
+
+    #howScreen .help-icon {
+
+        width:
+            46px;
+
+        height:
+            46px;
+
+    }
+
+
+    .character-select-header {
+
+        grid-template-columns:
+
+            1fr
+            auto;
+
+        text-align:
+            left;
+
+    }
+
+
+    .character-select-header > div {
+
+        grid-column:
+            1;
+
+    }
+
+
+    .character-cards {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .character-card {
+
+        min-height:
+            auto;
+
+    }
+
+
+    /*
+        No celular não sobe tanto,
+        para evitar saltos grandes.
+    */
+    .character-card:hover {
+
+        transform:
+            translateY(
+                -3px
+            );
+
+    }
+
+}
+
+
+/* ================================================================
+   ACESSIBILIDADE
+   ================================================================ */
+
+@media
+(
+    prefers-reduced-motion:
+        reduce
+) {
+
+    #howScreen .help-card,
+    #howScreen .help-card::before,
+    #howScreen .help-icon,
+    .character-card,
+    .character-card::before,
+    .character-card::after,
+    .character-symbol {
+
+        transition:
+            none;
+
+    }
+
+}

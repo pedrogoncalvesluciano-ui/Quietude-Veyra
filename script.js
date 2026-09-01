@@ -1,3 +1,5 @@
+/*CODIGO JAVA SCRIPT*/
+
 /* ============================================================
    VEYRA: A QUIETUDE
    SCRIPT.JS — PARTE 1/5

@@ -38398,277 +38398,531 @@ for (
         });
 
 
-    function buyShopItem(
-        vendorId,
-        itemId
-    ) {
-        const player =
-            state.player;
+  function buyShopItem(
+    vendorId,
+    itemId
+) {
+    const player =
+        state.player;
 
-        const entry =
+
+    const entry =
+        safeArray(
             SHOP_CATALOG[
                 vendorId
-            ]?.find(
-                item =>
-                    item.itemId ===
+            ]
+        )
+            .find(
+                shopEntry =>
+                    shopEntry.itemId ===
                     itemId
             );
 
-        const item =
-            ITEMS[
-                itemId
-            ];
 
-       const infiniteMoney =
-    Boolean(
-        state.dev
-            ?.unlocked &&
-        state.dev
-            ?.cheats
-            ?.infiniteMoney
-    );
+    const item =
+        ITEMS[
+            itemId
+        ];
 
-        if (
-            !player ||
-            !entry ||
-            !item
-        ) {
-            return false;
-        }
 
-        if (
-            item.unique &&
-            getRealItemCount(
-                itemId,
-                player
-            ) >
-            0
-        ) {
-            pushNotification(
-                "JÁ ADQUIRIDO",
-                `${item.name} já pertence a você.`,
-                "info",
-                1.7
-            );
-
-            return false;
-        }
-
-      if (
-    !infiniteMoney &&
-    player.money <
-        entry.price
-) {
-          pushNotification(
-
-    item.unique
-        ? "ITEM ADQUIRIDO"
-        : "ITEM COMPRADO",
-
-    item.name,
-
-    "success",
-
-    2
-);
-
-            return false;
-        }
-
-        if (
-            !canCarryItem(
-                itemId,
-                1,
-                player
-            )
-        ) {
-            return false;
-        }
-
-      if (
-    !infiniteMoney
-) {
-    player.money -=
-        entry.price;
-}
-
-        if (
-            !addItem(
-                itemId,
-                1,
-                player
-            )
-        ) {
-           if (
-    !infiniteMoney
-) {
-    player.money +=
-        entry.price;
-}
-
-            return false;
-        }
-
-        if (
-            itemId ===
-            "minimapa"
-        ) {
-            player.minimapOwned =
-                true;
-        }
-
-        if (
-            itemId ===
-            "lanterna"
-        ) {
-            player.lanternOwned =
-                true;
-        }
-
-        if (
-            item.unique
-        ) {
-            player.purchasedUniqueItems =
-                uniqueArray([
-                    ...safeArray(
-                        player
-                            .purchasedUniqueItems
-                    ),
-
-                    itemId
-                ]);
-        }
-
+    if (
+        !player ||
+        !entry ||
+        !item
+    ) {
         pushNotification(
-            "COMPRA CONCLUÍDA",
-            item.name,
-            "success",
-            1.8
+            "COMPRA INDISPONÍVEL",
+            "Este item não pôde ser comprado.",
+            "warning",
+            2
         );
 
-        saveGame({
-            silent:
-                true
-        });
-
-        return true;
+        return false;
     }
 
 
-    function sellInventoryItem(
-        itemId,
-        amount = 1
-    ) {
-        const player =
-            state.player;
+    /*
+        DINHEIRO INFINITO.
 
+        Mesmo que alguma outra parte
+        do jogo altere as moedas,
+        a compra considera o cheat.
+    */
+    const infiniteMoney =
+        Boolean(
+            state.dev
+                ?.unlocked &&
+            state.dev
+                ?.cheats
+                ?.infiniteMoney
+        );
+
+
+    if (
+        infiniteMoney
+    ) {
+        player.money =
+            9999999;
+    }
+
+
+    /*
+        ITENS ÚNICOS.
+
+        Minimapa e Lanterna só podem
+        ser comprados uma vez.
+    */
+    const alreadyObtained =
+        Boolean(
+            item.unique &&
+            (
+                getRealItemCount(
+                    itemId,
+                    player
+                ) >
+                    0 ||
+
+                safeArray(
+                    player
+                        .purchasedUniqueItems
+                ).includes(
+                    itemId
+                ) ||
+
+                (
+                    itemId ===
+                        "minimapa" &&
+                    player.minimapOwned
+                ) ||
+
+                (
+                    itemId ===
+                        "lanterna" &&
+                    player.lanternOwned
+                )
+            )
+        );
+
+
+    if (
+        alreadyObtained
+    ) {
+        pushNotification(
+            "ITEM JÁ ADQUIRIDO",
+            `${item.name} já pertence a você.`,
+            "info",
+            2
+        );
+
+        return false;
+    }
+
+
+    /*
+        DINHEIRO NORMAL.
+    */
+    if (
+        !infiniteMoney &&
+        player.money <
+            entry.price
+    ) {
+        pushNotification(
+            "MOEDAS INSUFICIENTES",
+            `Você precisa de ${entry.price} moedas.`,
+            "warning",
+            2
+        );
+
+        return false;
+    }
+
+
+    /*
+        MOCHILA.
+    */
+    if (
+        !canCarryItem(
+            itemId,
+            1,
+            player
+        )
+    ) {
+        pushNotification(
+            "MOCHILA CHEIA",
+            "Libere espaço antes de comprar este item.",
+            "warning",
+            2
+        );
+
+        return false;
+    }
+
+
+    /*
+        Só desconta moedas quando
+        dinheiro infinito estiver
+        DESATIVADO.
+    */
+    if (
+        !infiniteMoney
+    ) {
+        player.money -=
+            entry.price;
+    }
+
+
+    if (
+        !addItem(
+            itemId,
+            1,
+            player
+        )
+    ) {
+        /*
+            Devolve o dinheiro
+            caso algo dê errado.
+        */
+        if (
+            !infiniteMoney
+        ) {
+            player.money +=
+                entry.price;
+        }
+
+
+        pushNotification(
+            "COMPRA CANCELADA",
+            "Não foi possível colocar o item na mochila.",
+            "warning",
+            2
+        );
+
+        return false;
+    }
+
+
+    if (
+        itemId ===
+        "minimapa"
+    ) {
+        player.minimapOwned =
+            true;
+    }
+
+
+    if (
+        itemId ===
+        "lanterna"
+    ) {
+        player.lanternOwned =
+            true;
+    }
+
+
+    if (
+        item.unique
+    ) {
+        player.purchasedUniqueItems =
+            uniqueArray([
+                ...safeArray(
+                    player
+                        .purchasedUniqueItems
+                ),
+
+                itemId
+            ]);
+    }
+
+
+    /*
+        MENSAGEM CORRETA.
+    */
+    pushNotification(
+        item.unique
+            ? "ITEM ADQUIRIDO"
+            : "ITEM COMPRADO",
+
+        item.name,
+
+        "success",
+
+        2
+    );
+
+
+    saveGame({
+        silent:
+            true
+    });
+
+
+    return true;
+}
+function sellInventoryItem(
+    itemId,
+    amount = 1
+) {
+    const player =
+        state.player;
+
+
+    const item =
+        ITEMS[
+            itemId
+        ];
+
+
+    const safeAmount =
+        Math.max(
+            1,
+            integer(
+                amount,
+                1
+            )
+        );
+
+
+    if (
+        !player ||
+        !item ||
+        item.unique ||
+        item.keyItem ||
+        item.questItem ||
+        item.sellable ===
+            false
+    ) {
+        return false;
+    }
+
+
+    if (
+        getRealItemCount(
+            itemId,
+            player
+        ) <
+        safeAmount
+    ) {
+        return false;
+    }
+
+
+    /*
+        Mesmo valor mostrado
+        na interface da loja.
+    */
+    const unitPrice =
+        Math.max(
+            1,
+            Math.floor(
+                finiteNumber(
+                    item.sellPrice,
+
+                    finiteNumber(
+                        item.value,
+
+                        finiteNumber(
+                            item.price,
+                            2
+                        ) *
+                            0.45
+                    )
+                )
+            )
+        );
+
+
+    if (
+        !removeItem(
+            itemId,
+            safeAmount,
+            player
+        )
+    ) {
+        return false;
+    }
+
+
+    const earned =
+        unitPrice *
+        safeAmount;
+
+
+    player.money +=
+        earned;
+
+
+    pushNotification(
+        "ITEM VENDIDO",
+        `${item.name} • +${earned} moedas`,
+        "success",
+        2
+    );
+
+
+    saveGame({
+        silent:
+            true
+    });
+
+
+    return true;
+}
+
+function sellAllInventoryItems() {
+    const player =
+        state.player;
+
+
+    if (
+        !player
+    ) {
+        return false;
+    }
+
+
+    const entries =
+        Object
+            .entries(
+                player.inventory ||
+                {}
+            );
+
+
+    let totalMoney =
+        0;
+
+
+    let totalItems =
+        0;
+
+
+    for (
+        const [
+            itemId,
+            amountValue
+        ] of
+        entries
+    ) {
         const item =
             ITEMS[
                 itemId
             ];
 
-        const safeAmount =
+
+        if (
+            !item ||
+            item.unique ||
+            item.keyItem ||
+            item.questItem ||
+            item.sellable ===
+                false
+        ) {
+            continue;
+        }
+
+
+        const amount =
             Math.max(
-                1,
+                0,
                 integer(
-                    amount,
-                    1
+                    amountValue,
+                    0
                 )
             );
 
-        if (
-            !player ||
-            !item ||
-            !item.sellable ||
-            getRealItemCount(
-                itemId,
-                player
-            ) <
-            safeAmount
-        ) {
-            return false;
-        }
 
         if (
-            !removeItem(
-                itemId,
-                safeAmount,
-                player
-            )
+            amount <=
+            0
         ) {
-            return false;
+            continue;
         }
 
-        const earned =
+
+        const unitPrice =
             Math.max(
                 1,
                 Math.floor(
                     finiteNumber(
-                        item.value,
-                        1
-                    ) *
-                    safeAmount
+                        item.sellPrice,
+
+                        finiteNumber(
+                            item.value,
+
+                            finiteNumber(
+                                item.price,
+                                2
+                            ) *
+                                0.45
+                        )
+                    )
                 )
             );
 
-        player.money +=
-            earned;
 
-      pushNotification(
-    "ITEM VENDIDO",
-
-    `${item.name} • +${earned} moedas`,
-
-    "success",
-
-    1.8
-);
-
-        return true;
-    }
-
-
-    function getNextArmorUpgrade(
-        player =
-            state.player
-    ) {
         if (
-            !player
+            !removeItem(
+                itemId,
+                amount,
+                player
+            )
         ) {
-            return null;
+            continue;
         }
 
-        const current =
-            player.equipment
-                ?.armor;
 
-        const currentTier =
-            current
-                ? V.ARMOR_DATA[
-                    current
-                ]?.tier ||
-                    0
-                : 0;
+        totalItems +=
+            amount;
 
-        return (
-            V.ARMOR_PROGRESSION
-                .map(
-                    id =>
-                        V.ARMOR_DATA[
-                            id
-                        ]
-                )
-                .find(
-                    armor =>
-                        armor.tier ===
-                        currentTier +
-                            1
-                ) ||
-            null
-        );
+
+        totalMoney +=
+            unitPrice *
+            amount;
     }
 
 
+    if (
+        totalItems <=
+        0
+    ) {
+        pushNotification(
+            "NADA PARA VENDER",
+            "Sua mochila não possui itens vendáveis.",
+            "info",
+            2
+        );
+
+        return false;
+    }
+
+
+    player.money +=
+        totalMoney;
+
+
+    pushNotification(
+        "ITENS VENDIDOS",
+        `${totalItems} itens • +${totalMoney} moedas`,
+        "success",
+        2.2
+    );
+
+
+    saveGame({
+        silent:
+            true
+    });
+
+
+    return {
+        count:
+            totalItems,
+
+        total:
+            totalMoney
+    };
+}
+   
     function buyArmorUpgrade(
         armorId
     ) {
@@ -43385,10 +43639,10 @@ chooseDialogueOption,
             attemptFragmentMinigame,
             completeFragmentMinigame,
 
-            buyShopItem,
-            sellInventoryItem,
-            getNextArmorUpgrade,
-            buyArmorUpgrade,
+         buyShopItem,
+sellInventoryItem,
+sellAllInventoryItems,
+getNextArmorUpgrade,
 
             interactBasicQuest,
 
@@ -65360,23 +65614,28 @@ firstAvailableCall(
 
                     amount:
                         entry.amount,
+price:
+    Math.max(
+        1,
+        Math.floor(
+            finite(
+                entry.item
+                    .sellPrice,
 
-                    price:
-                        Math.max(
-                            1,
-                            Math.floor(
-                                finite(
-                                    entry.item
-                                        .sellPrice,
-                                    finite(
-                                        entry.item
-                                            .price,
-                                        2
-                                    ) *
-                                        0.45
-                                )
-                            )
-                        )
+                finite(
+                    entry.item
+                        .value,
+
+                    finite(
+                        entry.item
+                            .price,
+                        2
+                    ) *
+                        0.45
+                )
+            )
+        )
+    )
                 })
             );
     }

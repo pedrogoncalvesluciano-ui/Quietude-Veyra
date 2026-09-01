@@ -10495,3 +10495,479 @@ and
         0 0 22px
         var(--char-color) !important;
 }
+
+/* ================================================================
+   VEYRA — COMO JOGAR V3
+   EMOJI + AÇÃO + DESCRIÇÃO
+   ================================================================ */
+
+#howScreen .help-card {
+
+    display:
+        grid;
+
+    grid-template-columns:
+
+        68px
+
+        minmax(
+            155px,
+            .82fr
+        )
+
+        minmax(
+            220px,
+            1.35fr
+        );
+
+    align-items:
+        center;
+
+    gap:
+        18px;
+
+    min-height:
+        94px;
+
+    padding:
+
+        16px
+        20px;
+
+}
+
+
+/* ================================================================
+   EMOJI
+   ================================================================ */
+
+#howScreen .help-emoji {
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    width:
+        58px;
+
+    height:
+        58px;
+
+    border:
+        1px solid
+        rgba(
+            213,
+            174,
+            88,
+            .26
+        );
+
+    border-radius:
+        11px;
+
+    background:
+
+        radial-gradient(
+            circle,
+
+            rgba(
+                205,
+                164,
+                74,
+                .12
+            ),
+
+            rgba(
+                255,
+                255,
+                255,
+                .018
+            )
+        );
+
+    font-size:
+        27px;
+
+    line-height:
+        1;
+
+    filter:
+
+        drop-shadow(
+            0
+            4px
+            6px
+            rgba(
+                0,
+                0,
+                0,
+                .30
+            )
+        );
+
+}
+
+
+#howScreen .help-card:hover
+.help-emoji {
+
+    transform:
+        translateY(
+            -2px
+        )
+        scale(
+            1.09
+        );
+
+    border-color:
+        rgba(
+            230,
+            190,
+            101,
+            .58
+        );
+
+    box-shadow:
+
+        0
+        0
+        22px
+        rgba(
+            211,
+            169,
+            79,
+            .12
+        ),
+
+        inset
+        0
+        0
+        17px
+        rgba(
+            212,
+            169,
+            76,
+            .05
+        );
+
+}
+
+
+/* ================================================================
+   PARTE MAIS IMPORTANTE
+
+   MOVIMENTO
+   ATAQUE BÁSICO
+   HABILIDADES
+   etc.
+   ================================================================ */
+
+#howScreen .help-main {
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    justify-content:
+        center;
+
+    min-width:
+        0;
+
+}
+
+
+#howScreen .help-main strong {
+
+    color:
+        #ead59d;
+
+    font-family:
+
+        "Palatino Linotype",
+        Palatino,
+        Georgia,
+        serif;
+
+    font-size:
+
+        clamp(
+            15px,
+            1.15vw,
+            18px
+        );
+
+    font-weight:
+        600;
+
+    line-height:
+        1.15;
+
+    letter-spacing:
+        .055em;
+
+}
+
+
+/* ================================================================
+   TECLA
+
+   Fica dentro da parte da ação,
+   do jeito que você pediu.
+   ================================================================ */
+
+#howScreen .help-key {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    width:
+        fit-content;
+
+    min-height:
+        23px;
+
+    margin-top:
+        8px;
+
+    padding:
+
+        3px
+        8px;
+
+    border:
+        1px solid
+        rgba(
+            206,
+            170,
+            89,
+            .20
+        );
+
+    border-radius:
+        5px;
+
+    color:
+        #b3a682;
+
+    background:
+        rgba(
+            202,
+            161,
+            76,
+            .04
+        );
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+        9px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1;
+
+    letter-spacing:
+        .12em;
+
+}
+
+
+/* ================================================================
+   PARTE MENOS IMPORTANTE
+
+   A explicação fica menor,
+   mas ainda fácil de ler.
+   ================================================================ */
+
+#howScreen .help-secondary {
+
+    margin:
+        0;
+
+    color:
+        #aaa69d;
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+
+        clamp(
+            12px,
+            .9vw,
+            14px
+        );
+
+    line-height:
+        1.58;
+
+}
+
+
+/* ================================================================
+   HOVER
+   ================================================================ */
+
+#howScreen .help-card:hover
+.help-main strong {
+
+    color:
+        #f2d993;
+
+    text-shadow:
+
+        0
+        0
+        15px
+        rgba(
+            216,
+            172,
+            77,
+            .12
+        );
+
+}
+
+
+#howScreen .help-card:hover
+.help-key {
+
+    border-color:
+        rgba(
+            226,
+            183,
+            86,
+            .46
+        );
+
+    color:
+        #dbc187;
+
+    background:
+        rgba(
+            203,
+            156,
+            60,
+            .075
+        );
+
+}
+
+
+/* ================================================================
+   MOBILE / TABLET
+   ================================================================ */
+
+@media
+(
+    max-width:
+        760px
+) {
+
+    #howScreen .help-card {
+
+        grid-template-columns:
+
+            58px
+            1fr;
+
+        gap:
+
+            11px
+            15px;
+
+    }
+
+
+    #howScreen .help-secondary {
+
+        grid-column:
+
+            2 /
+            3;
+
+    }
+
+
+    #howScreen .help-emoji {
+
+        width:
+            52px;
+
+        height:
+            52px;
+
+        font-size:
+            24px;
+
+    }
+
+}
+
+
+@media
+(
+    max-width:
+        460px
+) {
+
+    #howScreen .help-card {
+
+        grid-template-columns:
+
+            50px
+            1fr;
+
+        padding:
+            14px;
+
+    }
+
+
+    #howScreen .help-emoji {
+
+        width:
+            46px;
+
+        height:
+            46px;
+
+        font-size:
+            22px;
+
+    }
+
+
+    #howScreen .help-main strong {
+
+        font-size:
+            14px;
+
+    }
+
+
+    #howScreen .help-secondary {
+
+        font-size:
+            12px;
+
+    }
+
+}

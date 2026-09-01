@@ -65859,6 +65859,7 @@ container.onclick =
         }
 
     };
+    }
 
    function getShopBuyEntries(
     npc
@@ -66874,6 +66875,15 @@ function getDevPanel() {
                 "none";
 
         }
+    );
+
+   panel
+    .querySelector(
+        "#veyraDevLogin"
+    )
+    ?.addEventListener(
+        "click",
+        authenticateDevPanel
     );
 
    /*

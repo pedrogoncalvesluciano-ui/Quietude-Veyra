@@ -11787,3 +11787,321 @@ word-break:
         );
 
 }
+/* ================================================================
+   VEYRA — CORREÇÃO FINAL
+   CRÉDITOS SEM AZUL + EMOJIS
+   ================================================================ */
+
+
+/* ================================================================
+   CRÉDITOS — REMOVER TODO BLUR AZUL
+   ================================================================ */
+
+.credits-shell {
+
+    box-shadow:
+
+        0
+        40px
+        120px
+        rgba(
+            0,
+            0,
+            0,
+            .68
+        ),
+
+        0
+        0
+        55px
+        rgba(
+            205,
+            164,
+            76,
+            .07
+        ),
+
+        inset
+        0
+        0
+        0
+        1px
+        rgba(
+            218,
+            180,
+            101,
+            .035
+        ) !important;
+
+}
+
+
+/*
+    Água/reflexo inferior:
+    somente dourado.
+*/
+.credits-shell::after {
+
+    background:
+
+        repeating-radial-gradient(
+            ellipse at center,
+
+            transparent
+            0,
+
+            transparent
+            12px,
+
+            rgba(
+                211,
+                173,
+                88,
+                .13
+            )
+            13px,
+
+            transparent
+            15px
+        ),
+
+        radial-gradient(
+            ellipse,
+
+            rgba(
+                215,
+                174,
+                83,
+                .22
+            )
+            0%,
+
+            rgba(
+                167,
+                125,
+                49,
+                .12
+            )
+            35%,
+
+            rgba(
+                111,
+                80,
+                31,
+                .045
+            )
+            55%,
+
+            transparent
+            72%
+        ) !important;
+
+}
+
+
+/* ================================================================
+   EMBLEMA — SEM AZUL
+   ================================================================ */
+
+.credits-emblem {
+
+    background:
+
+        radial-gradient(
+            circle,
+
+            rgba(
+                205,
+                164,
+                76,
+                .13
+            )
+            0%,
+
+            rgba(
+                118,
+                83,
+                32,
+                .045
+            )
+            47%,
+
+            transparent
+            70%
+        ) !important;
+
+
+    text-shadow:
+
+        0
+        0
+        14px
+        rgba(
+            220,
+            175,
+            82,
+            .22
+        ),
+
+        0
+        0
+        32px
+        rgba(
+            200,
+            154,
+            62,
+            .10
+        ) !important;
+
+}
+
+
+/*
+    O aro continua animado,
+    mas totalmente dourado.
+*/
+.credits-emblem::before {
+
+    border-color:
+        rgba(
+            205,
+            169,
+            91,
+            .18
+        ) !important;
+
+
+    border-top-color:
+        rgba(
+            232,
+            194,
+            103,
+            .67
+        ) !important;
+
+
+    border-right-color:
+        rgba(
+            184,
+            139,
+            54,
+            .24
+        ) !important;
+
+
+    border-bottom-color:
+        rgba(
+            215,
+            171,
+            78,
+            .42
+        ) !important;
+
+
+    border-left-color:
+        rgba(
+            184,
+            139,
+            54,
+            .24
+        ) !important;
+
+}
+
+
+/*
+    Todas as partículas também
+    ficam douradas.
+*/
+.credits-emblem::after {
+
+    background:
+        #d1ab61 !important;
+
+
+    box-shadow:
+
+        -43px
+        -18px
+        0
+        rgba(
+            194,
+            151,
+            69,
+            .40
+        ),
+
+        42px
+        -10px
+        0
+        rgba(
+            229,
+            190,
+            98,
+            .34
+        ),
+
+        -34px
+        30px
+        0
+        rgba(
+            182,
+            139,
+            58,
+            .38
+        ),
+
+        39px
+        31px
+        0
+        rgba(
+            220,
+            174,
+            79,
+            .34
+        ),
+
+        -8px
+        -47px
+        0
+        rgba(
+            223,
+            185,
+            99,
+            .36
+        ) !important;
+
+}
+
+
+/* ================================================================
+   COMO JOGAR — EMOJIS
+   ================================================================ */
+
+#howScreen .help-emoji {
+
+    font-family:
+
+        "Segoe UI Emoji",
+        "Apple Color Emoji",
+        "Noto Color Emoji",
+        "Twemoji Mozilla",
+        sans-serif !important;
+
+
+    font-size:
+        27px !important;
+
+
+    font-style:
+        normal;
+
+
+    font-weight:
+        400;
+
+
+    line-height:
+        1;
+
+}

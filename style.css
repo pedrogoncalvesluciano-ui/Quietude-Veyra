@@ -10449,3 +10449,49 @@ and
     }
 
 }
+
+/* TESTE — SELEÇÃO VEYRA */
+
+.character-card {
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease,
+        border-color .25s ease !important;
+}
+
+.character-card:hover {
+    transform:
+        translateY(-8px)
+        scale(1.025) !important;
+
+    border-color:
+        var(--char-color) !important;
+
+    box-shadow:
+        0 0 30px var(--char-color),
+        0 18px 40px rgba(0, 0, 0, .45) !important;
+}
+
+.character-card.selected {
+    border-color:
+        var(--char-color) !important;
+
+    box-shadow:
+        0 0 35px var(--char-color),
+        inset 0 0 24px
+        color-mix(
+            in srgb,
+            var(--char-color) 10%,
+            transparent
+        ) !important;
+}
+
+.character-card:hover .character-symbol,
+.character-card.selected .character-symbol {
+    transform:
+        scale(1.14) !important;
+
+    box-shadow:
+        0 0 22px
+        var(--char-color) !important;
+}

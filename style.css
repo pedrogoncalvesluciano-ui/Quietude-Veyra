@@ -366,6 +366,8 @@ button {
 .menu-screen {
 
     position: relative;
+   
+   isolation: isolate;
 
     align-items: center;
     justify-content: center;
@@ -409,13 +411,15 @@ button {
     background-size:
         cover;
 
-    opacity:
-        .38;
+  opacity:
+    1;
 }
 
 .menu-screen::after {
 
     content: "";
+
+   display: none;
 
     position: absolute;
     inset: 0;

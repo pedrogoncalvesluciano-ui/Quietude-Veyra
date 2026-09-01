@@ -387,12 +387,61 @@ button {
 
 }
 
+.menu-screen::before {
+
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    z-index: 0;
+
+    pointer-events: none;
+
+    background-image:
+        url("./menu-veyra-bg.png");
+
+    background-repeat: no-repeat;
+
+    background-position:
+        center center;
+
+    background-size:
+        cover;
+
+    opacity:
+        .38;
+}
+
+.menu-screen::after {
+
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    z-index: 2;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            transparent 30%,
+            rgba(0, 0, 0, .18) 53%,
+            rgba(0, 0, 0, .56) 82%,
+            rgba(0, 0, 0, .88) 100%
+        );
+
+}
 
 .menu-atmosphere {
 
     position: absolute;
 
     inset: 0;
+   
+   z-index: 1;
 
     overflow: hidden;
 

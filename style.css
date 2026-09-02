@@ -12409,140 +12409,6 @@ word-break:
     text-shadow:
         0 2px 5px rgba(0, 0, 0, .9);
 }
-/* ================================================================
-   VEYRA — PARTÍCULAS DA TELA INICIAL
-   HERÓIS = DOURADO
-   QUIETUDE = NEGRO
-   ================================================================ */
-
-.veyra-gold-particles,
-.veyra-black-particles {
-
-    position: absolute;
-    inset: 0;
-
-    z-index: 3;
-
-    overflow: hidden;
-
-    pointer-events: none;
-
-}
-
-
-/* ================================================================
-   HERÓIS — PARTÍCULAS DOURADAS
-   ================================================================ */
-
-.veyra-gold-particles i {
-
-    position: absolute;
-
-    bottom: -8%;
-
-  width: 4px;
-height: 4px;
-
-    border-radius: 50%;
-
-    background:
-        #e2bd62;
-
-  box-shadow:
-    0 0 5px rgba(236, 199, 105, 1),
-    0 0 12px rgba(236, 199, 105, .72),
-    0 0 22px rgba(236, 199, 105, .34);
-   
-    opacity: 0;
-
-    animation:
-        veyraGoldHeroFloat
-        8s
-        ease-in-out
-        infinite;
-
-}
-
-
-.veyra-gold-particles i:nth-child(1) {
-    left: 4%;
-    animation-delay: -1s;
-}
-
-.veyra-gold-particles i:nth-child(2) {
-    left: 11%;
-    animation-delay: -5s;
-}
-
-.veyra-gold-particles i:nth-child(3) {
-    left: 19%;
-    animation-delay: -2s;
-}
-
-.veyra-gold-particles i:nth-child(4) {
-    left: 29%;
-    animation-delay: -7s;
-}
-
-.veyra-gold-particles i:nth-child(5) {
-    left: 68%;
-    animation-delay: -4s;
-}
-
-.veyra-gold-particles i:nth-child(6) {
-    left: 77%;
-    animation-delay: -8s;
-}
-
-.veyra-gold-particles i:nth-child(7) {
-    left: 87%;
-    animation-delay: -3s;
-}
-
-.veyra-gold-particles i:nth-child(8) {
-    left: 96%;
-    animation-delay: -6s;
-}
-
-@keyframes veyraGoldHeroFloat {
-
-    0% {
-
-        transform:
-            translate(
-                0,
-                12vh
-            )
-            scale(.7);
-
-        opacity: 0;
-
-    }
-
-15% {
-    opacity: .55;
-}
-
- 45% {
-    opacity: 1;
-}
-    }
-
-    100% {
-
-        transform:
-            translate(
-                28px,
-                -112vh
-            )
-            scale(1.15);
-
-        opacity: 0;
-
-    }
-
-}
-
 
 /* ================================================================
    QUIETUDE — CINZAS / FRAGMENTOS NEGROS
@@ -13000,218 +12866,217 @@ height: 4px;
 }
 
 /* ================================================================
-   VEYRA — DISTRIBUIÇÃO FINAL DAS PARTÍCULAS
-   8 DE CADA LADO
+   VEYRA — PARTÍCULAS DO MENU
+   VERSÃO ÚNICA E LIMPA
    ================================================================ */
 
+.veyra-gold-particles,
+.veyra-black-particles {
+    position: absolute;
+    inset: 0;
 
-/* DOURADAS — SOBEM */
+    z-index: 5;
 
-.veyra-gold-particles i:nth-child(1)  { left: 3%;  animation-delay: -1s; }
-.veyra-gold-particles i:nth-child(2)  { left: 7%;  animation-delay: -5s; }
-.veyra-gold-particles i:nth-child(3)  { left: 11%; animation-delay: -2s; }
-.veyra-gold-particles i:nth-child(4)  { left: 16%; animation-delay: -7s; }
-.veyra-gold-particles i:nth-child(5)  { left: 21%; animation-delay: -4s; }
-.veyra-gold-particles i:nth-child(6)  { left: 26%; animation-delay: -8s; }
-.veyra-gold-particles i:nth-child(7)  { left: 31%; animation-delay: -3s; }
-.veyra-gold-particles i:nth-child(8)  { left: 37%; animation-delay: -6s; }
-
-.veyra-gold-particles i:nth-child(9)  { left: 64%; animation-delay: -2s; }
-.veyra-gold-particles i:nth-child(10) { left: 69%; animation-delay: -6s; }
-.veyra-gold-particles i:nth-child(11) { left: 74%; animation-delay: -1s; }
-.veyra-gold-particles i:nth-child(12) { left: 79%; animation-delay: -7s; }
-.veyra-gold-particles i:nth-child(13) { left: 84%; animation-delay: -4s; }
-.veyra-gold-particles i:nth-child(14) { left: 89%; animation-delay: -8s; }
-.veyra-gold-particles i:nth-child(15) { left: 94%; animation-delay: -3s; }
-.veyra-gold-particles i:nth-child(16) { left: 97%; animation-delay: -5s; }
+    overflow: hidden;
+    pointer-events: none;
+}
 
 
-/* algumas diferenças de tamanho */
+/* ================================================================
+   DOURADAS — SOBEM
+   ================================================================ */
+
+.veyra-gold-particles i {
+    position: absolute;
+
+    bottom: -20px;
+
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    background: #f1c968;
+
+    box-shadow:
+        0 0 5px rgba(255, 220, 128, 1),
+        0 0 12px rgba(240, 195, 87, .90),
+        0 0 22px rgba(218, 161, 46, .50);
+
+    opacity: 0;
+
+    animation:
+        veyraGoldRise 7s linear infinite;
+}
+
+
+/* ESQUERDA */
+
+.veyra-gold-particles i:nth-child(1)  { left: 4%;  animation-delay: -1.0s; }
+.veyra-gold-particles i:nth-child(2)  { left: 8%;  animation-delay: -4.2s; }
+.veyra-gold-particles i:nth-child(3)  { left: 13%; animation-delay: -2.5s; }
+.veyra-gold-particles i:nth-child(4)  { left: 18%; animation-delay: -5.8s; }
+.veyra-gold-particles i:nth-child(5)  { left: 23%; animation-delay: -3.1s; }
+.veyra-gold-particles i:nth-child(6)  { left: 28%; animation-delay: -6.4s; }
+.veyra-gold-particles i:nth-child(7)  { left: 33%; animation-delay: -.4s; }
+.veyra-gold-particles i:nth-child(8)  { left: 37%; animation-delay: -4.9s; }
+
+
+/* DIREITA */
+
+.veyra-gold-particles i:nth-child(9)  { left: 63%; animation-delay: -3.7s; }
+.veyra-gold-particles i:nth-child(10) { left: 68%; animation-delay: -.8s; }
+.veyra-gold-particles i:nth-child(11) { left: 73%; animation-delay: -5.4s; }
+.veyra-gold-particles i:nth-child(12) { left: 78%; animation-delay: -2.0s; }
+.veyra-gold-particles i:nth-child(13) { left: 83%; animation-delay: -6.1s; }
+.veyra-gold-particles i:nth-child(14) { left: 88%; animation-delay: -3.0s; }
+.veyra-gold-particles i:nth-child(15) { left: 93%; animation-delay: -4.5s; }
+.veyra-gold-particles i:nth-child(16) { left: 97%; animation-delay: -1.7s; }
+
 
 .veyra-gold-particles i:nth-child(3n) {
-    width: 2px;
-    height: 2px;
+    width: 7px;
+    height: 7px;
 }
 
 .veyra-gold-particles i:nth-child(4n) {
-    width: 4px;
-    height: 4px;
-}
-
-
-/* PRETAS — CAEM */
-
-.veyra-black-particles i:nth-child(1)  { left: 4%;  animation-delay: -2s; }
-.veyra-black-particles i:nth-child(2)  { left: 8%;  animation-delay: -6s; }
-.veyra-black-particles i:nth-child(3)  { left: 13%; animation-delay: -3s; }
-.veyra-black-particles i:nth-child(4)  { left: 18%; animation-delay: -8s; }
-.veyra-black-particles i:nth-child(5)  { left: 23%; animation-delay: -4s; }
-.veyra-black-particles i:nth-child(6)  { left: 28%; animation-delay: -7s; }
-.veyra-black-particles i:nth-child(7)  { left: 33%; animation-delay: -1s; }
-.veyra-black-particles i:nth-child(8)  { left: 38%; animation-delay: -5s; }
-
-.veyra-black-particles i:nth-child(9)  { left: 63%; animation-delay: -4s; }
-.veyra-black-particles i:nth-child(10) { left: 68%; animation-delay: -1s; }
-.veyra-black-particles i:nth-child(11) { left: 73%; animation-delay: -7s; }
-.veyra-black-particles i:nth-child(12) { left: 78%; animation-delay: -3s; }
-.veyra-black-particles i:nth-child(13) { left: 83%; animation-delay: -8s; }
-.veyra-black-particles i:nth-child(14) { left: 88%; animation-delay: -2s; }
-.veyra-black-particles i:nth-child(15) { left: 93%; animation-delay: -6s; }
-.veyra-black-particles i:nth-child(16) { left: 97%; animation-delay: -5s; }
-
-
-.veyra-black-particles i:nth-child(3n) {
-    width: 3px;
-    height: 6px;
-}
-
-.veyra-black-particles i:nth-child(4n) {
-    width: 5px;
-    height: 9px;
-}
-
-/* MAIS PRESENÇA SEM POLUIR */
-
-.veyra-gold-particles i {
-    background: #e7c36b;
-
-    box-shadow:
-        0 0 5px rgba(235, 198, 104, 1),
-        0 0 12px rgba(235, 198, 104, .68),
-        0 0 20px rgba(235, 198, 104, .25);
-}
-
-
-.veyra-black-particles i {
-    background:
-        rgba(8, 8, 10, .98);
-
-    box-shadow:
-        0 0 2px rgba(90, 86, 79, .40),
-        0 0 7px rgba(0, 0, 0, .95);
-}
-
-@keyframes veyraGoldHeroFloat {
-
-    0% {
-        transform: translate(0, 10vh) scale(.8);
-        opacity: 0;
-    }
-
-    7% {
-        opacity: .85;
-    }
-
-    25% {
-        opacity: 1;
-    }
-
-    75% {
-        opacity: 1;
-    }
-
-    93% {
-        opacity: .75;
-    }
-
-    100% {
-        transform: translate(22px, -110vh) scale(1.15);
-        opacity: 0;
-    }
-}
-
-
-@keyframes veyraQuietudeFall {
-
-    0% {
-        transform: translate(0, -10vh) rotate(0deg);
-        opacity: 0;
-    }
-
-    7% {
-        opacity: .95;
-    }
-
-    25% {
-        opacity: .9;
-    }
-
-    75% {
-        opacity: .85;
-    }
-
-    93% {
-        opacity: .7;
-    }
-
-    100% {
-        transform: translate(-35px, 110vh) rotate(470deg);
-        opacity: 0;
-    }
-}
-/* ================================================================
-   VEYRA — PARTÍCULAS MAIS VISÍVEIS
-   ================================================================ */
-
-#menuScreen .veyra-gold-particles,
-#menuScreen .veyra-black-particles {
-    z-index: 4;
-}
-
-
-/* DOURADAS */
-
-#menuScreen .veyra-gold-particles i {
-
-    width: 4px;
-    height: 4px;
-
-    background:
-        #f0ca6e;
-
-    box-shadow:
-        0 0 4px rgba(255, 216, 119, 1),
-        0 0 10px rgba(238, 195, 91, .95),
-        0 0 22px rgba(225, 174, 63, .58),
-        0 0 38px rgba(225, 174, 63, .22);
-}
-
-
-/* Algumas maiores */
-
-#menuScreen .veyra-gold-particles i:nth-child(3n) {
-    width: 6px;
-    height: 6px;
-}
-
-#menuScreen .veyra-gold-particles i:nth-child(4n) {
     width: 3px;
     height: 3px;
 }
 
 
-/* PRETAS */
+@keyframes veyraGoldRise {
 
-#menuScreen .veyra-black-particles i {
+    0% {
+        transform:
+            translate3d(0, 30px, 0)
+            scale(.7);
 
-    width: 6px;
-    height: 11px;
+        opacity: 0;
+    }
 
-    background:
-        rgba(5, 5, 7, 1);
+    8% {
+        opacity: .9;
+    }
 
-    border:
-        1px solid
-        rgba(105, 100, 90, .22);
+    30% {
+        opacity: 1;
+    }
 
-    box-shadow:
-        0 0 3px rgba(130, 125, 112, .25),
-        0 0 8px rgba(0, 0, 0, 1),
-        0 0 18px rgba(0, 0, 0, .85);
+    75% {
+        opacity: .9;
+    }
+
+    92% {
+        opacity: .55;
+    }
+
+    100% {
+        transform:
+            translate3d(25px, -110vh, 0)
+            scale(1.2);
+
+        opacity: 0;
+    }
 }
 
 
-#menuScreen .veyra-black-particles i:nth-child(3n) {
+/* ================================================================
+   PRETAS — CAEM
+   ================================================================ */
+
+.veyra-black-particles i {
+    position: absolute;
+
+    top: -25px;
+
+    width: 7px;
+    height: 12px;
+
+    border-radius:
+        70% 30% 60% 40%;
+
+    background:
+        #08090b;
+
+    border:
+        1px solid rgba(145, 139, 124, .28);
+
+    box-shadow:
+        0 0 3px rgba(145, 139, 124, .30),
+        0 0 8px rgba(0, 0, 0, 1);
+
+    opacity: 0;
+
+    animation:
+        veyraBlackFallFinal
+        7.5s
+        linear
+        infinite;
+}
+
+
+/* ESQUERDA */
+
+.veyra-black-particles i:nth-child(1)  { left: 5%;  animation-delay: -2.1s; }
+.veyra-black-particles i:nth-child(2)  { left: 9%;  animation-delay: -5.4s; }
+.veyra-black-particles i:nth-child(3)  { left: 14%; animation-delay: -.7s; }
+.veyra-black-particles i:nth-child(4)  { left: 19%; animation-delay: -4.0s; }
+.veyra-black-particles i:nth-child(5)  { left: 24%; animation-delay: -6.5s; }
+.veyra-black-particles i:nth-child(6)  { left: 29%; animation-delay: -2.8s; }
+.veyra-black-particles i:nth-child(7)  { left: 34%; animation-delay: -5.9s; }
+.veyra-black-particles i:nth-child(8)  { left: 38%; animation-delay: -1.4s; }
+
+
+/* DIREITA */
+
+.veyra-black-particles i:nth-child(9)  { left: 62%; animation-delay: -4.6s; }
+.veyra-black-particles i:nth-child(10) { left: 67%; animation-delay: -1.2s; }
+.veyra-black-particles i:nth-child(11) { left: 72%; animation-delay: -6.0s; }
+.veyra-black-particles i:nth-child(12) { left: 77%; animation-delay: -3.3s; }
+.veyra-black-particles i:nth-child(13) { left: 82%; animation-delay: -.5s; }
+.veyra-black-particles i:nth-child(14) { left: 87%; animation-delay: -5.0s; }
+.veyra-black-particles i:nth-child(15) { left: 92%; animation-delay: -2.4s; }
+.veyra-black-particles i:nth-child(16) { left: 97%; animation-delay: -6.8s; }
+
+
+.veyra-black-particles i:nth-child(3n) {
     width: 4px;
     height: 8px;
+}
+
+
+@keyframes veyraBlackFallFinal {
+
+    0% {
+        transform:
+            translate3d(0, -30px, 0)
+            rotate(0deg);
+
+        opacity: 0;
+    }
+
+    8% {
+        opacity: .9;
+    }
+
+    30% {
+        opacity: .88;
+    }
+
+    76% {
+        opacity: .78;
+    }
+
+    93% {
+        opacity: .5;
+    }
+
+    100% {
+        transform:
+            translate3d(-30px, 110vh, 0)
+            rotate(420deg);
+
+        opacity: 0;
+    }
 }

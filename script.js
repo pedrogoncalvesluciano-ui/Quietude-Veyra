@@ -63288,11 +63288,20 @@ function repairScreenInteractivity(
         }
 
 
-   const characterId =
+  const characterId =
     UI_RUNTIME
         .selectedCharacter ||
     state.selectedCharacter;
 
+if (!characterId) {
+
+    showSmallMessage(
+        "Escolha um personagem antes de começar."
+    );
+
+    return false;
+
+}
 
 if (!characterId) {
 

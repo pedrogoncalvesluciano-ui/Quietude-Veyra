@@ -12162,3 +12162,243 @@ word-break:
         1;
 
 }
+
+/* ================================================================
+   VEYRA — MENU PRINCIPAL COM ARTE
+   CORREÇÃO FINAL DE CAMADAS E LEGIBILIDADE
+   ================================================================ */
+
+#menuScreen {
+    position: relative;
+    isolation: isolate;
+}
+
+
+/* ARTE DE FUNDO */
+
+#menuScreen::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    z-index: 0;
+
+    background:
+        url("./menu-veyra-bg.png")
+        center center /
+        cover
+        no-repeat;
+
+    opacity: .72;
+
+    pointer-events: none;
+}
+
+
+/* VINHETA */
+
+#menuScreen::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    z-index: 2;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(0, 0, 0, .04) 0%,
+            rgba(0, 0, 0, .08) 38%,
+            rgba(0, 0, 0, .35) 72%,
+            rgba(0, 0, 0, .78) 100%
+        );
+
+    pointer-events: none;
+}
+
+
+/* ATMOSFERA */
+
+#menuScreen .menu-atmosphere {
+    z-index: 1;
+}
+
+
+/* CONTEÚDO INTEIRO DO MENU */
+
+#menuScreen .menu-shell {
+    position: relative;
+
+    z-index: 10;
+
+    isolation: isolate;
+}
+
+
+/* SOMBRA SUAVE ATRÁS DA INTERFACE */
+
+#menuScreen .menu-shell::before {
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width:
+        min(
+            720px,
+            90vw
+        );
+
+    height:
+        94%;
+
+    z-index: -1;
+
+    transform:
+        translate(
+            -50%,
+            -50%
+        );
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(4, 5, 7, .68) 0%,
+            rgba(4, 5, 7, .48) 38%,
+            rgba(4, 5, 7, .20) 67%,
+            transparent 82%
+        );
+
+    filter:
+        blur(15px);
+
+    pointer-events: none;
+}
+
+
+/* TÍTULO */
+
+#menuScreen .main-logo {
+    color: #eee6d7;
+
+    text-shadow:
+        0 3px 8px rgba(0, 0, 0, .95),
+        0 0 24px rgba(0, 0, 0, .62);
+}
+
+
+/* SUBTÍTULO */
+
+#menuScreen .main-subtitle {
+    color: #d0b369;
+
+    text-shadow:
+        0 2px 7px rgba(0, 0, 0, .95);
+}
+
+
+/* TEXTO ACIMA DO TÍTULO */
+
+#menuScreen .menu-eyebrow {
+    color: #b9a981;
+
+    text-shadow:
+        0 2px 6px rgba(0, 0, 0, .95);
+}
+
+
+/* TEXTO DA HISTÓRIA */
+
+#menuScreen .menu-intro {
+    color: #e0ddd5;
+
+    text-shadow:
+        0 2px 7px rgba(0, 0, 0, 1),
+        0 0 15px rgba(0, 0, 0, .9);
+}
+
+
+/* BOTÕES PRINCIPAIS */
+
+#menuScreen .menu-main-btn {
+    border:
+        1px solid
+        rgba(211, 177, 103, .48);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(5, 7, 9, .82),
+            rgba(12, 14, 17, .72)
+        );
+
+    box-shadow:
+        0 9px 28px rgba(0, 0, 0, .55),
+        inset 0 0 20px rgba(255, 255, 255, .018);
+
+    backdrop-filter:
+        blur(5px);
+}
+
+
+/* TEXTO PEQUENO DOS BOTÕES */
+
+#menuScreen .menu-main-btn .btn-small {
+    color: #aaa292;
+
+    text-shadow:
+        0 2px 5px rgba(0, 0, 0, 1);
+}
+
+
+/* NOVO JOGO / CONTINUAR */
+
+#menuScreen .menu-main-btn strong {
+    color: #f0e9da;
+
+    text-shadow:
+        0 2px 7px rgba(0, 0, 0, 1);
+}
+
+
+/* BOTÃO CONTINUAR */
+
+#menuScreen .menu-secondary-main {
+    border-color:
+        rgba(200, 188, 160, .26);
+
+    background:
+        rgba(7, 9, 12, .74);
+}
+
+
+/* COMO JOGAR / CRÉDITOS */
+
+#menuScreen .menu-small-actions button {
+    color: #d0cbc0;
+
+    text-shadow:
+        0 2px 7px rgba(0, 0, 0, 1);
+}
+
+
+/* LINHA ENTRE COMO JOGAR / CRÉDITOS */
+
+#menuScreen .menu-small-actions span {
+    background:
+        rgba(255, 255, 255, .24);
+}
+
+
+/* RODAPÉ */
+
+#menuScreen .menu-footer {
+    color: #8c887f;
+
+    text-shadow:
+        0 2px 5px rgba(0, 0, 0, .9);
+}

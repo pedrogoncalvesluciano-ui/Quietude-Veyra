@@ -12459,51 +12459,44 @@ height: 4px;
 
 
 .veyra-gold-particles i:nth-child(1) {
-    left: 3%;
+    left: 4%;
     animation-delay: -1s;
 }
 
 .veyra-gold-particles i:nth-child(2) {
-    left: 8%;
+    left: 11%;
     animation-delay: -5s;
-    animation-duration: 10s;
 }
 
 .veyra-gold-particles i:nth-child(3) {
-    left: 13%;
+    left: 19%;
     animation-delay: -2s;
-    width: 2px;
-    height: 2px;
 }
 
 .veyra-gold-particles i:nth-child(4) {
-    left: 18%;
+    left: 29%;
     animation-delay: -7s;
 }
 
 .veyra-gold-particles i:nth-child(5) {
-    left: 23%;
+    left: 68%;
     animation-delay: -4s;
-    width: 4px;
-    height: 4px;
 }
 
 .veyra-gold-particles i:nth-child(6) {
-    left: 28%;
+    left: 77%;
     animation-delay: -8s;
-    animation-duration: 11s;
 }
 
 .veyra-gold-particles i:nth-child(7) {
-    left: 32%;
+    left: 87%;
     animation-delay: -3s;
 }
 
 .veyra-gold-particles i:nth-child(8) {
-    left: 37%;
+    left: 96%;
     animation-delay: -6s;
 }
-
 
 @keyframes veyraGoldHeroFloat {
 
@@ -12593,51 +12586,44 @@ height: 4px;
 
 
 .veyra-black-particles i:nth-child(1) {
-    left: 64%;
+    left: 5%;
     animation-delay: -2s;
 }
 
 .veyra-black-particles i:nth-child(2) {
-    left: 69%;
+    left: 13%;
     animation-delay: -6s;
-    animation-duration: 11s;
 }
 
 .veyra-black-particles i:nth-child(3) {
-    left: 74%;
+    left: 22%;
     animation-delay: -3s;
-    width: 3px;
-    height: 7px;
 }
 
 .veyra-black-particles i:nth-child(4) {
-    left: 79%;
+    left: 32%;
     animation-delay: -8s;
 }
 
 .veyra-black-particles i:nth-child(5) {
-    left: 84%;
+    left: 66%;
     animation-delay: -4s;
-    width: 6px;
-    height: 11px;
 }
 
 .veyra-black-particles i:nth-child(6) {
-    left: 89%;
+    left: 76%;
     animation-delay: -7s;
-    animation-duration: 10s;
 }
 
 .veyra-black-particles i:nth-child(7) {
-    left: 94%;
+    left: 87%;
     animation-delay: -1s;
 }
 
 .veyra-black-particles i:nth-child(8) {
-    left: 97%;
+    left: 96%;
     animation-delay: -5s;
 }
-
 
 @keyframes veyraQuietudeFall {
 

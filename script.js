@@ -63184,8 +63184,8 @@ function repairScreenInteractivity(
         lirael:
             "✨",
 
-        zephyr:
-            "🌀"
+       zephyr:
+    "🔮"
     };
 
     return (
@@ -63212,8 +63212,8 @@ function repairScreenInteractivity(
             lirael:
                 "FADA",
 
-            zephyr:
-                "METAMORFO"
+          zephyr:
+    "INVOCADOR DO VÉU"
         };
 
         return (
@@ -63240,9 +63240,9 @@ function repairScreenInteractivity(
 
             lirael:
                 "Extremamente rápida, leve e ligada à energia feérica.",
-
-            zephyr:
-                "Ágil e imprevisível. Dobra pequenas fendas ao redor do próprio corpo."
+zephyr:
+    "Um invocador ligado ao Véu. Usa entidades esquecidas e ecos da Quietude para lutar."
+           
         };
 
         return (
@@ -71544,10 +71544,10 @@ for (
         bindButton(
             DOM.buttons.newGame,
             () => {
-                UI_RUNTIME
-                    .selectedCharacter =
-                    state.selectedCharacter ||
-                    "kaelion";
+             UI_RUNTIME
+    .selectedCharacter =
+    state.selectedCharacter ||
+    null;
 
                 renderCharacterCards();
 

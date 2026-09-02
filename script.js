@@ -3736,7 +3736,7 @@ description:
 
 
                     <p>
-                        Kaelion, Theron, Grumgar, Lirael e Zephyr possuem
+                        Kaelion, Theron, Grumgar, Lirael e Vael possuem
                         atributos, corpos, ataques e habilidades próprios.
                     </p>
 
@@ -61457,7 +61457,7 @@ drawDoors(
             esse teste não altera o jogo,
             apenas checa a função disponível.
         */
-        if (
+        Zephyif (
             state.world
                 ?.id ===
                 "monarchMaze" &&
@@ -61770,8 +61770,8 @@ drawDoors(
         autosaveAccumulator:
             0,
 
-        selectedCharacter:
-            "kaelion",
+   selectedCharacter:
+    null,
 
         activeInventoryCategory:
             "all",
@@ -63288,11 +63288,21 @@ function repairScreenInteractivity(
         }
 
 
-        const characterId =
-            UI_RUNTIME
-                .selectedCharacter ||
-            state.selectedCharacter ||
-            "kaelion";
+   const characterId =
+    UI_RUNTIME
+        .selectedCharacter ||
+    state.selectedCharacter;
+
+
+if (!characterId) {
+
+    showSmallMessage(
+        "Escolha um personagem antes de começar."
+    );
+
+    return false;
+
+}
 
 
         beginFreshAdventureSession();

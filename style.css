@@ -443,7 +443,7 @@ button {
 
     inset: 0;
    
-   z-index: 1;
+   z-index: 3;
 
     overflow: hidden;
 
@@ -459,6 +459,8 @@ button {
     position: absolute;
 
     inset: 0;
+
+   z-index: 0;
 
     background:
 
@@ -481,6 +483,8 @@ button {
 
     inset: 0;
 
+   z-index: 0;
+
     background:
 
         radial-gradient(
@@ -499,6 +503,8 @@ button {
 
     width: 760px;
     height: 260px;
+
+   z-index: 1;
 
     border-radius: 50%;
 
@@ -13088,24 +13094,28 @@ height: 4px;
 @keyframes veyraGoldHeroFloat {
 
     0% {
-        transform: translate(0, 12vh) scale(.7);
+        transform: translate(0, 10vh) scale(.8);
         opacity: 0;
     }
 
-    12% {
-        opacity: .55;
+    7% {
+        opacity: .85;
     }
 
-    48% {
+    25% {
         opacity: 1;
     }
 
-    82% {
-        opacity: .7;
+    75% {
+        opacity: 1;
+    }
+
+    93% {
+        opacity: .75;
     }
 
     100% {
-        transform: translate(28px, -112vh) scale(1.15);
+        transform: translate(22px, -110vh) scale(1.15);
         opacity: 0;
     }
 }
@@ -13114,24 +13124,94 @@ height: 4px;
 @keyframes veyraQuietudeFall {
 
     0% {
-        transform: translate(0, -12vh) rotate(0deg);
+        transform: translate(0, -10vh) rotate(0deg);
         opacity: 0;
     }
 
-    10% {
-        opacity: .75;
+    7% {
+        opacity: .95;
     }
 
-    55% {
-        opacity: .68;
+    25% {
+        opacity: .9;
     }
 
-    82% {
-        opacity: .5;
+    75% {
+        opacity: .85;
+    }
+
+    93% {
+        opacity: .7;
     }
 
     100% {
-        transform: translate(-42px, 115vh) rotate(470deg);
+        transform: translate(-35px, 110vh) rotate(470deg);
         opacity: 0;
     }
+}
+/* ================================================================
+   VEYRA — PARTÍCULAS MAIS VISÍVEIS
+   ================================================================ */
+
+#menuScreen .veyra-gold-particles,
+#menuScreen .veyra-black-particles {
+    z-index: 4;
+}
+
+
+/* DOURADAS */
+
+#menuScreen .veyra-gold-particles i {
+
+    width: 4px;
+    height: 4px;
+
+    background:
+        #f0ca6e;
+
+    box-shadow:
+        0 0 4px rgba(255, 216, 119, 1),
+        0 0 10px rgba(238, 195, 91, .95),
+        0 0 22px rgba(225, 174, 63, .58),
+        0 0 38px rgba(225, 174, 63, .22);
+}
+
+
+/* Algumas maiores */
+
+#menuScreen .veyra-gold-particles i:nth-child(3n) {
+    width: 6px;
+    height: 6px;
+}
+
+#menuScreen .veyra-gold-particles i:nth-child(4n) {
+    width: 3px;
+    height: 3px;
+}
+
+
+/* PRETAS */
+
+#menuScreen .veyra-black-particles i {
+
+    width: 6px;
+    height: 11px;
+
+    background:
+        rgba(5, 5, 7, 1);
+
+    border:
+        1px solid
+        rgba(105, 100, 90, .22);
+
+    box-shadow:
+        0 0 3px rgba(130, 125, 112, .25),
+        0 0 8px rgba(0, 0, 0, 1),
+        0 0 18px rgba(0, 0, 0, .85);
+}
+
+
+#menuScreen .veyra-black-particles i:nth-child(3n) {
+    width: 4px;
+    height: 8px;
 }

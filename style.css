@@ -12811,3 +12811,322 @@ word-break:
         opacity: 0;
     }
 }
+/* ================================================================
+   EMBLEMA VEYRA — BRILHO VIVO
+   ================================================================ */
+
+#menuScreen .veyra-emblem {
+
+    opacity:
+        1;
+
+    filter:
+        drop-shadow(
+            0 0 5px
+            rgba(
+                220,
+                180,
+                91,
+                .50
+            )
+        );
+
+    animation:
+        veyraEmblemPulse
+        3.8s
+        ease-in-out
+        infinite;
+
+}
+
+
+#menuScreen .emblem-ring {
+
+    border-color:
+        rgba(
+            224,
+            187,
+            105,
+            .72
+        );
+
+}
+
+
+#menuScreen .emblem-line {
+
+    background:
+        linear-gradient(
+            to right,
+            transparent,
+            rgba(
+                235,
+                198,
+                112,
+                .95
+            ),
+            transparent
+        );
+
+}
+
+
+#menuScreen .emblem-core {
+
+    border-color:
+        #e4bc63;
+
+    box-shadow:
+
+        0 0 5px
+        rgba(
+            230,
+            190,
+            96,
+            .8
+        ),
+
+        0 0 14px
+        rgba(
+            230,
+            190,
+            96,
+            .35
+        );
+
+}
+
+
+@keyframes veyraEmblemPulse {
+
+    0%,
+    100% {
+
+        opacity:
+            .72;
+
+        filter:
+            drop-shadow(
+                0 0 4px
+                rgba(211, 171, 87, .30)
+            );
+
+    }
+
+    45% {
+
+        opacity:
+            1;
+
+        filter:
+            drop-shadow(
+                0 0 9px
+                rgba(235, 194, 102, .72)
+            )
+            drop-shadow(
+                0 0 21px
+                rgba(208, 161, 66, .28)
+            );
+
+    }
+
+    55% {
+
+        opacity:
+            .88;
+
+    }
+
+    61% {
+
+        opacity:
+            1;
+
+    }
+
+}
+
+/* ================================================================
+   BOTÕES — REFLEXO DOURADO
+   ================================================================ */
+
+#menuScreen .menu-main-btn::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    top:
+        -35%;
+
+    bottom:
+        -35%;
+
+    left:
+        -45%;
+
+    width:
+        32%;
+
+    z-index:
+        1;
+
+    opacity:
+        0;
+
+    background:
+        linear-gradient(
+            105deg,
+
+            transparent
+            0%,
+
+            rgba(
+                220,
+                183,
+                103,
+                .04
+            )
+            24%,
+
+            rgba(
+                240,
+                205,
+                125,
+                .30
+            )
+            49%,
+
+            rgba(
+                220,
+                183,
+                103,
+                .06
+            )
+            70%,
+
+            transparent
+            100%
+        );
+
+    transform:
+        skewX(
+            -18deg
+        );
+
+    transition:
+        none;
+
+    pointer-events:
+        none;
+
+}
+
+
+#menuScreen .menu-main-btn:hover:not(:disabled)::before {
+
+    animation:
+        veyraButtonReflection
+        .72s
+        ease-out
+        forwards;
+
+}
+
+
+@keyframes veyraButtonReflection {
+
+    0% {
+
+        left:
+            -45%;
+
+        opacity:
+            0;
+
+    }
+
+    18% {
+
+        opacity:
+            .85;
+
+    }
+
+    82% {
+
+        opacity:
+            .55;
+
+    }
+
+    100% {
+
+        left:
+            118%;
+
+        opacity:
+            0;
+
+    }
+
+}
+
+
+#menuScreen .menu-main-btn:hover:not(:disabled) {
+
+    border-color:
+        rgba(
+            224,
+            187,
+            104,
+            .72
+        );
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(
+                17,
+                15,
+                11,
+                .92
+            ),
+            rgba(
+                11,
+                12,
+                14,
+                .84
+            )
+        );
+
+    box-shadow:
+
+        0 10px 32px
+        rgba(
+            0,
+            0,
+            0,
+            .65
+        ),
+
+        0 0 18px
+        rgba(
+            196,
+            156,
+            75,
+            .08
+        ),
+
+        inset
+        0 0 22px
+        rgba(
+            225,
+            181,
+            92,
+            .035
+        );
+
+}

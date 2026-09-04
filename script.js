@@ -61103,9 +61103,152 @@ function repairScreenInteractivity(
     }
 
 
+function ensureCharacterSelectionParticles(screen) {
+    if (!screen) return null;
+
+    let field =
+        screen.querySelector(
+            ".character-selection-particles"
+        );
+
+    if (field) {
+        return field;
+    }
+
+    field =
+        document.createElement(
+            "div"
+        );
+
+    field.className =
+        "character-selection-particles";
+
+    field.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    const fragment =
+        document.createDocumentFragment();
+
+    const particleCount =
+        86;
+
+    for (
+        let index = 0;
+        index < particleCount;
+        index += 1
+    ) {
+        const particle =
+            document.createElement(
+                "i"
+            );
+
+        const size =
+            0.9 +
+            Math.random() *
+            2.9;
+
+        const duration =
+            8 +
+            Math.random() *
+            12;
+
+        const delay =
+            -Math.random() *
+            duration;
+
+        const drift =
+            -110 +
+            Math.random() *
+            220;
+
+        const x =
+            Math.random() *
+            100;
+
+        const opacity =
+            0.28 +
+            Math.random() *
+            0.68;
+
+        const blur =
+            Math.random() *
+            0.65;
+
+        const twinkle =
+            1.8 +
+            Math.random() *
+            4.2;
+
+        particle.style.setProperty(
+            "--particle-x",
+            `${x.toFixed(2)}%`
+        );
+
+        particle.style.setProperty(
+            "--particle-size",
+            `${size.toFixed(2)}px`
+        );
+
+        particle.style.setProperty(
+            "--particle-duration",
+            `${duration.toFixed(2)}s`
+        );
+
+        particle.style.setProperty(
+            "--particle-delay",
+            `${delay.toFixed(2)}s`
+        );
+
+        particle.style.setProperty(
+            "--particle-drift",
+            `${drift.toFixed(1)}px`
+        );
+
+        particle.style.setProperty(
+            "--particle-opacity",
+            opacity.toFixed(2)
+        );
+
+        particle.style.setProperty(
+            "--particle-blur",
+            `${blur.toFixed(2)}px`
+        );
+
+        particle.style.setProperty(
+            "--particle-twinkle",
+            `${twinkle.toFixed(2)}s`
+        );
+
+        fragment.appendChild(
+            particle
+        );
+    }
+
+    field.appendChild(
+        fragment
+    );
+
+    screen.prepend(
+        field
+    );
+
+    return field;
+}
+
+
 function updateCharacterSelectionAtmosphere(accent = null) {
-    const screen = DOM.screens.character;
-    if (!screen) return false;
+    const screen =
+        DOM.screens.character;
+
+    if (!screen) {
+        return false;
+    }
+
+    ensureCharacterSelectionParticles(
+        screen
+    );
 
     screen.style.setProperty(
         "--selection-accent",

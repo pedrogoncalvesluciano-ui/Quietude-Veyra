@@ -61571,31 +61571,31 @@ function updateCharacterStartButton() {
     return ready;
 }
 
-    function characterStatRow(
-        label,
-        value,
-        maximum
-    ) {
-        const ratio =
-            clamp(
-                finite(
-                    value,
-                    0
-                ) /
-                maximum,
-                0,
-                1
-            );
+function characterStatRow(
+    label,
+    value,
+    maximum
+) {
+    const ratio =
+        clamp(
+            finite(
+                value,
+                0
+            ) /
+            maximum,
+            0,
+            1
+        );
 
-        return `
-            <div class="character-stat">
-                <span>${label}</span>
-                <div>
-                    <i style="width:${ratio * 100}%"></i>
-                </div>
+    return `
+        <div class="character-stat">
+            <span>${label}</span>
+            <div>
+                <i style="width:${ratio * 100}%"></i>
             </div>
-        `;
-    }
+        </div>
+    `;
+}
 
 
   function getCharacterSymbol(

@@ -26656,7 +26656,7 @@ lastWorldRef: null,
                 state.notifications
             );
 
-        state.notifications.push(
+       state.notifications.unshift(
             notification
         );
 
@@ -26664,7 +26664,7 @@ lastWorldRef: null,
             state.notifications.length >
             5
         ) {
-            state.notifications.shift();
+          state.notifications.pop();
         }
 
         return notification;
@@ -46832,260 +46832,689 @@ function drawGate(
     ctx.restore();
 }
 
-    function drawFountain(
-        ctx,
-        fountain
+  function drawFountain(
+    ctx,
+    fountain
+) {
+    if (
+        !fountain ||
+        !isPointVisible(
+            fountain.x,
+            fountain.y,
+            190
+        )
     ) {
-        if (
-            !fountain ||
-            !isPointVisible(
-                fountain.x,
-                fountain.y,
-                180
-            )
-        ) {
-            return;
-        }
+        return;
+    }
 
-        const screen =
-            worldToScreen(
-                fountain.x,
-                fountain.y
-            );
+    const screen =
+        worldToScreen(
+            fountain.x,
+            fountain.y
+        );
 
-        const radius =
-            fountain.radius ||
-            92;
+    const radius =
+        fountain.radius ||
+        92;
 
-        const wave =
+    const time =
+        renderRuntime
+            .ambientTime;
+
+    const wave =
+        Math.sin(
+            time *
+            2.1
+        );
+
+    const shimmer =
+        (
             Math.sin(
-                renderRuntime
-                    .ambientTime *
-                    2.2
-            );
+                time *
+                1.45
+            ) +
+            1
+        ) /
+        2;
 
-        ctx.save();
+    ctx.save();
 
-        ctx.fillStyle =
-            "rgba(0,0,0,0.22)";
+    /*
+        SOMBRA
+    */
+    ctx.fillStyle =
+        "rgba(0,0,0,0.28)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        screen.x + 10,
+        screen.y + 18,
+        radius + 20,
+        radius * 0.5,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /*
+        PEDRA EXTERNA ENVELHECIDA
+    */
+    const outerStone =
+        ctx.createRadialGradient(
+            screen.x - 34,
+            screen.y - 34,
+            18,
+            screen.x,
+            screen.y,
+            radius + 18
+        );
+
+    outerStone.addColorStop(
+        0,
+        "#b9ad95"
+    );
+
+    outerStone.addColorStop(
+        0.46,
+        "#8d836f"
+    );
+
+    outerStone.addColorStop(
+        0.78,
+        "#675f53"
+    );
+
+    outerStone.addColorStop(
+        1,
+        "#3c3b38"
+    );
+
+    ctx.fillStyle =
+        outerStone;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        screen.x,
+        screen.y,
+        radius + 15,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.strokeStyle =
+        "rgba(35,34,31,0.84)";
+
+    ctx.lineWidth =
+        4;
+
+    ctx.stroke();
+
+
+    /*
+        ENTALHES NO ARO
+    */
+    ctx.save();
+
+    ctx.strokeStyle =
+        "rgba(220,207,178,0.20)";
+
+    ctx.lineWidth =
+        1.2;
+
+    ctx.setLineDash([
+        8,
+        7
+    ]);
+
+    ctx.beginPath();
+
+    ctx.arc(
+        screen.x,
+        screen.y,
+        radius + 7,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+    ctx.restore();
+
+
+    /*
+        INTERIOR DO ARO
+    */
+    ctx.fillStyle =
+        "#313538";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        screen.x,
+        screen.y,
+        radius + 1,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /*
+        ÁGUA
+    */
+    const waterGradient =
+        ctx.createRadialGradient(
+            screen.x - 36,
+            screen.y - 40,
+            10,
+            screen.x,
+            screen.y,
+            radius
+        );
+
+    waterGradient.addColorStop(
+        0,
+        "rgba(131,190,200,0.96)"
+    );
+
+    waterGradient.addColorStop(
+        0.42,
+        "rgba(66,126,143,0.96)"
+    );
+
+    waterGradient.addColorStop(
+        0.76,
+        "rgba(38,86,103,0.98)"
+    );
+
+    waterGradient.addColorStop(
+        1,
+        "rgba(23,55,68,1)"
+    );
+
+    ctx.fillStyle =
+        waterGradient;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        screen.x,
+        screen.y,
+        radius - 12,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /*
+        REFLEXO NA ÁGUA
+    */
+    ctx.save();
+
+    ctx.beginPath();
+
+    ctx.arc(
+        screen.x,
+        screen.y,
+        radius - 13,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.clip();
+
+    const waterLight =
+        ctx.createLinearGradient(
+            screen.x - radius,
+            screen.y - radius,
+            screen.x + radius,
+            screen.y + radius
+        );
+
+    waterLight.addColorStop(
+        0,
+        "rgba(225,245,240,0.18)"
+    );
+
+    waterLight.addColorStop(
+        0.36,
+        "rgba(180,220,225,0.06)"
+    );
+
+    waterLight.addColorStop(
+        0.62,
+        "rgba(255,255,255,0)"
+    );
+
+    ctx.fillStyle =
+        waterLight;
+
+    ctx.fillRect(
+        screen.x - radius,
+        screen.y - radius,
+        radius * 2,
+        radius * 2
+    );
+
+    ctx.restore();
+
+
+    /*
+        ONDAS
+    */
+    ctx.strokeStyle =
+        "rgba(204,235,236,0.30)";
+
+    ctx.lineWidth =
+        1.7;
+
+    for (
+        let index = 0;
+        index < 4;
+        index += 1
+    ) {
+        const ripple =
+            23 +
+            index * 16 +
+            wave * 2.4;
 
         ctx.beginPath();
 
         ctx.ellipse(
-            screen.x +
-                8,
-            screen.y +
-                15,
-            radius +
-                14,
-            radius *
-                0.5,
-            0,
-            0,
-            Math.PI *
-                2
-        );
-
-        ctx.fill();
-
-        ctx.fillStyle =
-            "#817c72";
-
-        ctx.beginPath();
-
-        ctx.arc(
             screen.x,
-            screen.y,
-            radius +
-                12,
+            screen.y + 13,
+            ripple,
+            ripple * 0.34,
             0,
-            Math.PI *
-                2
-        );
-
-        ctx.fill();
-
-        ctx.fillStyle =
-            "#393d40";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            screen.x,
-            screen.y,
-            radius,
             0,
-            Math.PI *
-                2
-        );
-
-        ctx.fill();
-
-        const waterGradient =
-            ctx.createRadialGradient(
-                screen.x -
-                    18,
-                screen.y -
-                    22,
-                10,
-
-                screen.x,
-                screen.y,
-                radius
-            );
-
-        waterGradient.addColorStop(
-            0,
-            "rgba(132,183,193,0.85)"
-        );
-
-        waterGradient.addColorStop(
-            1,
-            "rgba(48,91,105,0.88)"
-        );
-
-        ctx.fillStyle =
-            waterGradient;
-
-        ctx.beginPath();
-
-        ctx.arc(
-            screen.x,
-            screen.y,
-            radius -
-                12,
-            0,
-            Math.PI *
-                2
-        );
-
-        ctx.fill();
-
-        /*
-            Ondas.
-        */
-        ctx.strokeStyle =
-            "rgba(210,235,235,0.34)";
-
-        ctx.lineWidth =
-            2;
-
-        for (
-            let index = 0;
-            index < 3;
-            index += 1
-        ) {
-            ctx.beginPath();
-
-            ctx.ellipse(
-                screen.x,
-                screen.y +
-                    8,
-                26 +
-                    index *
-                        17 +
-                    wave *
-                        3,
-                10 +
-                    index *
-                        5,
-                0,
-                0,
-                Math.PI *
-                    2
-            );
-
-            ctx.stroke();
-        }
-
-        /*
-            Pilar.
-        */
-        ctx.fillStyle =
-            "#8e897d";
-
-        ctx.fillRect(
-            screen.x -
-                17,
-            screen.y -
-                86,
-            34,
-            89
-        );
-
-        ctx.fillStyle =
-            "#aaa397";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            screen.x,
-            screen.y -
-                89,
-            28,
-            0,
-            Math.PI *
-                2
-        );
-
-        ctx.fill();
-
-        /*
-            Água caindo.
-        */
-        ctx.strokeStyle =
-            "rgba(185,224,230,0.72)";
-
-        ctx.lineWidth =
-            4;
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            screen.x -
-                15,
-            screen.y -
-                80
-        );
-
-        ctx.quadraticCurveTo(
-            screen.x -
-                42 +
-                wave *
-                    3,
-            screen.y -
-                43,
-            screen.x -
-                38,
-            screen.y -
-                12
-        );
-
-        ctx.moveTo(
-            screen.x +
-                15,
-            screen.y -
-                80
-        );
-
-        ctx.quadraticCurveTo(
-            screen.x +
-                42 -
-                wave *
-                    3,
-            screen.y -
-                43,
-            screen.x +
-                38,
-            screen.y -
-                12
+            Math.PI * 2
         );
 
         ctx.stroke();
-
-        ctx.restore();
     }
 
+
+    /*
+        SOMBRA DO PEDESTAL
+    */
+    ctx.fillStyle =
+        "rgba(37,35,31,0.36)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        screen.x + 4,
+        screen.y + 3,
+        31,
+        14,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /*
+        PEDRA DO PEDESTAL
+    */
+    const pedestalStone =
+        ctx.createLinearGradient(
+            screen.x - 20,
+            screen.y - 82,
+            screen.x + 22,
+            screen.y
+        );
+
+    pedestalStone.addColorStop(
+        0,
+        "#c0b49b"
+    );
+
+    pedestalStone.addColorStop(
+        0.38,
+        "#9f947f"
+    );
+
+    pedestalStone.addColorStop(
+        0.75,
+        "#756e61"
+    );
+
+    pedestalStone.addColorStop(
+        1,
+        "#514d46"
+    );
+
+
+    /*
+        BASE DO PEDESTAL
+    */
+    ctx.fillStyle =
+        pedestalStone;
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        screen.x,
+        screen.y - 1,
+        29,
+        13,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /*
+        COLUNA AFUNILADA
+    */
+    ctx.beginPath();
+
+    ctx.moveTo(
+        screen.x - 17,
+        screen.y - 5
+    );
+
+    ctx.lineTo(
+        screen.x - 12,
+        screen.y - 69
+    );
+
+    ctx.quadraticCurveTo(
+        screen.x,
+        screen.y - 76,
+        screen.x + 12,
+        screen.y - 69
+    );
+
+    ctx.lineTo(
+        screen.x + 17,
+        screen.y - 5
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    ctx.strokeStyle =
+        "rgba(55,51,45,0.48)";
+
+    ctx.lineWidth =
+        1.5;
+
+    ctx.stroke();
+
+
+    /*
+        FRISO
+    */
+    ctx.fillStyle =
+        "#847b6a";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        screen.x,
+        screen.y - 67,
+        23,
+        9,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /*
+        TAÇA SUPERIOR
+    */
+    ctx.fillStyle =
+        "rgba(38,36,33,0.5)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        screen.x + 2,
+        screen.y - 75,
+        36,
+        14,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle =
+        pedestalStone;
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        screen.x,
+        screen.y - 80,
+        34,
+        13,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /*
+        ÁGUA DA TAÇA
+    */
+    const upperWater =
+        ctx.createRadialGradient(
+            screen.x - 8,
+            screen.y - 84,
+            2,
+            screen.x,
+            screen.y - 80,
+            25
+        );
+
+    upperWater.addColorStop(
+        0,
+        "rgba(165,214,218,0.92)"
+    );
+
+    upperWater.addColorStop(
+        1,
+        "rgba(47,101,116,0.94)"
+    );
+
+    ctx.fillStyle =
+        upperWater;
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        screen.x,
+        screen.y - 81,
+        25,
+        8,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /*
+        ORNAMENTO PEQUENO
+    */
+    ctx.fillStyle =
+        "#9f957f";
+
+    ctx.fillRect(
+        screen.x - 3,
+        screen.y - 101,
+        6,
+        17
+    );
+
+    ctx.fillStyle =
+        "#b8aa90";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        screen.x,
+        screen.y - 104,
+        7,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /*
+        JATOS DE ÁGUA
+    */
+    ctx.save();
+
+    ctx.strokeStyle =
+        "rgba(196,232,235,0.78)";
+
+    ctx.lineWidth =
+        2.6;
+
+    ctx.shadowColor =
+        "rgba(121,198,210,0.40)";
+
+    ctx.shadowBlur =
+        7;
+
+    const jetReach =
+        45 +
+        wave * 3;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        screen.x - 20,
+        screen.y - 78
+    );
+
+    ctx.quadraticCurveTo(
+        screen.x - 48,
+        screen.y - 57 - shimmer * 3,
+        screen.x - jetReach,
+        screen.y - 7
+    );
+
+    ctx.moveTo(
+        screen.x + 20,
+        screen.y - 78
+    );
+
+    ctx.quadraticCurveTo(
+        screen.x + 48,
+        screen.y - 57 - shimmer * 3,
+        screen.x + jetReach,
+        screen.y - 7
+    );
+
+    ctx.moveTo(
+        screen.x,
+        screen.y - 88
+    );
+
+    ctx.quadraticCurveTo(
+        screen.x + wave * 2,
+        screen.y - 54,
+        screen.x,
+        screen.y - 18
+    );
+
+    ctx.stroke();
+
+    ctx.restore();
+
+
+    /*
+        BRILHOS DA ÁGUA
+    */
+    ctx.fillStyle =
+        "rgba(225,247,244,0.70)";
+
+    for (
+        let index = 0;
+        index < 4;
+        index += 1
+    ) {
+        const side =
+            index % 2 === 0
+                ? -1
+                : 1;
+
+        const sparkleX =
+            screen.x +
+            side *
+            (
+                39 +
+                (
+                    index > 1
+                        ? 12
+                        : 0
+                )
+            );
+
+        const sparkleY =
+            screen.y -
+            7 +
+            Math.sin(
+                time * 3 +
+                index
+            ) *
+            2;
+
+        ctx.globalAlpha =
+            0.42 +
+            shimmer *
+            0.36;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            sparkleX,
+            sparkleY,
+            1.5 +
+            shimmer *
+            0.8,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.globalAlpha =
+        1;
+
+    ctx.restore();
+}
 
     /* ============================================================
        GRAMA
@@ -48300,21 +48729,46 @@ else {
         /*
             Nome.
         */
-        ctx.font =
-            "600 11px serif";
+     ctx.font =
+    '600 11px "Cinzel", Georgia, serif';
 
-        ctx.textAlign =
-            "center";
+ctx.textAlign =
+    "center";
 
-        ctx.fillStyle =
-            "rgba(237,229,211,0.88)";
+ctx.textBaseline =
+    "middle";
 
-        ctx.fillText(
-            npc.name ||
-                "",
-            0,
-            -39
-        );
+ctx.lineWidth =
+    3;
+
+ctx.strokeStyle =
+    "rgba(5,6,7,0.78)";
+
+ctx.shadowColor =
+    "rgba(0,0,0,0.88)";
+
+ctx.shadowBlur =
+    5;
+
+ctx.strokeText(
+    npc.name ||
+        "",
+    0,
+    -39
+);
+
+ctx.fillStyle =
+    "rgba(244,233,209,0.98)";
+
+ctx.fillText(
+    npc.name ||
+        "",
+    0,
+    -39
+);
+
+ctx.shadowBlur =
+    0;
 
         ctx.restore();
 

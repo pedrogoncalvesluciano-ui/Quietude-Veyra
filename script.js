@@ -61103,169 +61103,201 @@ function repairScreenInteractivity(
     }
 
 
-  function renderCharacterCards() {
-    const container =
-        DOM.misc
-            .characterCards;
+function updateCharacterSelectionAtmosphere(accent = null) {
+    const screen = DOM.screens.character;
+    if (!screen) return false;
 
-    if (
-        !container
-    ) {
-        return;
-    }
+    screen.style.setProperty(
+        "--selection-accent",
+        accent || "#202329"
+    );
 
-    const characters =
-        getCharactersList();
+    screen.classList.toggle(
+        "has-character-selection",
+        Boolean(accent)
+    );
 
-    container.innerHTML =
-        characters
-            .map(
-                (
-                    character,
-                    index
-                ) => {
-                    const selected =
-                        character.id ===
-                        UI_RUNTIME
-                            .selectedCharacter;
+    return true;
+}
 
-                    const accent =
-                        character.color ||
-                        character.selectionGlow ||
-                        "#b69a65";
+function renderCharacterCards() {
+    const container = DOM.misc.characterCards;
+    if (!container) return;
 
-                    const role =
-                        character.role ||
-                        character.className ||
-                        getCharacterRole(
-                            character.id
-                        );
+    const characters = getCharactersList();
 
-                    const description =
-                        character.description ||
-                        getCharacterDescription(
-                            character.id
-                        );
+    const currentCharacter = characters.find(
+        character =>
+            character.id ===
+            UI_RUNTIME.selectedCharacter
+    ) || null;
 
-                    const symbol =
-                        getCharacterSymbol(
-                            character.id
-                        );
+    updateCharacterSelectionAtmosphere(
+        currentCharacter?.color || null
+    );
 
-                    return `
-                        <div
-                            class="character-choice ${selected ? "selected" : ""}"
-                            data-character-choice="${escapeHTML(character.id)}"
-                            style="--char-color:${escapeHTML(accent)};--card-index:${index}"
-                        >
+    container.innerHTML = characters.map((character, index) => {
+        const selected =
+            character.id ===
+            UI_RUNTIME.selectedCharacter;
 
-                            <div
-                                class="character-symbol"
-                                aria-hidden="true"
-                            >
-                                ${escapeHTML(symbol)}
-                            </div>
+        const accent =
+            character.color ||
+            character.selectionGlow ||
+            "#b69a65";
 
-                            <button
-                                type="button"
-                                class="character-card ${selected ? "selected" : ""}"
-                                data-character-id="${escapeHTML(character.id)}"
-                                aria-pressed="${selected ? "true" : "false"}"
-                            >
+        const role =
+            character.role ||
+            character.className ||
+            getCharacterRole(character.id);
 
-                                <span class="character-card-inner">
+        const description =
+            character.description ||
+            getCharacterDescription(character.id);
 
-                                    <span class="character-card-face character-card-front">
+        const symbol =
+            getCharacterSymbol(character.id);
 
-                                        <span class="character-identity">
+        const attackName =
+            character.basicAttack?.name ||
+            "Ataque básico";
 
-                                            <h3>
-                                                ${escapeHTML(character.name)}
-                                            </h3>
+        const attackRange =
+            Math.round(
+                finite(
+                    character.basicAttack?.range,
+                    0
+                )
+            );
 
-                                            <span class="role">
-                                                ${escapeHTML(role)}
-                                            </span>
+        return `
+            <div
+                class="character-choice ${selected ? "selected" : ""}"
+                data-character-choice="${escapeHTML(character.id)}"
+                style="--char-color:${escapeHTML(accent)};--card-index:${index}"
+            >
+                <div
+                    class="character-symbol"
+                    aria-hidden="true"
+                >
+                    ${escapeHTML(symbol)}
+                </div>
 
-                                        </span>
+                <button
+                    type="button"
+                    class="character-card ${selected ? "selected" : ""}"
+                    data-character-id="${escapeHTML(character.id)}"
+                    aria-pressed="${selected ? "true" : "false"}"
+                >
+                    <span class="character-card-inner">
 
-                                        <span class="character-description">
-                                            ${escapeHTML(description)}
-                                        </span>
+                        <span class="character-card-face character-card-front">
 
-                                        <span class="character-card-stats">
+                            <span class="character-identity">
+                                <h3>
+                                    ${escapeHTML(character.name)}
+                                </h3>
 
-                                            ${characterStatRow(
-                                                "VIDA",
-                                                character,
-                                                "hp"
-                                            )}
+                                <span class="role">
+                                    ${escapeHTML(role)}
+                                </span>
+                            </span>
 
-                                            ${characterStatRow(
-                                                "FORÇA",
-                                                character,
-                                                "damage"
-                                            )}
+                            <span class="character-description">
+                                ${escapeHTML(description)}
+                            </span>
 
-                                            ${characterStatRow(
-                                                "ENERGIA",
-                                                character,
-                                                "energy"
-                                            )}
+                            <span class="character-card-meta">
 
-                                            ${characterStatRow(
-                                                "RESISTÊNCIA",
-                                                character,
-                                                "defense"
-                                            )}
+                                <span class="character-meta-item">
+                                    <small>
+                                        ATAQUE
+                                    </small>
 
-                                            ${characterStatRow(
-                                                "VELOCIDADE",
-                                                character,
-                                                "speed"
-                                            )}
-
-                                        </span>
-
-                                    </span>
-
-                                    <span
-                                        class="character-card-face character-card-back"
-                                        aria-hidden="true"
-                                    >
-
-                                        <span class="character-back-mark">
-                                            ◇
-                                        </span>
-
-                                        <strong>
-                                            VEYRA
-                                        </strong>
-
-                                        <small>
-                                            A QUIETUDE
-                                        </small>
-
-                                    </span>
-
+                                    <strong>
+                                        ${escapeHTML(attackName)}
+                                    </strong>
                                 </span>
 
-                            </button>
+                                <span class="character-meta-item">
+                                    <small>
+                                        ALCANCE
+                                    </small>
 
-                            <div
-                                class="character-selected-label"
-                                aria-hidden="${selected ? "false" : "true"}"
-                            >
-                                SELECIONADO
-                            </div>
+                                    <strong>
+                                        ${attackRange}
+                                    </strong>
+                                </span>
 
-                        </div>
-                    `;
-                }
-            )
-            .join(
-                ""
-            );
+                            </span>
+
+                            <span class="character-card-stats">
+
+                                ${characterStatRow(
+                                    "VIDA",
+                                    character,
+                                    "hp"
+                                )}
+
+                                ${characterStatRow(
+                                    "FORÇA",
+                                    character,
+                                    "damage"
+                                )}
+
+                                ${characterStatRow(
+                                    "ENERGIA",
+                                    character,
+                                    "energy"
+                                )}
+
+                                ${characterStatRow(
+                                    "RESISTÊNCIA",
+                                    character,
+                                    "defense"
+                                )}
+
+                                ${characterStatRow(
+                                    "VELOCIDADE",
+                                    character,
+                                    "speed"
+                                )}
+
+                            </span>
+
+                        </span>
+
+                        <span
+                            class="character-card-face character-card-back"
+                            aria-hidden="true"
+                        >
+                            <span class="character-back-mark">
+                                ◇
+                            </span>
+
+                            <strong>
+                                VEYRA
+                            </strong>
+
+                            <span class="character-back-rule"></span>
+
+                            <small>
+                                A QUIETUDE
+                            </small>
+                        </span>
+
+                    </span>
+                </button>
+
+                <div
+                    class="character-selected-label"
+                    aria-hidden="${selected ? "false" : "true"}"
+                >
+                    SELECIONADO
+                </div>
+            </div>
+        `;
+    }).join("");
 
     updateCharacterStartButton();
 
@@ -61278,31 +61310,19 @@ function repairScreenInteractivity(
         card.addEventListener(
             "click",
             () => {
-                /*
-                    Enquanto o giro acontece,
-                    nenhum outro personagem
-                    pode ser selecionado.
-                */
                 if (
-                    UI_RUNTIME
-                        .characterSelectionLocked
+                    UI_RUNTIME.characterSelectionLocked
                 ) {
                     return;
                 }
 
                 const characterId =
-                    card.dataset
-                        .characterId;
+                    card.dataset.characterId;
 
-                /*
-                    Clicar novamente no personagem
-                    já escolhido não faz absolutamente nada.
-                */
                 if (
                     !characterId ||
                     characterId ===
-                        UI_RUNTIME
-                            .selectedCharacter
+                        UI_RUNTIME.selectedCharacter
                 ) {
                     return;
                 }
@@ -61316,6 +61336,23 @@ function repairScreenInteractivity(
                     container.querySelector(
                         ".character-choice.selected"
                     );
+
+                const nextAccent =
+                    choice
+                        ?.style
+                        .getPropertyValue(
+                            "--char-color"
+                        )
+                        .trim() ||
+                    null;
+
+                /*
+                    Começa a transição da atmosfera
+                    enquanto a carta gira.
+                */
+                updateCharacterSelectionAtmosphere(
+                    nextAccent
+                );
 
                 UI_RUNTIME.characterSelectionLocked =
                     true;
@@ -61332,20 +61369,11 @@ function repairScreenInteractivity(
                     "is-flipping"
                 );
 
-                /*
-                    O CSS usa exatamente .48s.
-
-                    Quando termina:
-                    - antiga perde brilho suavemente;
-                    - nova torna-se selecionada;
-                    - cliques são liberados.
-                */
                 window.setTimeout(
                     () => {
                         if (
                             previousChoice &&
-                            previousChoice !==
-                                choice
+                            previousChoice !== choice
                         ) {
                             previousChoice
                                 .classList
@@ -61426,14 +61454,12 @@ function repairScreenInteractivity(
 
                         updateCharacterStartButton();
                     },
-                    480
+                    780
                 );
             }
         );
     }
 }
-
-
 function characterStatRow(
     label,
     character,

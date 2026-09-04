@@ -9527,64 +9527,224 @@ and
 
 
 /* ================================================================
-   SELEÇÃO DE PERSONAGEM
+   SELEÇÃO DE PERSONAGEM — VEYRA
    ================================================================ */
 
 .character-screen {
+    isolation: isolate;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+
+    background:
+        radial-gradient(
+            circle at 12% 28%,
+            rgba(220, 122, 54, .055),
+            transparent 31%
+        ),
+
+        radial-gradient(
+            circle at 88% 26%,
+            rgba(129, 102, 171, .065),
+            transparent 32%
+        ),
+
+        radial-gradient(
+            ellipse at 50% 100%,
+            rgba(85, 104, 91, .055),
+            transparent 48%
+        ),
+
+        linear-gradient(
+            180deg,
+            #080a0d 0%,
+            #06080a 55%,
+            #040506 100%
+        );
+}
+
+
+.character-screen::before,
+.character-screen::after {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    pointer-events: none;
+
+}
+
+
+.character-screen::before {
+
+    z-index: 0;
+
+    opacity: .5;
 
     background:
 
         radial-gradient(
-            circle at
-                50%
-                13%,
-
-            rgba(
-                190,
-                153,
-                78,
-                .075
-            ),
-
-            transparent
-            34%
+            ellipse at 25% 58%,
+            rgba(255, 255, 255, .022),
+            transparent 34%
         ),
 
         radial-gradient(
-            ellipse at
-                50%
-                100%,
+            ellipse at 72% 46%,
+            rgba(255, 255, 255, .018),
+            transparent 31%
+        );
 
-            rgba(
-                74,
-                119,
-                125,
-                .045
-            ),
+    filter:
+        blur(18px);
 
+    animation:
+        characterMistDrift
+        10s
+        ease-in-out
+        infinite
+        alternate;
+
+}
+
+
+.character-screen::after {
+
+    z-index: 0;
+
+    opacity: .18;
+
+    background-image:
+
+        radial-gradient(
+            circle,
+            rgba(255, 255, 255, .18) 0 1px,
+            transparent 1.4px
+        );
+
+    background-size:
+        46px
+        46px;
+
+    mask-image:
+
+        linear-gradient(
+            to bottom,
+            transparent,
+            #000 15%,
+            #000 80%,
             transparent
-            48%
-        ),
+        );
 
-        #080b0e;
+}
+
+
+@keyframes characterMistDrift {
+
+    from {
+
+        transform:
+            translate3d(
+                -1.5%,
+                0,
+                0
+            )
+            scale(1);
+
+    }
+
+    to {
+
+        transform:
+            translate3d(
+                1.5%,
+                -1%,
+                0
+            )
+            scale(1.03);
+
+    }
 
 }
 
 
 /* ================================================================
-   TÍTULO DA SELEÇÃO
+   CONTAINER
+   ================================================================ */
+
+.character-select-shell {
+
+    position: relative;
+
+    z-index: 1;
+
+    width:
+        min(
+            90vw,
+            1680px
+        );
+
+    margin:
+        auto;
+
+    padding:
+
+        clamp(
+            24px,
+            3vh,
+            38px
+        )
+
+        0
+
+        34px;
+
+}
+
+
+/* ================================================================
+   CABEÇALHO
    ================================================================ */
 
 .character-select-header {
 
-    position:
-        relative;
+    position: relative;
 
-    padding-bottom:
-        25px;
+    display: grid;
+
+    grid-template-columns:
+
+        120px
+        1fr
+        120px;
+
+    align-items:
+        start;
 
     margin-bottom:
-        31px;
+
+        clamp(
+            22px,
+            3vh,
+            34px
+        );
+
+    padding-bottom:
+        22px;
+
+    text-align:
+        center;
+
+}
+
+
+.character-select-header > div {
+
+    grid-column:
+        2;
 
 }
 
@@ -9604,43 +9764,46 @@ and
         0;
 
     width:
+
         min(
-            440px,
-            70%
+            520px,
+            72%
         );
 
     height:
         1px;
-
-    background:
-
-        linear-gradient(
-            to right,
-
-            transparent,
-
-            rgba(
-                207,
-                170,
-                90,
-                .42
-            ),
-
-            transparent
-        );
 
     transform:
         translateX(
             -50%
         );
 
+    background:
+
+        linear-gradient(
+            to right,
+            transparent,
+            rgba(
+                207,
+                170,
+                90,
+                .4
+            ),
+            transparent
+        );
+
 }
 
 
-.character-select-header h2 {
+.character-select-header h1 {
+
+    margin:
+        5px
+        0
+        8px;
 
     color:
-        #e8d8ad;
+        #e6dcc3;
 
     font-family:
 
@@ -9653,19 +9816,22 @@ and
     font-size:
 
         clamp(
-            31px,
-            3vw,
-            42px
+            30px,
+            2.5vw,
+            44px
         );
 
     font-weight:
         600;
 
+    letter-spacing:
+        .12em;
+
     text-shadow:
 
         0
         0
-        25px
+        24px
         rgba(
             203,
             162,
@@ -9678,8 +9844,14 @@ and
 
 .character-select-header p {
 
+    max-width:
+        720px;
+
+    margin:
+        0 auto;
+
     color:
-        #a39f96;
+        #96928a;
 
     font-family:
 
@@ -9688,7 +9860,15 @@ and
         sans-serif;
 
     font-size:
-        13px;
+
+        clamp(
+            11px,
+            .8vw,
+            13px
+        );
+
+    line-height:
+        1.6;
 
 }
 
@@ -9699,12 +9879,15 @@ and
 
 .back-text-btn {
 
-    padding:
+    justify-self:
+        start;
 
+    padding:
         10px
         14px;
 
     border:
+
         1px solid
         rgba(
             197,
@@ -9726,11 +9909,6 @@ and
             255,
             .012
         );
-
-    transition:
-        all
-        .2s
-        ease;
 
 }
 
@@ -9772,7 +9950,303 @@ and
 
 
 /* ================================================================
-   CARDS DOS PERSONAGENS
+   GRID — SEMPRE 5 NO PC / NOTEBOOK
+   ================================================================ */
+
+.character-cards {
+
+    display:
+        grid;
+
+    grid-template-columns:
+
+        repeat(
+            5,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap:
+
+        clamp(
+            11px,
+            1.1vw,
+            22px
+        );
+
+    align-items:
+        stretch;
+
+    perspective:
+        1500px;
+
+}
+
+
+/* ================================================================
+   CADA ESCOLHA
+   ================================================================ */
+
+.character-choice {
+
+    --char-color:
+        #aa9463;
+
+    position:
+        relative;
+
+    display:
+        grid;
+
+    grid-template-rows:
+
+        44px
+        minmax(
+            0,
+            1fr
+        )
+        24px;
+
+    min-width:
+        0;
+
+    opacity:
+        0;
+
+    transform:
+        translateY(
+            14px
+        );
+
+    animation:
+
+        characterChoiceEnter
+        .46s
+        cubic-bezier(
+            .2,
+            .72,
+            .24,
+            1
+        )
+        forwards;
+
+    animation-delay:
+
+        calc(
+            var(
+                --card-index,
+                0
+            )
+            *
+            70ms
+        );
+
+}
+
+
+@keyframes characterChoiceEnter {
+
+    to {
+
+        opacity:
+            1;
+
+        transform:
+            translateY(
+                0
+            );
+
+    }
+
+}
+
+
+/* ================================================================
+   SÍMBOLO FORA DA CARTA
+   ================================================================ */
+
+.character-symbol {
+
+    position:
+        relative;
+
+    z-index:
+        5;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    justify-self:
+        center;
+
+    align-self:
+        end;
+
+    width:
+        38px;
+
+    height:
+        38px;
+
+    margin-bottom:
+        -9px;
+
+    border:
+
+        1px solid
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            34%,
+            rgba(
+                255,
+                255,
+                255,
+                .06
+            )
+        );
+
+    border-radius:
+        50%;
+
+    color:
+        var(
+            --char-color
+        );
+
+    background:
+        rgba(
+            7,
+            9,
+            12,
+            .96
+        );
+
+    box-shadow:
+
+        0
+        0
+        12px
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            13%,
+            transparent
+        );
+
+    font-size:
+        18px;
+
+    transition:
+
+        transform
+        .32s
+        ease,
+
+        box-shadow
+        .32s
+        ease,
+
+        border-color
+        .32s
+        ease,
+
+        filter
+        .32s
+        ease;
+
+}
+
+
+.character-choice:not(.selected)
+.character-symbol {
+
+    filter:
+
+        saturate(
+            .82
+        )
+
+        brightness(
+            .9
+        );
+
+}
+
+
+.character-choice.selected
+.character-symbol {
+
+    transform:
+        scale(
+            1.18
+        );
+
+    border-color:
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            78%,
+            #e5c774
+        );
+
+    box-shadow:
+
+        0
+        0
+        18px
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            54%,
+            transparent
+        ),
+
+        0
+        0
+        38px
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            18%,
+            transparent
+        );
+
+    filter:
+
+        saturate(
+            1.08
+        )
+
+        brightness(
+            1.12
+        );
+
+}
+
+
+/* ================================================================
+   CARTA
    ================================================================ */
 
 .character-card {
@@ -9780,17 +10254,49 @@ and
     position:
         relative;
 
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+
+        clamp(
+            350px,
+            42vh,
+            405px
+        );
+
+    padding:
+        0;
+
+    overflow:
+        hidden;
+
     border:
+
         1px solid
-        rgba(
-            255,
-            255,
-            255,
-            .07
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            21%,
+            rgba(
+                255,
+                255,
+                255,
+                .055
+            )
         );
 
     border-radius:
         11px;
+
+    color:
+        inherit;
 
     background:
 
@@ -9801,49 +10307,75 @@ and
 
             color-mix(
                 in srgb,
-                var(--char-color)
-                3%,
+                var(
+                    --char-color
+                )
+                5%,
                 transparent
             ),
 
             transparent
-            45%
+            44%
         ),
 
         linear-gradient(
             155deg,
-
             rgba(
                 255,
                 255,
                 255,
                 .028
             ),
-
             rgba(
                 255,
                 255,
                 255,
-                .006
+                .007
             )
+        ),
+
+        rgba(
+            8,
+            10,
+            13,
+            .94
         );
 
     box-shadow:
 
         0
-        12px
-        32px
+        14px
+        34px
         rgba(
             0,
             0,
             0,
-            .12
+            .25
+        ),
+
+        0
+        0
+        14px
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            6%,
+            transparent
         );
+
+    text-align:
+        left;
+
+    transform-style:
+        preserve-3d;
 
     transition:
 
         transform
-        .26s
+        .28s
         cubic-bezier(
             .2,
             .75,
@@ -9852,25 +10384,22 @@ and
         ),
 
         border-color
-        .25s
+        .32s
         ease,
 
         box-shadow
-        .25s
+        .38s
         ease,
 
         background
-        .25s
+        .32s
         ease;
 
 }
 
 
-/*
-    LUZ DA COR DO PERSONAGEM
-    NO FUNDO DO CARD.
-*/
-.character-card::before {
+.character-card::before,
+.character-card::after {
 
     content:
         "";
@@ -9878,8 +10407,24 @@ and
     position:
         absolute;
 
+    pointer-events:
+        none;
+
+}
+
+
+/* BORDA ANIMADA DO SELECIONADO */
+
+.character-card::before {
+
+    z-index:
+        4;
+
     inset:
         -1px;
+
+    padding:
+        1px;
 
     border-radius:
         inherit;
@@ -9889,55 +10434,72 @@ and
 
     background:
 
-        radial-gradient(
-            circle at
-                50%
-                20%,
+        linear-gradient(
+            110deg,
+
+            transparent
+            15%,
 
             color-mix(
                 in srgb,
-                var(--char-color)
-                19%,
-                transparent
-            ),
+                var(
+                    --char-color
+                )
+                92%,
+                #f1d58c
+            )
+            48%,
 
             transparent
-            57%
+            76%
         );
 
-    transition:
-        opacity
-        .26s
-        ease;
+    background-size:
+        240%
+        100%;
 
-    pointer-events:
-        none;
+    -webkit-mask:
+
+        linear-gradient(
+            #000
+            0
+            0
+        )
+        content-box,
+
+        linear-gradient(
+            #000
+            0
+            0
+        );
+
+    -webkit-mask-composite:
+        xor;
+
+    mask-composite:
+        exclude;
 
 }
 
 
-/*
-    BRILHO INFERIOR.
-*/
+/* REFLEXO NO HOVER */
+
 .character-card::after {
 
-    content:
-        "";
+    z-index:
+        3;
 
-    position:
-        absolute;
-
-    left:
-        10%;
-
-    right:
-        10%;
+    top:
+        -18%;
 
     bottom:
-        0;
+        -18%;
 
-    height:
-        2px;
+    left:
+        -55%;
+
+    width:
+        34%;
 
     opacity:
         0;
@@ -9945,306 +10507,208 @@ and
     background:
 
         linear-gradient(
-            to right,
-
+            90deg,
             transparent,
-
-            color-mix(
-                in srgb,
-                var(--char-color)
-                90%,
-                white
+            rgba(
+                255,
+                255,
+                255,
+                .13
             ),
-
             transparent
         );
-
-    box-shadow:
-
-        0
-        0
-        18px
-        var(--char-color),
-
-        0
-        -6px
-        32px
-        color-mix(
-            in srgb,
-            var(--char-color)
-            18%,
-            transparent
-        );
-
-    transition:
-        opacity
-        .25s
-        ease;
-
-    pointer-events:
-        none;
-
-}
-
-
-/* ================================================================
-   HOVER PERSONAGEM
-   ================================================================ */
-
-.character-card:hover {
 
     transform:
 
-        translateY(
-            -8px
+        skewX(
+            -18deg
         )
 
-        scale(
-            1.018
+        translateX(
+            -120%
         );
-
-    border-color:
-
-        color-mix(
-            in srgb,
-            var(--char-color)
-            58%,
-            #d6b96f
-        );
-
-    background:
-
-        radial-gradient(
-            circle at
-                50%
-                10%,
-
-            color-mix(
-                in srgb,
-                var(--char-color)
-                9%,
-                transparent
-            ),
-
-            transparent
-            50%
-        ),
-
-        linear-gradient(
-            155deg,
-
-            rgba(
-                255,
-                255,
-                255,
-                .045
-            ),
-
-            rgba(
-                255,
-                255,
-                255,
-                .008
-            )
-        );
-
-    box-shadow:
-
-        0
-        22px
-        44px
-        rgba(
-            0,
-            0,
-            0,
-            .32
-        ),
-
-        0
-        0
-        28px
-        color-mix(
-            in srgb,
-            var(--char-color)
-            13%,
-            transparent
-        ),
-
-        inset
-        0
-        0
-        28px
-        color-mix(
-            in srgb,
-            var(--char-color)
-            4%,
-            transparent
-        );
-
-}
-
-
-.character-card:hover::before {
-
-    opacity:
-        1;
-
-}
-
-
-.character-card:hover::after {
-
-    opacity:
-        1;
-
-}
-
-
-/* ================================================================
-   PERSONAGEM SELECIONADO
-   ================================================================ */
-
-.character-card.selected {
-
-    transform:
-        translateY(
-            -5px
-        );
-
-    border-color:
-
-        color-mix(
-            in srgb,
-            var(--char-color)
-            68%,
-            #e1c276
-        );
-
-    box-shadow:
-
-        0
-        17px
-        40px
-        rgba(
-            0,
-            0,
-            0,
-            .27
-        ),
-
-        0
-        0
-        32px
-        color-mix(
-            in srgb,
-            var(--char-color)
-            15%,
-            transparent
-        ),
-
-        inset
-        0
-        0
-        36px
-        color-mix(
-            in srgb,
-            var(--char-color)
-            5%,
-            transparent
-        );
-
-}
-
-
-.character-card.selected::before {
-
-    opacity:
-        1;
-
-}
-
-
-.character-card.selected::after {
-
-    opacity:
-        1;
-
-}
-
-
-/* ================================================================
-   ÍCONE DO PERSONAGEM
-   ================================================================ */
-
-.character-symbol {
 
     transition:
 
         transform
-        .25s
+        .5s
         ease,
 
-        box-shadow
-        .25s
-        ease,
-
-        border-color
-        .25s
+        opacity
+        .2s
         ease;
 
 }
 
 
-.character-card:hover
-.character-symbol,
-.character-card.selected
-.character-symbol {
+/* ================================================================
+   FRENTE / VERSO
+   ================================================================ */
 
-    transform:
-        scale(
-            1.10
-        );
+.character-card-inner {
 
-    border-color:
+    position:
+        relative;
 
-        color-mix(
-            in srgb,
-            var(--char-color)
-            70%,
-            #d5b66b
-        );
+    z-index:
+        2;
 
-    box-shadow:
+    display:
+        block;
 
-        0
-        0
-        20px
-        color-mix(
-            in srgb,
-            var(--char-color)
-            20%,
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-height:
+        inherit;
+
+    transform-style:
+        preserve-3d;
+
+}
+
+
+.character-card-face {
+
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    backface-visibility:
+        hidden;
+
+    -webkit-backface-visibility:
+        hidden;
+
+}
+
+
+.character-card-front {
+
+    padding:
+
+        28px
+
+        clamp(
+            14px,
+            1.15vw,
+            21px
+        )
+
+        22px;
+
+    background:
+
+        radial-gradient(
+            circle at
+                50%
+                11%,
+
+            color-mix(
+                in srgb,
+                var(
+                    --char-color
+                )
+                6%,
+                transparent
+            ),
+
             transparent
-        ),
-
-        inset
-        0
-        0
-        18px
-        color-mix(
-            in srgb,
-            var(--char-color)
-            8%,
-            transparent
+            35%
         );
 
 }
 
 
-/* ================================================================
-   NOMES
-   ================================================================ */
+.character-card-back {
 
-.character-card h3 {
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    gap:
+        9px;
+
+    transform:
+        rotateY(
+            180deg
+        );
+
+    color:
+        #d8cfb9;
+
+    background:
+
+        radial-gradient(
+            circle at center,
+
+            color-mix(
+                in srgb,
+                var(
+                    --char-color
+                )
+                11%,
+                transparent
+            ),
+
+            transparent
+            46%
+        ),
+
+        linear-gradient(
+            160deg,
+            #0c0e12,
+            #07090c
+        );
+
+    text-align:
+        center;
+
+}
+
+
+.character-back-mark {
+
+    color:
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            74%,
+            #d8bd79
+        );
+
+    font-size:
+        38px;
+
+    text-shadow:
+
+        0
+        0
+        24px
+        var(
+            --char-color
+        );
+
+}
+
+
+.character-card-back strong {
 
     font-family:
 
@@ -10254,47 +10718,24 @@ and
         serif;
 
     font-size:
-        19px;
+        25px;
 
-    color:
-        #ded7c7;
+    font-weight:
+        500;
 
-    transition:
+    letter-spacing:
+        .24em;
 
-        color
-        .2s
-        ease,
-
-        text-shadow
-        .2s
-        ease;
+    text-indent:
+        .24em;
 
 }
 
 
-.character-card:hover h3,
-.character-card.selected h3 {
+.character-card-back small {
 
     color:
-        #f0e6cc;
-
-    text-shadow:
-
-        0
-        0
-        15px
-
-        color-mix(
-            in srgb,
-            var(--char-color)
-            23%,
-            transparent
-        );
-
-}
-
-
-.character-card .role {
+        #9f947a;
 
     font-family:
 
@@ -10305,13 +10746,462 @@ and
     font-size:
         9px;
 
-    font-weight:
-        600;
+    letter-spacing:
+        .32em;
+
+    text-indent:
+        .32em;
 
 }
 
 
+/* ================================================================
+   GIRO 360º
+   ================================================================ */
+
+.character-card.is-flipping
+.character-card-inner {
+
+    animation:
+
+        characterCardFlip3D
+        .48s
+        cubic-bezier(
+            .34,
+            .05,
+            .18,
+            1
+        )
+        both;
+
+}
+
+
+@keyframes characterCardFlip3D {
+
+    0% {
+
+        transform:
+
+            rotateY(
+                0deg
+            )
+
+            rotateX(
+                0deg
+            )
+
+            scale(
+                1
+            );
+
+    }
+
+
+    48% {
+
+        transform:
+
+            rotateY(
+                174deg
+            )
+
+            rotateX(
+                3deg
+            )
+
+            scale(
+                1.018
+            );
+
+    }
+
+
+    52% {
+
+        transform:
+
+            rotateY(
+                186deg
+            )
+
+            rotateX(
+                -3deg
+            )
+
+            scale(
+                1.018
+            );
+
+    }
+
+
+    100% {
+
+        transform:
+
+            rotateY(
+                360deg
+            )
+
+            rotateX(
+                0deg
+            )
+
+            scale(
+                1
+            );
+
+    }
+
+}
+
+
+/* ================================================================
+   HOVER
+   ================================================================ */
+
+.character-choice:not(.selected)
+.character-card:hover {
+
+    transform:
+
+        translateY(
+            -6px
+        )
+
+        scale(
+            1.014
+        );
+
+    border-color:
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            57%,
+            #d7b96f
+        );
+
+    box-shadow:
+
+        0
+        20px
+        42px
+        rgba(
+            0,
+            0,
+            0,
+            .34
+        ),
+
+        0
+        0
+        26px
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            16%,
+            transparent
+        );
+
+}
+
+
+.character-choice:not(.selected)
+.character-card:hover::after {
+
+    opacity:
+        1;
+
+    transform:
+
+        skewX(
+            -18deg
+        )
+
+        translateX(
+            650%
+        );
+
+}
+
+
+/* ================================================================
+   SELECIONADO
+   ================================================================ */
+
+.character-choice.selected
+.character-card,
+
+.character-choice.selected
+.character-card:hover {
+
+    transform:
+        none;
+
+    cursor:
+        default;
+
+    border-color:
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            72%,
+            #dfc278
+        );
+
+    box-shadow:
+
+        0
+        18px
+        42px
+        rgba(
+            0,
+            0,
+            0,
+            .31
+        ),
+
+        0
+        0
+        28px
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            23%,
+            transparent
+        ),
+
+        inset
+        0
+        0
+        34px
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            7%,
+            transparent
+        );
+
+}
+
+
+.character-choice.selected
+.character-card::before {
+
+    opacity:
+        .92;
+
+    animation:
+
+        characterBorderFlow
+        2.1s
+        linear
+        infinite;
+
+}
+
+
+@keyframes characterBorderFlow {
+
+    from {
+
+        background-position:
+            210%
+            0;
+
+    }
+
+    to {
+
+        background-position:
+            -110%
+            0;
+
+    }
+
+}
+
+
+.character-cards.selection-locked
+.character-card {
+
+    pointer-events:
+        none;
+
+}
+
+
+/* ================================================================
+   NOME / CLASSE
+   ================================================================ */
+
+.character-identity {
+
+    display:
+        block;
+
+    padding:
+        3px
+        0
+        17px;
+
+    border-bottom:
+
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .045
+        );
+
+    text-align:
+        center;
+
+}
+
+
+.character-card h3 {
+
+    margin:
+        0;
+
+    color:
+        #e2daca;
+
+    font-family:
+
+        "Palatino Linotype",
+        Palatino,
+        Georgia,
+        serif;
+
+    font-size:
+
+        clamp(
+            18px,
+            1.2vw,
+            23px
+        );
+
+    font-weight:
+        600;
+
+    letter-spacing:
+        .09em;
+
+    text-transform:
+        uppercase;
+
+    transition:
+
+        color
+        .3s
+        ease,
+
+        text-shadow
+        .3s
+        ease;
+
+}
+
+
+.character-card .role {
+
+    display:
+        block;
+
+    margin-top:
+        6px;
+
+    color:
+        var(
+            --char-color
+        );
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+
+        clamp(
+            8px,
+            .52vw,
+            10px
+        );
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        .13em;
+
+    text-transform:
+        uppercase;
+
+}
+
+
+.character-choice.selected
+.character-card h3 {
+
+    color:
+        #f2e7ca;
+
+    text-shadow:
+
+        0
+        0
+        15px
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            26%,
+            transparent
+        );
+
+}
+
+
+/* ================================================================
+   DESCRIÇÃO
+   ================================================================ */
+
 .character-description {
+
+    display:
+        block;
+
+    min-height:
+        62px;
+
+    margin:
+
+        17px
+        0
+        18px;
 
     color:
         #99958d;
@@ -10323,39 +11213,567 @@ and
         sans-serif;
 
     font-size:
-        12px;
+
+        clamp(
+            10px,
+            .68vw,
+            12px
+        );
 
     line-height:
-        1.6;
+        1.55;
+
+    text-align:
+        center;
 
 }
 
 
 /* ================================================================
-   BARRAS / STATUS
+   BARRAS
    ================================================================ */
 
-.character-stat {
+.character-card-stats {
 
-    transition:
-        transform
-        .2s
-        ease;
+    display:
+        grid;
+
+    gap:
+
+        clamp(
+            9px,
+            1vh,
+            12px
+        );
+
+    margin-top:
+        auto;
 
 }
 
 
-.character-card:hover
 .character-stat {
 
-    transform:
-        translateX(
-            2px
+    display:
+        grid;
+
+    grid-template-columns:
+
+        minmax(
+            62px,
+            auto
+        )
+
+        minmax(
+            0,
+            1fr
+        )
+
+        30px;
+
+    gap:
+        8px;
+
+    align-items:
+        center;
+
+}
+
+
+.character-stat-label {
+
+    color:
+        #77736b;
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+
+        clamp(
+            7px,
+            .48vw,
+            9px
+        );
+
+    font-weight:
+        600;
+
+    letter-spacing:
+        .07em;
+
+    white-space:
+        nowrap;
+
+}
+
+
+.character-stat-track {
+
+    height:
+        5px;
+
+    overflow:
+        hidden;
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .065
+        );
+
+    box-shadow:
+
+        inset
+        0
+        1px
+        2px
+        rgba(
+            0,
+            0,
+            0,
+            .55
         );
 
 }
 
 
+.character-stat-track i {
+
+    display:
+        block;
+
+    height:
+        100%;
+
+    border-radius:
+        inherit;
+
+    background:
+
+        linear-gradient(
+            90deg,
+
+            color-mix(
+                in srgb,
+                var(
+                    --char-color
+                )
+                58%,
+                #544f46
+            ),
+
+            var(
+                --char-color
+            )
+        );
+
+    box-shadow:
+
+        0
+        0
+        9px
+
+        color-mix(
+            in srgb,
+            var(
+                --char-color
+            )
+            26%,
+            transparent
+        );
+
+    transition:
+
+        width
+        .35s
+        ease;
+
+}
+
+
+.character-stat-value {
+
+    color:
+        #c2b9a8;
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+
+        clamp(
+            8px,
+            .55vw,
+            10px
+        );
+
+    font-weight:
+        600;
+
+    text-align:
+        right;
+
+}
+
+
+/* ================================================================
+   SELECIONADO — TEXTO EM OURO
+   ================================================================ */
+
+.character-selected-label {
+
+    align-self:
+        end;
+
+    justify-self:
+        center;
+
+    min-height:
+        18px;
+
+    padding-top:
+        6px;
+
+    opacity:
+        0;
+
+    color:
+        #d2b36b;
+
+    font-family:
+
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size:
+        8px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        .18em;
+
+    text-indent:
+        .18em;
+
+    text-shadow:
+
+        0
+        0
+        12px
+        rgba(
+            214,
+            176,
+            91,
+            .22
+        );
+
+    transform:
+        translateY(
+            -3px
+        );
+
+    transition:
+
+        opacity
+        .32s
+        ease,
+
+        transform
+        .32s
+        ease;
+
+}
+
+
+.character-choice.selected
+.character-selected-label {
+
+    opacity:
+        1;
+
+    transform:
+        translateY(
+            0
+        );
+
+}
+
+
+/* ================================================================
+   COMEÇAR JORNADA
+   ================================================================ */
+
+.start-journey-btn {
+
+    transition:
+
+        opacity
+        .25s
+        ease,
+
+        border-color
+        .3s
+        ease,
+
+        background
+        .3s
+        ease,
+
+        box-shadow
+        .3s
+        ease,
+
+        filter
+        .3s
+        ease;
+
+}
+
+
+.start-journey-btn:disabled {
+
+    opacity:
+        .28;
+
+    filter:
+
+        grayscale(
+            .35
+        )
+
+        brightness(
+            .72
+        );
+
+    box-shadow:
+        none;
+
+}
+
+
+.start-journey-btn.ready {
+
+    opacity:
+        1;
+
+    border-color:
+
+        rgba(
+            214,
+            177,
+            94,
+            .58
+        );
+
+    background:
+
+        rgba(
+            164,
+            127,
+            60,
+            .13
+        );
+
+    box-shadow:
+
+        0
+        0
+        17px
+        rgba(
+            204,
+            163,
+            79,
+            .12
+        ),
+
+        inset
+        0
+        0
+        20px
+        rgba(
+            219,
+            178,
+            88,
+            .035
+        );
+
+    animation:
+
+        journeyReadyGlow
+        2.4s
+        ease-in-out
+        infinite;
+
+}
+
+
+@keyframes journeyReadyGlow {
+
+    50% {
+
+        box-shadow:
+
+            0
+            0
+            25px
+            rgba(
+                204,
+                163,
+                79,
+                .19
+            ),
+
+            inset
+            0
+            0
+            22px
+            rgba(
+                219,
+                178,
+                88,
+                .055
+            );
+
+    }
+
+}
+
+
+/* ================================================================
+   PC GRANDE
+   ================================================================ */
+
+@media
+(
+    min-width:
+        1600px
+) {
+
+    .character-select-shell {
+
+        width:
+
+            min(
+                88vw,
+                1680px
+            );
+
+    }
+
+
+    .character-card {
+
+        min-height:
+
+            clamp(
+                410px,
+                46vh,
+                455px
+            );
+
+    }
+
+
+    .character-card-front {
+
+        padding:
+
+            31px
+            22px
+            25px;
+
+    }
+
+
+    .character-symbol {
+
+        width:
+            42px;
+
+        height:
+            42px;
+
+        font-size:
+            20px;
+
+    }
+
+
+    .character-choice {
+
+        grid-template-rows:
+
+            48px
+            minmax(
+                0,
+                1fr
+            )
+            25px;
+
+    }
+
+}
+
+
+/* ================================================================
+   ACESSIBILIDADE
+   ================================================================ */
+
+@media
+(
+    prefers-reduced-motion:
+        reduce
+) {
+
+    .character-choice {
+
+        opacity:
+            1;
+
+        transform:
+            none;
+
+        animation:
+            none;
+
+    }
+
+
+    .character-card.is-flipping
+    .character-card-inner {
+
+        animation-duration:
+            .01ms;
+
+    }
+
+
+    .character-choice.selected
+    .character-card::before,
+
+    .start-journey-btn.ready {
+
+        animation:
+            none;
+
+    }
+
+}
 /* ================================================================
    RESPONSIVIDADE
    ================================================================ */
@@ -10554,51 +11972,6 @@ and
 
 }
 
-/* TESTE — SELEÇÃO VEYRA */
-
-.character-card {
-    transition:
-        transform .25s ease,
-        box-shadow .25s ease,
-        border-color .25s ease !important;
-}
-
-.character-card:hover {
-    transform:
-        translateY(-8px)
-        scale(1.025) !important;
-
-    border-color:
-        var(--char-color) !important;
-
-    box-shadow:
-        0 0 30px var(--char-color),
-        0 18px 40px rgba(0, 0, 0, .45) !important;
-}
-
-.character-card.selected {
-    border-color:
-        var(--char-color) !important;
-
-    box-shadow:
-        0 0 35px var(--char-color),
-        inset 0 0 24px
-        color-mix(
-            in srgb,
-            var(--char-color) 10%,
-            transparent
-        ) !important;
-}
-
-.character-card:hover .character-symbol,
-.character-card.selected .character-symbol {
-    transform:
-        scale(1.14) !important;
-
-    box-shadow:
-        0 0 22px
-        var(--char-color) !important;
-}
 
 /* ================================================================
    VEYRA — COMO JOGAR V3

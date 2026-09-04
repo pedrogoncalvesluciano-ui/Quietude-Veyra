@@ -61457,7 +61457,7 @@ drawDoors(
             esse teste não altera o jogo,
             apenas checa a função disponível.
         */
-        Zephyif (
+       if (
             state.world
                 ?.id ===
                 "monarchMaze" &&

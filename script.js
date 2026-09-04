@@ -57832,121 +57832,220 @@ function drawHoldHUD(
     ctx.restore();
 }
 
-    function drawNotifications(
-        ctx
+   function drawNotifications(
+    ctx
+) {
+    const notifications =
+        safeArray(
+            state.notifications
+        );
+
+    if (
+        !notifications.length
     ) {
-        const notifications =
-            safeArray(
-                state.notifications
-            );
-
-        if (
-            !notifications.length
-        ) {
-            return;
-        }
-
-        ctx.save();
-
-        let y =
-            145;
-
-        for (
-            const notification of
-            notifications
-        ) {
-            const ratio =
-                clamp(
-                    notification.timer /
-                    notification.maxTimer,
-                    0,
-                    1
-                );
-
-            const alpha =
-                Math.min(
-                    1,
-                    ratio *
-                        3
-                );
-
-            const width =
-                300;
-
-            const x =
-                renderRuntime.width -
-                    width -
-                    22;
-
-            ctx.globalAlpha =
-                alpha;
-
-            ctx.fillStyle =
-                "rgba(15,14,18,0.88)";
-
-            roundRectPath(
-                ctx,
-                x,
-                y,
-                width,
-                48,
-                10
-            );
-
-            ctx.fill();
-
-            ctx.strokeStyle =
-                notification.type ===
-                "warning"
-                    ? "rgba(173,111,86,0.55)"
-                    : notification.type ===
-                        "special"
-                        ? "rgba(123,91,145,0.55)"
-                        : notification.type ===
-                            "success"
-                            ? "rgba(102,139,109,0.5)"
-                            : "rgba(174,158,122,0.35)";
-
-            ctx.stroke();
-
-            ctx.fillStyle =
-                "#d9cdb7";
-
-            ctx.font =
-                "700 10px serif";
-
-            ctx.textAlign =
-                "left";
-
-            ctx.fillText(
-                notification.title,
-                x +
-                    12,
-                y +
-                    17
-            );
-
-            ctx.fillStyle =
-                "rgba(190,181,167,0.82)";
-
-            ctx.font =
-                "10px sans-serif";
-
-            ctx.fillText(
-                notification.text,
-                x +
-                    12,
-                y +
-                    34
-            );
-
-            y +=
-                56;
-        }
-
-        ctx.restore();
+        return;
     }
 
+    const largePC =
+        renderRuntime.width >=
+        1600;
+
+    const compact =
+        renderRuntime.width <=
+        720;
+
+    const width =
+        largePC
+            ? 332
+            : 300;
+
+    const height =
+        largePC
+            ? 54
+            : 48;
+
+    /*
+        Começa abaixo do minimapa.
+
+        Em celular o minimapa some,
+        então recuperamos espaço.
+    */
+    let y =
+        compact
+            ? 92
+            : (
+                largePC
+                    ? 252
+                    : 232
+            );
+
+    const x =
+        renderRuntime.width -
+        width -
+        22;
+
+    ctx.save();
+
+    for (
+        const notification of
+        notifications
+    ) {
+        const ratio =
+            clamp(
+                notification.timer /
+                notification.maxTimer,
+                0,
+                1
+            );
+
+        const alpha =
+            Math.min(
+                1,
+                ratio *
+                    3
+            );
+
+        const accent =
+            notification.type ===
+            "warning"
+                ? "#b67c63"
+                : notification.type ===
+                    "special"
+                    ? "#9b76b4"
+                    : notification.type ===
+                        "success"
+                        ? "#86a98b"
+                        : "#b3a37e";
+
+        ctx.globalAlpha =
+            alpha;
+
+        const panelGradient =
+            ctx.createLinearGradient(
+                x,
+                y,
+                x +
+                    width,
+                y +
+                    height
+            );
+
+        panelGradient.addColorStop(
+            0,
+            "rgba(18,17,19,0.94)"
+        );
+
+        panelGradient.addColorStop(
+            1,
+            "rgba(9,10,12,0.90)"
+        );
+
+        ctx.fillStyle =
+            panelGradient;
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            width,
+            height,
+            10
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "rgba(198,181,145,0.16)";
+
+        ctx.lineWidth =
+            1;
+
+        ctx.stroke();
+
+        /*
+            Pequeno filete colorido.
+        */
+        ctx.fillStyle =
+            accent;
+
+        roundRectPath(
+            ctx,
+            x,
+            y +
+                6,
+            3,
+            height -
+                12,
+            2
+        );
+
+        ctx.fill();
+
+        /*
+            Título.
+        */
+        ctx.fillStyle =
+            "#eee2ca";
+
+        ctx.font =
+            largePC
+                ? '700 11px "Cinzel", Georgia, serif'
+                : '700 10px "Cinzel", Georgia, serif';
+
+        ctx.textAlign =
+            "left";
+
+        ctx.shadowColor =
+            "rgba(0,0,0,0.88)";
+
+        ctx.shadowBlur =
+            4;
+
+        ctx.fillText(
+            notification.title,
+            x +
+                14,
+            y +
+                (
+                    largePC
+                        ? 19
+                        : 17
+                )
+        );
+
+        /*
+            Quantidade / descrição.
+        */
+        ctx.shadowBlur =
+            0;
+
+        ctx.fillStyle =
+            "rgba(205,196,180,0.90)";
+
+        ctx.font =
+            largePC
+                ? '500 12px "Crimson Pro", Georgia, serif'
+                : '500 11px "Crimson Pro", Georgia, serif';
+
+        ctx.fillText(
+            notification.text,
+            x +
+                14,
+            y +
+                (
+                    largePC
+                        ? 39
+                        : 34
+                )
+        );
+
+        y +=
+            height +
+            8;
+    }
+
+    ctx.restore();
+}
 
     /* ============================================================
        QUEST TRACKER

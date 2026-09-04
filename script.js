@@ -61189,6 +61189,17 @@ function renderCharacterCards() {
                     data-character-id="${escapeHTML(character.id)}"
                     aria-pressed="${selected ? "true" : "false"}"
                 >
+
+                    <span
+                        class="character-border-laser"
+                        aria-hidden="true"
+                    >
+                        <span class="laser-edge laser-edge-top"></span>
+                        <span class="laser-edge laser-edge-right"></span>
+                        <span class="laser-edge laser-edge-bottom"></span>
+                        <span class="laser-edge laser-edge-left"></span>
+                    </span>
+                
                     <span class="character-card-inner">
 
                         <span class="character-card-face character-card-front">

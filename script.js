@@ -61454,7 +61454,7 @@ function renderCharacterCards() {
 
                         updateCharacterStartButton();
                     },
-                    780
+                   1050
                 );
             }
         );

@@ -10116,13 +10116,16 @@ and
 
 .character-card.is-flipping
 .character-card-inner {
+    will-change:
+        transform;
+
     animation:
         characterCardFlip3D
-        .78s
+        1.05s
         cubic-bezier(
-            .34,
-            .02,
-            .2,
+            .42,
+            0,
+            .18,
             1
         )
         both;
@@ -10135,62 +10138,98 @@ and
         transform:
             rotateY(0deg)
             rotateX(0deg)
-            scaleX(1)
+            translateZ(0)
             scale(1);
     }
 
 
-    18% {
+    12% {
         transform:
-            rotateY(72deg)
-            rotateX(1.8deg)
-            scaleX(.84)
-            scale(1.012);
+            rotateY(32deg)
+            rotateX(.6deg)
+            translateZ(7px)
+            scale(1.004);
     }
 
 
     24% {
         transform:
+            rotateY(72deg)
+            rotateX(1.3deg)
+            translateZ(13px)
+            scale(1.01);
+    }
+
+
+    30% {
+        transform:
             rotateY(90deg)
-            rotateX(2.4deg)
-            scaleX(.14)
+            rotateX(1.6deg)
+            translateZ(16px)
+            scale(1.014);
+    }
+
+
+    42% {
+        transform:
+            rotateY(150deg)
+            rotateX(.7deg)
+            translateZ(10px)
+            scale(1.017);
+    }
+
+
+    48% {
+        transform:
+            rotateY(180deg)
+            rotateX(0deg)
+            translateZ(6px)
             scale(1.018);
     }
 
 
-    43% {
+    52% {
         transform:
             rotateY(180deg)
             rotateX(0deg)
-            scaleX(1)
-            scale(1.02);
+            translateZ(6px)
+            scale(1.018);
     }
 
 
-    57% {
+    58% {
         transform:
-            rotateY(180deg)
-            rotateX(0deg)
-            scaleX(1)
-            scale(1.02);
+            rotateY(210deg)
+            rotateX(-.7deg)
+            translateZ(10px)
+            scale(1.017);
+    }
+
+
+    70% {
+        transform:
+            rotateY(270deg)
+            rotateX(-1.6deg)
+            translateZ(16px)
+            scale(1.014);
     }
 
 
     76% {
         transform:
-            rotateY(270deg)
-            rotateX(-2.4deg)
-            scaleX(.14)
-            scale(1.018);
+            rotateY(288deg)
+            rotateX(-1.3deg)
+            translateZ(13px)
+            scale(1.01);
     }
 
 
-    82% {
+    88% {
         transform:
-            rotateY(288deg)
-            rotateX(-1.8deg)
-            scaleX(.84)
-            scale(1.012);
+            rotateY(328deg)
+            rotateX(-.6deg)
+            translateZ(7px)
+            scale(1.004);
     }
 
 
@@ -10198,12 +10237,11 @@ and
         transform:
             rotateY(360deg)
             rotateX(0deg)
-            scaleX(1)
+            translateZ(0)
             scale(1);
     }
 
 }
-
 
 /* ================================================================
    HOVER

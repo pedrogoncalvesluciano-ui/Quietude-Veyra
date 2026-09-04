@@ -2024,44 +2024,43 @@
                 }),
 
 
-            zephyr:
-                Object.freeze({
+          zephyr:
+    Object.freeze({
 
-                    id:
-                        "zephyr",
+        id:
+            "zephyr",
 
-                 name:
-    "Vael",
+        name:
+            "Vael",
 
-"Invocador do Véu",
+        className: "Invocador do Véu",
 
-icon:
-    "◈",
+        icon:
+            "◈",
 
-color:
-    "#8166ab",
+        color:
+            "#8166ab",
 
-selectionGlow:
-    "#c29aef",
+        selectionGlow:
+            "#c29aef",
 
-description:
-    "Um invocador que domina ecos, entidades espectrais e forças que existem entre a memória e a Quietude.",
+        description:
+            "Um invocador que domina ecos, entidades espectrais e forças que existem entre a memória e a Quietude.",
 
-                    hp:
-                        105,
+        hp:
+            105,
 
-                    energy:
-                        126,
+        energy:
+            126,
 
-                    damage:
-                        24,
+        damage:
+            24,
 
-                    defense:
-                        11,
+        defense:
+            11,
 
-                    speed:
-                        160,
-
+        speed:
+            160,
 
                     basicAttack:
                         Object.freeze({
@@ -71386,40 +71385,55 @@ maintainDevRuntime,
 function boot() {
     cacheDOM();
 
+    /*
+        A tela inicial é prioridade.
 
-    V.__part5Validation =
-        validatePart5Data();
+        Os botões são ligados ANTES
+        das validações e dos sistemas
+        secundários do jogo.
+    */
+    bindMenuButtons();
 
+    repairScreenInteractivity(
+        "menu"
+    );
 
-    if (
-        !V.__part5Validation.ok
+    try {
+
+        V.__part5Validation =
+            validatePart5Data();
+
+        if (
+            !V.__part5Validation.ok
+        ) {
+            console.warn(
+                "VEYRA — existem avisos de validação, mas o jogo continuará iniciando.",
+                V.__part5Validation.errors
+            );
+        }
+
+        initializeVeyra();
+
+    } catch (
+        error
     ) {
-        console.warn(
-            "VEYRA — existem avisos de validação, mas o jogo continuará iniciando.",
-            V.__part5Validation.errors
+
+        console.error(
+            "VEYRA — erro durante a inicialização:",
+            error
+        );
+
+        /*
+            Mesmo que algum sistema
+            secundário falhe, recupera
+            os controles do menu.
+        */
+        cacheDOM();
+
+        bindMenuButtons();
+
+        repairScreenInteractivity(
+            "menu"
         );
     }
-
-
-    initializeVeyra();
 }
-
-
-if (
-    document.readyState ===
-    "loading"
-) {
-    document.addEventListener(
-        "DOMContentLoaded",
-        boot,
-        {
-            once:
-                true
-        }
-    );
-}
-
-else {
-    boot();
-}
-   })();

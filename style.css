@@ -229,8 +229,24 @@ button:not(:disabled):active {
 
 
 .screen.active {
-
     display: flex;
+
+    animation:
+        veyraScreenFadeIn
+        .28s
+        ease
+        both;
+}
+
+@keyframes veyraScreenFadeIn {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 
 }
 
@@ -12377,6 +12393,26 @@ word-break:
 
     background:
         rgba(7, 9, 12, .74);
+}
+
+#menuScreen #continueBtn.disabled {
+    opacity: .32;
+    filter: grayscale(.35);
+    cursor: pointer;
+}
+
+#menuScreen #continueBtn.disabled:hover {
+    border-color:
+        rgba(200, 188, 160, .26);
+
+    background:
+        rgba(7, 9, 12, .74);
+
+    box-shadow:
+        none;
+
+    transform:
+        none;
 }
 
 

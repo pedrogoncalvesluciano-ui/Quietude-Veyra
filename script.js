@@ -61131,8 +61131,8 @@ function ensureCharacterSelectionParticles(screen) {
     const fragment =
         document.createDocumentFragment();
 
-    const particleCount =
-        86;
+const particleCount =
+    112;
 
     for (
         let index = 0;
@@ -61144,10 +61144,10 @@ function ensureCharacterSelectionParticles(screen) {
                 "i"
             );
 
-        const size =
-            0.9 +
-            Math.random() *
-            2.9;
+      const size =
+    1.2 +
+    Math.random() *
+    3.6;
 
         const duration =
             8 +
@@ -61167,10 +61167,10 @@ function ensureCharacterSelectionParticles(screen) {
             Math.random() *
             100;
 
-        const opacity =
-            0.28 +
-            Math.random() *
-            0.68;
+      const opacity =
+    0.42 +
+    Math.random() *
+    0.53;
 
         const blur =
             Math.random() *
@@ -61723,32 +61723,6 @@ function updateCharacterStartButton() {
     );
 
     return ready;
-}
-
-function characterStatRow(
-    label,
-    value,
-    maximum
-) {
-    const ratio =
-        clamp(
-            finite(
-                value,
-                0
-            ) /
-            maximum,
-            0,
-            1
-        );
-
-    return `
-        <div class="character-stat">
-            <span>${label}</span>
-            <div>
-                <i style="width:${ratio * 100}%"></i>
-            </div>
-        </div>
-    `;
 }
 
 

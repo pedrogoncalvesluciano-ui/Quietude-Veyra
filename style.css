@@ -10697,30 +10697,86 @@ and
 
 
 .character-stat-track {
+    position:
+        relative;
+
     height:
-        6px;
+        8px;
 
     overflow:
-        hidden;
+        visible;
 
     border-radius:
         999px;
 
     background:
-        rgba(255, 255, 255, .07);
+        rgba(
+            255,
+            255,
+            255,
+            .075
+        );
 
     box-shadow:
         inset
         0
         1px
-        2px
-        rgba(0, 0, 0, .55);
+        3px
+        rgba(
+            0,
+            0,
+            0,
+            .75
+        ),
+
+        0
+        0
+        7px
+        rgba(
+            255,
+            255,
+            255,
+            .025
+        );
+}
+
+
+.character-stat-track::before {
+    content:
+        "";
+
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .035
+        );
+
+    border-radius:
+        inherit;
+
+    pointer-events:
+        none;
 }
 
 
 .character-stat-track i {
+    position:
+        relative;
+
     display:
         block;
+
+    min-width:
+        3px;
 
     height:
         100%;
@@ -10734,29 +10790,107 @@ and
 
             color-mix(
                 in srgb,
-                var(--char-color) 55%,
-                #4f4a43
-            ),
+                var(--char-color) 42%,
+                #3d3b39
+            )
+            0%,
+
+            color-mix(
+                in srgb,
+                var(--char-color) 76%,
+                #b8aa88
+            )
+            54%,
 
             var(--char-color)
+            100%
         );
 
     box-shadow:
         0
         0
-        11px
+        5px
         color-mix(
             in srgb,
-            var(--char-color) 36%,
+            var(--char-color) 70%,
+            transparent
+        ),
+
+        0
+        0
+        12px
+        color-mix(
+            in srgb,
+            var(--char-color) 42%,
+            transparent
+        ),
+
+        0
+        0
+        22px
+        color-mix(
+            in srgb,
+            var(--char-color) 17%,
             transparent
         );
 
     transition:
         width
-        .35s
-        ease;
+        .55s
+        cubic-bezier(
+            .2,
+            .7,
+            .25,
+            1
+        );
 }
 
+
+.character-stat-track i::after {
+    content:
+        "";
+
+    position:
+        absolute;
+
+    right:
+        -2px;
+
+    top:
+        50%;
+
+    width:
+        5px;
+
+    height:
+        5px;
+
+    border-radius:
+        50%;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--char-color) 82%,
+            #fff4d0
+        );
+
+    box-shadow:
+        0
+        0
+        7px
+        var(--char-color),
+
+        0
+        0
+        13px
+        var(--char-color);
+
+    transform:
+        translateY(
+            -50%
+        );
+}
 
 .character-stat-value {
     color:

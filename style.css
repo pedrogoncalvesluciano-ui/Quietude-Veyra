@@ -9047,13 +9047,13 @@ and
         0;
 
     z-index:
-        0;
+       1;
 
     overflow:
         hidden;
 
     opacity:
-        .78;
+        .94;
 
     pointer-events:
         none;
@@ -9094,16 +9094,18 @@ and
     opacity:
         var(--particle-opacity);
 
-    background-color:
-        #292c31;
+  background-color:
+    #43474d;
 
-    box-shadow:
-        0 0 5px
-        rgba(20, 22, 25, .82),
+box-shadow:
+    0 0 6px
+    rgba(91, 96, 104, .62),
 
-        0 0 10px
-        rgba(90, 93, 96, .16);
+    0 0 14px
+    rgba(91, 96, 104, .26),
 
+    0 0 24px
+    rgba(70, 74, 81, .10);
     filter:
         blur(
             var(--particle-blur)
@@ -9236,7 +9238,7 @@ and
 .character-select-shell {
     position: relative;
 
-    z-index: 1;
+    z-index: 2;
 
     width:
         min(

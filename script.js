@@ -56295,57 +56295,6 @@ function drawSkillAuraEffect(
     }
 }
 
-
-function drawMagicSparkEffect(
-    ctx,
-    screen,
-    effect,
-    progress
-) {
-    const colors = {
-        kaelionRay:
-            "#f29a4f",
-
-        arcaneCircle:
-            "#ed9350",
-
-        memoryExplosion:
-            "#ffb16a",
-
-        vitalLight:
-            "#f2b3dc",
-
-        fairyBlast:
-            "#f2a6db",
-
-        lightRain:
-            "#f2a7d8"
-    };
-
-
-    const color =
-        colors[
-            effect.type
-        ] ||
-        effect.color ||
-        "#dfcfb6";
-
-
-    const radius =
-        Number(
-            effect.radius
-        ) ||
-        80;
-
-
-    ctx.strokeStyle =
-        colorWithAlpha(
-            color,
-            0.82 *
-            (
-                1 -
-                progress
-            )
        function drawMagicSparkEffect(
     ctx,
     screen,

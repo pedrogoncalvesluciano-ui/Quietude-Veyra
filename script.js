@@ -42229,8 +42229,8 @@ if (
     player.deathAnimation = {
         timer:
             0,
-        duration:
-            0.50
+       duration:
+    0.95
     };
 
     const losses =

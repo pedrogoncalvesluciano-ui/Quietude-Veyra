@@ -27780,10 +27780,6 @@ if (
             return;
         }
 
-        updatePlayerFacingFromVector(
-            vector
-        );
-
         let speed =
             player.speed *
             getExhaustionSpeedMultiplier(
@@ -30455,6 +30451,14 @@ if (
             aim
         );
 
+              if (
+            character.id ===
+            "kaelion"
+        ) {
+            player.visual.attackAnimation =
+                "shoot";
+        }
+
         player.visual.attackTime =
             0.28;
 
@@ -31547,6 +31551,14 @@ if (
             normalizedKey
         ] =
             skill.cooldown;
+
+               if (
+            player.characterId ===
+            "kaelion"
+        ) {
+            player.visual.attackAnimation =
+                "spellcast";
+        }
 
         player.visual.attackTime =
             0.28;
@@ -48958,12 +48970,12 @@ ctx.shadowBlur =
     const PLAYER_SPRITE_BASE_PATH = "./assets/sprites/players";
 
     const PLAYER_SPRITE_ANIMATIONS = Object.freeze({
-        idle: Object.freeze({
-            file: "idle.png",
-            frames: 2,
-            fps: 2.4,
-            rows: 4
-        }),
+       idle: Object.freeze({
+    file: "walk.png",
+    frames: 1,
+    fps: 1,
+    rows: 4
+}),
 
         walk: Object.freeze({
             file: "walk.png",
@@ -48979,10 +48991,17 @@ ctx.shadowBlur =
             rows: 4
         }),
 
-        spellcast: Object.freeze({
+              spellcast: Object.freeze({
             file: "spellcast.png",
             frames: 7,
             fps: 25,
+            rows: 4
+        }),
+
+        shoot: Object.freeze({
+            file: "shoot.png",
+            frames: 13,
+            fps: 30,
             rows: 4
         }),
 
@@ -49255,7 +49274,7 @@ ctx.shadowBlur =
 
             Aqui só animamos o corpo.
         */
-        if (
+               if (
             finiteNumber(
                 player.visual
                     ?.attackTime,
@@ -49263,9 +49282,23 @@ ctx.shadowBlur =
             ) >
             0
         ) {
+            const attackAnimation =
+                player.visual
+                    ?.attackAnimation ===
+                    "shoot"
+                    ? "shoot"
+                    : "spellcast";
+
+            const attackConfig =
+                PLAYER_SPRITE_ANIMATIONS[
+                    attackAnimation
+                ] ||
+                PLAYER_SPRITE_ANIMATIONS
+                    .spellcast;
+
             return {
                 animation:
-                    "spellcast",
+                    attackAnimation,
 
                 frame:
                     getOneShotSpriteFrame(
@@ -49278,13 +49311,11 @@ ctx.shadowBlur =
                             1
                         ),
 
-                        PLAYER_SPRITE_ANIMATIONS
-                            .spellcast
+                        attackConfig
                             .frames
                     )
             };
         }
-
 
         /*
             DASH.
@@ -49399,7 +49430,7 @@ ctx.shadowBlur =
                 pose.animation,
                 player.facing,
                 pose.frame,
-                1
+             1.30
             );
 
 

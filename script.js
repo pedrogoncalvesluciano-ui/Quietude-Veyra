@@ -6300,10 +6300,6 @@ speed:
                     true
             }
         );
-
-preloadPlayerSprites(
-    character.id
-);
        
         return player;
 

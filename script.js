@@ -3134,15 +3134,16 @@
         sellable:
             true,
 
-        effect:
-            Object.freeze({
+       effect:
+    Object.freeze({
 
-                exhaustion:
-                    -24
+        exhaustion:
+            -34,
 
-            })
+        energy:
+            30
 
-    });
+    })
 
 
     registerItem({
@@ -28270,56 +28271,134 @@ if (
             item.category ===
             "food"
         ) {
-            const reduction =
-                Math.abs(
-                    finiteNumber(
-                        item.effect
-                            ?.exhaustion,
-                        0
-                    )
-                );
+          const reduction =
+    Math.abs(
+        finiteNumber(
+            item.effect
+                ?.exhaustion,
+            0
+        )
+    );
 
-            if (
-                reduction <=
-                    0 ||
-                player.exhaustion <=
-                    0
-            ) {
-                pushNotification(
-                    "NÃO É NECESSÁRIO",
-                    "Você não está exausto o suficiente para comer agora.",
-                    "info",
-                    1.8
-                );
+const energyRestore =
+    Math.max(
+        0,
+        finiteNumber(
+            item.effect
+                ?.energy,
+            0
+        )
+    );
 
-                return false;
-            }
+const canReduceExhaustion =
+    reduction > 0 &&
+    player.exhaustion > 0;
 
-            if (
-                !removeItem(
-                    itemId,
-                    1,
-                    player
-                )
-            ) {
-                return false;
-            }
+const canRestoreEnergy =
+    energyRestore > 0 &&
+    player.energy <
+        player.maxEnergy;
 
-            changeExhaustion(
-                -reduction,
-                player
-            );
+if (
+    !canReduceExhaustion &&
+    !canRestoreEnergy
+) {
+    pushNotification(
+        "NÃO É NECESSÁRIO",
+        "Você já está descansado e com energia cheia.",
+        "info",
+        1.8
+    );
 
-            pushNotification(
-                item.name
-                    .toUpperCase(),
-                `Exaustão -${Math.round(
-                    reduction
-                )}`,
-                "item",
-                1.7
-            );
+    return false;
+}
 
+if (
+    !removeItem(
+        itemId,
+        1,
+        player
+    )
+) {
+    return false;
+}
+
+const effects = [];
+
+if (
+    canReduceExhaustion
+) {
+    const before =
+        player.exhaustion;
+
+    changeExhaustion(
+        -reduction,
+        player
+    );
+
+    const reduced =
+        Math.max(
+            0,
+            before -
+                player.exhaustion
+        );
+
+    if (
+        reduced > 0
+    ) {
+        effects.push(
+            `Exaustão -${Math.round(
+                reduced
+            )}`
+        );
+    }
+}
+
+if (
+    canRestoreEnergy
+) {
+    const before =
+        player.energy;
+
+    player.energy =
+        clamp(
+            player.energy +
+                energyRestore,
+            0,
+            player.maxEnergy
+        );
+
+    const restored =
+        Math.max(
+            0,
+            player.energy -
+                before
+        );
+
+    if (
+        restored > 0
+    ) {
+        effects.push(
+            `Energia +${Math.round(
+                restored
+            )}`
+        );
+    }
+}
+
+pushNotification(
+    item.name
+        .toUpperCase(),
+
+    effects.join(
+        " • "
+    ),
+
+    "item",
+    1.7
+);
+
+return true;
             return true;
         }
 
@@ -29112,30 +29191,52 @@ const damage =
                     damage
             );
 
-        enemy.hurtAnim =
-            0.2;
+      enemy.hurtAnim =
+    0.22;
 
-        spawnTransientEffect(
-            enemy.id ===
-                "vaelkor"
-                ? "voidHit"
-                : "hitSpark",
+const shadowHit =
+    enemy.id ===
+        "vaelkor" ||
 
-            enemy.x,
-            enemy.y,
+    String(
+        enemy.speciesId ||
+        ""
+    )
+        .toLowerCase()
+        .includes(
+            "void"
+        ) ||
 
-            {
-                duration:
-                    0.28,
+    enemy.definition
+        ?.particleIdentity ===
+        "shadow";
 
-                damage,
+spawnTransientEffect(
+    shadowHit
+        ? "voidHit"
+        : "hitSpark",
 
-                color:
-                    enemy.definition
-                        ?.aura ||
-                    null
-            }
-        );
+    enemy.x,
+    enemy.y,
+
+    {
+        duration:
+            0.34,
+
+        damage,
+
+        color:
+            shadowHit
+                ? "#76508f"
+                : "#b83232",
+
+        bloodLike:
+            !shadowHit,
+
+        shadowLike:
+            shadowHit
+    }
+);
 
         if (
             enemy.id ===
@@ -49011,10 +49112,10 @@ if (
     const PLAYER_SPRITE_BASE_PATH = "./assets/sprites/players";
 
     const PLAYER_SPRITE_ANIMATIONS = Object.freeze({
-      idle: Object.freeze({
-    file: "idle.png",
-    frames: 13,
-    fps: 8,
+    idle: Object.freeze({
+    file: "walk.png",
+    frames: 1,
+    fps: 1,
     rows: 4
 }),
 
@@ -50455,10 +50556,44 @@ if (
         ctx.globalAlpha =
             alpha;
 
-        ctx.translate(
-            screen.x,
-            screen.y
-        );
+       ctx.translate(
+    screen.x,
+    screen.y
+);
+
+/*
+    Feedback de impacto:
+    o inimigo treme rapidamente
+    quando recebe dano.
+*/
+const hurtRatio =
+    clamp(
+        finiteNumber(
+            enemy.hurtAnim,
+            0
+        ) /
+            0.22,
+        0,
+        1
+    );
+
+if (
+    hurtRatio > 0
+) {
+    ctx.translate(
+        Math.sin(
+            renderRuntime
+                .ambientTime *
+                115 +
+            enemy.x *
+                0.05
+        ) *
+            3.4 *
+            hurtRatio,
+
+        0
+    );
+}
 
         drawEnemyShadow(
             ctx,
@@ -55350,78 +55485,193 @@ case "bossTrail":
     ctx.restore();
 }
 
-    function drawHitEffect(
-        ctx,
-        screen,
-        effect,
-        progress
+function drawHitEffect(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const color =
+        effect.color ||
+        "#d9c8aa";
+
+    const fade =
+        1 - progress;
+
+    ctx.save();
+
+    /*
+        Pequeno impacto central.
+    */
+    ctx.strokeStyle =
+        colorWithAlpha(
+            color,
+            0.82 * fade
+        );
+
+    ctx.lineWidth =
+        2.4;
+
+    for (
+        let index = 0;
+        index < 6;
+        index += 1
     ) {
-        const color =
-            effect.color ||
-            "#d9c8aa";
+        const angle =
+            (
+                index / 6
+            ) *
+            Math.PI * 2;
 
-        ctx.strokeStyle =
-            colorWithAlpha(
-                color,
-                0.8
-            );
+        const start =
+            progress * 7;
 
-        ctx.lineWidth =
-            3;
+        const end =
+            7 +
+            progress * 19;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screen.x +
+                Math.cos(
+                    angle
+                ) *
+                    start,
+
+            screen.y +
+                Math.sin(
+                    angle
+                ) *
+                    start
+        );
+
+        ctx.lineTo(
+            screen.x +
+                Math.cos(
+                    angle
+                ) *
+                    end,
+
+            screen.y +
+                Math.sin(
+                    angle
+                ) *
+                    end
+        );
+
+        ctx.stroke();
+    }
+
+    /*
+        Criaturas normais:
+        partículas vermelhas.
+
+        Criaturas do Vazio/sombra:
+        partículas roxas/escuras.
+    */
+    if (
+        effect.bloodLike ||
+        effect.shadowLike
+    ) {
+        const particleCount =
+            effect.shadowLike
+                ? 9
+                : 12;
 
         for (
             let index = 0;
-            index < 6;
+            index < particleCount;
             index += 1
         ) {
             const angle =
+                -Math.PI * 0.92 +
                 (
                     index /
-                    6
+                    Math.max(
+                        1,
+                        particleCount - 1
+                    )
                 ) *
-                Math.PI *
-                2;
+                Math.PI * 1.84;
 
-            const start =
-                progress *
-                10;
+            const speed =
+                18 +
+                (
+                    index % 4
+                ) *
+                    6;
 
-            const end =
-                8 +
+            const distance =
                 progress *
-                    28;
+                speed;
+
+            const gravity =
+                progress *
+                progress *
+                18;
+
+            const px =
+                screen.x +
+                Math.cos(
+                    angle
+                ) *
+                    distance;
+
+            const py =
+                screen.y -
+                6 +
+                Math.sin(
+                    angle
+                ) *
+                    distance +
+                gravity;
+
+            const particleColor =
+                effect.shadowLike
+                    ? (
+                        index % 2 === 0
+                            ? "#7a4b9a"
+                            : "#2c2037"
+                    )
+                    : (
+                        index % 3 === 0
+                            ? "#6f171b"
+                            : "#b83232"
+                    );
+
+            ctx.fillStyle =
+                colorWithAlpha(
+                    particleColor,
+                    0.95 * fade
+                );
 
             ctx.beginPath();
 
-            ctx.moveTo(
-                screen.x +
-                    Math.cos(
-                        angle
+            ctx.arc(
+                px,
+                py,
+
+                Math.max(
+                    0.7,
+                    2.4 -
+                    progress * 1.3 +
+                    (
+                        index % 2
                     ) *
-                        start,
-                screen.y +
-                    Math.sin(
-                        angle
-                    ) *
-                        start
+                        0.45
+                ),
+
+                0,
+                Math.PI * 2
             );
 
-            ctx.lineTo(
-                screen.x +
-                    Math.cos(
-                        angle
-                    ) *
-                        end,
-                screen.y +
-                    Math.sin(
-                        angle
-                    ) *
-                        end
-            );
-
-            ctx.stroke();
+            ctx.fill();
         }
     }
+
+    ctx.restore();
+}
 
 
     function drawRingEffect(
@@ -60307,10 +60557,22 @@ drawStaticDecorations(
             );
         }
 
-        /*
-            Y-SORT REAL.
-        */
-     drawDepthSortedEntities(
+     /*
+    PROJÉTEIS antes do Y-SORT.
+
+    Assim árvores, personagens,
+    criaturas e outras partes do
+    cenário podem passar
+    visualmente por cima da magia.
+*/
+drawProjectiles(
+    ctx
+);
+
+/*
+    Y-SORT REAL.
+*/
+drawDepthSortedEntities(
     ctx
 );
 
@@ -60336,10 +60598,6 @@ drawDoors(
         */
 
         drawHazards(
-            ctx
-        );
-
-        drawProjectiles(
             ctx
         );
 

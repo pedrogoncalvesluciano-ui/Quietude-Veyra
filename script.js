@@ -42320,6 +42320,9 @@ if (
         player.poisonEffect =
             null;
 
+player.deathAnimation =
+    null;
+       
         player.dead =
             false;
 
@@ -49295,6 +49298,43 @@ if (
         player
     ) {
 
+       /*
+    MORTE DO KAELION.
+
+    hurt.png:
+    primeiro frame = em pé
+    último frame = caído.
+
+    Portanto a animação avança
+    normalmente até ele cair.
+*/
+if (
+    player.deathAnimation
+) {
+    const progress =
+        clamp(
+            player.deathAnimation
+                .timer /
+            player.deathAnimation
+                .duration,
+            0,
+            1
+        );
+
+    return {
+        animation:
+            "hurt",
+
+        frame:
+            getOneShotSpriteFrame(
+                progress,
+                PLAYER_SPRITE_ANIMATIONS
+                    .hurt
+                    .frames
+            )
+    };
+}
+
         /*
             TOMANDO DANO.
         */
@@ -49491,25 +49531,44 @@ if (
                 pose.animation,
                 player.facing,
                 pose.frame,
-             1.30
+            1.55
             );
 
 
-        /*
-            Se algum PNG não carregar,
-            mantém o Kaelion antigo.
-        */
-        if (
-            !drawn
-        ) {
-            drawKaelionLegacy(
-                ctx,
-                player,
-                profile,
-                walk
-            );
-        }
+       /*
+    Se a animação atual ainda
+    não carregou, tenta manter
+    o sprite NOVO do Kaelion.
+*/
+if (
+    !drawn
+) {
+    const idleFallback =
+        drawPlayerSpriteFrame(
+            ctx,
+            "kaelion",
+            "idle",
+            player.facing,
+            0,
+            1.55
+        );
+
+    /*
+        Só usa o desenho antigo
+        se absolutamente nenhum
+        sprite novo estiver disponível.
+    */
+    if (
+        !idleFallback
+    ) {
+        drawKaelionLegacy(
+            ctx,
+            player,
+            profile,
+            walk
+        );
     }
+}
    
     /* ============================================================
        KAELION

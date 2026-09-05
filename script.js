@@ -30589,7 +30589,7 @@ if (
        ATAQUE BÁSICO
        ============================================================ */
 
-  function getPlayerAimVector() {
+function getPlayerAimVector() {
     const player =
         state.player;
 
@@ -30602,108 +30602,87 @@ if (
         };
     }
 
+    /*
+        A direção agora é calculada
+        diretamente pela posição do mouse
+        NA TELA.
+
+        Isso elimina o problema da câmera
+        alterar a direção enquanto o player
+        está andando.
+    */
+    if (
+        typeof V.worldToScreen ===
+        "function"
+    ) {
+        const playerScreen =
+            V.worldToScreen(
+                player.x,
+                player.y
+            );
+
+        if (
+            playerScreen
+        ) {
+            const pointerX =
+                finiteNumber(
+                    state.pointer
+                        ?.screenX,
+                    playerScreen.x + 1
+                );
+
+            const pointerY =
+                finiteNumber(
+                    state.pointer
+                        ?.screenY,
+                    playerScreen.y
+                );
+
+            const screenAim =
+                normalize(
+                    pointerX -
+                        playerScreen.x,
+
+                    pointerY -
+                        playerScreen.y
+                );
+
+            if (
+                screenAim.x !==
+                    0 ||
+                screenAim.y !==
+                    0
+            ) {
+                return screenAim;
+            }
+        }
+    }
 
     /*
-        Posição mundial calculada
-        quando o mouse foi movimentado.
+        Fallback caso o renderer
+        ainda não esteja carregado.
     */
-    const storedWorldX =
-        finiteNumber(
-            state.pointer
-                ?.worldX,
-            player.x + 1
-        );
-
-    const storedWorldY =
-        finiteNumber(
-            state.pointer
-                ?.worldY,
-            player.y
-        );
-
-
-    /*
-        Câmera que existia naquele
-        exato momento.
-    */
-    const storedCameraX =
-        finiteNumber(
-            state.pointer
-                ?.cameraX,
-            finiteNumber(
-                state.camera
-                    ?.x,
-                0
-            )
-        );
-
-    const storedCameraY =
-        finiteNumber(
-            state.pointer
-                ?.cameraY,
-            finiteNumber(
-                state.camera
-                    ?.y,
-                0
-            )
-        );
-
-
-    /*
-        Câmera atual.
-    */
-    const currentCameraX =
-        finiteNumber(
-            state.camera
-                ?.x,
-            storedCameraX
-        );
-
-    const currentCameraY =
-        finiteNumber(
-            state.camera
-                ?.y,
-            storedCameraY
-        );
-
-
-    /*
-        Se a câmera andou 30px para
-        a direita, o ponto de mundo
-        correspondente ao mesmo lugar
-        da tela também precisa andar 30px.
-
-        O mouse não precisa se mover.
-    */
-    const targetX =
-        storedWorldX +
-        (
-            currentCameraX -
-            storedCameraX
-        );
-
-    const targetY =
-        storedWorldY +
-        (
-            currentCameraY -
-            storedCameraY
-        );
-
-
-    const aim =
+    const worldAim =
         normalize(
-            targetX -
+            finiteNumber(
+                state.pointer
+                    ?.worldX,
+                player.x + 1
+            ) -
                 player.x,
 
-            targetY -
+            finiteNumber(
+                state.pointer
+                    ?.worldY,
+                player.y
+            ) -
                 player.y
         );
 
-
     if (
-        aim.x ===
+        worldAim.x ===
             0 &&
-        aim.y ===
+        worldAim.y ===
             0
     ) {
         return getFacingVector(
@@ -30711,9 +30690,9 @@ if (
         );
     }
 
-
-    return aim;
+    return worldAim;
 }
+   
     function angleBetween(
         x1,
         y1,
@@ -47158,43 +47137,39 @@ function drawGate(
             gate.w + 52;
 
 
-        /*
-            Sombras.
-        */
-        ctx.beginPath();
+       /*
+    Sombra discreta presa à base
+    do portão.
 
-        ctx.ellipse(
-            screen.x +
-                gate.w * 0.5,
+    Não fica mais aquele oval
+    flutuando longe da estrutura.
+*/
+ctx.save();
 
-            screen.y + 18,
+ctx.fillStyle =
+    "rgba(0,0,0,0.16)";
 
-            gate.w * 0.56,
-            12,
+ctx.beginPath();
 
-            0,
-            0,
-            Math.PI * 2
-        );
+ctx.ellipse(
+    screen.x +
+        gate.w * 0.5,
 
-        ctx.ellipse(
-            screen.x +
-                gate.w * 0.5,
+    screen.y +
+        gate.h -
+        4,
 
-            screen.y +
-                gate.h +
-                18,
+    gate.w * 0.46,
+    7,
 
-            gate.w * 0.56,
-            12,
+    0,
+    0,
+    Math.PI * 2
+);
 
-            0,
-            0,
-            Math.PI * 2
-        );
+ctx.fill();
 
-        ctx.fill();
-
+ctx.restore();
 
         drawStoneBlock(
             postX,
@@ -47478,14 +47453,14 @@ function drawGateOverhang(
 
     ctx.save();
 
-    ctx.shadowColor =
-        "rgba(0,0,0,0.38)";
+   ctx.shadowColor =
+    "rgba(0,0,0,0.20)";
 
-    ctx.shadowBlur =
-        8;
+ctx.shadowBlur =
+    4;
 
-    ctx.shadowOffsetY =
-        7;
+ctx.shadowOffsetY =
+    3;
 
 
     let x;
@@ -71680,74 +71655,51 @@ state.pointer.cameraY =
     }
 
 
-    function handlePointerDown(
-        event
+   function handlePointerDown(
+    event
+) {
+    if (
+        event.button !==
+        0 ||
+        !state.running
     ) {
-        if (
-            event.button !==
-            0 ||
-            !state.running
-        ) {
-            return;
-        }
-
-
-        updatePointerFromEvent(
-            event
-        );
-
-                   UI_RUNTIME.lastPrimaryPointerDownAt =
-            performance.now();
-
-
-        /*
-            1 CLIQUE = 1 ATAQUE.
-
-            NÃO criamos mouseHeld.
-            NÃO fazemos ataque em update().
-        */
-        safeCall(
-            "handleGameplayAttackInput"
-        );
+        return;
     }
 
-       function handleMouseDownFallback(
-        event
+    /*
+        Não atacar quando o jogador
+        estiver realmente clicando
+        em elementos da interface.
+    */
+    const target =
+        event.target;
+
+    if (
+        target instanceof
+            Element &&
+        target.closest(
+            "button, input, textarea, select, a, .minimap-shell, .player-hud, .combat-hints, .game-hotbar, .money-hud, .location-ribbon"
+        )
     ) {
-        if (
-            event.button !==
-            0 ||
-            !state.running
-        ) {
-            return;
-        }
-
-        const now =
-            performance.now();
-
-        /*
-            Se o pointerdown já disparou,
-            não deixa duplicar o ataque.
-        */
-        if (
-            now -
-                finiteNumber(
-                    UI_RUNTIME.lastPrimaryPointerDownAt,
-                    0
-                ) <
-            40
-        ) {
-            return;
-        }
-
-        updatePointerFromEvent(
-            event
-        );
-
-        safeCall(
-            "handleGameplayAttackInput"
-        );
+        return;
     }
+
+    /*
+        Atualiza a mira com a posição
+        EXATA deste clique.
+    */
+    updatePointerFromEvent(
+        event
+    );
+
+    /*
+        1 clique = 1 ataque.
+    */
+    safeCall(
+        "handleGameplayAttackInput"
+    );
+}
+   
 
     /* ============================================================
        EXPLORAÇÃO DO MAPA
@@ -73334,47 +73286,46 @@ updateTransition(
         );
 
 
-        if (
-            DOM.canvas.game
-        ) {
-            DOM.canvas.game
-                .addEventListener(
-                    "pointermove",
-                    handlePointerMove
-                );
+      /*
+    MOUSE DO GAMEPLAY.
+
+    Agora o mouse é acompanhado pela
+    TELA INTEIRA DO JOGO, e não somente
+    pelo canvas.
+
+    Isso também resolve casos em que
+    HUD/minimapa ficam por cima do canvas.
+*/
+if (
+    DOM.screens.game
+) {
+    DOM.screens.game
+        .addEventListener(
+            "pointermove",
+            handlePointerMove,
+            true
+        );
+
+    DOM.screens.game
+        .addEventListener(
+            "pointerdown",
+            handlePointerDown,
+            true
+        );
+}
 
 
-            DOM.canvas.game
-                .addEventListener(
-                    "pointerdown",
-                    handlePointerDown
-                );
-
-                       DOM.canvas.game
-                .addEventListener(
-                    "mousedown",
-                    handleMouseDownFallback
-                );
-
-
-            DOM.canvas.game
-                .addEventListener(
-                    "pointerleave",
-                    () => {
-                        UI_RUNTIME.pointerInsideCanvas =
-                            false;
-                    }
-                );
-
-
-            DOM.canvas.game
-                .addEventListener(
-                    "contextmenu",
-                    event => {
-                        event.preventDefault();
-                    }
-                );
-        }
+if (
+    DOM.canvas.game
+) {
+    DOM.canvas.game
+        .addEventListener(
+            "contextmenu",
+            event => {
+                event.preventDefault();
+            }
+        );
+}
 
 
         /*

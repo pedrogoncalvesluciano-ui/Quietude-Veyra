@@ -30284,57 +30284,131 @@ if (
        ATAQUE BÁSICO
        ============================================================ */
 
-    function getPlayerAimVector() {
-        const player =
-            state.player;
+  function getPlayerAimVector() {
+    const player =
+        state.player;
 
-        if (
-            !player
-        ) {
-            return {
-                x: 1,
-                y: 0
-            };
-        }
-
-        const dx =
-            finiteNumber(
-                state.pointer
-                    .worldX,
-                player.x +
-                    1
-            ) -
-            player.x;
-
-        const dy =
-            finiteNumber(
-                state.pointer
-                    .worldY,
-                player.y
-            ) -
-            player.y;
-
-        const aim =
-            normalize(
-                dx,
-                dy
-            );
-
-        if (
-            aim.x ===
-                0 &&
-            aim.y ===
-                0
-        ) {
-            return getFacingVector(
-                player.facing
-            );
-        }
-
-        return aim;
+    if (
+        !player
+    ) {
+        return {
+            x: 1,
+            y: 0
+        };
     }
 
 
+    /*
+        Posição mundial calculada
+        quando o mouse foi movimentado.
+    */
+    const storedWorldX =
+        finiteNumber(
+            state.pointer
+                ?.worldX,
+            player.x + 1
+        );
+
+    const storedWorldY =
+        finiteNumber(
+            state.pointer
+                ?.worldY,
+            player.y
+        );
+
+
+    /*
+        Câmera que existia naquele
+        exato momento.
+    */
+    const storedCameraX =
+        finiteNumber(
+            state.pointer
+                ?.cameraX,
+            finiteNumber(
+                state.camera
+                    ?.x,
+                0
+            )
+        );
+
+    const storedCameraY =
+        finiteNumber(
+            state.pointer
+                ?.cameraY,
+            finiteNumber(
+                state.camera
+                    ?.y,
+                0
+            )
+        );
+
+
+    /*
+        Câmera atual.
+    */
+    const currentCameraX =
+        finiteNumber(
+            state.camera
+                ?.x,
+            storedCameraX
+        );
+
+    const currentCameraY =
+        finiteNumber(
+            state.camera
+                ?.y,
+            storedCameraY
+        );
+
+
+    /*
+        Se a câmera andou 30px para
+        a direita, o ponto de mundo
+        correspondente ao mesmo lugar
+        da tela também precisa andar 30px.
+
+        O mouse não precisa se mover.
+    */
+    const targetX =
+        storedWorldX +
+        (
+            currentCameraX -
+            storedCameraX
+        );
+
+    const targetY =
+        storedWorldY +
+        (
+            currentCameraY -
+            storedCameraY
+        );
+
+
+    const aim =
+        normalize(
+            targetX -
+                player.x,
+
+            targetY -
+                player.y
+        );
+
+
+    if (
+        aim.x ===
+            0 &&
+        aim.y ===
+            0
+    ) {
+        return getFacingVector(
+            player.facing
+        );
+    }
+
+
+    return aim;
+}
     function angleBetween(
         x1,
         y1,

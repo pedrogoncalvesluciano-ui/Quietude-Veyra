@@ -3137,11 +3137,11 @@
         effect:
             Object.freeze({
 
-                exhaustion:
-                    -24,
+             exhaustion:
+    -18,
 
-                energy:
-                    18
+energy:
+    12
 
             })
 
@@ -3174,11 +3174,11 @@
         effect:
             Object.freeze({
 
-                exhaustion:
-                    -34,
+              exhaustion:
+    -26,
 
-                energy:
-                    30
+energy:
+    20
 
             })
 
@@ -27721,6 +27721,46 @@ if (
         }
     }
 
+   function updatePassiveHealthRegeneration(
+    dt
+) {
+    const player =
+        state.player;
+
+    if (
+        !player ||
+        player.dead ||
+        player.hp >=
+            player.maxHp ||
+        player.maxEnergy <=
+            0
+    ) {
+        return;
+    }
+
+    const energyFull =
+        player.energy >=
+        player.maxEnergy -
+            0.001;
+
+    if (
+        !energyFull
+    ) {
+        return;
+    }
+
+    /*
+        Energia cheia:
+        +1 HP por segundo.
+    */
+    player.hp =
+        clamp(
+            player.hp +
+                dt,
+            0,
+            player.maxHp
+        );
+}
 
     function updatePlayerMovement(
         dt
@@ -28889,8 +28929,8 @@ return true;
                     damage
             );
 
-        player.hurtAnim =
-            0.24;
+      player.hurtAnim =
+    0.56;
 
        state.damageFlash =
     Math.max(
@@ -43492,9 +43532,13 @@ updateRuntimeTransition(
                 !state.fragmentMinigame
                     ?.active
             ) {
-                updateSurvival(
-                    safeDt
-                );
+              updateSurvival(
+    safeDt
+);
+
+updatePassiveHealthRegeneration(
+    safeDt
+);
             }
 
             updateHoldInteraction(
@@ -46352,30 +46396,218 @@ function drawGate(
         return;
     }
 
-
     const screen =
         worldToScreen(
             gate.x,
             gate.y
         );
 
-
     const locked =
         gate.locked !==
         false;
 
+    const time =
+        finiteNumber(
+            renderRuntime
+                .ambientTime,
+            0
+        );
+
+    function drawStoneBlock(
+        x,
+        y,
+        w,
+        h
+    ) {
+        const gradient =
+            ctx.createLinearGradient(
+                x,
+                y,
+                x + w,
+                y + h
+            );
+
+        gradient.addColorStop(
+            0,
+            "#777064"
+        );
+
+        gradient.addColorStop(
+            0.48,
+            "#59544c"
+        );
+
+        gradient.addColorStop(
+            1,
+            "#363430"
+        );
+
+        ctx.fillStyle =
+            gradient;
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            w,
+            h,
+            5
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "rgba(24,22,20,0.92)";
+
+        ctx.lineWidth =
+            3;
+
+        ctx.stroke();
+
+        /*
+            Pequena rachadura na pedra.
+        */
+        ctx.strokeStyle =
+            "rgba(205,190,158,0.12)";
+
+        ctx.lineWidth =
+            1;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x + w * 0.18,
+            y + h * 0.28
+        );
+
+        ctx.lineTo(
+            x + w * 0.42,
+            y + h * 0.42
+        );
+
+        ctx.lineTo(
+            x + w * 0.31,
+            y + h * 0.62
+        );
+
+        ctx.stroke();
+    }
+
+
+    function drawWoodBeam(
+        x,
+        y,
+        w,
+        h,
+        vertical = false
+    ) {
+        const gradient =
+            ctx.createLinearGradient(
+                x,
+                y,
+
+                vertical
+                    ? x + w
+                    : x,
+
+                vertical
+                    ? y
+                    : y + h
+            );
+
+        gradient.addColorStop(
+            0,
+            "#69543f"
+        );
+
+        gradient.addColorStop(
+            0.5,
+            "#493a2e"
+        );
+
+        gradient.addColorStop(
+            1,
+            "#2d2621"
+        );
+
+        ctx.fillStyle =
+            gradient;
+
+        roundRectPath(
+            ctx,
+            x,
+            y,
+            w,
+            h,
+            4
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "rgba(20,16,14,0.95)";
+
+        ctx.lineWidth =
+            3;
+
+        ctx.stroke();
+
+        ctx.strokeStyle =
+            "rgba(210,177,111,0.16)";
+
+        ctx.lineWidth =
+            1;
+
+        if (
+            vertical
+        ) {
+            for (
+                let py = y + 24;
+                py < y + h - 16;
+                py += 42
+            ) {
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    x + 4,
+                    py
+                );
+
+                ctx.lineTo(
+                    x + w - 4,
+                    py + 5
+                );
+
+                ctx.stroke();
+            }
+        } else {
+            for (
+                let px = x + 24;
+                px < x + w - 16;
+                px += 42
+            ) {
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    px,
+                    y + 4
+                );
+
+                ctx.lineTo(
+                    px + 5,
+                    y + h - 4
+                );
+
+                ctx.stroke();
+            }
+        }
+    }
+
 
     ctx.save();
 
-
     ctx.fillStyle =
-        "#4c443b";
-
-    ctx.strokeStyle =
-        "#211d1a";
-
-    ctx.lineWidth =
-        4;
+        "rgba(0,0,0,0.24)";
 
 
     /*
@@ -46386,257 +46618,689 @@ function drawGate(
         "horizontal"
     ) {
         const postW =
-            34;
+            38;
 
+        const postY =
+            screen.y - 26;
 
-        /*
-            PILAR ESQUERDO.
-        */
-        ctx.fillRect(
-            screen.x,
-            screen.y - 22,
-            postW,
-            gate.h + 44
-        );
-
-        ctx.strokeRect(
-            screen.x,
-            screen.y - 22,
-            postW,
-            gate.h + 44
-        );
-
+        const postH =
+            gate.h + 52;
 
         /*
-            PILAR DIREITO.
+            Sombras dos pilares.
         */
-        ctx.fillRect(
+        ctx.beginPath();
+
+        ctx.ellipse(
+            screen.x + 18,
+            screen.y +
+                gate.h + 18,
+            30,
+            12,
+            0,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.ellipse(
+            screen.x +
+                gate.w - 18,
+            screen.y +
+                gate.h + 18,
+            30,
+            12,
+            0,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        drawStoneBlock(
+            screen.x,
+            postY,
+            postW,
+            postH
+        );
+
+        drawStoneBlock(
             screen.x +
                 gate.w -
                 postW,
-            screen.y - 22,
-            postW,
-            gate.h + 44
-        );
 
-        ctx.strokeRect(
-            screen.x +
-                gate.w -
-                postW,
-            screen.y - 22,
+            postY,
             postW,
-            gate.h + 44
+            postH
         );
 
 
         /*
-            PARTE SUPERIOR.
+            Chapéus dos pilares.
         */
-        ctx.fillStyle =
-            "#5c4e40";
+        drawStoneBlock(
+            screen.x - 5,
+            postY - 9,
+            postW + 10,
+            13
+        );
 
-        ctx.fillRect(
+        drawStoneBlock(
             screen.x +
+                gate.w -
                 postW -
-                4,
-            screen.y - 10,
+                5,
+
+            postY - 9,
+            postW + 10,
+            13
+        );
+
+
+        drawWoodBeam(
+            screen.x +
+                postW - 4,
+
+            screen.y - 13,
+
             gate.w -
                 postW * 2 +
                 8,
-            24
+
+            29,
+            false
         );
 
 
         /*
-            GRADES SE ESTIVER FECHADO.
+            Grades quando fechado.
         */
         if (
             locked
         ) {
             ctx.fillStyle =
-                "#2d2927";
+                "#252424";
 
+            ctx.strokeStyle =
+                "rgba(174,159,128,0.18)";
+
+            ctx.lineWidth =
+                1;
 
             for (
                 let px =
-                    postW + 18;
+                    postW + 19;
 
                 px <
                     gate.w -
                     postW -
                     8;
 
-                px += 28
+                px +=
+                    27
             ) {
-                ctx.fillRect(
+                roundRectPath(
+                    ctx,
+
                     screen.x +
                         px,
+
                     screen.y +
-                        12,
-                    8,
-                    gate.h -
-                        12
+                        13,
+
+                    7,
+
+                    Math.max(
+                        18,
+                        gate.h -
+                            13
+                    ),
+
+                    2
                 );
+
+                ctx.fill();
+                ctx.stroke();
             }
         }
     }
-
 
     /*
         PORTÃO VERTICAL.
     */
     else {
         const postH =
-            34;
+            38;
+
+        const postX =
+            screen.x - 26;
+
+        const postW =
+            gate.w + 52;
 
 
         /*
-            PILAR DE CIMA.
+            Sombras.
         */
-        ctx.fillRect(
-            screen.x - 22,
+        ctx.beginPath();
+
+        ctx.ellipse(
+            screen.x +
+                gate.w * 0.5,
+
+            screen.y + 18,
+
+            gate.w * 0.56,
+            12,
+
+            0,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.ellipse(
+            screen.x +
+                gate.w * 0.5,
+
+            screen.y +
+                gate.h +
+                18,
+
+            gate.w * 0.56,
+            12,
+
+            0,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        drawStoneBlock(
+            postX,
             screen.y,
-            gate.w + 44,
+            postW,
             postH
         );
 
-        ctx.strokeRect(
-            screen.x - 22,
-            screen.y,
-            gate.w + 44,
-            postH
-        );
+        drawStoneBlock(
+            postX,
 
-
-        /*
-            PILAR DE BAIXO.
-        */
-        ctx.fillRect(
-            screen.x - 22,
             screen.y +
                 gate.h -
                 postH,
-            gate.w + 44,
+
+            postW,
             postH
         );
 
-        ctx.strokeRect(
-            screen.x - 22,
+
+        drawStoneBlock(
+            postX - 7,
+            screen.y - 5,
+            postW + 14,
+            13
+        );
+
+        drawStoneBlock(
+            postX - 7,
+
             screen.y +
                 gate.h -
-                postH,
-            gate.w + 44,
-            postH
+                8,
+
+            postW + 14,
+            13
         );
 
 
         /*
-            LATERAL.
+            Madeira que fica SOBRE o player.
         */
-        ctx.fillStyle =
-            "#5c4e40";
+        drawWoodBeam(
+            screen.x - 13,
 
-        ctx.fillRect(
-            screen.x - 10,
             screen.y +
                 postH -
                 4,
-            24,
+
+            29,
+
             gate.h -
                 postH * 2 +
-                8
+                8,
+
+            true
         );
 
 
-        /*
-            GRADES.
-        */
         if (
             locked
         ) {
             ctx.fillStyle =
-                "#2d2927";
+                "#252424";
 
+            ctx.strokeStyle =
+                "rgba(174,159,128,0.18)";
+
+            ctx.lineWidth =
+                1;
 
             for (
                 let py =
-                    postH + 18;
+                    postH + 19;
 
                 py <
                     gate.h -
                     postH -
                     8;
 
-                py += 28
+                py +=
+                    27
             ) {
-                ctx.fillRect(
+                roundRectPath(
+                    ctx,
+
                     screen.x +
-                        12,
+                        13,
+
                     screen.y +
                         py,
-                    gate.w -
-                        12,
-                    8
+
+                    Math.max(
+                        18,
+                        gate.w -
+                            13
+                    ),
+
+                    7,
+
+                    2
                 );
+
+                ctx.fill();
+                ctx.stroke();
             }
         }
     }
 
 
     /*
-        NOME DO CAMINHO.
+        PLACA DO CAMINHO.
     */
     const center =
         worldToScreen(
             gate.x +
                 gate.w / 2,
+
             gate.y +
                 gate.h / 2
         );
 
+    const titleY =
+        center.y -
+        gate.h / 2 -
+        19;
+
+    const plaqueW =
+        Math.max(
+            104,
+
+            Math.min(
+                180,
+
+                String(
+                    gate.label ||
+                        "PORTÃO"
+                ).length *
+                    8 +
+                    34
+            )
+        );
+
+
+    ctx.fillStyle =
+        "rgba(18,17,16,0.90)";
+
+    ctx.strokeStyle =
+        "rgba(188,156,92,0.34)";
+
+    ctx.lineWidth =
+        1.5;
+
+    roundRectPath(
+        ctx,
+
+        center.x -
+            plaqueW / 2,
+
+        titleY - 13,
+
+        plaqueW,
+
+        locked
+            ? 27
+            : 38,
+
+        4
+    );
+
+    ctx.fill();
+    ctx.stroke();
+
 
     ctx.font =
-        "700 11px serif";
+        '600 10px "Cinzel", Georgia, serif';
 
     ctx.textAlign =
         "center";
 
-    ctx.fillStyle =
-        "#ddd0b6";
+    ctx.textBaseline =
+        "middle";
 
+    ctx.fillStyle =
+        "#d9ceb8";
+
+    ctx.shadowColor =
+        "rgba(0,0,0,0.85)";
+
+    ctx.shadowBlur =
+        4;
 
     ctx.fillText(
         gate.label ||
             "PORTÃO",
+
         center.x,
-        center.y -
-            gate.h / 2 -
-            16
+        titleY
     );
 
 
     if (
         !locked
     ) {
+        const pulse =
+            0.68 +
+            Math.sin(
+                time *
+                    1.8
+            ) *
+                0.08;
+
         ctx.font =
-            "600 9px sans-serif";
+            '600 8px "Cinzel", Georgia, serif';
 
         ctx.fillStyle =
-            "rgba(220,210,188,0.72)";
+            `rgba(188,174,133,${pulse})`;
 
         ctx.fillText(
             "ABERTO",
             center.x,
-            center.y -
-                gate.h / 2 -
-                3
+            titleY + 13
         );
     }
 
+    ctx.shadowBlur =
+        0;
 
     ctx.restore();
 }
 
+
+/*
+    DESENHO DA PARTE ALTA.
+
+    Isso é redesenhado depois do player.
+*/
+function drawGateOverhangs(
+    ctx
+) {
+    const world =
+        state.world;
+
+    if (!world) {
+        return;
+    }
+
+    for (
+        const gate of
+        safeArray(
+            world.gates
+        )
+    ) {
+        drawGateOverhang(
+            ctx,
+            gate
+        );
+    }
+}
+
+
+function drawGateOverhang(
+    ctx,
+    gate
+) {
+    if (
+        !gate ||
+        !isRectVisible(
+            gate,
+            180
+        )
+    ) {
+        return;
+    }
+
+    const screen =
+        worldToScreen(
+            gate.x,
+            gate.y
+        );
+
+    ctx.save();
+
+    ctx.shadowColor =
+        "rgba(0,0,0,0.38)";
+
+    ctx.shadowBlur =
+        8;
+
+    ctx.shadowOffsetY =
+        7;
+
+
+    let x;
+    let y;
+    let w;
+    let h;
+    let vertical;
+
+
+    if (
+        gate.orientation ===
+        "horizontal"
+    ) {
+        const postW =
+            38;
+
+        x =
+            screen.x +
+            postW -
+            4;
+
+        y =
+            screen.y -
+            13;
+
+        w =
+            gate.w -
+            postW * 2 +
+            8;
+
+        h =
+            29;
+
+        vertical =
+            false;
+    } else {
+        const postH =
+            38;
+
+        x =
+            screen.x -
+            13;
+
+        y =
+            screen.y +
+            postH -
+            4;
+
+        w =
+            29;
+
+        h =
+            gate.h -
+            postH * 2 +
+            8;
+
+        vertical =
+            true;
+    }
+
+
+    const gradient =
+        ctx.createLinearGradient(
+            x,
+            y,
+
+            vertical
+                ? x + w
+                : x,
+
+            vertical
+                ? y
+                : y + h
+        );
+
+    gradient.addColorStop(
+        0,
+        "#715a43"
+    );
+
+    gradient.addColorStop(
+        0.5,
+        "#4a3a2d"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#2b241f"
+    );
+
+    ctx.fillStyle =
+        gradient;
+
+    roundRectPath(
+        ctx,
+        x,
+        y,
+        w,
+        h,
+        4
+    );
+
+    ctx.fill();
+
+    ctx.shadowBlur =
+        0;
+
+    ctx.shadowOffsetY =
+        0;
+
+    ctx.strokeStyle =
+        "rgba(22,17,14,0.95)";
+
+    ctx.lineWidth =
+        3;
+
+    ctx.stroke();
+
+
+    /*
+        Reforços metálicos.
+    */
+    ctx.strokeStyle =
+        "rgba(150,135,108,0.28)";
+
+    ctx.lineWidth =
+        3;
+
+
+    if (
+        vertical
+    ) {
+        for (
+            let py =
+                y + 32;
+
+            py <
+                y +
+                h -
+                18;
+
+            py +=
+                62
+        ) {
+            ctx.beginPath();
+
+            ctx.moveTo(
+                x + 2,
+                py
+            );
+
+            ctx.lineTo(
+                x +
+                    w -
+                    2,
+
+                py
+            );
+
+            ctx.stroke();
+        }
+    } else {
+        for (
+            let px =
+                x + 32;
+
+            px <
+                x +
+                w -
+                18;
+
+            px +=
+                62
+        ) {
+            ctx.beginPath();
+
+            ctx.moveTo(
+                px,
+                y + 2
+            );
+
+            ctx.lineTo(
+                px,
+                y +
+                    h -
+                    2
+            );
+
+            ctx.stroke();
+        }
+    }
+
+    ctx.restore();
+}
    function drawBossBarriers(
     ctx
 ) {
@@ -60578,6 +61242,17 @@ drawProjectiles(
     Y-SORT REAL.
 */
 drawDepthSortedEntities(
+    ctx
+);
+
+       /*
+    PARTES ALTAS DOS PORTÕES.
+
+    São desenhadas depois do player,
+    então ele passa visualmente
+    por BAIXO da estrutura.
+*/
+drawGateOverhangs(
     ctx
 );
 

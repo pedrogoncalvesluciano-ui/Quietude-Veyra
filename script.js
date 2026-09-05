@@ -6141,6 +6141,9 @@ speed:
             hurtAnim:
                 0,
 
+           deathAnimation:
+    null,
+
 
             /*
                 NÃO será utilizado
@@ -6298,7 +6301,10 @@ speed:
             }
         );
 
-
+preloadPlayerSprites(
+    character.id
+);
+       
         return player;
 
     }
@@ -8042,6 +8048,8 @@ const effectiveDomain =
         delete playerCopy
             .resting;
 
+delete playerCopy
+    .deathAnimation;
 
         delete playerCopy
             .hurtAnim;
@@ -42090,110 +42098,117 @@ if (
     }
 
 
-    function killPlayer(
-        source = {}
+  function killPlayer(
+    source = {}
+) {
+    const player =
+        state.player;
+
+    if (
+        !player ||
+        player.dead
     ) {
-        const player =
-            state.player;
+        return false;
+    }
 
-        if (
-            !player ||
-            player.dead
-        ) {
-            return false;
-        }
+    gameplayRuntime
+        .deathSafeSnapshot =
+        getSafeStoredSave();
 
-        gameplayRuntime
-            .deathSafeSnapshot =
-            getSafeStoredSave();
+    player.dead =
+        true;
 
-        player.dead =
-            true;
+    player.hp =
+        0;
 
-        player.hp =
-            0;
+    player.hurtAnim =
+        0;
 
-        /*
-            SOMENTE CALCULA.
+    player.deathAnimation = {
+        timer:
+            0,
+        duration:
+            0.50
+    };
 
-            NÃO REMOVE NADA.
-        */
-        const losses =
-            calculateDeathMaterialLoss(
-                player
-            );
-
-        state.deathState = {
-            timer:
-                0,
-
-            losses,
-
-            lossesApplied:
-                false,
-
-            appliedLosses:
-                [],
-
-            source,
-
-            title:
-                "A QUIETUDE TOMOU CONTA DE VOCÊ",
-
-            subtitle:
-                "Até a memória do caminho parece distante."
-        };
-
-        state.bossBarTarget =
-            null;
-
-        state.cutscene =
-            null;
-
-        state.dialogue =
-            null;
-
-        state.fragmentMinigame =
-            null;
-
-        state.holdAction =
-            null;
-
-        state.activePanel =
-            null;
-
-        state.battle =
-            null;
-
-        if (
-            state.world
-        ) {
-            ensureWorldCombatArrays(
-                state.world
-            );
-
-            state.world.projectiles =
-                [];
-
-            state.world.hazards =
-                [];
-        }
-
-        spawnTransientEffect(
-            "playerDeath",
-            player.x,
-            player.y,
-            {
-                duration:
-                    1.2,
-
-                characterId:
-                    player.characterId
-            }
+    const losses =
+        calculateDeathMaterialLoss(
+            player
         );
 
-        return true;
+    state.deathState = {
+        timer:
+            0,
+
+        showOverlay:
+            false,
+
+        losses,
+
+        lossesApplied:
+            false,
+
+        appliedLosses:
+            [],
+
+        source,
+
+        title:
+            "A QUIETUDE TOMOU CONTA DE VOCÊ",
+
+        subtitle:
+            "Até a memória do caminho parece distante."
+    };
+
+    state.bossBarTarget =
+        null;
+
+    state.cutscene =
+        null;
+
+    state.dialogue =
+        null;
+
+    state.fragmentMinigame =
+        null;
+
+    state.holdAction =
+        null;
+
+    state.activePanel =
+        null;
+
+    state.battle =
+        null;
+
+    if (
+        state.world
+    ) {
+        ensureWorldCombatArrays(
+            state.world
+        );
+
+        state.world.projectiles =
+            [];
+
+        state.world.hazards =
+            [];
     }
+
+    spawnTransientEffect(
+        "playerDeath",
+        player.x,
+        player.y,
+        {
+            duration:
+                1.2,
+            characterId:
+                player.characterId
+        }
+    );
+
+    return true;
+}
 
 
     function respawnPlayerAtHome() {
@@ -43291,12 +43306,36 @@ updateRuntimeTransition(
             safeDt
         );
 
+       if (
+    state.deathState
+) {
+    state.deathState.timer +=
+        safeDt;
+
+    if (
+        state.player
+            ?.deathAnimation
+    ) {
+        state.player
+            .deathAnimation
+            .timer += safeDt;
+
         if (
-            state.deathState
+            state.player
+                .deathAnimation
+                .timer >=
+            state.player
+                .deathAnimation
+                .duration
         ) {
-            state.deathState.timer +=
-                safeDt;
+            state.deathState.showOverlay =
+                true;
         }
+    } else {
+        state.deathState.showOverlay =
+            true;
+    }
+}
 
         updateResting(
             safeDt
@@ -48839,13 +48878,16 @@ ctx.shadowBlur =
         const player =
             state.player;
 
-        if (
-            !player ||
-            player.dead
-        ) {
-            return;
-        }
+       if (!player) {
+    return;
+}
 
+if (
+    player.dead &&
+    !player.deathAnimation
+) {
+    return;
+}
         const screen =
             worldToScreen(
                 player.x,
@@ -48970,10 +49012,10 @@ ctx.shadowBlur =
     const PLAYER_SPRITE_BASE_PATH = "./assets/sprites/players";
 
     const PLAYER_SPRITE_ANIMATIONS = Object.freeze({
-       idle: Object.freeze({
-    file: "walk.png",
-    frames: 1,
-    fps: 1,
+      idle: Object.freeze({
+    file: "idle.png",
+    frames: 13,
+    fps: 8,
     rows: 4
 }),
 
@@ -49014,6 +49056,25 @@ ctx.shadowBlur =
     });
 
     const playerSpriteCache = new Map();
+
+   function preloadPlayerSprites(
+    characterId
+) {
+    if (!characterId) {
+        return;
+    }
+
+    Object.keys(
+        PLAYER_SPRITE_ANIMATIONS
+    ).forEach(
+        animationName => {
+            getPlayerSpriteEntry(
+                characterId,
+                animationName
+            );
+        }
+    );
+}
 
 
     function getPlayerSpriteEntry(
@@ -56225,77 +56286,237 @@ function drawMagicSparkEffect(
                 1 -
                 progress
             )
+        )function drawMagicSparkEffect(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const colors = {
+        kaelionRay:
+            "#f29a4f",
+        arcaneCircle:
+            "#ed9350",
+        memoryExplosion:
+            "#ffb16a",
+        vitalLight:
+            "#f2b3dc",
+        fairyBlast:
+            "#f2a6db",
+        lightRain:
+            "#f2a7d8"
+    };
+
+    const color =
+        colors[
+            effect.type
+        ] ||
+        effect.color ||
+        "#dfcfb6";
+
+    const radius =
+        Number(
+            effect.radius
+        ) || 80;
+
+    const fade =
+        1 - progress;
+
+    ctx.save();
+    ctx.globalCompositeOperation =
+        "lighter";
+
+    /*
+        Aura suave
+    */
+    const glowRadius =
+        10 +
+        progress *
+            radius *
+            0.45;
+
+    const gradient =
+        ctx.createRadialGradient(
+            screen.x,
+            screen.y,
+            0,
+            screen.x,
+            screen.y,
+            glowRadius
         );
 
+    gradient.addColorStop(
+        0,
+        colorWithAlpha(
+            color,
+            0.28 * fade
+        )
+    );
+
+    gradient.addColorStop(
+        1,
+        colorWithAlpha(
+            color,
+            0
+        )
+    );
+
+    ctx.fillStyle =
+        gradient;
+
+    ctx.beginPath();
+    ctx.arc(
+        screen.x,
+        screen.y,
+        glowRadius,
+        0,
+        Math.PI * 2
+    );
+    ctx.fill();
+
+    /*
+        Anel mágico
+    */
+    ctx.strokeStyle =
+        colorWithAlpha(
+            color,
+            0.82 * fade
+        );
 
     ctx.lineWidth =
-        2;
+        2.5;
 
+    ctx.beginPath();
+    ctx.arc(
+        screen.x,
+        screen.y,
+        10 +
+            progress *
+                radius *
+                0.32,
+        0,
+        Math.PI * 2
+    );
+    ctx.stroke();
 
+    /*
+        Faíscas externas
+    */
     for (
         let index = 0;
-        index < 12;
+        index < 14;
         index += 1
     ) {
         const angle =
             (
-                index /
-                12
+                index / 14
             ) *
             Math.PI *
-            2;
-
+            2 +
+            progress *
+                1.4;
 
         const start =
-            8 +
+            12 +
             progress *
                 radius *
-                0.2;
-
+                0.20;
 
         const end =
-            18 +
+            22 +
             progress *
                 radius *
-                0.75;
+                0.72;
 
+        ctx.strokeStyle =
+            colorWithAlpha(
+                color,
+                0.78 * fade
+            );
 
         ctx.beginPath();
-
         ctx.moveTo(
             screen.x +
                 Math.cos(
                     angle
                 ) *
-                start,
-
+                    start,
             screen.y +
                 Math.sin(
                     angle
                 ) *
-                start *
-                0.7
+                    start *
+                    0.72
         );
-
 
         ctx.lineTo(
             screen.x +
                 Math.cos(
                     angle
                 ) *
-                end,
-
+                    end,
             screen.y +
                 Math.sin(
                     angle
                 ) *
-                end *
-                0.7
+                    end *
+                    0.72
         );
-
-
         ctx.stroke();
     }
+
+    /*
+        Partículas pequenas
+    */
+    for (
+        let index = 0;
+        index < 8;
+        index += 1
+    ) {
+        const angle =
+            (
+                index / 8
+            ) *
+            Math.PI *
+            2 -
+            progress *
+                2.2;
+
+        const dist =
+            8 +
+            progress *
+                radius *
+                0.35;
+
+        ctx.fillStyle =
+            colorWithAlpha(
+                "#fff4d9",
+                0.85 * fade
+            );
+
+        ctx.beginPath();
+        ctx.arc(
+            screen.x +
+                Math.cos(
+                    angle
+                ) *
+                    dist,
+            screen.y +
+                Math.sin(
+                    angle
+                ) *
+                    dist *
+                    0.70,
+            1.8 +
+                fade *
+                    1.2,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
+    }
+
+    ctx.restore();
 }
 
     function drawGenericEffect(
@@ -59133,6 +59354,12 @@ function drawHoldHUD(
         if (!death) {
             return;
         }
+
+       if (
+    !death.showOverlay
+) {
+    return;
+}
 
         const alpha =
             clamp(

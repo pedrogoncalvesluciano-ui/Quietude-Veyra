@@ -50101,37 +50101,64 @@ if (
     };
 }
 
-        /*
-            TOMANDO DANO.
-        */
-        if (
-            finiteNumber(
-                player.hurtAnim,
-                0
-            ) >
-            0
-        ) {
-            return {
-                animation:
-                    "hurt",
+      /*
+    TOMANDO DANO.
 
-                frame:
-                    getOneShotSpriteFrame(
-                        1 -
-                        clamp(
-                            player.hurtAnim /
-                                0.24,
-                            0,
-                            1
-                        ),
+    Primeiro cai.
+    Depois a animação volta
+    ao contrário para ele levantar.
+*/
+if (
+    finiteNumber(
+        player.hurtAnim,
+        0
+    ) >
+    0
+) {
+    const hurtDuration =
+        0.56;
 
-                        PLAYER_SPRITE_ANIMATIONS
-                            .hurt
-                            .frames
-                    )
-            };
-        }
+    const elapsed =
+        hurtDuration -
+        clamp(
+            player.hurtAnim,
+            0,
+            hurtDuration
+        );
 
+    const normalized =
+        clamp(
+            elapsed /
+                hurtDuration,
+            0,
+            1
+        );
+
+    /*
+        0.0 → em pé
+        0.5 → totalmente caído
+        1.0 → em pé novamente
+    */
+    const fallAndRise =
+        normalized <=
+        0.5
+            ? normalized * 2
+            : (1 - normalized) * 2;
+
+    return {
+        animation:
+            "hurt",
+
+        frame:
+            getOneShotSpriteFrame(
+                fallAndRise,
+
+                PLAYER_SPRITE_ANIMATIONS
+                    .hurt
+                    .frames
+            )
+    };
+}
 
         /*
             ATACANDO / LANÇANDO MAGIA.
@@ -71221,6 +71248,26 @@ if (
         state.pointer.worldY =
             world.y;
 
+       /*
+    Guarda onde a câmera estava
+    no último movimento real do mouse.
+
+    Isso permite manter a mira fixa
+    na tela mesmo se a câmera andar.
+*/
+state.pointer.cameraX =
+    finiteNumber(
+        state.camera
+            ?.x,
+        0
+    );
+
+state.pointer.cameraY =
+    finiteNumber(
+        state.camera
+            ?.y,
+        0
+    );
 
         /*
             Compatibilidade com sistemas antigos.

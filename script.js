@@ -49569,6 +49569,7 @@ if (
         );
     }
 }
+       }
    
     /* ============================================================
        KAELION
@@ -56345,7 +56346,7 @@ function drawMagicSparkEffect(
                 1 -
                 progress
             )
-        )function drawMagicSparkEffect(
+       function drawMagicSparkEffect(
     ctx,
     screen,
     effect,

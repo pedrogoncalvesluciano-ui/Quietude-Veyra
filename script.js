@@ -27730,6 +27730,44 @@ if (
         const vector =
             getMovementInputVector();
 
+                   const pointerReady =
+            finiteNumber(
+                state.pointer
+                    ?.screenX,
+                0
+            ) !==
+                0 ||
+            finiteNumber(
+                state.pointer
+                    ?.screenY,
+                0
+            ) !==
+                0;
+
+
+        /*
+            O movimento continua sendo WASD,
+            mas o PERSONAGEM olha para o mouse.
+        */
+        if (
+            pointerReady
+        ) {
+            updatePlayerFacingFromVector(
+                getPlayerAimVector()
+            );
+
+        } else if (
+            vector.x !==
+                0 ||
+            vector.y !==
+                0
+        ) {
+            updatePlayerFacingFromVector(
+                vector
+            );
+        }
+
+
         if (
             vector.x ===
                 0 &&
@@ -30418,7 +30456,7 @@ if (
         );
 
         player.visual.attackTime =
-            0.22;
+            0.28;
 
         switch (
             attack.type
@@ -48911,12 +48949,481 @@ ctx.shadowBlur =
             1;
     }
 
+    /* ============================================================
+       SPRITES LPC — PLAYER
+       Corpo = PNG LPC. Ataques/efeitos continuam no Canvas.
+       ============================================================ */
 
+    const PLAYER_SPRITE_FRAME_SIZE = 64;
+    const PLAYER_SPRITE_BASE_PATH = "./assets/sprites/players";
+
+    const PLAYER_SPRITE_ANIMATIONS = Object.freeze({
+        idle: Object.freeze({
+            file: "idle.png",
+            frames: 2,
+            fps: 2.4,
+            rows: 4
+        }),
+
+        walk: Object.freeze({
+            file: "walk.png",
+            frames: 9,
+            fps: 10,
+            rows: 4
+        }),
+
+        run: Object.freeze({
+            file: "run.png",
+            frames: 8,
+            fps: 13,
+            rows: 4
+        }),
+
+        spellcast: Object.freeze({
+            file: "spellcast.png",
+            frames: 7,
+            fps: 25,
+            rows: 4
+        }),
+
+        hurt: Object.freeze({
+            file: "hurt.png",
+            frames: 6,
+            fps: 25,
+            rows: 1
+        })
+    });
+
+    const playerSpriteCache = new Map();
+
+
+    function getPlayerSpriteEntry(
+        characterId,
+        animationName
+    ) {
+        const animation =
+            PLAYER_SPRITE_ANIMATIONS[
+                animationName
+            ];
+
+        if (!animation) {
+            return null;
+        }
+
+        const key =
+            `${characterId}:${animationName}`;
+
+        if (
+            playerSpriteCache.has(
+                key
+            )
+        ) {
+            return playerSpriteCache.get(
+                key
+            );
+        }
+
+        const image =
+            new Image();
+
+        const entry = {
+            image,
+            failed: false
+        };
+
+        image.addEventListener(
+            "error",
+            () => {
+                entry.failed = true;
+
+                console.warn(
+                    `VEYRA — sprite não encontrado: ${characterId}/${animation.file}`
+                );
+            },
+            {
+                once: true
+            }
+        );
+
+        playerSpriteCache.set(
+            key,
+            entry
+        );
+
+        image.src =
+            `${PLAYER_SPRITE_BASE_PATH}/${characterId}/${animation.file}`;
+
+        return entry;
+    }
+
+
+    function getPlayerSpriteDirectionRow(
+        facing
+    ) {
+        switch (facing) {
+
+            case "up":
+                return 0;
+
+            case "left":
+                return 1;
+
+            case "down":
+                return 2;
+
+            case "right":
+            default:
+                return 3;
+        }
+    }
+
+
+    function getLoopingSpriteFrame(
+        time,
+        frames,
+        fps
+    ) {
+        return (
+            Math.floor(
+                Math.max(
+                    0,
+                    finiteNumber(
+                        time,
+                        0
+                    )
+                ) *
+                fps
+            ) %
+            Math.max(
+                1,
+                frames
+            )
+        );
+    }
+
+
+    function getOneShotSpriteFrame(
+        progress,
+        frames
+    ) {
+        return clamp(
+            Math.floor(
+                clamp(
+                    finiteNumber(
+                        progress,
+                        0
+                    ),
+                    0,
+                    0.999999
+                ) *
+                frames
+            ),
+            0,
+            Math.max(
+                0,
+                frames - 1
+            )
+        );
+    }
+
+
+    function drawPlayerSpriteFrame(
+        ctx,
+        characterId,
+        animationName,
+        facing,
+        frame,
+        scale = 1
+    ) {
+        const animation =
+            PLAYER_SPRITE_ANIMATIONS[
+                animationName
+            ];
+
+        const entry =
+            getPlayerSpriteEntry(
+                characterId,
+                animationName
+            );
+
+        if (
+            !animation ||
+            !entry ||
+            entry.failed ||
+            !entry.image.complete ||
+            entry.image.naturalWidth <= 0
+        ) {
+            return false;
+        }
+
+        const safeFrame =
+            clamp(
+                integer(
+                    frame,
+                    0
+                ),
+                0,
+                animation.frames - 1
+            );
+
+        const row =
+            animation.rows === 1
+                ? 0
+                : getPlayerSpriteDirectionRow(
+                    facing
+                );
+
+        const drawSize =
+            PLAYER_SPRITE_FRAME_SIZE *
+            scale;
+
+        ctx.save();
+
+        /*
+            MUITO IMPORTANTE:
+            deixa pixel art nítida.
+        */
+        ctx.imageSmoothingEnabled =
+            false;
+
+        ctx.drawImage(
+            entry.image,
+
+            safeFrame *
+                PLAYER_SPRITE_FRAME_SIZE,
+
+            row *
+                PLAYER_SPRITE_FRAME_SIZE,
+
+            PLAYER_SPRITE_FRAME_SIZE,
+            PLAYER_SPRITE_FRAME_SIZE,
+
+            -drawSize / 2,
+            -46 * scale,
+
+            drawSize,
+            drawSize
+        );
+
+        ctx.restore();
+
+        return true;
+    }
+
+
+    function getKaelionSpritePose(
+        player
+    ) {
+
+        /*
+            TOMANDO DANO.
+        */
+        if (
+            finiteNumber(
+                player.hurtAnim,
+                0
+            ) >
+            0
+        ) {
+            return {
+                animation:
+                    "hurt",
+
+                frame:
+                    getOneShotSpriteFrame(
+                        1 -
+                        clamp(
+                            player.hurtAnim /
+                                0.24,
+                            0,
+                            1
+                        ),
+
+                        PLAYER_SPRITE_ANIMATIONS
+                            .hurt
+                            .frames
+                    )
+            };
+        }
+
+
+        /*
+            ATACANDO / LANÇANDO MAGIA.
+
+            O efeito do ataque continua sendo
+            desenhado pelo Canvas.
+
+            Aqui só animamos o corpo.
+        */
+        if (
+            finiteNumber(
+                player.visual
+                    ?.attackTime,
+                0
+            ) >
+            0
+        ) {
+            return {
+                animation:
+                    "spellcast",
+
+                frame:
+                    getOneShotSpriteFrame(
+                        1 -
+                        clamp(
+                            player.visual
+                                .attackTime /
+                                0.28,
+                            0,
+                            1
+                        ),
+
+                        PLAYER_SPRITE_ANIMATIONS
+                            .spellcast
+                            .frames
+                    )
+            };
+        }
+
+
+        /*
+            DASH.
+        */
+        if (
+            player.dashRuntime
+                ?.active
+        ) {
+            return {
+                animation:
+                    "run",
+
+                frame:
+                    getLoopingSpriteFrame(
+                        renderRuntime
+                            .ambientTime,
+
+                        PLAYER_SPRITE_ANIMATIONS
+                            .run
+                            .frames,
+
+                        PLAYER_SPRITE_ANIMATIONS
+                            .run
+                            .fps
+                    )
+            };
+        }
+
+
+        /*
+            ANDANDO.
+        */
+        const moving =
+            finiteNumber(
+                player.visual
+                    ?.walkTime,
+                0
+            ) >
+                0 &&
+
+            finiteNumber(
+                player.visual
+                    ?.idleTime,
+                0
+            ) <=
+                0.0001;
+
+
+        if (
+            moving
+        ) {
+            return {
+                animation:
+                    "walk",
+
+                frame:
+                    getLoopingSpriteFrame(
+                        player.visual
+                            .walkTime,
+
+                        PLAYER_SPRITE_ANIMATIONS
+                            .walk
+                            .frames,
+
+                        PLAYER_SPRITE_ANIMATIONS
+                            .walk
+                            .fps
+                    )
+            };
+        }
+
+
+        /*
+            PARADO.
+        */
+        return {
+            animation:
+                "idle",
+
+            frame:
+                getLoopingSpriteFrame(
+                    player.visual
+                        ?.idleTime,
+
+                    PLAYER_SPRITE_ANIMATIONS
+                        .idle
+                        .frames,
+
+                    PLAYER_SPRITE_ANIMATIONS
+                        .idle
+                        .fps
+                )
+        };
+    }
+
+
+    function drawKaelion(
+        ctx,
+        player,
+        profile,
+        walk
+    ) {
+        const pose =
+            getKaelionSpritePose(
+                player
+            );
+
+        const drawn =
+            drawPlayerSpriteFrame(
+                ctx,
+                "kaelion",
+                pose.animation,
+                player.facing,
+                pose.frame,
+                1
+            );
+
+
+        /*
+            Se algum PNG não carregar,
+            mantém o Kaelion antigo.
+        */
+        if (
+            !drawn
+        ) {
+            drawKaelionLegacy(
+                ctx,
+                player,
+                profile,
+                walk
+            );
+        }
+    }
+   
     /* ============================================================
        KAELION
        ============================================================ */
 
-    function drawKaelion(
+  function drawKaelionLegacy(
         ctx,
         player,
         profile,

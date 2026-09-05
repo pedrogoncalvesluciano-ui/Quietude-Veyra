@@ -3111,7 +3111,7 @@
        e usar o alimento.
        ============================================================ */
 
-    registerItem({
+      registerItem({
 
         id:
             "pao",
@@ -3134,16 +3134,18 @@
         sellable:
             true,
 
-       effect:
-    Object.freeze({
+        effect:
+            Object.freeze({
 
-        exhaustion:
-            -34,
+                exhaustion:
+                    -24,
 
-        energy:
-            30
+                energy:
+                    18
 
-    })
+            })
+
+    });
 
 
     registerItem({
@@ -3173,7 +3175,10 @@
             Object.freeze({
 
                 exhaustion:
-                    -34
+                    -34,
+
+                energy:
+                    30
 
             })
 

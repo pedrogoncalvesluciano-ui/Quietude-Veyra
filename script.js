@@ -14668,6 +14668,74 @@ const depth =
 
         }
 
+               /*
+            Protege a área dos portões.
+
+            Assim árvores, pedras e outras
+            decorações naturais não nascem
+            grudadas no portão nem atravessando
+            a arte dele.
+        */
+        for (
+            const gate of
+            safeArray(
+                world.gates
+            )
+        ) {
+            if (
+                !gate
+            ) {
+                continue;
+            }
+
+            if (
+                gate.orientation ===
+                "vertical"
+            ) {
+                const protectedX =
+                    gate.x - 72;
+
+                const protectedY =
+                    gate.y - 56;
+
+                const protectedW =
+                    gate.w + 144;
+
+                const protectedH =
+                    gate.h + 112;
+
+                if (
+                    x >= protectedX &&
+                    x <= protectedX + protectedW &&
+                    y >= protectedY &&
+                    y <= protectedY + protectedH
+                ) {
+                    return true;
+                }
+            } else {
+                const protectedX =
+                    gate.x - 56;
+
+                const protectedY =
+                    gate.y - 72;
+
+                const protectedW =
+                    gate.w + 112;
+
+                const protectedH =
+                    gate.h + 144;
+
+                if (
+                    x >= protectedX &&
+                    x <= protectedX + protectedW &&
+                    y >= protectedY &&
+                    y <= protectedY + protectedH
+                ) {
+                    return true;
+                }
+            }
+        }
+
 
    for (
     const building of
@@ -15830,6 +15898,241 @@ const depth =
     });
 }
 
+   function getGateCollisionObstacles(
+    gate
+) {
+    const result =
+        [];
+
+    if (
+        !gate
+    ) {
+        return result;
+    }
+
+    /*
+        PORTÃO VERTICAL
+        (como o CAMINHO 1 da imagem).
+    */
+    if (
+        gate.orientation ===
+        "vertical"
+    ) {
+        const postH =
+            38;
+
+        const postX =
+            gate.x - 26;
+
+        const postW =
+            gate.w + 52;
+
+        /*
+            Barra/pedra de cima.
+        */
+        result.push(
+            createSolidObstacle({
+                id:
+                    `${gate.id}_top_cap`,
+                type:
+                    "gate",
+                x:
+                    postX,
+                y:
+                    gate.y,
+                w:
+                    postW,
+                h:
+                    postH,
+                sourceId:
+                    gate.id,
+                depthY:
+                    gate.y +
+                    postH,
+                blocksLight:
+                    false
+            })
+        );
+
+        /*
+            Barra/pedra de baixo.
+        */
+        result.push(
+            createSolidObstacle({
+                id:
+                    `${gate.id}_bottom_cap`,
+                type:
+                    "gate",
+                x:
+                    postX,
+                y:
+                    gate.y +
+                    gate.h -
+                    postH,
+                w:
+                    postW,
+                h:
+                    postH,
+                sourceId:
+                    gate.id,
+                depthY:
+                    gate.y +
+                    gate.h,
+                blocksLight:
+                    false
+            })
+        );
+
+        /*
+            Se estiver FECHADO,
+            bloqueia também a passagem central.
+        */
+        if (
+            gate.solid
+        ) {
+            result.push(
+                createSolidObstacle({
+                    id:
+                        `${gate.id}_closed_body`,
+                    type:
+                        "gate",
+                    x:
+                        gate.x,
+                    y:
+                        gate.y +
+                        postH - 4,
+                    w:
+                        gate.w,
+                    h:
+                        Math.max(
+                            24,
+                            gate.h -
+                                postH * 2 +
+                                8
+                        ),
+                    sourceId:
+                        gate.id,
+                    depthY:
+                        gate.y +
+                        gate.h,
+                    blocksLight:
+                        false
+                })
+            );
+        }
+    }
+
+    /*
+        PORTÃO HORIZONTAL.
+    */
+    else {
+        const postW =
+            38;
+
+        const postY =
+            gate.y - 26;
+
+        const postH =
+            gate.h + 52;
+
+        /*
+            Pilar esquerdo.
+        */
+        result.push(
+            createSolidObstacle({
+                id:
+                    `${gate.id}_left_post`,
+                type:
+                    "gate",
+                x:
+                    gate.x,
+                y:
+                    postY,
+                w:
+                    postW,
+                h:
+                    postH,
+                sourceId:
+                    gate.id,
+                depthY:
+                    gate.y +
+                    gate.h,
+                blocksLight:
+                    false
+            })
+        );
+
+        /*
+            Pilar direito.
+        */
+        result.push(
+            createSolidObstacle({
+                id:
+                    `${gate.id}_right_post`,
+                type:
+                    "gate",
+                x:
+                    gate.x +
+                    gate.w -
+                    postW,
+                y:
+                    postY,
+                w:
+                    postW,
+                h:
+                    postH,
+                sourceId:
+                    gate.id,
+                    depthY:
+                    gate.y +
+                    gate.h,
+                blocksLight:
+                    false
+            })
+        );
+
+        /*
+            Se estiver FECHADO,
+            bloqueia o meio também.
+        */
+        if (
+            gate.solid
+        ) {
+            result.push(
+                createSolidObstacle({
+                    id:
+                        `${gate.id}_closed_body`,
+                    type:
+                        "gate",
+                    x:
+                        gate.x +
+                        postW - 4,
+                    y:
+                        gate.y,
+                    w:
+                        Math.max(
+                            24,
+                            gate.w -
+                                postW * 2 +
+                                8
+                        ),
+                    h:
+                        gate.h,
+                    sourceId:
+                        gate.id,
+                    depthY:
+                        gate.y +
+                        gate.h,
+                    blocksLight:
+                        false
+                })
+            );
+        }
+    }
+
+    return result;
+}
+
     /* ============================================================
        OBSTÁCULOS
        ============================================================ */
@@ -16083,23 +16386,25 @@ for (
         }
 
 
-        for (
+               for (
             const gate of
             safeArray(
                 world.gates
             )
         ) {
-
-            if (
-                gate.solid
-            ) {
-
-                obstacles.push(
+            const gateObstacles =
+                getGateCollisionObstacles(
                     gate
                 );
 
+            for (
+                const obstacle of
+                gateObstacles
+            ) {
+                obstacles.push(
+                    obstacle
+                );
             }
-
         }
 
 
@@ -62245,6 +62550,9 @@ drawDoors(
         pointerInsideCanvas:
             false,
 
+               lastPrimaryPointerDownAt:
+            0,
+
         deathGiveUpButton:
             null,
 
@@ -71388,6 +71696,9 @@ state.pointer.cameraY =
             event
         );
 
+                   UI_RUNTIME.lastPrimaryPointerDownAt =
+            performance.now();
+
 
         /*
             1 CLIQUE = 1 ATAQUE.
@@ -71400,6 +71711,43 @@ state.pointer.cameraY =
         );
     }
 
+       function handleMouseDownFallback(
+        event
+    ) {
+        if (
+            event.button !==
+            0 ||
+            !state.running
+        ) {
+            return;
+        }
+
+        const now =
+            performance.now();
+
+        /*
+            Se o pointerdown já disparou,
+            não deixa duplicar o ataque.
+        */
+        if (
+            now -
+                finiteNumber(
+                    UI_RUNTIME.lastPrimaryPointerDownAt,
+                    0
+                ) <
+            40
+        ) {
+            return;
+        }
+
+        updatePointerFromEvent(
+            event
+        );
+
+        safeCall(
+            "handleGameplayAttackInput"
+        );
+    }
 
     /* ============================================================
        EXPLORAÇÃO DO MAPA
@@ -73000,6 +73348,12 @@ updateTransition(
                 .addEventListener(
                     "pointerdown",
                     handlePointerDown
+                );
+
+                       DOM.canvas.game
+                .addEventListener(
+                    "mousedown",
+                    handleMouseDownFallback
                 );
 
 

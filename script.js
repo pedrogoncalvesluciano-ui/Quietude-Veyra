@@ -15926,7 +15926,7 @@ const depth =
        SPAWN DE INIMIGOS
        ============================================================ */
 
-    function spawnEnemiesNearRoute(
+      function spawnEnemiesNearRoute(
         world,
         options = {}
     ) {
@@ -15963,17 +15963,24 @@ const depth =
         if (
             !nodes.length
         ) {
-
             return;
-
         }
 
 
-        for (
-            let index = 0;
-            index < count;
-            index += 1
+        let created =
+            0;
+
+        let attempts =
+            0;
+
+
+        while (
+            created < count &&
+            attempts < count * 30
         ) {
+
+            attempts += 1;
+
 
             const node =
                 nodes[
@@ -15982,11 +15989,98 @@ const depth =
                         1,
                         Math.max(
                             1,
-                            nodes.length -
-                                2
+                            nodes.length - 2
                         )
                     )
                 ];
+
+
+            const x =
+                clamp(
+                    node.x +
+                    seededRange(
+                        rng,
+                        -300,
+                        300
+                    ),
+                    100,
+                    world.width - 100
+                );
+
+
+            const y =
+                clamp(
+                    node.y +
+                    seededRange(
+                        rng,
+                        -280,
+                        280
+                    ),
+                    100,
+                    world.height - 100
+                );
+
+
+            if (
+                isPointInsideProtectedZone(
+                    x,
+                    y,
+                    world
+                ) ||
+
+                isPositionBlocked(
+                    x,
+                    y,
+                    34,
+                    world
+                )
+            ) {
+                continue;
+            }
+
+
+            const species =
+                speciesList[
+                    seededInt(
+                        rng,
+                        0,
+                        speciesList.length - 1
+                    )
+                ];
+
+
+            const enemy =
+                createEnemy(
+                    species,
+                    {
+                        entityId:
+                            `${world.id}_enemy_${created}`,
+
+                        x,
+
+                        y
+                    }
+                );
+
+
+            if (
+                !enemy
+            ) {
+                continue;
+            }
+
+
+            world.enemies.push(
+                enemy
+            );
+
+
+            created += 1;
+
+        }
+
+    }
+   
     function spawnEnemiesNearRoute(
         world,
         options = {}

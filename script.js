@@ -13595,14 +13595,18 @@ const depth =
     }
 
 
-    /* ============================================================
-       ÁRVORES
+      /* ============================================================
+       ÁRVORES — PNG + COLISÃO SÓ NA BASE
 
-       COLISÃO SOMENTE NO TRONCO.
+       tree_01 / tree_02 / tree_03:
+       drop normal.
+
+       tree_04:
+       árvores pequenas, drop menor.
        ============================================================ */
 
     function createTree(
-        config
+        config = {}
     ) {
 
         const scale =
@@ -13616,25 +13620,51 @@ const depth =
             );
 
 
+        const x =
+            finiteNumber(
+                config.x
+            );
+
+        const y =
+            finiteNumber(
+                config.y
+            );
+
+
+        const spriteSheetId =
+            clamp(
+                integer(
+                    config.spriteSheetId,
+                    1
+                ),
+                1,
+                4
+            );
+
+
+        const smallTree =
+            spriteSheetId ===
+            4;
+
+
+        const trunkWidth =
+            (smallTree ? 18 : 30) *
+            scale;
+
+
+        const trunkHeight =
+            (smallTree ? 18 : 27) *
+            scale;
+
+
         return {
 
             id:
                 config.id ||
                 `tree_${Math.random().toString(36).slice(2)}`,
 
-
-            x:
-                finiteNumber(
-                    config.x
-                ),
-
-
-            y:
-                finiteNumber(
-                    config.y
-                ),
-
-
+            x,
+            y,
             scale,
 
 
@@ -13643,11 +13673,56 @@ const depth =
                 "oak",
 
 
+            spriteSheetId,
+
+
+            /*
+                Qual árvore da
+                spritesheet foi escolhida.
+            */
+            spritePick:
+                finiteNumber(
+                    config.spritePick,
+                    Math.random()
+                ),
+
+
+            treeSize:
+                smallTree
+                    ? "small"
+                    : "normal",
+
+
+            spriteKind:
+                smallTree
+                    ? "small"
+                    : "upright",
+
+
+            /*
+                1, 2 e 3:
+                3 madeiras.
+
+                4:
+                1 madeira.
+            */
+            resourceAmount:
+                Math.max(
+                    1,
+                    integer(
+                        config.resourceAmount,
+                        smallTree
+                            ? 1
+                            : 3
+                    )
+                ),
+
+
             canopySeed:
                 finiteNumber(
                     config.canopySeed,
                     Math.random() *
-                        9999
+                    9999
                 ),
 
 
@@ -13655,24 +13730,30 @@ const depth =
                 finiteNumber(
                     config.swayOffset,
                     Math.random() *
-                        Math.PI *
-                        2
+                    Math.PI *
+                    2
                 ),
 
 
-            trunkWidth:
-                25 *
-                scale,
-
-
-            trunkHeight:
-                38 *
-                scale,
+            trunkWidth,
+            trunkHeight,
 
 
             canopyRadius:
                 58 *
                 scale,
+
+
+            /*
+                Y-sort usa a base.
+
+                É isso que permite
+                passar atrás da copa.
+            */
+            depthY:
+                y +
+                trunkHeight *
+                0.45,
 
 
             harvested:
@@ -13688,7 +13769,11 @@ const depth =
                 finiteNumber(
                     config.respawnSeconds,
                     80
-                )
+                ),
+
+
+            respawnTimer:
+                0
 
         };
 
@@ -13706,7 +13791,7 @@ const depth =
 
         const height =
             tree.trunkHeight ||
-            36;
+            24;
 
 
         return createSolidObstacle({
@@ -13714,35 +13799,50 @@ const depth =
             id:
                 `${tree.id}_trunk`,
 
+
             type:
                 "treeTrunk",
 
+
+            /*
+                SOMENTE BASE/TRONCO.
+
+                A copa inteira fica
+                sem colisão.
+            */
             x:
                 tree.x -
                 width /
                 2,
 
+
             y:
                 tree.y -
                 height *
-                0.25,
+                0.55,
+
 
             w:
                 width,
 
+
             h:
                 height,
+
 
             collisionShape:
                 "trunk",
 
+
             sourceId:
                 tree.id,
+
 
             depthY:
                 tree.y +
                 height *
-                0.75,
+                0.45,
+
 
             blocksLight:
                 false
@@ -13750,8 +13850,6 @@ const depth =
         });
 
     }
-
-
     /* ============================================================
        PEDRAS
        ============================================================ */
@@ -14883,6 +14981,320 @@ const depth =
 
     }
 
+       /*
+        Anti-atravessamento do spawn.
+
+        A BASE da árvore precisa estar
+        livre antes dela nascer.
+    */
+    function isTreeSpawnPositionSafe(
+        x,
+        y,
+        world,
+        spriteSheetId,
+        scale = 1
+    ) {
+
+        if (
+            !world ||
+            isPointInsideProtectedZone(
+                x,
+                y,
+                world
+            )
+        ) {
+
+            return false;
+
+        }
+
+
+        const smallTree =
+            spriteSheetId === 4;
+
+
+        const radius =
+            (smallTree ? 46 : 82) *
+            Math.max(
+                0.65,
+                finiteNumber(
+                    scale,
+                    1
+                )
+            );
+
+
+        /*
+            NPCs.
+        */
+        for (
+            const npc of
+            safeArray(
+                world.npcs
+            )
+        ) {
+
+            if (
+                distance(
+                    x,
+                    y,
+                    npc.x,
+                    npc.y
+                ) <
+                radius + 92
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        /*
+            Altares, camas,
+            chaves etc.
+        */
+        for (
+            const interactable of
+            safeArray(
+                world.interactables
+            )
+        ) {
+
+            const protectedRadius =
+                Math.max(
+                    48,
+                    finiteNumber(
+                        interactable.radius,
+                        0
+                    )
+                );
+
+
+            if (
+                distance(
+                    x,
+                    y,
+                    interactable.x,
+                    interactable.y
+                ) <
+                radius +
+                protectedRadius
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        /*
+            Obstáculos fixos.
+        */
+        for (
+            const obstacle of
+            safeArray(
+                world.staticObstacles
+            )
+        ) {
+
+            if (
+                !obstacle
+            ) {
+                continue;
+            }
+
+
+            const ox =
+                finiteNumber(
+                    obstacle.x
+                );
+
+            const oy =
+                finiteNumber(
+                    obstacle.y
+                );
+
+            const ow =
+                Math.max(
+                    0,
+                    finiteNumber(
+                        obstacle.w
+                    )
+                );
+
+            const oh =
+                Math.max(
+                    0,
+                    finiteNumber(
+                        obstacle.h
+                    )
+                );
+
+
+            if (
+                x >=
+                    ox -
+                    radius &&
+
+                x <=
+                    ox +
+                    ow +
+                    radius &&
+
+                y >=
+                    oy -
+                    radius &&
+
+                y <=
+                    oy +
+                    oh +
+                    radius
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        /*
+            Outras árvores.
+        */
+        for (
+            const otherTree of
+            safeArray(
+                world.trees
+            )
+        ) {
+
+            if (
+                !otherTree ||
+                otherTree.harvested
+            ) {
+                continue;
+            }
+
+
+            const otherSmall =
+                otherTree.spriteSheetId ===
+                4;
+
+
+            const otherRadius =
+                (otherSmall ? 46 : 82) *
+                Math.max(
+                    0.65,
+                    finiteNumber(
+                        otherTree.scale,
+                        1
+                    )
+                );
+
+
+            if (
+                distance(
+                    x,
+                    y,
+                    otherTree.x,
+                    otherTree.y
+                ) <
+                radius +
+                otherRadius
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        /*
+            Pedras.
+        */
+        for (
+            const rock of
+            safeArray(
+                world.rocks
+            )
+        ) {
+
+            const rockRadius =
+                Math.max(
+                    finiteNumber(
+                        rock.w
+                    ),
+                    finiteNumber(
+                        rock.h
+                    )
+                ) *
+                0.55;
+
+
+            if (
+                distance(
+                    x,
+                    y,
+                    rock.x,
+                    rock.y
+                ) <
+                radius +
+                rockRadius +
+                16
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        /*
+            Decorações já existentes.
+        */
+        for (
+            const decoration of
+            safeArray(
+                world.decorations
+            )
+        ) {
+
+            if (
+                !Number.isFinite(
+                    decoration?.x
+                ) ||
+                !Number.isFinite(
+                    decoration?.y
+                )
+            ) {
+                continue;
+            }
+
+
+            if (
+                distance(
+                    x,
+                    y,
+                    decoration.x,
+                    decoration.y
+                ) <
+                radius + 68
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        return true;
+    }
 
     /* ============================================================
        AMBIENTE NATURAL
@@ -14969,49 +15381,77 @@ const depth =
             ];
 
 
-        let createdTrees =
-            0;
+              let createdTrees = 0;
+        let attempts = 0;
 
-
-        let attempts =
-            0;
-
-
+        /*
+            Mais tentativas que antes:
+            se o ponto estiver ocupado,
+            procura outro.
+        */
         while (
-            createdTrees <
-                treeCount &&
-            attempts <
-                treeCount *
-                    10
+            createdTrees < treeCount &&
+            attempts < treeCount * 35
         ) {
 
-            attempts +=
-                1;
+            attempts += 1;
 
 
             const x =
                 seededRange(
                     rng,
-                    80,
-                    world.width -
-                        80
+                    100,
+                    world.width - 100
                 );
 
 
             const y =
                 seededRange(
                     rng,
-                    80,
-                    world.height -
-                        80
+                    100,
+                    world.height - 100
                 );
 
 
+            /*
+                1, 2 e 3 = árvores normais.
+                4 = árvores pequenas.
+            */
+            const spriteSheetId =
+                seededInt(
+                    rng,
+                    1,
+                    4
+                );
+
+
+            const smallTree =
+                spriteSheetId === 4;
+
+
+            const scale =
+                smallTree
+
+                    ? seededRange(
+                        rng,
+                        0.72,
+                        0.92
+                    )
+
+                    : seededRange(
+                        rng,
+                        0.90,
+                        1.16
+                    );
+
+
             if (
-                isPointInsideProtectedZone(
+                !isTreeSpawnPositionSafe(
                     x,
                     y,
-                    world
+                    world,
+                    spriteSheetId,
+                    scale
                 )
             ) {
 
@@ -15027,34 +15467,41 @@ const depth =
                         `${world.id}_tree_${createdTrees}`,
 
                     x,
-
                     y,
+                    scale,
 
-                    scale:
-                        seededRange(
-                            rng,
-                            0.82,
-                            1.30
-                        ),
+                    spriteSheetId,
+
+                    /*
+                        Escolhe uma árvore
+                        da spritesheet.
+                    */
+                    spritePick:
+                        rng(),
+
+                    /*
+                        1–3 = 3 madeiras.
+                        4 = 1 madeira.
+                    */
+                    resourceAmount:
+                        smallTree
+                            ? 1
+                            : 3,
 
                     variant:
                         treeVariants[
                             seededInt(
                                 rng,
                                 0,
-                                treeVariants.length -
-                                    1
+                                treeVariants.length - 1
                             )
                         ],
 
                     canopySeed:
-                        rng() *
-                        9999,
+                        rng() * 9999,
 
                     swayOffset:
-                        rng() *
-                        Math.PI *
-                        2
+                        rng() * Math.PI * 2
 
                 });
 
@@ -49478,7 +49925,6 @@ else {
         }
     }
 
-
     /* ============================================================
        ÁRVORES
 
@@ -49488,6 +49934,48 @@ else {
        A árvore entra no MESMO Y-SORT
        de player/NPC/inimigo/boss.
        ============================================================ */
+
+    let treeCollisionRefreshScheduled =
+        false;
+
+
+    function scheduleTreeCollisionRefresh() {
+
+        if (
+            treeCollisionRefreshScheduled
+        ) {
+            return;
+        }
+
+
+        treeCollisionRefreshScheduled =
+            true;
+
+
+        requestAnimationFrame(
+            () => {
+
+                treeCollisionRefreshScheduled =
+                    false;
+
+
+                if (
+                    state.world &&
+                    typeof V
+                        .rebuildDynamicWorldObstacles ===
+                        "function"
+                ) {
+
+                    V.rebuildDynamicWorldObstacles(
+                        state.world
+                    );
+
+                }
+
+            }
+        );
+
+    }
 
     function drawTree(
         ctx,
@@ -49504,6 +49992,47 @@ else {
             return;
         }
 
+        /*
+            Novo sistema PNG.
+
+            Enquanto carrega, o renderer antigo
+            abaixo continua funcionando como fallback.
+        */
+        const treeSpriteSystem =
+            window.VEYRA_TREE_SPRITES;
+
+        if (
+            treeSpriteSystem &&
+            typeof treeSpriteSystem.draw === "function"
+        ) {
+            const spriteResult =
+                treeSpriteSystem.draw(
+                    ctx,
+                    tree,
+                    worldToScreen(
+                        tree.x,
+                        tree.y
+                    ),
+                    renderRuntime.ambientTime
+                );
+
+            if (
+                spriteResult?.collisionChanged
+            ) {
+                scheduleTreeCollisionRefresh();
+            }
+
+            if (
+                spriteResult?.drawn
+            ) {
+                renderRuntime
+                    .frameStats
+                    .drawnTrees += 1;
+
+                return;
+            }
+        }
+       
         const screen =
             worldToScreen(
                 tree.x,

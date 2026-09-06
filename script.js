@@ -63518,6 +63518,17 @@ drawBuildingRoofsOverlay(
 
 
 /*
+    ENTRADA DA CASA POR CIMA DAS ÁRVORES.
+
+    Isso impede que a copa esconda
+    o vão preto da porta.
+*/
+drawDoorwayOpenings(
+    ctx
+);
+
+
+/*
     Porta continua na frente.
 */
 drawDoors(

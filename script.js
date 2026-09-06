@@ -46063,7 +46063,7 @@ const height =
                     ? 85
                     : kind === "medium"
                         ? 165
-                        : 225;
+                        : 275;
 
             height =
                 baseHeight *

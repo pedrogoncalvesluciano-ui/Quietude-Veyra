@@ -50282,8 +50282,7 @@ if (
         Object.freeze({
 
             file:
-                "1h_halfslash.png",
-
+              "slash.png",
             frames:
                 6,
 
@@ -51451,7 +51450,7 @@ function drawGrumgar(
                 Grumgar é propositalmente
                 maior que os outros.
             */
-            1.72
+       2.05
         );
 
 

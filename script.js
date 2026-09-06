@@ -15075,7 +15075,232 @@ const depth =
                     scale,
                     1
                 )
-            );
+       );
+
+               /*
+            PORTAS / CASAS / PORTÕES.
+
+            Não basta proteger o tronco.
+            A copa inteira da árvore precisa
+            ficar afastada das estruturas.
+        */
+        for (
+            const building of
+            safeArray(
+                world.buildings
+            )
+        ) {
+
+            if (
+                !building
+            ) {
+                continue;
+            }
+
+
+            const margin =
+                radius + 95;
+
+
+            if (
+                x >=
+                    building.x -
+                    margin &&
+
+                x <=
+                    building.x +
+                    building.w +
+                    margin &&
+
+                y >=
+                    building.y -
+                    margin &&
+
+                y <=
+                    building.y +
+                    building.h +
+                    margin
+            ) {
+                return false;
+            }
+
+        }
+
+
+        /*
+            PORTAS DAS CASAS.
+        */
+        for (
+            const door of
+            safeArray(
+                world.doors
+            )
+        ) {
+
+            if (
+                !door
+            ) {
+                continue;
+            }
+
+
+            const doorX =
+                finiteNumber(
+                    door.x,
+                    finiteNumber(
+                        door.centerX
+                    ) - 36
+                );
+
+
+            const doorY =
+                finiteNumber(
+                    door.y,
+                    finiteNumber(
+                        door.centerY
+                    ) - 20
+                );
+
+
+            const doorW =
+                Math.max(
+                    40,
+                    finiteNumber(
+                        door.w,
+                        72
+                    )
+                );
+
+
+            const doorH =
+                Math.max(
+                    28,
+                    finiteNumber(
+                        door.h,
+                        40
+                    )
+                );
+
+
+            const margin =
+                radius + 125;
+
+
+            if (
+                x >=
+                    doorX -
+                    margin &&
+
+                x <=
+                    doorX +
+                    doorW +
+                    margin &&
+
+                y >=
+                    doorY -
+                    margin &&
+
+                y <=
+                    doorY +
+                    doorH +
+                    margin
+            ) {
+                return false;
+            }
+
+        }
+
+
+        /*
+            PORTÕES.
+        */
+        for (
+            const gate of
+            safeArray(
+                world.gates
+            )
+        ) {
+
+            if (
+                !gate
+            ) {
+                continue;
+            }
+
+
+            const margin =
+                radius + 135;
+
+
+            if (
+                x >=
+                    gate.x -
+                    margin &&
+
+                x <=
+                    gate.x +
+                    gate.w +
+                    margin &&
+
+                y >=
+                    gate.y -
+                    margin &&
+
+                y <=
+                    gate.y +
+                    gate.h +
+                    margin
+            ) {
+                return false;
+            }
+
+        }
+
+
+        /*
+            SAÍDAS ENTRE REGIÕES.
+        */
+        for (
+            const exit of
+            safeArray(
+                world.exits
+            )
+        ) {
+
+            if (
+                !exit
+            ) {
+                continue;
+            }
+
+
+            const margin =
+                radius + 100;
+
+
+            if (
+                x >=
+                    exit.x -
+                    margin &&
+
+                x <=
+                    exit.x +
+                    exit.w +
+                    margin &&
+
+                y >=
+                    exit.y -
+                    margin &&
+
+                y <=
+                    exit.y +
+                    exit.h +
+                    margin
+            ) {
+                return false;
+            }
+
+        }
 
                /*
             PROTEÇÃO VISUAL DA ESTRADA.
@@ -51762,23 +51987,22 @@ if (
         ========================================================
     */
 
-       theronIdle:
-        Object.freeze({
+      theronIdle:
+    Object.freeze({
 
-            file:
-                "combat.png",
+        file:
+            "slash.png",
 
-            frames:
-                8,
+        frames:
+            6,
 
-            fps:
-                1.8,
+        fps:
+            1.35,
 
-            rows:
-                4
+        rows:
+            4
 
-        }),
-
+    }),
 
     theronWalk:
         Object.freeze({
@@ -51875,22 +52099,22 @@ if (
         ========================================================
     */
 
-    liraelIdle:
-        Object.freeze({
+  liraelIdle:
+    Object.freeze({
 
-            file:
-                "idle.png",
+        file:
+            "spellcast.png",
 
-            frames:
-                2,
+        frames:
+            7,
 
-            fps:
-                2.2,
+        fps:
+            1.45,
 
-            rows:
-                4
+        rows:
+            4
 
-        }),
+    }),
 
 
     liraelWalk:

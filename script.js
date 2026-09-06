@@ -51628,6 +51628,100 @@ if (
 
     }),
 
+         /*
+        ========================================================
+        THERON
+        ========================================================
+    */
+
+    theronIdle:
+        Object.freeze({
+
+            file:
+                "idle.png",
+
+            frames:
+                2,
+
+            fps:
+                2.4,
+
+            rows:
+                4
+
+        }),
+
+
+    theronWalk:
+        Object.freeze({
+
+            file:
+                "walk.png",
+
+            frames:
+                9,
+
+            fps:
+                9,
+
+            rows:
+                4
+
+        }),
+
+
+    theronRun:
+        Object.freeze({
+
+            file:
+                "run.png",
+
+            frames:
+                8,
+
+            fps:
+                12,
+
+            rows:
+                4
+
+        }),
+
+
+    theronSlash:
+        Object.freeze({
+
+            file:
+                "slash.png",
+
+            frames:
+                6,
+
+            fps:
+                22,
+
+            rows:
+                4
+
+        }),
+
+
+    theronHurt:
+        Object.freeze({
+
+            file:
+                "hurt.png",
+
+            frames:
+                6,
+
+            fps:
+                18,
+
+            rows:
+                1
+
+        }),
 
     /*
         ========================================================
@@ -52431,7 +52525,7 @@ if (
        THERON
        ============================================================ */
 
-    function drawTheron(
+      function drawTheronLegacy(
         ctx,
         player,
         profile,
@@ -52599,6 +52693,315 @@ if (
         ctx.fill();
 
         ctx.restore();
+    }
+
+       function getTheronSpritePose(
+        player
+    ) {
+
+        /*
+            MORTE.
+        */
+        if (
+            player.deathAnimation
+        ) {
+
+            const progress =
+                clamp(
+                    player.deathAnimation
+                        .timer /
+                    player.deathAnimation
+                        .duration,
+                    0,
+                    1
+                );
+
+
+            return {
+
+                animation:
+                    "theronHurt",
+
+                frame:
+                    getOneShotSpriteFrame(
+                        progress,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .theronHurt
+                            .frames
+                    )
+
+            };
+
+        }
+
+
+        /*
+            TOMANDO DANO.
+
+            Cai e depois retorna para
+            a posição normal.
+        */
+        if (
+            finiteNumber(
+                player.hurtAnim,
+                0
+            ) >
+            0
+        ) {
+
+            const hurtDuration =
+                0.56;
+
+
+            const elapsed =
+                hurtDuration -
+                clamp(
+                    player.hurtAnim,
+                    0,
+                    hurtDuration
+                );
+
+
+            const normalized =
+                clamp(
+                    elapsed /
+                        hurtDuration,
+                    0,
+                    1
+                );
+
+
+            const fallAndRise =
+                normalized <=
+                0.5
+                    ? normalized * 2
+                    : (1 - normalized) * 2;
+
+
+            return {
+
+                animation:
+                    "theronHurt",
+
+                frame:
+                    getOneShotSpriteFrame(
+                        fallAndRise,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .theronHurt
+                            .frames
+                    )
+
+            };
+
+        }
+
+
+        /*
+            ATAQUE.
+
+            Dano e efeitos continuam
+            no sistema existente.
+
+            Aqui alteramos somente
+            a animação do corpo.
+        */
+        if (
+            finiteNumber(
+                player.visual
+                    ?.attackTime,
+                0
+            ) >
+            0
+        ) {
+
+            return {
+
+                animation:
+                    "theronSlash",
+
+                frame:
+                    getOneShotSpriteFrame(
+                        1 -
+                            clamp(
+                                player.visual
+                                    .attackTime /
+                                0.28,
+                                0,
+                                1
+                            ),
+                        PLAYER_SPRITE_ANIMATIONS
+                            .theronSlash
+                            .frames
+                    )
+
+            };
+
+        }
+
+
+        /*
+            DASH.
+        */
+        if (
+            player.dashRuntime
+                ?.active
+        ) {
+
+            return {
+
+                animation:
+                    "theronRun",
+
+                frame:
+                    getLoopingSpriteFrame(
+                        renderRuntime
+                            .ambientTime,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .theronRun
+                            .frames,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .theronRun
+                            .fps
+                    )
+
+            };
+
+        }
+
+
+        /*
+            MOVIMENTO NORMAL.
+        */
+        const moving =
+            finiteNumber(
+                player.visual
+                    ?.walkTime,
+                0
+            ) >
+                0 &&
+
+            finiteNumber(
+                player.visual
+                    ?.idleTime,
+                0
+            ) <=
+                0.0001;
+
+
+        if (
+            moving
+        ) {
+
+            return {
+
+                animation:
+                    "theronWalk",
+
+                frame:
+                    getLoopingSpriteFrame(
+                        player.visual
+                            .walkTime,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .theronWalk
+                            .frames,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .theronWalk
+                            .fps
+                    )
+
+            };
+
+        }
+
+
+        /*
+            PARADO.
+        */
+        return {
+
+            animation:
+                "theronIdle",
+
+            frame:
+                getLoopingSpriteFrame(
+                    player.visual
+                        ?.idleTime,
+                    PLAYER_SPRITE_ANIMATIONS
+                        .theronIdle
+                        .frames,
+                    PLAYER_SPRITE_ANIMATIONS
+                        .theronIdle
+                        .fps
+                )
+
+        };
+
+    }
+
+
+    function drawTheron(
+        ctx,
+        player,
+        profile,
+        walk
+    ) {
+
+        const pose =
+            getTheronSpritePose(
+                player
+            );
+
+
+        const drawn =
+            drawPlayerSpriteFrame(
+                ctx,
+                "theron",
+                pose.animation,
+                player.facing,
+                pose.frame,
+                1.55
+            );
+
+
+        /*
+            Se a animação específica
+            ainda não carregou, tenta
+            manter o sprite novo parado.
+        */
+        if (
+            !drawn
+        ) {
+
+            const idleFallback =
+                drawPlayerSpriteFrame(
+                    ctx,
+                    "theron",
+                    "theronIdle",
+                    player.facing,
+                    0,
+                    1.55
+                );
+
+
+            /*
+                Último fallback:
+                desenho antigo.
+            */
+            if (
+                !idleFallback
+            ) {
+
+                drawTheronLegacy(
+                    ctx,
+                    player,
+                    profile,
+                    walk
+                );
+
+            }
+
+        }
+
     }
 
 

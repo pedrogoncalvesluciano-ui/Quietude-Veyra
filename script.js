@@ -45655,7 +45655,7 @@ const height =
         }
 
              const tileSize =
-           320;
+           50;
 
         const view =
             renderRuntime

@@ -50102,13 +50102,218 @@ if (
     const PLAYER_SPRITE_FRAME_SIZE = 64;
     const PLAYER_SPRITE_BASE_PATH = "./assets/sprites/players";
 
-    const PLAYER_SPRITE_ANIMATIONS = Object.freeze({
+  const PLAYER_SPRITE_ANIMATIONS = Object.freeze({
+
+    /*
+        KAELION / PADRÃO ATUAL.
+
+        Não mexemos no funcionamento
+        já aprovado dele.
+    */
     idle: Object.freeze({
-    file: "walk.png",
-    frames: 1,
-    fps: 1,
-    rows: 4
-}),
+
+        file:
+            "walk.png",
+
+        frames:
+            1,
+
+        fps:
+            1,
+
+        rows:
+            4
+
+    }),
+
+
+    walk: Object.freeze({
+
+        file:
+            "walk.png",
+
+        frames:
+            9,
+
+        fps:
+            10,
+
+        rows:
+            4
+
+    }),
+
+
+    run: Object.freeze({
+
+        file:
+            "run.png",
+
+        frames:
+            8,
+
+        fps:
+            13,
+
+        rows:
+            4
+
+    }),
+
+
+    spellcast: Object.freeze({
+
+        file:
+            "spellcast.png",
+
+        frames:
+            7,
+
+        fps:
+            25,
+
+        rows:
+            4
+
+    }),
+
+
+    shoot: Object.freeze({
+
+        file:
+            "shoot.png",
+
+        frames:
+            13,
+
+        fps:
+            30,
+
+        rows:
+            4
+
+    }),
+
+
+    hurt: Object.freeze({
+
+        file:
+            "hurt.png",
+
+        frames:
+            6,
+
+        fps:
+            25,
+
+        rows:
+            1
+
+    }),
+
+
+    /*
+        ========================================================
+        GRUMGAR
+        ========================================================
+    */
+
+    grumgarIdle:
+        Object.freeze({
+
+            file:
+                "idle.png",
+
+            frames:
+                2,
+
+            fps:
+                2.4,
+
+            rows:
+                4
+
+        }),
+
+
+    grumgarWalk:
+        Object.freeze({
+
+            file:
+                "walk.png",
+
+            frames:
+                9,
+
+            fps:
+                8.5,
+
+            rows:
+                4
+
+        }),
+
+
+    grumgarRun:
+        Object.freeze({
+
+            file:
+                "run.png",
+
+            frames:
+                8,
+
+            fps:
+                11,
+
+            rows:
+                4
+
+        }),
+
+
+    /*
+        Movimento curto de braço.
+
+        Vamos usar como o soco
+        do ataque básico.
+    */
+    grumgarPunch:
+        Object.freeze({
+
+            file:
+                "1h_halfslash.png",
+
+            frames:
+                6,
+
+            fps:
+                22,
+
+            rows:
+                4
+
+        }),
+
+
+    grumgarHurt:
+        Object.freeze({
+
+            file:
+                "hurt.png",
+
+            frames:
+                6,
+
+            fps:
+                18,
+
+            rows:
+                1
+
+        })
+
+});
 
         walk: Object.freeze({
             file: "walk.png",
@@ -51017,132 +51222,449 @@ if (
     }
 
 
-    /* ============================================================
-       GRUMGAR
-       ============================================================ */
+  /* ============================================================
+   GRUMGAR — SPRITE LPC
+   ============================================================ */
 
-    function drawGrumgar(
-        ctx,
-        player,
-        profile,
-        walk
+function getGrumgarSpritePose(
+    player
+) {
+
+    /*
+        MORTE.
+    */
+    if (
+        player.deathAnimation
     ) {
-        ctx.save();
 
-        ctx.scale(
-            1.15,
-            1.15
-        );
+        const progress =
+            clamp(
+                player.deathAnimation
+                    .timer /
+                player.deathAnimation
+                    .duration,
+                0,
+                1
+            );
 
-        /*
-            Corpo grande.
-        */
-        ctx.fillStyle =
-            profile.skinColor ||
-            "#6b7d4a";
+        return {
 
-        roundRectPath(
-            ctx,
-            -17,
-            -12,
-            34,
-            34,
-            11
-        );
+            animation:
+                "grumgarHurt",
 
-        ctx.fill();
+            frame:
+                getOneShotSpriteFrame(
+                    progress,
+                    PLAYER_SPRITE_ANIMATIONS
+                        .grumgarHurt
+                        .frames
+                )
 
-        /*
-            Cabeça.
-        */
-        ctx.beginPath();
-
-        ctx.arc(
-            0,
-            -22,
-            14,
-            0,
-            Math.PI *
-                2
-        );
-
-        ctx.fill();
-
-        /*
-            Ombros.
-        */
-        ctx.fillStyle =
-            "#463e30";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            -17,
-            -5,
-            9,
-            0,
-            Math.PI *
-                2
-        );
-
-        ctx.arc(
-            17,
-            -5,
-            9,
-            0,
-            Math.PI *
-                2
-        );
-
-        ctx.fill();
-
-        /*
-            Presas.
-        */
-        ctx.fillStyle =
-            "#e0d4b4";
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            -7,
-            -16
-        );
-
-        ctx.lineTo(
-            -3,
-            -8
-        );
-
-        ctx.lineTo(
-            -1,
-            -17
-        );
-
-        ctx.closePath();
-
-        ctx.moveTo(
-            7,
-            -16
-        );
-
-        ctx.lineTo(
-            3,
-            -8
-        );
-
-        ctx.lineTo(
-            1,
-            -17
-        );
-
-        ctx.closePath();
-
-        ctx.fill();
-
-        ctx.restore();
+        };
     }
 
+
+    /*
+        TOMANDO DANO.
+
+        Cai e depois retorna
+        para a posição em pé.
+    */
+    if (
+        finiteNumber(
+            player.hurtAnim,
+            0
+        ) >
+        0
+    ) {
+
+        const hurtDuration =
+            0.56;
+
+        const elapsed =
+            hurtDuration -
+            clamp(
+                player.hurtAnim,
+                0,
+                hurtDuration
+            );
+
+        const normalized =
+            clamp(
+                elapsed /
+                    hurtDuration,
+                0,
+                1
+            );
+
+        const fallAndRise =
+            normalized <=
+            0.5
+                ? normalized * 2
+                : (1 - normalized) * 2;
+
+        return {
+
+            animation:
+                "grumgarHurt",
+
+            frame:
+                getOneShotSpriteFrame(
+                    fallAndRise,
+                    PLAYER_SPRITE_ANIMATIONS
+                        .grumgarHurt
+                        .frames
+                )
+
+        };
+    }
+
+
+    /*
+        ATAQUE BÁSICO.
+
+        Usa o movimento curto
+        de braço como soco.
+    */
+    if (
+        finiteNumber(
+            player.visual
+                ?.attackTime,
+            0
+        ) >
+        0
+    ) {
+
+        return {
+
+            animation:
+                "grumgarPunch",
+
+            frame:
+                getOneShotSpriteFrame(
+                    1 -
+                        clamp(
+                            player.visual
+                                .attackTime /
+                            0.28,
+                            0,
+                            1
+                        ),
+                    PLAYER_SPRITE_ANIMATIONS
+                        .grumgarPunch
+                        .frames
+                )
+
+        };
+    }
+
+
+    /*
+        DASH.
+    */
+    if (
+        player.dashRuntime
+            ?.active
+    ) {
+
+        return {
+
+            animation:
+                "grumgarRun",
+
+            frame:
+                getLoopingSpriteFrame(
+                    renderRuntime
+                        .ambientTime,
+
+                    PLAYER_SPRITE_ANIMATIONS
+                        .grumgarRun
+                        .frames,
+
+                    PLAYER_SPRITE_ANIMATIONS
+                        .grumgarRun
+                        .fps
+                )
+
+        };
+    }
+
+
+    /*
+        MOVIMENTO NORMAL.
+    */
+    const moving =
+        finiteNumber(
+            player.visual
+                ?.walkTime,
+            0
+        ) >
+            0 &&
+
+        finiteNumber(
+            player.visual
+                ?.idleTime,
+            0
+        ) <=
+            0.0001;
+
+
+    if (
+        moving
+    ) {
+
+        return {
+
+            animation:
+                "grumgarWalk",
+
+            frame:
+                getLoopingSpriteFrame(
+                    player.visual
+                        .walkTime,
+
+                    PLAYER_SPRITE_ANIMATIONS
+                        .grumgarWalk
+                        .frames,
+
+                    PLAYER_SPRITE_ANIMATIONS
+                        .grumgarWalk
+                        .fps
+                )
+
+        };
+    }
+
+
+    /*
+        PARADO.
+    */
+    return {
+
+        animation:
+            "grumgarIdle",
+
+        frame:
+            getLoopingSpriteFrame(
+                player.visual
+                    ?.idleTime,
+
+                PLAYER_SPRITE_ANIMATIONS
+                    .grumgarIdle
+                    .frames,
+
+                PLAYER_SPRITE_ANIMATIONS
+                    .grumgarIdle
+                    .fps
+            )
+
+    };
+}
+
+
+function drawGrumgar(
+    ctx,
+    player,
+    profile,
+    walk
+) {
+
+    const pose =
+        getGrumgarSpritePose(
+            player
+        );
+
+
+    const drawn =
+        drawPlayerSpriteFrame(
+            ctx,
+            "grumgar",
+            pose.animation,
+            player.facing,
+            pose.frame,
+
+            /*
+                Grumgar é propositalmente
+                maior que os outros.
+            */
+            1.72
+        );
+
+
+    /*
+        Se a animação atual
+        ainda não carregou,
+        tenta usar o idle.
+    */
+    if (
+        !drawn
+    ) {
+
+        const idleFallback =
+            drawPlayerSpriteFrame(
+                ctx,
+                "grumgar",
+                "grumgarIdle",
+                player.facing,
+                0,
+                1.72
+            );
+
+
+        /*
+            Se nenhum PNG estiver
+            disponível, preserva
+            o troll antigo.
+        */
+        if (
+            !idleFallback
+        ) {
+
+            drawGrumgarLegacy(
+                ctx,
+                player,
+                profile,
+                walk
+            );
+
+        }
+    }
+}
+
+
+/*
+    DESENHO ANTIGO.
+
+    Mantido apenas como fallback
+    caso algum PNG não carregue.
+*/
+function drawGrumgarLegacy(
+    ctx,
+    player,
+    profile,
+    walk
+) {
+
+    ctx.save();
+
+    ctx.scale(
+        1.15,
+        1.15
+    );
+
+
+    /*
+        Corpo grande.
+    */
+    ctx.fillStyle =
+        profile.skinColor ||
+        "#6b7d4a";
+
+    roundRectPath(
+        ctx,
+        -17,
+        -12,
+        34,
+        34,
+        11
+    );
+
+    ctx.fill();
+
+
+    /*
+        Cabeça.
+    */
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        -22,
+        14,
+        0,
+        Math.PI *
+            2
+    );
+
+    ctx.fill();
+
+
+    /*
+        Ombros.
+    */
+    ctx.fillStyle =
+        "#463e30";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        -17,
+        -5,
+        9,
+        0,
+        Math.PI *
+            2
+    );
+
+    ctx.arc(
+        17,
+        -5,
+        9,
+        0,
+        Math.PI *
+            2
+    );
+
+    ctx.fill();
+
+
+    /*
+        Presas.
+    */
+    ctx.fillStyle =
+        "#e0d4b4";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        -7,
+        -16
+    );
+
+    ctx.lineTo(
+        -3,
+        -8
+    );
+
+    ctx.lineTo(
+        -1,
+        -17
+    );
+
+    ctx.closePath();
+
+
+    ctx.moveTo(
+        7,
+        -16
+    );
+
+    ctx.lineTo(
+        3,
+        -8
+    );
+
+    ctx.lineTo(
+        1,
+        -17
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    ctx.restore();
+}
 
     /* ============================================================
        LIRAEL

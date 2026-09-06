@@ -46381,6 +46381,8 @@ function drawWorldBackground(
         );
     }
 
+}
+
 
     function drawGroundTexture(
         ctx,

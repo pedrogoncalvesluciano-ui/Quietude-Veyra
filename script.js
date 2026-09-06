@@ -14834,6 +14834,60 @@ const depth =
             }
         }
 
+               /*
+            BARREIRAS DE BOSS.
+
+            Nenhuma árvore/recurso natural
+            pode nascer dentro ou grudado
+            no campo mágico.
+        */
+        for (
+            const barrier of
+            safeArray(
+                world.bossBarriers
+            )
+        ) {
+
+            if (
+                !barrier ||
+                barrier.solid === false ||
+                isBossDefeated(
+                    barrier.bossId
+                )
+            ) {
+                continue;
+            }
+
+
+            const barrierMargin =
+                135;
+
+
+            if (
+                x >=
+                    barrier.x -
+                        barrierMargin &&
+
+                x <=
+                    barrier.x +
+                        barrier.w +
+                        barrierMargin &&
+
+                y >=
+                    barrier.y -
+                        barrierMargin &&
+
+                y <=
+                    barrier.y +
+                        barrier.h +
+                        barrierMargin
+            ) {
+
+                return true;
+
+            }
+
+        }
 
    for (
     const building of
@@ -15933,6 +15987,73 @@ const depth =
                         )
                     )
                 ];
+    function spawnEnemiesNearRoute(
+        world,
+        options = {}
+    ) {
+
+        const speciesList =
+            options.species ||
+            [
+                "wolf"
+            ];
+
+
+        const count =
+            Math.max(
+                0,
+                integer(
+                    options.count,
+                    12
+                )
+            );
+
+
+        const rng =
+            getAreaRandom(
+                world.id,
+                options.salt ||
+                "enemies"
+            );
+
+
+        const nodes =
+            world.pathNodes;
+
+
+        if (
+            !nodes.length
+        ) {
+            return;
+        }
+
+
+        let created =
+            0;
+
+        let attempts =
+            0;
+
+
+        while (
+            created < count &&
+            attempts < count * 30
+        ) {
+
+            attempts += 1;
+
+
+            const node =
+                nodes[
+                    seededInt(
+                        rng,
+                        1,
+                        Math.max(
+                            1,
+                            nodes.length - 2
+                        )
+                    )
+                ];
 
 
             const x =
@@ -15944,8 +16065,7 @@ const depth =
                         300
                     ),
                     100,
-                    world.width -
-                        100
+                    world.width - 100
                 );
 
 
@@ -15958,9 +16078,33 @@ const depth =
                         280
                     ),
                     100,
-                    world.height -
-                        100
+                    world.height - 100
                 );
+
+
+            /*
+                Não nasce em barreira,
+                casa, portão, boss ou
+                outro obstáculo.
+            */
+            if (
+                isPointInsideProtectedZone(
+                    x,
+                    y,
+                    world
+                ) ||
+
+                isPositionBlocked(
+                    x,
+                    y,
+                    34,
+                    world
+                )
+            ) {
+
+                continue;
+
+            }
 
 
             const species =
@@ -15968,8 +16112,7 @@ const depth =
                     seededInt(
                         rng,
                         0,
-                        speciesList.length -
-                            1
+                        speciesList.length - 1
                     )
                 ];
 
@@ -15980,7 +16123,7 @@ const depth =
                     {
 
                         entityId:
-                            `${world.id}_enemy_${index}`,
+                            `${world.id}_enemy_${created}`,
 
                         x,
 
@@ -15991,20 +16134,22 @@ const depth =
 
 
             if (
-                enemy
+                !enemy
             ) {
-
-                world.enemies.push(
-                    enemy
-                );
-
+                continue;
             }
+
+
+            world.enemies.push(
+                enemy
+            );
+
+
+            created += 1;
 
         }
 
     }
-
-
     /* ============================================================
        RECURSOS PROCEDURAIS
        ============================================================ */
@@ -38314,72 +38459,20 @@ for (
        BOSS DEATH
        ============================================================ */
 
-    function createUnlockedPathRune(
+      function createUnlockedPathRune(
         boss
     ) {
-        if (
-            !boss ||
-            boss.id ===
-                "monarch" ||
-            boss.id ===
-                "vaelkor"
-        ) {
-            return null;
-        }
 
-        const rune = {
-            id:
-                `rune_${boss.id}`,
+        /*
+            Removida a runa azul
+            de boss derrotado.
 
-            type:
-                "pathUnlockedRune",
+            A passagem continua
+            sendo liberada normalmente.
+        */
+        return null;
 
-            x:
-                boss.spawnX,
-
-            y:
-                boss.spawnY,
-
-            bossId:
-                boss.id,
-
-            timer:
-                Infinity,
-
-            pulse:
-                Math.random() *
-                Math.PI *
-                2,
-
-            color:
-                "#77a7c7"
-        };
-
-        gameplayRuntime
-            .bossRunes =
-            gameplayRuntime
-                .bossRunes
-                .filter(
-                    item =>
-                        item.bossId !==
-                        boss.id
-                );
-
-        gameplayRuntime
-            .bossRunes
-            .push(
-                rune
-            );
-
-        state.world
-            ?.decorations
-            ?.push(
-                rune
-            );
-
-        return rune;
     }
-
 
     function repairWorldBossBarriers(
         world =
@@ -43840,105 +43933,45 @@ player.deathAnimation =
         });
 
 
-    function ensureDefeatedBossRune(
+      function ensureDefeatedBossRune(
         world =
             state.world
     ) {
+
         if (
             !world
         ) {
             return null;
         }
 
-        const bossId =
-            AREA_PATH_BOSS[
-                world.id
-            ];
 
-        if (
-            !bossId ||
-            !isBossDefeated(
-                bossId
-            )
-        ) {
-            return null;
-        }
-
-        const existing =
+        /*
+            Remove a antiga runa azul
+            inclusive de saves que já
+            possuíam uma.
+        */
+        world.decorations =
             safeArray(
                 world.decorations
-            )
-                .find(
-                    item =>
-                        item.type ===
-                            "pathUnlockedRune" &&
-                        item.bossId ===
-                            bossId
-                );
+            ).filter(
+                item =>
+                    item.type !==
+                        "pathUnlockedRune"
+            );
 
-        if (
-            existing
-        ) {
-            return existing;
-        }
 
-        let x =
-            world.width /
-            2;
-
-        let y =
-            world.height /
-            2;
-
-        if (
+        gameplayRuntime.bossRunes =
             safeArray(
-                world.pathNodes
-            ).length >=
-            2
-        ) {
-            const node =
-                world.pathNodes[
-                    world
-                        .pathNodes
-                        .length -
-                        2
-                ];
+                gameplayRuntime.bossRunes
+            ).filter(
+                item =>
+                    item.type !==
+                        "pathUnlockedRune"
+            );
 
-            x =
-                node.x;
 
-            y =
-                node.y;
-        }
+        return null;
 
-        const rune = {
-            id:
-                `rune_${bossId}`,
-
-            type:
-                "pathUnlockedRune",
-
-            x,
-
-            y,
-
-            bossId,
-
-            timer:
-                Infinity,
-
-            pulse:
-                0,
-
-            color:
-                "#77a7c7"
-        };
-
-        world.decorations.push(
-            rune
-        );
-
-        return rune;
     }
 
 
@@ -49022,8 +49055,7 @@ ctx.shadowOffsetY =
             CAMPO ROXO.
         */
         ctx.fillStyle =
-            "rgba(77,45,94,0.25)";
-
+         "rgba(112,24,30,0.28)";
 
         ctx.fillRect(
             screen.x,
@@ -49037,7 +49069,7 @@ ctx.shadowOffsetY =
             BORDA MÁGICA.
         */
         ctx.strokeStyle =
-            "rgba(178,115,207,0.88)";
+        "rgba(222,72,78,0.92)";
 
         ctx.lineWidth =
             3;
@@ -49068,7 +49100,7 @@ ctx.shadowOffsetY =
             Linhas da energia.
         */
         ctx.strokeStyle =
-            "rgba(181,133,204,0.35)";
+          "rgba(209,67,74,0.42)";
 
         ctx.lineWidth =
             2;
@@ -51743,6 +51775,101 @@ if (
 
         }),
 
+         /*
+        ========================================================
+        LIRAEL
+        ========================================================
+    */
+
+    liraelIdle:
+        Object.freeze({
+
+            file:
+                "idle.png",
+
+            frames:
+                2,
+
+            fps:
+                2.2,
+
+            rows:
+                4
+
+        }),
+
+
+    liraelWalk:
+        Object.freeze({
+
+            file:
+                "walk.png",
+
+            frames:
+                9,
+
+            fps:
+                9,
+
+            rows:
+                4
+
+        }),
+
+
+    liraelRun:
+        Object.freeze({
+
+            file:
+                "run.png",
+
+            frames:
+                8,
+
+            fps:
+                12,
+
+            rows:
+                4
+
+        }),
+
+
+    liraelCast:
+        Object.freeze({
+
+            file:
+                "spellcast.png",
+
+            frames:
+                7,
+
+            fps:
+                25,
+
+            rows:
+                4
+
+        }),
+
+
+    liraelHurt:
+        Object.freeze({
+
+            file:
+                "hurt.png",
+
+            frames:
+                6,
+
+            fps:
+                18,
+
+            rows:
+                1
+
+        }),
+
     /*
         ========================================================
         GRUMGAR
@@ -53476,11 +53603,249 @@ function drawGrumgarLegacy(
     ctx.restore();
 }
 
+       /* ============================================================
+       LIRAEL — SPRITE LPC
+       ============================================================ */
+
+    function getLiraelSpritePose(
+        player
+    ) {
+
+        if (
+            player.deathAnimation
+        ) {
+            const progress =
+                clamp(
+                    player.deathAnimation.timer /
+                        player.deathAnimation.duration,
+                    0,
+                    1
+                );
+
+            return {
+                animation:
+                    "liraelHurt",
+
+                frame:
+                    getOneShotSpriteFrame(
+                        progress,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .liraelHurt
+                            .frames
+                    )
+            };
+        }
+
+
+        if (
+            finiteNumber(
+                player.hurtAnim,
+                0
+            ) > 0
+        ) {
+            const hurtDuration =
+                0.56;
+
+            const elapsed =
+                hurtDuration -
+                clamp(
+                    player.hurtAnim,
+                    0,
+                    hurtDuration
+                );
+
+            const normalized =
+                clamp(
+                    elapsed /
+                        hurtDuration,
+                    0,
+                    1
+                );
+
+            const fallAndRise =
+                normalized <= 0.5
+                    ? normalized * 2
+                    : (1 - normalized) * 2;
+
+            return {
+                animation:
+                    "liraelHurt",
+
+                frame:
+                    getOneShotSpriteFrame(
+                        fallAndRise,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .liraelHurt
+                            .frames
+                    )
+            };
+        }
+
+
+        if (
+            finiteNumber(
+                player.visual
+                    ?.attackTime,
+                0
+            ) > 0
+        ) {
+            return {
+                animation:
+                    "liraelCast",
+
+                frame:
+                    getOneShotSpriteFrame(
+                        1 -
+                            clamp(
+                                player.visual.attackTime /
+                                    0.28,
+                                0,
+                                1
+                            ),
+                        PLAYER_SPRITE_ANIMATIONS
+                            .liraelCast
+                            .frames
+                    )
+            };
+        }
+
+
+        if (
+            player.dashRuntime
+                ?.active
+        ) {
+            return {
+                animation:
+                    "liraelRun",
+
+                frame:
+                    getLoopingSpriteFrame(
+                        renderRuntime.ambientTime,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .liraelRun
+                            .frames,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .liraelRun
+                            .fps
+                    )
+            };
+        }
+
+
+        const moving =
+            finiteNumber(
+                player.visual
+                    ?.walkTime,
+                0
+            ) > 0 &&
+
+            finiteNumber(
+                player.visual
+                    ?.idleTime,
+                0
+            ) <= 0.0001;
+
+
+        if (
+            moving
+        ) {
+            return {
+                animation:
+                    "liraelWalk",
+
+                frame:
+                    getLoopingSpriteFrame(
+                        player.visual.walkTime,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .liraelWalk
+                            .frames,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .liraelWalk
+                            .fps
+                    )
+            };
+        }
+
+
+        return {
+            animation:
+                "liraelIdle",
+
+            frame:
+                getLoopingSpriteFrame(
+                    player.visual
+                        ?.idleTime,
+                    PLAYER_SPRITE_ANIMATIONS
+                        .liraelIdle
+                        .frames,
+                    PLAYER_SPRITE_ANIMATIONS
+                        .liraelIdle
+                        .fps
+                )
+        };
+
+    }
+
+
+    function drawLirael(
+        ctx,
+        player,
+        profile,
+        walk
+    ) {
+
+        const pose =
+            getLiraelSpritePose(
+                player
+            );
+
+
+        const drawn =
+            drawPlayerSpriteFrame(
+                ctx,
+                "lirael",
+                pose.animation,
+                player.facing,
+                pose.frame,
+                1.55
+            );
+
+
+        if (
+            !drawn
+        ) {
+
+            const idleFallback =
+                drawPlayerSpriteFrame(
+                    ctx,
+                    "lirael",
+                    "liraelIdle",
+                    player.facing,
+                    0,
+                    1.55
+                );
+
+
+            if (
+                !idleFallback
+            ) {
+                drawLiraelLegacy(
+                    ctx,
+                    player,
+                    profile,
+                    walk
+                );
+            }
+
+        }
+
+    }
+
     /* ============================================================
        LIRAEL
        ============================================================ */
 
-    function drawLirael(
+   function drawLiraelLegacy(
         ctx,
         player,
         profile,

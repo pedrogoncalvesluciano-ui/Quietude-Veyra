@@ -73255,14 +73255,14 @@ if (
     na tela mesmo se a câmera andar.
 */
 state.pointer.cameraX =
-    finiteNumber(
+    finite(
         state.camera
             ?.x,
         0
     );
 
 state.pointer.cameraY =
-    finiteNumber(
+    finite(
         state.camera
             ?.y,
         0

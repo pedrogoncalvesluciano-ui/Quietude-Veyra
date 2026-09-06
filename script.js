@@ -51470,7 +51470,7 @@ function drawGrumgar(
                 "grumgarIdle",
                 player.facing,
                 0,
-                1.72
+              2.05
             );
 
 

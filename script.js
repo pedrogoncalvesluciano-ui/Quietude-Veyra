@@ -28085,42 +28085,27 @@ if (
         const vector =
             getMovementInputVector();
 
-                   const pointerReady =
-            finiteNumber(
-                state.pointer
-                    ?.screenX,
-                0
-            ) !==
-                0 ||
-            finiteNumber(
-                state.pointer
-                    ?.screenY,
-                0
-            ) !==
-                0;
+       /*
+    O MOVIMENTO não altera mais
+    a direção visual depois que
+    o mouse já foi usado.
 
-
-        /*
-            O movimento continua sendo WASD,
-            mas o PERSONAGEM olha para o mouse.
-        */
-        if (
-            pointerReady
-        ) {
-            updatePlayerFacingFromVector(
-                getPlayerAimVector()
-            );
-
-        } else if (
-            vector.x !==
-                0 ||
-            vector.y !==
-                0
-        ) {
-            updatePlayerFacingFromVector(
-                vector
-            );
-        }
+    Isso impede o personagem de
+    ficar virando sozinho enquanto
+    você anda com o mouse parado.
+*/
+if (
+    !state.pointer
+        ?.hasMoved &&
+    (
+        vector.x !== 0 ||
+        vector.y !== 0
+    )
+) {
+    updatePlayerFacingFromVector(
+        vector
+    );
+}
 
 
         if (
@@ -47135,41 +47120,6 @@ function drawGate(
 
         const postW =
             gate.w + 52;
-
-
-       /*
-    Sombra discreta presa à base
-    do portão.
-
-    Não fica mais aquele oval
-    flutuando longe da estrutura.
-*/
-ctx.save();
-
-ctx.fillStyle =
-    "rgba(0,0,0,0.16)";
-
-ctx.beginPath();
-
-ctx.ellipse(
-    screen.x +
-        gate.w * 0.5,
-
-    screen.y +
-        gate.h -
-        4,
-
-    gate.w * 0.46,
-    7,
-
-    0,
-    0,
-    Math.PI * 2
-);
-
-ctx.fill();
-
-ctx.restore();
 
         drawStoneBlock(
             postX,
@@ -71643,17 +71593,44 @@ state.pointer.cameraY =
     }
 
 
-    function handlePointerMove(
+   function handlePointerMove(
+    event
+) {
+    UI_RUNTIME.pointerInsideCanvas =
+        true;
+
+    updatePointerFromEvent(
         event
+    );
+
+    state.pointer.hasMoved =
+        true;
+
+    /*
+        O personagem muda de direção
+        SOMENTE quando o mouse realmente
+        se movimenta.
+    */
+    if (
+        state.running &&
+        state.player &&
+        !state.player.dead
     ) {
-        UI_RUNTIME.pointerInsideCanvas =
-            true;
+        const aim =
+            safeCall(
+                "getPlayerAimVector"
+            );
 
-        updatePointerFromEvent(
-            event
-        );
+        if (
+            aim
+        ) {
+            safeCall(
+                "updatePlayerFacingFromVector",
+                aim
+            );
+        }
     }
-
+}
 
    function handlePointerDown(
     event
@@ -71699,7 +71676,104 @@ state.pointer.cameraY =
         "handleGameplayAttackInput"
     );
 }
-   
+
+   function handlePrimaryAttackEvent(
+    event
+) {
+    if (
+        !state.running
+    ) {
+        return;
+    }
+
+    /*
+        Só botão esquerdo.
+    */
+    if (
+        typeof event.button ===
+            "number" &&
+        event.button !==
+            0
+    ) {
+        return;
+    }
+
+    const target =
+        event.target;
+
+    /*
+        Não ataca quando o clique
+        realmente foi em uma interface.
+    */
+    if (
+        target instanceof
+            Element &&
+        target.closest(
+            "button, input, textarea, select, a, .minimap-shell, .player-hud, .combat-hints, .game-hotbar, .money-hud, .location-ribbon"
+        )
+    ) {
+        return;
+    }
+
+    /*
+        Mira exatamente onde clicou.
+    */
+    updatePointerFromEvent(
+        event
+    );
+
+    state.pointer.hasMoved =
+        true;
+
+    const now =
+        performance.now();
+
+    /*
+        pointerdown + click podem acontecer
+        no mesmo clique.
+
+        80ms impede ataque duplicado.
+    */
+    if (
+        now -
+            finiteNumber(
+                UI_RUNTIME
+                    .lastPrimaryPointerDownAt,
+                0
+            ) <
+        80
+    ) {
+        return;
+    }
+
+    UI_RUNTIME
+        .lastPrimaryPointerDownAt =
+        now;
+
+    /*
+        Chamamos o ataque diretamente,
+        sem depender do safeCall aqui.
+    */
+    const attackHandler =
+        V.handleGameplayAttackInput;
+
+    if (
+        typeof attackHandler ===
+        "function"
+    ) {
+        try {
+            attackHandler();
+
+        } catch (
+            error
+        ) {
+            console.error(
+                "VEYRA — erro no ataque básico:",
+                error
+            );
+        }
+    }
+}
 
     /* ============================================================
        EXPLORAÇÃO DO MAPA
@@ -73299,6 +73373,9 @@ updateTransition(
 if (
     DOM.screens.game
 ) {
+    /*
+        Movimento do mouse.
+    */
     DOM.screens.game
         .addEventListener(
             "pointermove",
@@ -73306,10 +73383,27 @@ if (
             true
         );
 
+    /*
+        Ataque principal.
+    */
     DOM.screens.game
         .addEventListener(
             "pointerdown",
-            handlePointerDown,
+            handlePrimaryAttackEvent,
+            true
+        );
+
+    /*
+        Fallback.
+
+        Se por algum motivo o navegador
+        não executar o pointerdown como
+        esperado, o click ainda ataca.
+    */
+    DOM.screens.game
+        .addEventListener(
+            "click",
+            handlePrimaryAttackEvent,
             true
         );
 }

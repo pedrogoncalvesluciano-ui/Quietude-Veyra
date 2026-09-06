@@ -15392,21 +15392,19 @@ const depth =
                 "pine"
             ];
 
-               /*
-            SPRITES DE ÁRVORE POR REGIÃO.
+                    /*
+            ÁRVORES POR REGIÃO
 
-            VILA / ESTRADA:
-            somente tree_01.
+            Vila/Estrada:
+            somente grandes.
 
-            FLORESTA:
-            tree_01 + tree_02.
+            Floresta:
+            grandes + médias.
 
-            BOSQUE:
-            tree_01 + tree_02 + tree_04.
+            Bosque:
+            grandes + médias + caídas + pequenas.
 
-            tree_03 fica desativada.
-
-            MONTANHAS EM DIANTE:
+            Montanhas em diante:
             nenhuma árvore.
         */
         const allowedTreeSheets =
@@ -15434,14 +15432,11 @@ const depth =
                         return [
                             1,
                             2,
+                            3,
                             4
                         ];
 
 
-                    /*
-                        Montanhas e qualquer região
-                        posterior não recebem árvore.
-                    */
                     case "mountains":
                     default:
                         return [];
@@ -45584,7 +45579,584 @@ const height =
         return color;
     }
 
+    /* ============================================================
+       PNGs DO AMBIENTE — CHÃO + ÁRVORES
+       ============================================================ */
 
+    const REGION_GROUND_TEXTURES = Object.freeze({
+        village: "./assets/sprites/textures/ground/vila_ground.png",
+        road: "./assets/sprites/textures/ground/estrada_ground.png",
+        forest: "./assets/sprites/textures/ground/floresta_ground.png",
+        grove: "./assets/sprites/textures/ground/bosque_ground.png",
+        mountains: "./assets/sprites/textures/ground/trilha_rochosa.png",
+        ironRegion: "./assets/sprites/textures/ground/ferro_ground.png"
+    });
+
+    const groundTextureCache = new Map();
+
+    function getGroundTexture(areaId) {
+        const src = REGION_GROUND_TEXTURES[areaId];
+
+        if (!src) {
+            return null;
+        }
+
+        if (groundTextureCache.has(src)) {
+            return groundTextureCache.get(src);
+        }
+
+        const image = new Image();
+
+        const entry = {
+            image,
+            loaded: false,
+            failed: false
+        };
+
+        image.onload = () => {
+            entry.loaded = true;
+            entry.failed = false;
+        };
+
+        image.onerror = () => {
+            entry.failed = true;
+
+            console.warn(
+                `VEYRA — chão não carregou: ${src}`
+            );
+        };
+
+        image.src = src;
+
+        groundTextureCache.set(
+            src,
+            entry
+        );
+
+        return entry;
+    }
+
+
+    function drawRegionGroundTexture(
+        ctx,
+        world
+    ) {
+        const entry =
+            getGroundTexture(
+                world?.id
+            );
+
+        if (
+            !entry ||
+            !entry.loaded ||
+            entry.failed
+        ) {
+            return false;
+        }
+
+        const tileSize =
+            640;
+
+        const view =
+            renderRuntime
+                .visibleWorldRect;
+
+        const startX =
+            Math.floor(
+                view.x /
+                tileSize
+            ) *
+            tileSize;
+
+        const startY =
+            Math.floor(
+                view.y /
+                tileSize
+            ) *
+            tileSize;
+
+        const endX =
+            view.x +
+            view.w +
+            tileSize;
+
+        const endY =
+            view.y +
+            view.h +
+            tileSize;
+
+        ctx.save();
+
+        ctx.imageSmoothingEnabled =
+            false;
+
+        for (
+            let x = startX;
+            x <= endX;
+            x += tileSize
+        ) {
+            for (
+                let y = startY;
+                y <= endY;
+                y += tileSize
+            ) {
+                const screen =
+                    worldToScreen(
+                        x,
+                        y
+                    );
+
+                ctx.drawImage(
+                    entry.image,
+                    screen.x,
+                    screen.y,
+                    tileSize,
+                    tileSize
+                );
+            }
+        }
+
+        ctx.restore();
+
+        return true;
+    }
+
+
+    /*
+        ÁRVORES NOVAS.
+
+        1 = grande
+        2 = média
+        3 = caída
+        4 = pequena
+
+        Não existe mais detector automático.
+        Cada árvore tem seu recorte fixo.
+    */
+    const TREE_SPRITE_DATA =
+        Object.freeze({
+
+            1: Object.freeze({
+                src:
+                    "./assets/sprites/environment/trees/large.png",
+
+                kind:
+                    "large",
+
+                regions: Object.freeze([
+                    [6, 231, 503, 674],
+                    [530, 233, 394, 668],
+                    [947, 231, 495, 671]
+                ])
+            }),
+
+
+            2: Object.freeze({
+
+                /*
+                    Seu arquivo no GitHub está
+                    exatamente com o nome "medium"
+                    sem .png.
+                */
+                src:
+                    "./assets/sprites/environment/trees/medium",
+
+                kind:
+                    "medium",
+
+                regions: Object.freeze([
+                    [28, 289, 463, 542],
+                    [516, 297, 422, 545],
+                    [973, 318, 457, 520]
+                ])
+            }),
+
+
+            3: Object.freeze({
+                src:
+                    "./assets/sprites/environment/trees/fallen.png",
+
+                kind:
+                    "fallen",
+
+                /*
+                    Somente árvores/troncos caídos.
+                    Os tocos de baixo não entram.
+                */
+                regions: Object.freeze([
+                    [40, 144, 463, 269],
+                    [519, 172, 456, 241],
+                    [1000, 194, 416, 222],
+                    [40, 456, 478, 277],
+                    [548, 482, 422, 250],
+                    [1000, 479, 421, 253]
+                ])
+            }),
+
+
+            4: Object.freeze({
+                src:
+                    "./assets/sprites/environment/trees/small.png",
+
+                kind:
+                    "small",
+
+                regions: Object.freeze([
+                    [185, 449, 223, 250],
+                    [629, 463, 205, 236],
+                    [1060, 464, 206, 229]
+                ])
+            })
+
+        });
+
+
+    const treeSpriteCache =
+        new Map();
+
+
+    function getTreeSpriteEntry(
+        spriteSheetId
+    ) {
+        const id =
+            clamp(
+                integer(
+                    spriteSheetId,
+                    1
+                ),
+                1,
+                4
+            );
+
+        if (
+            treeSpriteCache.has(
+                id
+            )
+        ) {
+            return treeSpriteCache.get(
+                id
+            );
+        }
+
+        const data =
+            TREE_SPRITE_DATA[
+                id
+            ];
+
+        const image =
+            new Image();
+
+        const entry = {
+            data,
+            image,
+            loaded: false,
+            failed: false
+        };
+
+        image.onload =
+            () => {
+                entry.loaded =
+                    true;
+
+                entry.failed =
+                    false;
+            };
+
+        image.onerror =
+            () => {
+                entry.failed =
+                    true;
+
+                console.warn(
+                    `VEYRA — árvore não carregou: ${data.src}`
+                );
+            };
+
+        image.src =
+            data.src;
+
+        treeSpriteCache.set(
+            id,
+            entry
+        );
+
+        return entry;
+    }
+
+
+    function getTreeRegion(
+        tree,
+        entry
+    ) {
+        const regions =
+            entry.data.regions;
+
+        const pick =
+            Math.abs(
+                finiteNumber(
+                    tree.spritePick,
+                    0
+                )
+            ) %
+            1;
+
+        const index =
+            Math.min(
+                regions.length - 1,
+                Math.floor(
+                    pick *
+                    regions.length
+                )
+            );
+
+        return regions[
+            index
+        ];
+    }
+
+
+    function updateTreePngCollision(
+        tree,
+        kind
+    ) {
+        const before =
+            `${tree.trunkWidth}|${tree.trunkHeight}|${tree.depthY}|${tree.spriteKind}`;
+
+        const scale =
+            Math.max(
+                0.65,
+                finiteNumber(
+                    tree.scale,
+                    1
+                )
+            );
+
+        tree.spriteKind =
+            kind;
+
+
+        if (
+            kind === "small"
+        ) {
+            tree.trunkWidth =
+                15 *
+                scale;
+
+            tree.trunkHeight =
+                14 *
+                scale;
+        }
+
+        else if (
+            kind === "medium"
+        ) {
+            tree.trunkWidth =
+                27 *
+                scale;
+
+            tree.trunkHeight =
+                22 *
+                scale;
+        }
+
+        else if (
+            kind === "fallen"
+        ) {
+            tree.trunkWidth =
+                120 *
+                scale;
+
+            tree.trunkHeight =
+                20 *
+                scale;
+        }
+
+        else {
+            tree.trunkWidth =
+                34 *
+                scale;
+
+            tree.trunkHeight =
+                26 *
+                scale;
+        }
+
+
+        tree.depthY =
+            tree.y +
+            tree.trunkHeight *
+            0.45;
+
+
+        const after =
+            `${tree.trunkWidth}|${tree.trunkHeight}|${tree.depthY}|${tree.spriteKind}`;
+
+
+        return before !== after;
+    }
+
+
+    function drawTreePng(
+        ctx,
+        tree
+    ) {
+        const entry =
+            getTreeSpriteEntry(
+                tree.spriteSheetId
+            );
+
+        if (
+            !entry ||
+            !entry.loaded ||
+            entry.failed
+        ) {
+            return {
+                drawn: false,
+                collisionChanged: false
+            };
+        }
+
+        const region =
+            getTreeRegion(
+                tree,
+                entry
+            );
+
+        const kind =
+            entry.data.kind;
+
+        const scale =
+            Math.max(
+                0.65,
+                finiteNumber(
+                    tree.scale,
+                    1
+                )
+            );
+
+        const aspect =
+            region[2] /
+            Math.max(
+                1,
+                region[3]
+            );
+
+        let width;
+        let height;
+
+
+        if (
+            kind === "fallen"
+        ) {
+            width =
+                220 *
+                scale;
+
+            height =
+                width /
+                aspect;
+        }
+
+        else {
+            const baseHeight =
+                kind === "small"
+                    ? 85
+                    : kind === "medium"
+                        ? 165
+                        : 225;
+
+            height =
+                baseHeight *
+                scale;
+
+            width =
+                height *
+                aspect;
+        }
+
+
+        const collisionChanged =
+            updateTreePngCollision(
+                tree,
+                kind
+            );
+
+
+        const screen =
+            worldToScreen(
+                tree.x,
+                tree.y
+            );
+
+
+        const sway =
+            kind === "fallen"
+                ? 0
+                : Math.sin(
+                    renderRuntime
+                        .ambientTime *
+                        1.05 +
+                    finiteNumber(
+                        tree.swayOffset,
+                        0
+                    )
+                ) *
+                (
+                    kind === "small"
+                        ? 0.6
+                        : 1.1
+                );
+
+
+        ctx.save();
+
+        ctx.imageSmoothingEnabled =
+            false;
+
+
+        ctx.drawImage(
+            entry.image,
+
+            region[0],
+            region[1],
+            region[2],
+            region[3],
+
+            screen.x -
+                width /
+                2 +
+                sway,
+
+            screen.y -
+                height,
+
+            width,
+            height
+        );
+
+
+        ctx.restore();
+
+
+        return {
+            drawn: true,
+            collisionChanged
+        };
+    }
+
+
+    /*
+        Pré-carrega as 4 sheets.
+    */
+    [
+        1,
+        2,
+        3,
+        4
+    ].forEach(
+        getTreeSpriteEntry
+    );
+   
     /* ============================================================
        FUNDO / TERRENO
        ============================================================ */
@@ -45777,10 +46349,10 @@ function drawWorldBackground(
     /*
         MUNDO EXTERNO NORMAL.
     */
-  const style =
-    getBiomeStyle(
-        world.id
-    );
+     const style =
+        getBiomeStyle(
+            world.id
+        );
 
     ctx.fillStyle =
         style.ground;
@@ -45792,11 +46364,22 @@ function drawWorldBackground(
         renderRuntime.height
     );
 
-    drawGroundTexture(
-        ctx,
-        style
-    );
-}
+
+    /*
+        PNG novo se estiver carregado.
+        Se falhar, mantém o chão antigo.
+    */
+    if (
+        !drawRegionGroundTexture(
+            ctx,
+            world
+        )
+    ) {
+        drawGroundTexture(
+            ctx,
+            style
+        );
+    }
 
 
     function drawGroundTexture(
@@ -50073,45 +50656,37 @@ else {
             return;
         }
 
-        /*
-            Novo sistema PNG.
-
-            Enquanto carrega, o renderer antigo
-            abaixo continua funcionando como fallback.
+             /*
+            Novo renderer interno.
+            tree-sprites.js antigo deixa
+            de controlar as árvores.
         */
-        const treeSpriteSystem =
-            window.VEYRA_TREE_SPRITES;
+        const spriteResult =
+            drawTreePng(
+                ctx,
+                tree
+            );
+
 
         if (
-            treeSpriteSystem &&
-            typeof treeSpriteSystem.draw === "function"
+            spriteResult
+                ?.collisionChanged
         ) {
-            const spriteResult =
-                treeSpriteSystem.draw(
-                    ctx,
-                    tree,
-                    worldToScreen(
-                        tree.x,
-                        tree.y
-                    ),
-                    renderRuntime.ambientTime
-                );
+            scheduleTreeCollisionRefresh();
+        }
 
-            if (
-                spriteResult?.collisionChanged
-            ) {
-                scheduleTreeCollisionRefresh();
-            }
 
-            if (
-                spriteResult?.drawn
-            ) {
-                renderRuntime
-                    .frameStats
-                    .drawnTrees += 1;
+        if (
+            spriteResult
+                ?.drawn
+        ) {
 
-                return;
-            }
+            renderRuntime
+                .frameStats
+                .drawnTrees +=
+                1;
+
+            return;
         }
        
         const screen =

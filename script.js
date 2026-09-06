@@ -30968,15 +30968,25 @@ function getPlayerAimVector() {
 
                     attackToken,
 
-                    x:
-                        player.x +
-                        aim.x *
-                            24,
+                  x:
+    player.x +
+    aim.x *
+        (
+            character.id ===
+            "kaelion"
+                ? 54
+                : 28
+        ),
 
-                    y:
-                        player.y +
-                        aim.y *
-                            24,
+y:
+    player.y +
+    aim.y *
+        (
+            character.id ===
+            "kaelion"
+                ? 54
+                : 28
+        ),
 
                     dx:
                         aim.x,
@@ -71632,88 +71642,63 @@ state.pointer.cameraY =
     }
 }
 
-   function handlePointerDown(
+function handlePrimaryAttackEvent(
     event
 ) {
+    /*
+        Só durante o jogo
+        e somente botão esquerdo.
+    */
     if (
-        event.button !==
-        0 ||
-        !state.running
+        !state.running ||
+        event.button !== 0
     ) {
         return;
     }
 
+    const canvas =
+        DOM.canvas.game;
+
+    if (
+        !canvas
+    ) {
+        return;
+    }
+
+
     /*
-        Não atacar quando o jogador
-        estiver realmente clicando
-        em elementos da interface.
+        Confirma que o clique realmente
+        aconteceu dentro da área do jogo.
+    */
+    const rect =
+        canvas.getBoundingClientRect();
+
+    if (
+        event.clientX < rect.left ||
+        event.clientX > rect.right ||
+        event.clientY < rect.top ||
+        event.clientY > rect.bottom
+    ) {
+        return;
+    }
+
+
+    /*
+        Não ataca quando estiver
+        clicando em interface.
     */
     const target =
         event.target;
 
     if (
-        target instanceof
-            Element &&
+        target instanceof Element &&
         target.closest(
-            "button, input, textarea, select, a, .minimap-shell, .player-hud, .combat-hints, .game-hotbar, .money-hud, .location-ribbon"
+            "button, input, textarea, select, a, .minimap-shell, .player-hud, .combat-hints, .game-hotbar, .money-hud, .location-ribbon, .overlay-panel"
         )
     ) {
         return;
     }
 
-    /*
-        Atualiza a mira com a posição
-        EXATA deste clique.
-    */
-    updatePointerFromEvent(
-        event
-    );
-
-    /*
-        1 clique = 1 ataque.
-    */
-    safeCall(
-        "handleGameplayAttackInput"
-    );
-}
-
-   function handlePrimaryAttackEvent(
-    event
-) {
-    if (
-        !state.running
-    ) {
-        return;
-    }
-
-    /*
-        Só botão esquerdo.
-    */
-    if (
-        typeof event.button ===
-            "number" &&
-        event.button !==
-            0
-    ) {
-        return;
-    }
-
-    const target =
-        event.target;
-
-    /*
-        Não ataca quando o clique
-        realmente foi em uma interface.
-    */
-    if (
-        target instanceof
-            Element &&
-        target.closest(
-            "button, input, textarea, select, a, .minimap-shell, .player-hud, .combat-hints, .game-hotbar, .money-hud, .location-ribbon"
-        )
-    ) {
-        return;
-    }
 
     /*
         Mira exatamente onde clicou.
@@ -71725,54 +71710,32 @@ state.pointer.cameraY =
     state.pointer.hasMoved =
         true;
 
-    const now =
-        performance.now();
 
     /*
-        pointerdown + click podem acontecer
-        no mesmo clique.
-
-        80ms impede ataque duplicado.
+        Vira o boneco para o clique
+        imediatamente.
     */
+    const aim =
+        safeCall(
+            "getPlayerAimVector"
+        );
+
     if (
-        now -
-            finiteNumber(
-                UI_RUNTIME
-                    .lastPrimaryPointerDownAt,
-                0
-            ) <
-        80
+        aim
     ) {
-        return;
+        safeCall(
+            "updatePlayerFacingFromVector",
+            aim
+        );
     }
 
-    UI_RUNTIME
-        .lastPrimaryPointerDownAt =
-        now;
 
     /*
-        Chamamos o ataque diretamente,
-        sem depender do safeCall aqui.
+        ATAQUE.
     */
-    const attackHandler =
-        V.handleGameplayAttackInput;
-
-    if (
-        typeof attackHandler ===
-        "function"
-    ) {
-        try {
-            attackHandler();
-
-        } catch (
-            error
-        ) {
-            console.error(
-                "VEYRA — erro no ataque básico:",
-                error
-            );
-        }
-    }
+    safeCall(
+        "handleGameplayAttackInput"
+    );
 }
 
     /* ============================================================
@@ -73370,45 +73333,40 @@ updateTransition(
     Isso também resolve casos em que
     HUD/minimapa ficam por cima do canvas.
 */
+/*
+    MOVIMENTO DO MOUSE.
+
+    Continua sendo controlado
+    pela tela do jogo.
+*/
 if (
     DOM.screens.game
 ) {
-    /*
-        Movimento do mouse.
-    */
     DOM.screens.game
         .addEventListener(
             "pointermove",
             handlePointerMove,
             true
         );
-
-    /*
-        Ataque principal.
-    */
-    DOM.screens.game
-        .addEventListener(
-            "pointerdown",
-            handlePrimaryAttackEvent,
-            true
-        );
-
-    /*
-        Fallback.
-
-        Se por algum motivo o navegador
-        não executar o pointerdown como
-        esperado, o click ainda ataca.
-    */
-    DOM.screens.game
-        .addEventListener(
-            "click",
-            handlePrimaryAttackEvent,
-            true
-        );
 }
 
 
+/*
+    ATAQUE BÁSICO.
+
+    Fica diretamente no window,
+    em modo de captura.
+
+    Assim HUD, canvas ou qualquer
+    camada visual não consegue
+    engolir o clique.
+*/
+window.addEventListener(
+    "mousedown",
+    handlePrimaryAttackEvent,
+    true
+);
+       
 if (
     DOM.canvas.game
 ) {

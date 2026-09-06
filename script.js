@@ -45583,13 +45583,13 @@ const height =
        PNGs DO AMBIENTE — CHÃO + ÁRVORES
        ============================================================ */
 
-    const REGION_GROUND_TEXTURES = Object.freeze({
-        village: "./assets/sprites/textures/ground/vila_ground.png",
-        road: "./assets/sprites/textures/ground/estrada_ground.png",
-        forest: "./assets/sprites/textures/ground/floresta_ground.png",
-        grove: "./assets/sprites/textures/ground/bosque_ground.png",
-        mountains: "./assets/sprites/textures/ground/trilha_rochosa.png",
-        ironRegion: "./assets/sprites/textures/ground/ferro_ground.png"
+       const REGION_GROUND_TEXTURES = Object.freeze({
+        village: "./assets/sprites/textures/ground/vila_ground.png?v=20260906-env2",
+        road: "./assets/sprites/textures/ground/estrada_ground.png?v=20260906-env2",
+        forest: "./assets/sprites/textures/ground/floresta_ground.png?v=20260906-env2",
+        grove: "./assets/sprites/textures/ground/bosque_ground.png?v=20260906-env2",
+        mountains: "./assets/sprites/textures/ground/trilha_rochosa.png?v=20260906-env2",
+        ironRegion: "./assets/sprites/textures/ground/ferro_ground.png?v=20260906-env2"
     });
 
     const groundTextureCache = new Map();
@@ -45738,7 +45738,7 @@ const height =
 
             1: Object.freeze({
                 src:
-                    "./assets/sprites/environment/trees/large.png",
+               "./assets/sprites/environment/trees/large.png?v=20260906-env2",
 
                 kind:
                     "large",
@@ -45759,7 +45759,7 @@ const height =
                     sem .png.
                 */
                src:
-    "./assets/sprites/environment/trees/medium.png",
+     "./assets/sprites/environment/trees/medium.png?v=20260906-env2",
 
                 kind:
                     "medium",
@@ -45774,7 +45774,7 @@ const height =
 
             3: Object.freeze({
                 src:
-                    "./assets/sprites/environment/trees/fallen.png",
+               "./assets/sprites/environment/trees/fallen.png?v=20260906-env2",
 
                 kind:
                     "fallen",
@@ -45796,8 +45796,8 @@ const height =
 
             4: Object.freeze({
                 src:
-                    "./assets/sprites/environment/trees/small.png",
-
+              "./assets/sprites/environment/trees/small.png?v=20260906-env2",
+               
                 kind:
                     "small",
 
@@ -49172,19 +49172,21 @@ ctx.shadowOffsetY =
 
     ctx.save();
 
-    /*
-        SOMBRA
+       /*
+        SOMBRA DISCRETA DA BASE.
+        Mantém a fonte ancorada no chão
+        sem criar um oval deslocado.
     */
     ctx.fillStyle =
-        "rgba(0,0,0,0.28)";
+        "rgba(0,0,0,0.16)";
 
     ctx.beginPath();
 
     ctx.ellipse(
-        screen.x + 10,
-        screen.y + 18,
-        radius + 20,
-        radius * 0.5,
+        screen.x,
+        screen.y + radius * 0.58,
+        radius * 0.72,
+        radius * 0.20,
         0,
         0,
         Math.PI * 2

@@ -46045,11 +46045,11 @@ const height =
         let height;
 
 
-        if (
+             if (
             kind === "fallen"
         ) {
             width =
-                220 *
+                170 *
                 scale;
 
             height =
@@ -46060,10 +46060,10 @@ const height =
         else {
             const baseHeight =
                 kind === "small"
-                    ? 85
+                    ? 70
                     : kind === "medium"
-                        ? 165
-                        : 225;
+                        ? 125
+                        : 170;
 
             height =
                 baseHeight *
@@ -46369,7 +46369,7 @@ function drawWorldBackground(
         PNG novo se estiver carregado.
         Se falhar, mantém o chão antigo.
     */
-    if (
+       if (
         !drawRegionGroundTexture(
             ctx,
             world
@@ -46381,6 +46381,234 @@ function drawWorldBackground(
         );
     }
 
+
+    /*
+        Fora dos limites jogáveis o terreno
+        desaparece gradualmente no preto.
+    */
+    drawWorldEdgeFade(
+        ctx,
+        world
+    );
+
+}
+
+
+function drawWorldEdgeFade(
+    ctx,
+    world
+) {
+    if (
+        !ctx ||
+        !world ||
+        world.interior
+    ) {
+        return;
+    }
+
+    const width =
+        renderRuntime.width;
+
+    const height =
+        renderRuntime.height;
+
+    const topLeft =
+        worldToScreen(
+            0,
+            0
+        );
+
+    const bottomRight =
+        worldToScreen(
+            world.width,
+            world.height
+        );
+
+    const left =
+        topLeft.x;
+
+    const top =
+        topLeft.y;
+
+    const right =
+        bottomRight.x;
+
+    const bottom =
+        bottomRight.y;
+
+    const fadeSize =
+        230;
+
+    ctx.save();
+
+
+    /*
+        BORDA ESQUERDA
+    */
+    if (
+        left >
+        0
+    ) {
+        const gradient =
+            ctx.createLinearGradient(
+                Math.max(
+                    0,
+                    left -
+                        fadeSize
+                ),
+                0,
+                left,
+                0
+            );
+
+        gradient.addColorStop(
+            0,
+            "rgba(2,2,3,0.98)"
+        );
+
+        gradient.addColorStop(
+            1,
+            "rgba(2,2,3,0)"
+        );
+
+        ctx.fillStyle =
+            gradient;
+
+        ctx.fillRect(
+            0,
+            0,
+            left,
+            height
+        );
+    }
+
+
+    /*
+        BORDA DIREITA
+    */
+    if (
+        right <
+        width
+    ) {
+        const gradient =
+            ctx.createLinearGradient(
+                right,
+                0,
+                Math.min(
+                    width,
+                    right +
+                        fadeSize
+                ),
+                0
+            );
+
+        gradient.addColorStop(
+            0,
+            "rgba(2,2,3,0)"
+        );
+
+        gradient.addColorStop(
+            1,
+            "rgba(2,2,3,0.98)"
+        );
+
+        ctx.fillStyle =
+            gradient;
+
+        ctx.fillRect(
+            right,
+            0,
+            width -
+                right,
+            height
+        );
+    }
+
+
+    /*
+        BORDA DE CIMA
+    */
+    if (
+        top >
+        0
+    ) {
+        const gradient =
+            ctx.createLinearGradient(
+                0,
+                Math.max(
+                    0,
+                    top -
+                        fadeSize
+                ),
+                0,
+                top
+            );
+
+        gradient.addColorStop(
+            0,
+            "rgba(2,2,3,0.98)"
+        );
+
+        gradient.addColorStop(
+            1,
+            "rgba(2,2,3,0)"
+        );
+
+        ctx.fillStyle =
+            gradient;
+
+        ctx.fillRect(
+            0,
+            0,
+            width,
+            top
+        );
+    }
+
+
+    /*
+        BORDA DE BAIXO
+    */
+    if (
+        bottom <
+        height
+    ) {
+        const gradient =
+            ctx.createLinearGradient(
+                0,
+                bottom,
+                0,
+                Math.min(
+                    height,
+                    bottom +
+                        fadeSize
+                )
+            );
+
+        gradient.addColorStop(
+            0,
+            "rgba(2,2,3,0)"
+        );
+
+        gradient.addColorStop(
+            1,
+            "rgba(2,2,3,0.98)"
+        );
+
+        ctx.fillStyle =
+            gradient;
+
+        ctx.fillRect(
+            0,
+            bottom,
+            width,
+            height -
+                bottom
+        );
+    }
+
+
+    ctx.restore();
 }
 
 
@@ -66191,9 +66419,36 @@ if (!characterId) {
             true;
 
 
-        showScreen(
+             showScreen(
             "game"
         );
+
+
+        /*
+            ENTRADA NO JOGO.
+
+            Começa já escura e revela o cenário
+            devagar. Enquanto isso, o primeiro
+            chão PNG e os sprites têm tempo para
+            terminar de carregar sem aparecer
+            aquele instante de chão antigo.
+        */
+        state.transition = {
+            type:
+                "area",
+
+            timer:
+                1.4,
+
+            duration:
+                2.8,
+
+            title:
+                "",
+
+            midpointDone:
+                true
+        };
 
 
         closeAllPanels();
@@ -73852,7 +74107,7 @@ function beginAreaTransition(
             0,
 
         duration:
-            1.2,
+            2.2,
 
         title:
             title ||

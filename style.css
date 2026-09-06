@@ -10106,12 +10106,18 @@ box-shadow:
     min-height:
         inherit;
 
+    transform:
+        translateZ(0);
+
     transform-style:
         preserve-3d;
 
     transform-origin:
         50%
         50%;
+
+    will-change:
+        transform;
 }
 
 

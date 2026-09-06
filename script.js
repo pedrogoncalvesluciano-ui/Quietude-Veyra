@@ -15014,7 +15014,7 @@ const depth =
 
 
         const radius =
-            (smallTree ? 46 : 82) *
+           (smallTree ? 88 : 145) *
             Math.max(
                 0.65,
                 finiteNumber(
@@ -15022,6 +15022,26 @@ const depth =
                     1
                 )
             );
+
+               /*
+            PROTEÇÃO VISUAL DA ESTRADA.
+
+            Não basta o tronco estar fora:
+            a copa inteira também deve
+            permanecer afastada.
+        */
+        if (
+            isPointNearPath(
+                x,
+                y,
+                world,
+                radius + 45
+            )
+        ) {
+
+            return false;
+
+        }
 
 
         /*
@@ -15185,7 +15205,7 @@ const depth =
 
 
             const otherRadius =
-                (otherSmall ? 46 : 82) *
+               (otherSmall ? 88 : 145) *
                 Math.max(
                     0.65,
                     finiteNumber(
@@ -15202,8 +15222,9 @@ const depth =
                     otherTree.x,
                     otherTree.y
                 ) <
-                radius +
-                otherRadius
+               radius +
+                otherRadius +
+                42
             ) {
 
                 return false;
@@ -15371,6 +15392,79 @@ const depth =
                 "pine"
             ];
 
+               /*
+            SPRITES DE ÁRVORE POR REGIÃO.
+
+            Vila:
+            somente árvore 1.
+
+            Estrada:
+            mantém árvore 1.
+
+            Floresta:
+            árvores 1 e 2.
+
+            Bosque:
+            libera todas.
+
+            Montanhas:
+            mantém todas por enquanto.
+
+            A partir da região de Ferro:
+            nenhuma árvore.
+        */
+        const allowedTreeSheets =
+            (() => {
+
+                switch (
+                    world.id
+                ) {
+
+                    case "village":
+                    case "road":
+                        return [
+                            1
+                        ];
+
+
+                    case "forest":
+                        return [
+                            1,
+                            2
+                        ];
+
+
+                    case "grove":
+                    case "mountains":
+                        return [
+                            1,
+                            2,
+                            3,
+                            4
+                        ];
+
+
+                    /*
+                        Todo o restante atualmente
+                        fica sem árvore.
+
+                        Isso inclui Ferro em diante:
+                        ironRegion
+                        rubyRegion
+                        monarchMaze
+                        Gnomos
+                        Reino Feérico
+                        Fronteira Celestial
+                        Céu
+                        Vazio etc.
+                    */
+                    default:
+                        return [];
+
+                }
+
+            })();
+
 
         const flowerColors =
             options.flowerColors ||
@@ -15389,11 +15483,12 @@ const depth =
             se o ponto estiver ocupado,
             procura outro.
         */
-        while (
+               while (
+            allowedTreeSheets.length > 0 &&
             createdTrees < treeCount &&
             attempts < treeCount * 35
         ) {
-
+                  
             attempts += 1;
 
 
@@ -15417,12 +15512,14 @@ const depth =
                 1, 2 e 3 = árvores normais.
                 4 = árvores pequenas.
             */
-            const spriteSheetId =
-                seededInt(
-                    rng,
-                    1,
-                    4
-                );
+              const spriteSheetId =
+                allowedTreeSheets[
+                    seededInt(
+                        rng,
+                        0,
+                        allowedTreeSheets.length - 1
+                    )
+                ];
 
 
             const smallTree =

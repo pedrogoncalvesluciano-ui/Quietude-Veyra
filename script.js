@@ -66026,14 +66026,18 @@ function renderCharacterCards() {
                         .trim() ||
                     null;
 
-                /*
-                    Começa a transição da atmosfera
-                    enquanto a carta gira.
-                */
-                updateCharacterSelectionAtmosphere(
-                    nextAccent
-                );
+                              /*
+                    Começa primeiro o giro 3D.
 
+                    O fundo possui gradientes,
+                    partículas, sombras e cores
+                    dependentes do personagem.
+
+                    Dar dois frames para a carta
+                    entrar na camada de composição
+                    evita a travada inicial sem
+                    remover nenhum efeito visual.
+                */
                 UI_RUNTIME.characterSelectionLocked =
                     true;
 
@@ -66047,6 +66051,23 @@ function renderCharacterCards() {
 
                 card.classList.add(
                     "is-flipping"
+                );
+
+
+                requestAnimationFrame(
+                    () => {
+
+                        requestAnimationFrame(
+                            () => {
+
+                                updateCharacterSelectionAtmosphere(
+                                    nextAccent
+                                );
+
+                            }
+                        );
+
+                    }
                 );
 
                 window.setTimeout(

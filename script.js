@@ -45758,8 +45758,8 @@ const height =
                     exatamente com o nome "medium"
                     sem .png.
                 */
-                src:
-                    "./assets/sprites/environment/trees/medium",
+               src:
+    "./assets/sprites/environment/trees/medium.png",
 
                 kind:
                     "medium",

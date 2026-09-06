@@ -45654,8 +45654,8 @@ const height =
             return false;
         }
 
-        const tileSize =
-            640;
+             const tileSize =
+            520;
 
         const view =
             renderRuntime
@@ -46045,11 +46045,11 @@ const height =
         let height;
 
 
-             if (
+                   if (
             kind === "fallen"
         ) {
             width =
-                170 *
+                220 *
                 scale;
 
             height =
@@ -46060,10 +46060,10 @@ const height =
         else {
             const baseHeight =
                 kind === "small"
-                    ? 70
+                    ? 85
                     : kind === "medium"
-                        ? 125
-                        : 170;
+                        ? 165
+                        : 225;
 
             height =
                 baseHeight *

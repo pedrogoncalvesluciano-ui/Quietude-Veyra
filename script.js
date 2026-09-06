@@ -49172,7 +49172,7 @@ ctx.shadowOffsetY =
 
     ctx.save();
 
-       /*
+        /*
         SOMBRA DISCRETA DA BASE.
         Mantém a fonte ancorada no chão
         sem criar um oval deslocado.

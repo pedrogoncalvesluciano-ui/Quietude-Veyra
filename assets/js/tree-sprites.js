@@ -72,6 +72,136 @@
             image.naturalHeight || image.height || 1
         );
 
+                /*
+            TREE_01 — RECORTE MANUAL.
+
+            Remove:
+            - toco gigante;
+            - pedaços da árvore vizinha;
+            - fragmentos flutuando.
+        */
+        if (
+            sheetId === 1 &&
+            Math.abs(
+                sourceW / sourceH -
+                1448 / 1086
+            ) < 0.03
+        ) {
+
+            const sx =
+                sourceW /
+                1448;
+
+            const sy =
+                sourceH /
+                1086;
+
+
+            const region =
+                (
+                    x,
+                    y,
+                    w,
+                    h
+                ) => ({
+
+                    x:
+                        Math.round(
+                            x * sx
+                        ),
+
+                    y:
+                        Math.round(
+                            y * sy
+                        ),
+
+                    w:
+                        Math.round(
+                            w * sx
+                        ),
+
+                    h:
+                        Math.round(
+                            h * sy
+                        )
+
+                });
+
+
+            return [
+
+                /*
+                    3 árvores verdes.
+                */
+                region(
+                    116,
+                    188,
+                    321,
+                    346
+                ),
+
+                region(
+                    493,
+                    161,
+                    430,
+                    373
+                ),
+
+                region(
+                    996,
+                    207,
+                    338,
+                    327
+                ),
+
+
+                /*
+                    2 árvores tipo salgueiro.
+                */
+                region(
+                    35,
+                    598,
+                    294,
+                    345
+                ),
+
+                region(
+                    346,
+                    581,
+                    312,
+                    360
+                ),
+
+
+                /*
+                    Árvore seca.
+
+                    A direita foi cortada
+                    propositalmente antes
+                    do toco vizinho.
+                */
+                region(
+                    681,
+                    621,
+                    214,
+                    323
+                ),
+
+
+                /*
+                    Árvore caída.
+                */
+                region(
+                    1124,
+                    762,
+                    307,
+                    190
+                )
+
+            ];
+
+        }
+
         const scale = Math.min(1, 520 / sourceW);
         const w = Math.max(1, Math.round(sourceW * scale));
         const h = Math.max(1, Math.round(sourceH * scale));

@@ -74255,12 +74255,12 @@ maintainDevRuntime,
 
             handleKeyUp,
 
-            handlePointerMove,
+           handlePointerMove,
 
-            handlePointerDown,
+handlePrimaryAttackEvent,
 
-            updateMapExploration,
-
+updateMapExploration,
+           
             renderMainCanvas,
 
             validatePart5Data

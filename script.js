@@ -15395,22 +15395,18 @@ const depth =
                /*
             SPRITES DE ÁRVORE POR REGIÃO.
 
-            Vila:
-            somente árvore 1.
+            VILA / ESTRADA:
+            somente tree_01.
 
-            Estrada:
-            mantém árvore 1.
+            FLORESTA:
+            tree_01 + tree_02.
 
-            Floresta:
-            árvores 1 e 2.
+            BOSQUE:
+            tree_01 + tree_02 + tree_04.
 
-            Bosque:
-            libera todas.
+            tree_03 fica desativada.
 
-            Montanhas:
-            mantém todas por enquanto.
-
-            A partir da região de Ferro:
+            MONTANHAS EM DIANTE:
             nenhuma árvore.
         */
         const allowedTreeSheets =
@@ -15435,37 +15431,25 @@ const depth =
 
 
                     case "grove":
-                    case "mountains":
                         return [
                             1,
                             2,
-                            3,
                             4
                         ];
 
 
                     /*
-                        Todo o restante atualmente
-                        fica sem árvore.
-
-                        Isso inclui Ferro em diante:
-                        ironRegion
-                        rubyRegion
-                        monarchMaze
-                        Gnomos
-                        Reino Feérico
-                        Fronteira Celestial
-                        Céu
-                        Vazio etc.
+                        Montanhas e qualquer região
+                        posterior não recebem árvore.
                     */
+                    case "mountains":
                     default:
                         return [];
 
                 }
 
             })();
-
-
+       
         const flowerColors =
             options.flowerColors ||
             [

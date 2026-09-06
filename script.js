@@ -15926,7 +15926,7 @@ const depth =
        SPAWN DE INIMIGOS
        ============================================================ */
 
-      function spawnEnemiesNearRoute(
+     function spawnEnemiesNearRoute(
         world,
         options = {}
     ) {

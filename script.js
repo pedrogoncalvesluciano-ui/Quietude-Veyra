@@ -50315,42 +50315,6 @@ if (
 
 });
 
-        walk: Object.freeze({
-            file: "walk.png",
-            frames: 9,
-            fps: 10,
-            rows: 4
-        }),
-
-        run: Object.freeze({
-            file: "run.png",
-            frames: 8,
-            fps: 13,
-            rows: 4
-        }),
-
-              spellcast: Object.freeze({
-            file: "spellcast.png",
-            frames: 7,
-            fps: 25,
-            rows: 4
-        }),
-
-        shoot: Object.freeze({
-            file: "shoot.png",
-            frames: 13,
-            fps: 30,
-            rows: 4
-        }),
-
-        hurt: Object.freeze({
-            file: "hurt.png",
-            frames: 6,
-            fps: 25,
-            rows: 1
-        })
-    });
-
     const playerSpriteCache = new Map();
 
    function preloadPlayerSprites(

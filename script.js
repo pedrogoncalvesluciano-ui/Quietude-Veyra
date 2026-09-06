@@ -28093,21 +28093,29 @@ if (
     Isso impede o personagem de
     ficar virando sozinho enquanto
     você anda com o mouse parado.
+/*
+    Durante o ataque, o personagem
+    mantém a direção do disparo.
+
+    Assim que a animação termina,
+    o WASD volta a controlar
+    a direção visual normalmente.
 */
 if (
-    !state.pointer
-        ?.hasMoved &&
     (
         vector.x !== 0 ||
         vector.y !== 0
-    )
+    ) &&
+    finiteNumber(
+        player.visual
+            ?.attackTime,
+        0
+    ) <= 0
 ) {
     updatePlayerFacingFromVector(
         vector
     );
 }
-
-
         if (
             vector.x ===
                 0 &&

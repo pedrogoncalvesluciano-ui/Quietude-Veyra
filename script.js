@@ -31475,17 +31475,19 @@ function getPlayerAimVector() {
             aim
         );
 
-              if (
+                     if (
             character.id ===
-            "kaelion"
+            "theron"
         ) {
-            player.visual.attackAnimation =
-                "shoot";
+            player.visual.theronReverseSlash =
+                !Boolean(
+                    player.visual.theronReverseSlash
+                );
         }
 
         player.visual.attackTime =
             0.28;
-
+       
         switch (
             attack.type
         ) {
@@ -51634,17 +51636,17 @@ if (
         ========================================================
     */
 
-    theronIdle:
+       theronIdle:
         Object.freeze({
 
             file:
-                "idle.png",
+                "combat.png",
 
             frames:
-                2,
+                8,
 
             fps:
-                2.4,
+                1.8,
 
             rows:
                 4
@@ -51688,11 +51690,29 @@ if (
         }),
 
 
-    theronSlash:
+      theronSlashForward:
         Object.freeze({
 
             file:
-                "slash.png",
+                "slash_oversize.png",
+
+            frames:
+                6,
+
+            fps:
+                22,
+
+            rows:
+                4
+
+        }),
+
+
+    theronSlashReverse:
+        Object.freeze({
+
+            file:
+                "slash_reverse_oversize.png",
 
             frames:
                 6,
@@ -52814,10 +52834,17 @@ if (
             0
         ) {
 
+                  const attackAnimation =
+                player.visual
+                    ?.theronReverseSlash
+                    ? "theronSlashReverse"
+                    : "theronSlashForward";
+
+
             return {
 
                 animation:
-                    "theronSlash",
+                    attackAnimation,
 
                 frame:
                     getOneShotSpriteFrame(
@@ -52829,9 +52856,9 @@ if (
                                 0,
                                 1
                             ),
-                        PLAYER_SPRITE_ANIMATIONS
-                            .theronSlash
-                            .frames
+                        PLAYER_SPRITE_ANIMATIONS[
+                            attackAnimation
+                        ].frames
                     )
 
             };
@@ -59345,21 +59372,17 @@ function drawBasicAttackEffect(
     /*
         CAVALEIRO.
     */
-    if (
+      if (
         characterId ===
         "theron"
     ) {
-        drawSkillSlashEffect(
-            ctx,
-            screen,
-            {
-                ...effect,
-                characterId:
-                    "theron"
-            },
-            progress
-        );
+        /*
+            O corte visual do Theron agora
+            vem inteiramente do spritesheet.
 
+            A hitbox e o dano continuam
+            no sistema de meleeArc.
+        */
         return;
     }
 

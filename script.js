@@ -69682,9 +69682,7 @@ function renderCharacterCards() {
     const container =
         DOM.misc.characterCards;
 
-    if (
-        !container
-    ) {
+    if (!container) {
         return;
     }
 
@@ -69694,13 +69692,9 @@ function renderCharacterCards() {
 
 
     /*
-        Mantemos os IDs internos existentes.
-
-        theron  = Varyn
-        zephyr  = Vael
-
-        Isso evita quebrar saves e outros
-        sistemas que já usam esses IDs.
+        ========================================================
+        ASSETS DA ARTE GRANDE
+        ========================================================
     */
 
     const selectionAssets = {
@@ -69723,51 +69717,85 @@ function renderCharacterCards() {
     };
 
 
-    const selectionNames = {
+    /*
+        ========================================================
+        SPRITES PEQUENOS DOS BOTÕES
+
+        Usamos os próprios sprites do jogo.
+        O CSS recorta somente o personagem olhando para frente.
+        ========================================================
+    */
+
+    const selectionSpriteAssets = {
 
         kaelion:
-            "KAELION",
+            "./assets/sprites/players/kaelion/walk.png",
 
         theron:
-            "VARYN",
+            "./assets/sprites/players/theron/idle.png",
 
         grumgar:
-            "GRUMGAR",
+            "./assets/sprites/players/grumgar/idle.png",
 
         lirael:
-            "LIRAEL",
+            "./assets/sprites/players/lirael/spellcast.png",
 
+        /*
+            O ID continua zephyr.
+            Somente a pasta visual é vael.
+        */
         zephyr:
-            "VAEL"
+            "./assets/sprites/players/vael/idle.png"
+
+    };
+
+
+    const selectionNames = {
+
+        kaelion: "KAELION",
+        theron: "VARYN",
+        grumgar: "GRUMGAR",
+        lirael: "LIRAEL",
+        zephyr: "VAEL"
 
     };
 
 
     const selectionRoles = {
 
-        kaelion:
-            "MAGO",
-
-        theron:
-            "ESPADACHIM LUPINO",
-
-        grumgar:
-            "TROLL",
-
-        lirael:
-            "FADA",
-
-        zephyr:
-            "INVOCADOR"
+        kaelion: "MAGO",
+        theron: "ESPADACHIM LUPINO",
+        grumgar: "TROLL",
+        lirael: "FADA",
+        zephyr: "INVOCADOR"
 
     };
 
 
     /*
-        Caso ainda não exista personagem selecionado,
-        Kaelion vira apenas a seleção visual inicial.
+        Cores da seleção.
 
-        O ID interno continua sendo usado normalmente.
+        Usamos selectionGlow do próprio personagem
+        quando existir.
+    */
+
+    function getSelectionColor(
+        character
+    ) {
+
+        return (
+            character?.selectionGlow ||
+            character?.color ||
+            "#d5d5d5"
+        );
+
+    }
+
+
+    /*
+        ========================================================
+        SELEÇÃO INICIAL
+        ========================================================
     */
 
     if (
@@ -69784,8 +69812,764 @@ function renderCharacterCards() {
     }
 
 
+    /*
+        ========================================================
+        GRÁFICO CANVAS
+        ========================================================
+
+        O gráfico NÃO pula de um personagem para outro.
+
+        Ele interpola:
+        valor atual -> valor do novo personagem.
+    */
+
+    function updateSelectionGraph(
+        character,
+        instant = false
+    ) {
+
+        const canvas =
+            document.getElementById(
+                "selectionStatsCanvas"
+            );
+
+        if (
+            !canvas ||
+            !character
+        ) {
+            return;
+        }
+
+
+        const ctx =
+            canvas.getContext(
+                "2d"
+            );
+
+        if (!ctx) {
+            return;
+        }
+
+
+        const stats = [
+
+            {
+                key: "hp",
+                label: "VIDA"
+            },
+
+            {
+                key: "energy",
+                label: "ENERGIA"
+            },
+
+            {
+                key: "damage",
+                label: "DANO"
+            },
+
+            {
+                key: "defense",
+                label: "DEFESA"
+            },
+
+            {
+                key: "speed",
+                label: "VELOCIDADE"
+            }
+
+        ];
+
+
+        const targetValues =
+            stats.map(
+                stat => {
+
+                    if (
+                        hasFunction(
+                            "getCharacterStatBarValue"
+                        )
+                    ) {
+
+                        return clamp(
+                            finite(
+                                safeCall(
+                                    "getCharacterStatBarValue",
+                                    character,
+                                    stat.key
+                                ),
+                                0
+                            ),
+                            0,
+                            100
+                        );
+
+                    }
+
+                    return 0;
+
+                }
+            );
+
+
+        const realValues =
+            stats.map(
+                stat =>
+                    Math.round(
+                        finite(
+                            character[
+                                stat.key
+                            ],
+                            0
+                        )
+                    )
+            );
+
+
+        const color =
+            getSelectionColor(
+                character
+            );
+
+
+        /*
+            Estado persistente no próprio Canvas.
+        */
+
+        if (
+            !canvas._veyraGraphState
+        ) {
+
+            canvas._veyraGraphState = {
+
+                values:
+                    targetValues.slice(),
+
+                target:
+                    targetValues.slice(),
+
+                start:
+                    targetValues.slice(),
+
+                realValues:
+                    realValues.slice(),
+
+                color,
+
+                animationFrame:
+                    0
+
+            };
+
+        }
+
+
+        const graph =
+            canvas._veyraGraphState;
+
+
+        if (
+            graph.animationFrame
+        ) {
+
+            cancelAnimationFrame(
+                graph.animationFrame
+            );
+
+        }
+
+
+        graph.start =
+            graph.values.slice();
+
+        graph.target =
+            targetValues.slice();
+
+        graph.realValues =
+            realValues.slice();
+
+        graph.color =
+            color;
+
+
+        /*
+            Ajusta resolução para tela Retina/alta densidade.
+        */
+
+        function resizeCanvas() {
+
+            const rect =
+                canvas.getBoundingClientRect();
+
+            const ratio =
+                Math.min(
+                    window.devicePixelRatio || 1,
+                    2
+                );
+
+
+            const width =
+                Math.max(
+                    1,
+                    Math.round(
+                        rect.width * ratio
+                    )
+                );
+
+
+            const height =
+                Math.max(
+                    1,
+                    Math.round(
+                        rect.height * ratio
+                    )
+                );
+
+
+            if (
+                canvas.width !== width ||
+                canvas.height !== height
+            ) {
+
+                canvas.width =
+                    width;
+
+                canvas.height =
+                    height;
+
+            }
+
+
+            ctx.setTransform(
+                ratio,
+                0,
+                0,
+                ratio,
+                0,
+                0
+            );
+
+
+            return {
+                width:
+                    rect.width,
+
+                height:
+                    rect.height
+            };
+
+        }
+
+
+        /*
+            Converte HEX em RGB para o glow.
+        */
+
+        function hexToRgb(
+            hex
+        ) {
+
+            const clean =
+                String(
+                    hex || "#ffffff"
+                )
+                    .replace(
+                        "#",
+                        ""
+                    );
+
+
+            if (
+                clean.length !== 6
+            ) {
+
+                return {
+                    r: 220,
+                    g: 220,
+                    b: 220
+                };
+
+            }
+
+
+            return {
+
+                r:
+                    parseInt(
+                        clean.slice(
+                            0,
+                            2
+                        ),
+                        16
+                    ),
+
+                g:
+                    parseInt(
+                        clean.slice(
+                            2,
+                            4
+                        ),
+                        16
+                    ),
+
+                b:
+                    parseInt(
+                        clean.slice(
+                            4,
+                            6
+                        ),
+                        16
+                    )
+
+            };
+
+        }
+
+
+        function drawGraph() {
+
+            const size =
+                resizeCanvas();
+
+
+            const width =
+                size.width;
+
+            const height =
+                size.height;
+
+
+            ctx.clearRect(
+                0,
+                0,
+                width,
+                height
+            );
+
+
+            const rgb =
+                hexToRgb(
+                    graph.color
+                );
+
+
+            /*
+                Título.
+            */
+
+            ctx.save();
+
+            ctx.fillStyle =
+                "rgba(218, 213, 201, 0.82)";
+
+            ctx.font =
+                '600 11px "Cinzel", Georgia, serif';
+
+            ctx.textAlign =
+                "left";
+
+            ctx.textBaseline =
+                "middle";
+
+            ctx.fillText(
+                "ATRIBUTOS",
+                0,
+                12
+            );
+
+            ctx.restore();
+
+
+            const top =
+                38;
+
+            const bottom =
+                8;
+
+            const usableHeight =
+                Math.max(
+                    1,
+                    height -
+                    top -
+                    bottom
+                );
+
+
+            const rowHeight =
+                usableHeight /
+                stats.length;
+
+
+            const labelWidth =
+                Math.min(
+                    82,
+                    width * 0.26
+                );
+
+
+            const numberWidth =
+                38;
+
+
+            const barX =
+                labelWidth;
+
+
+            const barWidth =
+                Math.max(
+                    20,
+                    width -
+                    labelWidth -
+                    numberWidth
+                );
+
+
+            for (
+                let index = 0;
+                index < stats.length;
+                index += 1
+            ) {
+
+                const stat =
+                    stats[index];
+
+
+                const y =
+                    top +
+                    rowHeight *
+                    index +
+                    rowHeight *
+                    0.5;
+
+
+                /*
+                    Label.
+                */
+
+                ctx.save();
+
+                ctx.fillStyle =
+                    "rgba(164, 161, 153, 0.76)";
+
+                ctx.font =
+                    '600 9px "Cinzel", Georgia, serif';
+
+                ctx.textAlign =
+                    "left";
+
+                ctx.textBaseline =
+                    "middle";
+
+                ctx.fillText(
+                    stat.label,
+                    0,
+                    y
+                );
+
+                ctx.restore();
+
+
+                /*
+                    Fundo da barra.
+                */
+
+                const barHeight =
+                    Math.max(
+                        3,
+                        Math.min(
+                            6,
+                            rowHeight * 0.16
+                        )
+                    );
+
+
+                const barY =
+                    y -
+                    barHeight / 2;
+
+
+                ctx.save();
+
+                ctx.fillStyle =
+                    "rgba(255,255,255,0.055)";
+
+                ctx.fillRect(
+                    barX,
+                    barY,
+                    barWidth,
+                    barHeight
+                );
+
+
+                /*
+                    Pequenas divisões.
+                */
+
+                ctx.strokeStyle =
+                    "rgba(255,255,255,0.045)";
+
+                ctx.lineWidth =
+                    1;
+
+
+                for (
+                    let division = 1;
+                    division < 5;
+                    division += 1
+                ) {
+
+                    const divisionX =
+                        barX +
+                        barWidth *
+                        (
+                            division /
+                            5
+                        );
+
+
+                    ctx.beginPath();
+
+                    ctx.moveTo(
+                        divisionX,
+                        barY - 2
+                    );
+
+                    ctx.lineTo(
+                        divisionX,
+                        barY +
+                        barHeight +
+                        2
+                    );
+
+                    ctx.stroke();
+
+                }
+
+
+                const progress =
+                    clamp(
+                        graph.values[index] /
+                        100,
+                        0,
+                        1
+                    );
+
+
+                const fillWidth =
+                    barWidth *
+                    progress;
+
+
+                /*
+                    Glow da barra.
+                */
+
+                ctx.shadowColor =
+                    `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.72)`;
+
+                ctx.shadowBlur =
+                    10;
+
+
+                const gradient =
+                    ctx.createLinearGradient(
+                        barX,
+                        0,
+                        barX +
+                            Math.max(
+                                1,
+                                fillWidth
+                            ),
+                        0
+                    );
+
+
+                gradient.addColorStop(
+                    0,
+                    `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.32)`
+                );
+
+                gradient.addColorStop(
+                    1,
+                    `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`
+                );
+
+
+                ctx.fillStyle =
+                    gradient;
+
+
+                ctx.fillRect(
+                    barX,
+                    barY,
+                    fillWidth,
+                    barHeight
+                );
+
+
+                ctx.restore();
+
+
+                /*
+                    Valor real.
+                */
+
+                ctx.save();
+
+                ctx.fillStyle =
+                    `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.94)`;
+
+                ctx.font =
+                    '600 10px "Cinzel", Georgia, serif';
+
+                ctx.textAlign =
+                    "right";
+
+                ctx.textBaseline =
+                    "middle";
+
+
+                ctx.fillText(
+                    String(
+                        graph.realValues[
+                            index
+                        ]
+                    ),
+                    width,
+                    y
+                );
+
+                ctx.restore();
+
+            }
+
+        }
+
+
+        /*
+            Primeira renderização pode aparecer imediatamente.
+        */
+
+        if (instant) {
+
+            graph.values =
+                graph.target.slice();
+
+            drawGraph();
+
+            return;
+
+        }
+
+
+        const startTime =
+            performance.now();
+
+
+        const duration =
+            620;
+
+
+        function animate(
+            now
+        ) {
+
+            const raw =
+                clamp(
+                    (
+                        now -
+                        startTime
+                    ) /
+                    duration,
+                    0,
+                    1
+                );
+
+
+            /*
+                Ease-out cubic.
+            */
+
+            const eased =
+                1 -
+                Math.pow(
+                    1 - raw,
+                    3
+                );
+
+
+            graph.values =
+                graph.start.map(
+                    (
+                        startValue,
+                        index
+                    ) =>
+                        startValue +
+                        (
+                            graph.target[index] -
+                            startValue
+                        ) *
+                        eased
+                );
+
+
+            drawGraph();
+
+
+            if (
+                raw < 1
+            ) {
+
+                graph.animationFrame =
+                    requestAnimationFrame(
+                        animate
+                    );
+
+            } else {
+
+                graph.animationFrame =
+                    0;
+
+                graph.values =
+                    graph.target.slice();
+
+                drawGraph();
+
+            }
+
+        }
+
+
+        graph.animationFrame =
+            requestAnimationFrame(
+                animate
+            );
+
+    }
+
+
+    /*
+        ========================================================
+        TRANSIÇÃO DA ARTE GRANDE
+        ========================================================
+
+        REGRA:
+
+        1. personagem antigo ainda visível;
+        2. flash cresce;
+        3. flash cobre 100% do quadro;
+        4. SOMENTE AQUI trocamos a imagem;
+        5. explosão ultrapassa a moldura;
+        6. flash desaparece;
+        7. novo personagem já está por baixo.
+
+        Portanto o jogador NÃO vê o instante
+        em que a imagem é substituída.
+    */
+
     function updateSelectionCharacterArt(
-        characterId
+        characterId,
+        instant = false
     ) {
 
         const image =
@@ -69800,9 +70584,18 @@ function renderCharacterCards() {
             );
 
 
+        const character =
+            characters.find(
+                item =>
+                    item.id ===
+                    characterId
+            );
+
+
         if (
             !image ||
-            !artContainer
+            !artContainer ||
+            !character
         ) {
             return;
         }
@@ -69814,28 +70607,136 @@ function renderCharacterCards() {
             ];
 
 
-        if (
-            !nextSource
-        ) {
+        if (!nextSource) {
             return;
         }
 
 
-        /*
-            Começa a transição.
-        */
+        const glow =
+            getSelectionColor(
+                character
+            );
 
-        artContainer.classList.add(
-            "is-changing"
+
+        artContainer.style.setProperty(
+            "--character-glow",
+            glow
         );
 
 
-        window.setTimeout(
+        /*
+            Primeira imagem da tela:
+            não precisa explodir.
+        */
+
+        if (
+            instant ||
+            !image.getAttribute(
+                "src"
+            )
+        ) {
+
+            image.src =
+                nextSource;
+
+            image.alt =
+                selectionNames[
+                    characterId
+                ] ||
+                "Personagem";
+
+            artContainer.classList.remove(
+                "is-transitioning"
+            );
+
+            return;
+
+        }
+
+
+        /*
+            Pré-carrega ANTES de iniciar o flash.
+
+            Assim não existe risco de o flash acabar
+            e a nova imagem ainda não estar pronta.
+        */
+
+        const preload =
+            new Image();
+
+
+        preload.onload =
             () => {
+
+                artContainer.classList.remove(
+                    "is-transitioning"
+                );
+
+
+                /*
+                    Força o navegador a reconhecer
+                    uma nova animação.
+                */
+
+                void artContainer.offsetWidth;
+
+
+                artContainer.classList.add(
+                    "is-transitioning"
+                );
+
+
+                /*
+                    250ms = momento em que o flash
+                    já cobre completamente o quadro.
+
+                    A troca acontece escondida.
+                */
+
+                window.setTimeout(
+                    () => {
+
+                        image.src =
+                            nextSource;
+
+                        image.alt =
+                            selectionNames[
+                                characterId
+                            ] ||
+                            "Personagem";
+
+                    },
+                    250
+                );
+
+
+                /*
+                    Final da explosão.
+                */
+
+                window.setTimeout(
+                    () => {
+
+                        artContainer.classList.remove(
+                            "is-transitioning"
+                        );
+
+                    },
+                    680
+                );
+
+            };
+
+
+        preload.onerror =
+            () => {
+
+                /*
+                    Fallback seguro.
+                */
 
                 image.src =
                     nextSource;
-
 
                 image.alt =
                     selectionNames[
@@ -69843,53 +70744,20 @@ function renderCharacterCards() {
                     ] ||
                     "Personagem";
 
-
-                image.onload =
-                    () => {
-
-                        requestAnimationFrame(
-                            () => {
-
-                                artContainer
-                                    .classList
-                                    .remove(
-                                        "is-changing"
-                                    );
-
-                            }
-                        );
-
-                    };
+            };
 
 
-                /*
-                    Caso a imagem já esteja no cache.
-                */
-
-                if (
-                    image.complete
-                ) {
-
-                    requestAnimationFrame(
-                        () => {
-
-                            artContainer
-                                .classList
-                                .remove(
-                                    "is-changing"
-                                );
-
-                        }
-                    );
-
-                }
-
-            },
-            150
-        );
+        preload.src =
+            nextSource;
 
     }
 
+
+    /*
+        ========================================================
+        BOTÕES
+        ========================================================
+    */
 
     container.innerHTML =
         characters
@@ -69920,16 +70788,40 @@ function renderCharacterCards() {
                         "";
 
 
+                    const sprite =
+                        selectionSpriteAssets[
+                            character.id
+                        ] ||
+                        "";
+
+
+                    const glow =
+                        getSelectionColor(
+                            character
+                        );
+
+
                     return `
                         <button
                             type="button"
                             class="selection-character-btn ${selected ? "selected" : ""}"
                             data-character-id="${escapeHTML(character.id)}"
-                            style="--selection-index:${index}"
+                            style="
+                                --selection-index:${index};
+                                --character-glow:${escapeHTML(glow)};
+                            "
                             aria-pressed="${selected ? "true" : "false"}"
                         >
 
                             <span class="selection-character-sprite-slot">
+
+                                <img
+                                    class="selection-character-sprite"
+                                    src="${escapeHTML(sprite)}"
+                                    alt=""
+                                    draggable="false"
+                                >
+
                             </span>
 
                             <span class="selection-character-copy">
@@ -69952,23 +70844,48 @@ function renderCharacterCards() {
             .join("");
 
 
+    /*
+        Primeira arte + primeiro gráfico.
+    */
+
     updateSelectionCharacterArt(
-        UI_RUNTIME.selectedCharacter
+        UI_RUNTIME.selectedCharacter,
+        true
     );
 
 
-    updateCharacterSelectionAtmosphere(
+    const initialCharacter =
         characters.find(
             character =>
                 character.id ===
                 UI_RUNTIME.selectedCharacter
-        )?.color ||
+        );
+
+
+    if (initialCharacter) {
+
+        updateSelectionGraph(
+            initialCharacter,
+            true
+        );
+
+    }
+
+
+    updateCharacterSelectionAtmosphere(
+        initialCharacter?.color ||
         null
     );
 
 
     updateCharacterStartButton();
 
+
+    /*
+        ========================================================
+        CLIQUES
+        ========================================================
+    */
 
     for (
         const button of
@@ -70012,12 +70929,15 @@ function renderCharacterCards() {
                     );
 
 
-                if (
-                    !character
-                ) {
+                if (!character) {
                     return;
                 }
 
+
+                /*
+                    Bloqueia outros cliques durante
+                    o flash para não quebrar a cortina.
+                */
 
                 UI_RUNTIME
                     .characterSelectionLocked =
@@ -70030,7 +70950,7 @@ function renderCharacterCards() {
 
 
                 /*
-                    Remove seleção anterior.
+                    Atualiza a seleção dos botões.
                 */
 
                 for (
@@ -70072,9 +70992,24 @@ function renderCharacterCards() {
                     characterId;
 
 
+                /*
+                    Tudo começa praticamente junto:
+
+                    - botão muda;
+                    - atmosfera muda;
+                    - gráfico começa a se mover;
+                    - flash começa;
+                    - imagem troca escondida.
+                */
+
                 updateCharacterSelectionAtmosphere(
                     character.color ||
                     null
+                );
+
+
+                updateSelectionGraph(
+                    character
                 );
 
 
@@ -70084,8 +71019,8 @@ function renderCharacterCards() {
 
 
                 /*
-                    Pequeno bloqueio evita clique duplo
-                    durante a troca da arte.
+                    700ms:
+                    flash já terminou completamente.
                 */
 
                 window.setTimeout(
@@ -70104,7 +71039,7 @@ function renderCharacterCards() {
                         updateCharacterStartButton();
 
                     },
-                    380
+                    700
                 );
 
             }

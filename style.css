@@ -15545,8 +15545,8 @@ word-break:
 .selection-character-art.is-transitioning::before {
     animation:
         veyraCharacterFlash
-        660ms
-        cubic-bezier(.2, .72, .18, 1)
+        240ms
+        cubic-bezier(.15, .85, .2, 1)
         both;
 }
 
@@ -15554,8 +15554,8 @@ word-break:
 .selection-character-art.is-transitioning::after {
     animation:
         veyraCharacterExplosion
-        660ms
-        cubic-bezier(.12, .68, .18, 1)
+        260ms
+        cubic-bezier(.1, .82, .18, 1)
         both;
 }
 
@@ -15563,8 +15563,8 @@ word-break:
 .selection-character-art.is-transitioning img {
     animation:
         veyraCharacterImageSwap
-        660ms
-        ease
+        220ms
+        ease-out
         both;
 }
 
@@ -15579,60 +15579,30 @@ word-break:
     exatamente dentro dessa região.
 */
 
-@keyframes veyraCharacterFlash {
+@keyframes veyraCharacterImageSwap {
 
     0% {
-        opacity: 0;
-
-        transform:
-            scale(.12);
+        opacity: .72;
+        transform: scale(1.025);
+        filter:
+            brightness(1.35)
+            blur(1px);
     }
 
-    18% {
-        opacity: .55;
-
-        transform:
-            scale(.64);
-    }
-
-    35% {
+    45% {
         opacity: 1;
-
-        transform:
-            scale(1.035);
-
-        box-shadow:
-            0 0 22px
-            var(--character-glow),
-            0 0 55px
-            var(--character-glow);
-    }
-
-    47% {
-        opacity: 1;
-
-        transform:
-            scale(1.055);
-
-        box-shadow:
-            0 0 30px
-            var(--character-glow),
-            0 0 80px
-            var(--character-glow);
-    }
-
-    68% {
-        opacity: .48;
-
-        transform:
-            scale(1.12);
+        transform: scale(1.012);
+        filter:
+            brightness(1.15)
+            blur(0);
     }
 
     100% {
-        opacity: 0;
-
-        transform:
-            scale(1.18);
+        opacity: 1;
+        transform: scale(1);
+        filter:
+            brightness(1)
+            blur(0);
     }
 
 }

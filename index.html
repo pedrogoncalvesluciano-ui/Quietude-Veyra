@@ -708,17 +708,52 @@
              atributos e habilidades.
              =============================================== -->
 
-        <div
-                     id="selectionInfoPanel"
+              <div
+            id="selectionInfoPanel"
             class="selection-info-panel"
         >
-            <canvas
-                id="selectionStatsCanvas"
-                class="selection-stats-canvas"
-                aria-label="Atributos do personagem"
-            ></canvas>
-        </div>
 
+            <div class="selection-character-info">
+
+                <span
+                    id="selectionCharacterRole"
+                    class="selection-character-role"
+                >
+                    CLASSE
+                </span>
+
+                <h2
+                    id="selectionCharacterName"
+                    class="selection-character-name"
+                >
+                    PERSONAGEM
+                </h2>
+
+                <div class="selection-info-divider"></div>
+
+                <p
+                    id="selectionCharacterDescription"
+                    class="selection-character-description"
+                ></p>
+
+            </div>
+
+
+            <div class="selection-stats-area">
+
+                <span class="selection-stats-title">
+                    ATRIBUTOS
+                </span>
+
+                <canvas
+                    id="selectionStatsCanvas"
+                    class="selection-stats-canvas"
+                    aria-label="Atributos do personagem"
+                ></canvas>
+
+            </div>
+
+        </div>
 
         <!-- ===============================================
              VOLTAR

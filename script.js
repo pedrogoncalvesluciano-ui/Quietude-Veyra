@@ -69791,6 +69791,92 @@ function renderCharacterCards() {
 
     }
 
+       function updateSelectionCharacterInfo(
+        character
+    ) {
+
+        if (!character) {
+            return;
+        }
+
+
+        const nameElement =
+            document.getElementById(
+                "selectionCharacterName"
+            );
+
+
+        const roleElement =
+            document.getElementById(
+                "selectionCharacterRole"
+            );
+
+
+        const descriptionElement =
+            document.getElementById(
+                "selectionCharacterDescription"
+            );
+
+
+        const panel =
+            document.getElementById(
+                "selectionInfoPanel"
+            );
+
+
+        const name =
+            selectionNames[
+                character.id
+            ] ||
+            character.name ||
+            "PERSONAGEM";
+
+
+        const role =
+            selectionRoles[
+                character.id
+            ] ||
+            character.className ||
+            "";
+
+
+        if (nameElement) {
+
+            nameElement.textContent =
+                name;
+
+        }
+
+
+        if (roleElement) {
+
+            roleElement.textContent =
+                role;
+
+        }
+
+
+        if (descriptionElement) {
+
+            descriptionElement.textContent =
+                character.description ||
+                "";
+
+        }
+
+
+        if (panel) {
+
+            panel.style.setProperty(
+                "--character-glow",
+                getSelectionColor(
+                    character
+                )
+            );
+
+        }
+
+    }
 
     /*
         ========================================================
@@ -70862,7 +70948,12 @@ function renderCharacterCards() {
         );
 
 
-    if (initialCharacter) {
+      if (initialCharacter) {
+
+        updateSelectionCharacterInfo(
+            initialCharacter
+        );
+
 
         updateSelectionGraph(
             initialCharacter,
@@ -71007,6 +71098,9 @@ function renderCharacterCards() {
                     null
                 );
 
+       updateSelectionCharacterInfo(
+                    character
+                );
 
                 updateSelectionGraph(
                     character

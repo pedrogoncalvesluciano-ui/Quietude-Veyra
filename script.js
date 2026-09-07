@@ -1635,7 +1635,7 @@
                         "Cavaleiro",
 
                     icon:
-                        "⚔️",
+                        "🗡️",
 
                     color:
                         "#9da2a4",
@@ -1676,11 +1676,11 @@
                             type:
                                 "meleeArc",
 
-                            range:
-                                74,
+                          range:
+    108,
 
-                            arc:
-                                1.12,
+arc:
+    1.85,
 
                             color:
                                 "#d7dbdc"
@@ -45991,182 +45991,402 @@ const height =
     }
 
 
-    function drawRegionGroundTexture(
-        ctx,
-        world
+  const groundBlendSurface = {
+
+    canvas:
+        null,
+
+    ctx:
+        null,
+
+    width:
+        0,
+
+    height:
+        0
+
+};
+
+
+function ensureGroundBlendSurface() {
+
+    const width =
+        Math.max(
+            1,
+            Math.ceil(
+                renderRuntime.width
+            )
+        );
+
+    const height =
+        Math.max(
+            1,
+            Math.ceil(
+                renderRuntime.height
+            )
+        );
+
+
+    if (
+        !groundBlendSurface.canvas
     ) {
-        const entry =
-            getGroundTexture(
-                world?.id
+
+        groundBlendSurface.canvas =
+            document.createElement(
+                "canvas"
             );
 
-        if (
-            !entry ||
-            !entry.loaded ||
-            entry.failed
-        ) {
-            return false;
-        }
-
-             const tileSize =
-           290;
-
-        const view =
-            renderRuntime
-                .visibleWorldRect;
-
-        const startX =
-            Math.floor(
-                view.x /
-                tileSize
-            ) *
-            tileSize;
-
-        const startY =
-            Math.floor(
-                view.y /
-                tileSize
-            ) *
-            tileSize;
-
-        const endX =
-            view.x +
-            view.w +
-            tileSize;
-
-        const endY =
-            view.y +
-            view.h +
-            tileSize;
-
-        ctx.save();
-
-        ctx.imageSmoothingEnabled =
-            false;
-
-        for (
-            let x = startX;
-            x <= endX;
-            x += tileSize
-        ) {
-            for (
-                let y = startY;
-                y <= endY;
-                y += tileSize
-            ) {
-                const screen =
-                    worldToScreen(
-                        x,
-                        y
-                    );
-
-                ctx.drawImage(
-                    entry.image,
-                    screen.x,
-                    screen.y,
-                    tileSize,
-                    tileSize
+        groundBlendSurface.ctx =
+            groundBlendSurface.canvas
+                .getContext(
+                    "2d"
                 );
-            }
-        }
 
-        ctx.restore();
-
-        return true;
     }
 
 
+    if (
+        groundBlendSurface.width !==
+            width ||
+
+        groundBlendSurface.height !==
+            height
+    ) {
+
+        groundBlendSurface.width =
+            width;
+
+        groundBlendSurface.height =
+            height;
+
+        groundBlendSurface.canvas.width =
+            width;
+
+        groundBlendSurface.canvas.height =
+            height;
+
+    }
+
+
+    return groundBlendSurface;
+
+}
+
+
+function drawGroundImageTiles(
+    targetCtx,
+    image,
+    tileSize,
+    view
+) {
+
+    const startX =
+        Math.floor(
+            view.x /
+            tileSize
+        ) *
+        tileSize;
+
+    const startY =
+        Math.floor(
+            view.y /
+            tileSize
+        ) *
+        tileSize;
+
+
+    const endX =
+        view.x +
+        view.w +
+        tileSize;
+
+    const endY =
+        view.y +
+        view.h +
+        tileSize;
+
+
+    for (
+        let x = startX;
+        x <= endX;
+        x += tileSize
+    ) {
+
+        for (
+            let y = startY;
+            y <= endY;
+            y += tileSize
+        ) {
+
+            const screen =
+                worldToScreen(
+                    x,
+                    y
+                );
+
+
+            targetCtx.drawImage(
+                image,
+                screen.x,
+                screen.y,
+                tileSize,
+                tileSize
+            );
+
+        }
+
+    }
+
+}
+
+
+function drawRegionGroundTexture(
+    ctx,
+    world
+) {
+
+    const entry =
+        getGroundTexture(
+            world?.id
+        );
+
+
+    if (
+        !entry ||
+        !entry.loaded ||
+        entry.failed
+    ) {
+
+        return false;
+
+    }
+
+
+    const tileSize =
+        290;
+
+
+    const view =
+        renderRuntime
+            .visibleWorldRect;
+
+
     /*
-        ÁRVORES NOVAS.
-
-        1 = grande
-        2 = média
-        3 = caída
-        4 = pequena
-
-        Não existe mais detector automático.
-        Cada árvore tem seu recorte fixo.
+        CHÃO PRINCIPAL DA REGIÃO.
     */
-    const TREE_SPRITE_DATA =
-        Object.freeze({
+    ctx.save();
 
-            1: Object.freeze({
-                src:
-               "./assets/sprites/environment/trees/large.png?v=20260906-env2",
-
-                kind:
-                    "large",
-
-                regions: Object.freeze([
-                    [6, 231, 503, 674],
-                    [530, 233, 394, 668],
-                    [947, 231, 495, 671]
-                ])
-            }),
+    ctx.imageSmoothingEnabled =
+        false;
 
 
-            2: Object.freeze({
-
-                /*
-                    Seu arquivo no GitHub está
-                    exatamente com o nome "medium"
-                    sem .png.
-                */
-               src:
-     "./assets/sprites/environment/trees/medium.png?v=20260906-env2",
-
-                kind:
-                    "medium",
-
-                regions: Object.freeze([
-                    [28, 289, 463, 542],
-                    [516, 297, 422, 545],
-                    [973, 318, 457, 520]
-                ])
-            }),
+    drawGroundImageTiles(
+        ctx,
+        entry.image,
+        tileSize,
+        view
+    );
 
 
-            3: Object.freeze({
-                src:
-               "./assets/sprites/environment/trees/fallen.png?v=20260906-env2",
-
-                kind:
-                    "fallen",
-
-                /*
-                    Somente árvores/troncos caídos.
-                    Os tocos de baixo não entram.
-                */
-                regions: Object.freeze([
-                    [40, 144, 463, 269],
-                    [519, 172, 456, 241],
-                    [1000, 194, 416, 222],
-                    [40, 456, 478, 277],
-                    [548, 482, 422, 250],
-                    [1000, 479, 421, 253]
-                ])
-            }),
+    ctx.restore();
 
 
-            4: Object.freeze({
-                src:
-              "./assets/sprites/environment/trees/small.png?v=20260906-env2",
-               
-                kind:
-                    "small",
+    /*
+        VILA -> ESTRADA ESQUECIDA.
 
-                regions: Object.freeze([
-                    [185, 449, 223, 250],
-                    [629, 463, 205, 236],
-                    [1060, 464, 206, 229]
-                ])
-            })
+        Primeiros 38% da Estrada:
+        Vila vai sumindo aos poucos
+        enquanto Estrada aparece.
 
-        });
+        Antes da metade:
+        100% Estrada.
+    */
+    if (
+        world.id ===
+        "road"
+    ) {
+
+        const previousEntry =
+            getGroundTexture(
+                "village"
+            );
 
 
-    const treeSpriteCache =
-        new Map();
+        if (
+            previousEntry &&
+            previousEntry.loaded &&
+            !previousEntry.failed
+        ) {
+
+            const surface =
+                ensureGroundBlendSurface();
+
+
+            const blendCtx =
+                surface.ctx;
+
+
+            blendCtx.setTransform(
+                1,
+                0,
+                0,
+                1,
+                0,
+                0
+            );
+
+
+            blendCtx.clearRect(
+                0,
+                0,
+                surface.width,
+                surface.height
+            );
+
+
+            blendCtx.imageSmoothingEnabled =
+                false;
+
+
+            blendCtx.globalCompositeOperation =
+                "source-over";
+
+
+            /*
+                Desenha a textura da Vila
+                temporariamente.
+            */
+            drawGroundImageTiles(
+                blendCtx,
+                previousEntry.image,
+                tileSize,
+                view
+            );
+
+
+            /*
+                Posição no mundo onde
+                começa e termina a mistura.
+            */
+            const transitionStart =
+                worldToScreen(
+                    0,
+                    0
+                ).x;
+
+
+            const transitionEnd =
+                worldToScreen(
+                    world.width *
+                        0.38,
+                    0
+                ).x;
+
+
+            const gradient =
+                blendCtx
+                    .createLinearGradient(
+                        transitionStart,
+                        0,
+                        transitionEnd,
+                        0
+                    );
+
+
+            /*
+                Entrada:
+                praticamente Vila.
+            */
+            gradient.addColorStop(
+                0,
+                "rgba(0,0,0,1)"
+            );
+
+
+            gradient.addColorStop(
+                0.18,
+                "rgba(0,0,0,0.96)"
+            );
+
+
+            /*
+                Meio da transição.
+            */
+            gradient.addColorStop(
+                0.58,
+                "rgba(0,0,0,0.52)"
+            );
+
+
+            gradient.addColorStop(
+                0.86,
+                "rgba(0,0,0,0.12)"
+            );
+
+
+            /*
+                38% do mapa:
+                chão da Vila desapareceu.
+            */
+            gradient.addColorStop(
+                1,
+                "rgba(0,0,0,0)"
+            );
+
+
+            /*
+                Usa o gradiente como máscara
+                da textura da Vila.
+            */
+            blendCtx.globalCompositeOperation =
+                "destination-in";
+
+
+            blendCtx.fillStyle =
+                gradient;
+
+
+            blendCtx.fillRect(
+                0,
+                0,
+                surface.width,
+                surface.height
+            );
+
+
+            blendCtx.globalCompositeOperation =
+                "source-over";
+
+
+            /*
+                Coloca a mistura por cima
+                da textura da Estrada.
+            */
+            ctx.save();
+
+            ctx.imageSmoothingEnabled =
+                false;
+
+
+            ctx.drawImage(
+                surface.canvas,
+                0,
+                0,
+                renderRuntime.width,
+                renderRuntime.height
+            );
+
+
+            ctx.restore();
+
+        }
+
+    }
+
+
+    return true;
+
+}
 
 
     function getTreeSpriteEntry(
@@ -51987,22 +52207,22 @@ if (
         ========================================================
     */
 
-      theronIdle:
-    Object.freeze({
+   theronIdle:
+Object.freeze({
 
-        file:
-            "slash.png",
+    file:
+        "slash.png",
 
-        frames:
-            6,
+    frames:
+        1,
 
-        fps:
-            1.35,
+    fps:
+        1,
 
-        rows:
-            4
+    rows:
+        4
 
-    }),
+}),
 
     theronWalk:
         Object.freeze({
@@ -52040,40 +52260,40 @@ if (
         }),
 
 
-      theronSlashForward:
-        Object.freeze({
+  theronSlashForward:
+    Object.freeze({
 
-            file:
-                "slash_oversize.png",
+        file:
+            "slash.png",
 
-            frames:
-                6,
+        frames:
+            6,
 
-            fps:
-                22,
+        fps:
+            22,
 
-            rows:
-                4
+        rows:
+            4
 
-        }),
+    }),
 
 
-    theronSlashReverse:
-        Object.freeze({
+theronSlashReverse:
+    Object.freeze({
 
-            file:
-                "slash_reverse_oversize.png",
+        file:
+            "slash.png",
 
-            frames:
-                6,
+        frames:
+            6,
 
-            fps:
-                22,
+        fps:
+            22,
 
-            rows:
-                4
+        rows:
+            4
 
-        }),
+    }),
 
 
     theronHurt:
@@ -58375,6 +58595,49 @@ function drawBloodMarks(
         }
 
 /*
+    PORTAS TAMBÉM PARTICIPAM DO Y-SORT.
+
+    Assim árvore, player e porta respeitam
+    corretamente quem está na frente
+    conforme a posição vertical.
+*/
+for (
+    const door of
+    safeArray(
+        world.doors
+    )
+) {
+    if (
+        !door
+    ) {
+        continue;
+    }
+
+    entries.push({
+
+        kind:
+            "door",
+
+        entity:
+            door,
+
+        depth:
+            finiteNumber(
+                door.centerY,
+                finiteNumber(
+                    door.y,
+                    0
+                ) +
+                finiteNumber(
+                    door.h,
+                    0
+                )
+            )
+
+    });
+}
+
+/*
     DROPS TAMBÉM PARTICIPAM
     DO Y-SORT.
 
@@ -58537,6 +58800,13 @@ for (
         entry.entity
     );
 
+    break;
+
+                  case "door":
+    drawDoor(
+        ctx,
+        entry.entity
+    );
     break;
 
                 case "player":
@@ -64638,11 +64908,9 @@ drawDoorwayOpenings(
 
 
 /*
-    Porta continua na frente.
+    As portas agora participam do Y-SORT.
+    Não redesenhamos aqui por cima das árvores.
 */
-drawDoors(
-    ctx
-);
 
         /*
             Ataques e drops.

@@ -46388,6 +46388,100 @@ function drawRegionGroundTexture(
 
 }
 
+       /*
+        ÁRVORES NOVAS.
+
+        1 = grande
+        2 = média
+        3 = caída
+        4 = pequena
+
+        Não existe mais detector automático.
+        Cada árvore tem seu recorte fixo.
+    */
+    const TREE_SPRITE_DATA =
+        Object.freeze({
+
+            1: Object.freeze({
+
+                src:
+                    "./assets/sprites/environment/trees/large.png?v=20260906-env2",
+
+                kind:
+                    "large",
+
+                regions:
+                    Object.freeze([
+                        [6, 231, 503, 674],
+                        [530, 233, 394, 668],
+                        [947, 231, 495, 671]
+                    ])
+
+            }),
+
+
+            2: Object.freeze({
+
+                src:
+                    "./assets/sprites/environment/trees/medium.png?v=20260906-env2",
+
+                kind:
+                    "medium",
+
+                regions:
+                    Object.freeze([
+                        [28, 289, 463, 542],
+                        [516, 297, 422, 545],
+                        [973, 318, 457, 520]
+                    ])
+
+            }),
+
+
+            3: Object.freeze({
+
+                src:
+                    "./assets/sprites/environment/trees/fallen.png?v=20260906-env2",
+
+                kind:
+                    "fallen",
+
+                regions:
+                    Object.freeze([
+                        [40, 144, 463, 269],
+                        [519, 172, 456, 241],
+                        [1000, 194, 416, 222],
+                        [40, 456, 478, 277],
+                        [548, 482, 422, 250],
+                        [1000, 479, 421, 253]
+                    ])
+
+            }),
+
+
+            4: Object.freeze({
+
+                src:
+                    "./assets/sprites/environment/trees/small.png?v=20260906-env2",
+
+                kind:
+                    "small",
+
+                regions:
+                    Object.freeze([
+                        [185, 449, 223, 250],
+                        [629, 463, 205, 236],
+                        [1060, 464, 206, 229]
+                    ])
+
+            })
+
+        });
+
+
+    const treeSpriteCache =
+        new Map();
+
 
     function getTreeSpriteEntry(
         spriteSheetId

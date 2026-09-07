@@ -53530,8 +53530,8 @@ if (
         Object.freeze({
 
             file:
-                "combat.png",
-
+    "idle.png",
+           
             frames:
                 2,
 
@@ -53544,41 +53544,43 @@ if (
         }),
 
 
-    theronWalk:
-        Object.freeze({
+   theronWalk:
+    Object.freeze({
 
-            file:
-                "combat.png",
+        file:
+            "run.png",
 
-            frames:
-                2,
+        frames:
+            8,
 
-            fps:
-                7,
+        /*
+            Mais devagar que o Dash.
+        */
+        fps:
+            8,
 
-            rows:
-                4
+        rows:
+            4
 
-        }),
+    }),
 
 
-    theronRun:
-        Object.freeze({
+  theronRun:
+    Object.freeze({
 
-            file:
-                "combat.png",
+        file:
+            "run.png",
 
-            frames:
-                2,
+        frames:
+            8,
 
-            fps:
-                10,
+        fps:
+            12,
 
-            rows:
-                4
+        rows:
+            4
 
-        }),
-
+    }),
 
     theronSlashForward:
         Object.freeze({
@@ -53645,7 +53647,7 @@ if (
         Object.freeze({
 
             file:
-                "combat.png",
+    "idle.png",
 
             frames:
                 2,
@@ -53662,14 +53664,21 @@ if (
     zephyrWalk:
         Object.freeze({
 
-            file:
-                "combat.png",
+           /*
+    O pack não precisa utilizar
+    stance de combate para andar.
 
-            frames:
-                2,
+    Usamos a corrida em velocidade
+    menor como caminhada.
+*/
+file:
+    "run.png",
 
-            fps:
-                7,
+frames:
+    8,
+
+fps:
+    8,
 
             rows:
                 4
@@ -53680,14 +53689,14 @@ if (
     zephyrRun:
         Object.freeze({
 
-            file:
-                "combat.png",
+           file:
+    "run.png",
 
-            frames:
-                2,
+frames:
+    8,
 
-            fps:
-                10,
+fps:
+    12,
 
             rows:
                 4
@@ -53928,23 +53937,60 @@ if (
 
     const playerSpriteCache = new Map();
 
-   function preloadPlayerSprites(
+ function preloadPlayerSprites(
     characterId
 ) {
-    if (!characterId) {
+    if (
+        !characterId
+    ) {
         return;
     }
 
-    Object.keys(
-        PLAYER_SPRITE_ANIMATIONS
-    ).forEach(
-        animationName => {
-            getPlayerSpriteEntry(
-                characterId,
-                animationName
-            );
-        }
-    );
+
+    const preloadSets = {
+
+        theron: [
+            "theronIdle",
+            "theronWalk",
+            "theronRun",
+            "theronSlashForward",
+            "theronSlashReverse",
+            "theronHurt"
+        ],
+
+        zephyr: [
+            "zephyrIdle",
+            "zephyrWalk",
+            "zephyrRun",
+            "zephyrAttack",
+            "zephyrHurt"
+        ]
+
+    };
+
+
+    const animations =
+        preloadSets[
+            characterId
+        ];
+
+
+    if (
+        !animations
+    ) {
+        return;
+    }
+
+
+    for (
+        const animationName of
+        animations
+    ) {
+        getPlayerSpriteEntry(
+            characterId,
+            animationName
+        );
+    }
 }
 
 
@@ -54118,15 +54164,33 @@ image.src =
                 animationName
             );
 
-        if (
-            !animation ||
-            !entry ||
-            entry.failed ||
-            !entry.image.complete ||
-            entry.image.naturalWidth <= 0
-        ) {
-            return false;
-        }
+       /*
+    ERRO REAL:
+    permite utilizar fallback.
+*/
+if (
+    !animation ||
+    !entry ||
+    entry.failed
+) {
+    return false;
+}
+
+
+/*
+    A IMAGEM EXISTE,
+    MAS AINDA ESTÁ CARREGANDO.
+
+    Consideramos como "desenhada"
+    para NÃO deixar o boneco Canvas
+    piscar por um frame.
+*/
+if (
+    !entry.image.complete ||
+    entry.image.naturalWidth <= 0
+) {
+    return true;
+}
 
         const safeFrame =
             clamp(
@@ -70229,6 +70293,21 @@ if (!characterId) {
     return false;
 
 }
+
+       /*
+    Carrega os sprites do personagem
+    ANTES de entrar no Canvas do jogo.
+
+    Isso evita aparecer o boneco
+    provisório no primeiro movimento
+    ou primeiro ataque.
+*/
+preloadPlayerSprites(
+    characterId
+);
+
+
+beginFreshAdventureSession();
 
         beginFreshAdventureSession();
 

@@ -70653,7 +70653,7 @@ function renderCharacterCards() {
         em que a imagem é substituída.
     */
 
-    function updateSelectionCharacterArt(
+      function updateSelectionCharacterArt(
         characterId,
         instant = false
     ) {
@@ -70711,15 +70711,13 @@ function renderCharacterCards() {
 
 
         /*
-            Primeira imagem da tela:
-            não precisa explodir.
+            PRIMEIRA ABERTURA:
+            mostra imediatamente.
         */
 
         if (
             instant ||
-            !image.getAttribute(
-                "src"
-            )
+            !image.getAttribute("src")
         ) {
 
             image.src =
@@ -70736,108 +70734,55 @@ function renderCharacterCards() {
             );
 
             return;
-
         }
 
 
         /*
-            Pré-carrega ANTES de iniciar o flash.
+            TROCA RÁPIDA.
 
-            Assim não existe risco de o flash acabar
-            e a nova imagem ainda não estar pronta.
+            Ao clicar:
+            1. explosão começa AGORA;
+            2. imagem troca AGORA;
+            3. explosão desaparece rapidamente.
+
+            Não existe mais espera de 250ms.
         */
 
-        const preload =
-            new Image();
+        artContainer.classList.remove(
+            "is-transitioning"
+        );
 
 
-        preload.onload =
+        void artContainer.offsetWidth;
+
+
+        image.src =
+            nextSource;
+
+        image.alt =
+            selectionNames[
+                characterId
+            ] ||
+            "Personagem";
+
+
+        artContainer.classList.add(
+            "is-transitioning"
+        );
+
+
+        window.setTimeout(
             () => {
 
                 artContainer.classList.remove(
                     "is-transitioning"
                 );
 
-
-                /*
-                    Força o navegador a reconhecer
-                    uma nova animação.
-                */
-
-                void artContainer.offsetWidth;
-
-
-                artContainer.classList.add(
-                    "is-transitioning"
-                );
-
-
-                /*
-                    250ms = momento em que o flash
-                    já cobre completamente o quadro.
-
-                    A troca acontece escondida.
-                */
-
-                window.setTimeout(
-                    () => {
-
-                        image.src =
-                            nextSource;
-
-                        image.alt =
-                            selectionNames[
-                                characterId
-                            ] ||
-                            "Personagem";
-
-                    },
-                    250
-                );
-
-
-                /*
-                    Final da explosão.
-                */
-
-                window.setTimeout(
-                    () => {
-
-                        artContainer.classList.remove(
-                            "is-transitioning"
-                        );
-
-                    },
-                    680
-                );
-
-            };
-
-
-        preload.onerror =
-            () => {
-
-                /*
-                    Fallback seguro.
-                */
-
-                image.src =
-                    nextSource;
-
-                image.alt =
-                    selectionNames[
-                        characterId
-                    ] ||
-                    "Personagem";
-
-            };
-
-
-        preload.src =
-            nextSource;
+            },
+            260
+        );
 
     }
-
 
     /*
         ========================================================
@@ -71026,21 +70971,6 @@ function renderCharacterCards() {
 
 
                 /*
-                    Bloqueia outros cliques durante
-                    o flash para não quebrar a cortina.
-                */
-
-                UI_RUNTIME
-                    .characterSelectionLocked =
-                    true;
-
-
-                container.classList.add(
-                    "selection-locked"
-                );
-
-
-                /*
                     Atualiza a seleção dos botões.
                 */
 
@@ -71112,29 +71042,7 @@ function renderCharacterCards() {
                 );
 
 
-                /*
-                    700ms:
-                    flash já terminou completamente.
-                */
-
-                window.setTimeout(
-                    () => {
-
-                        UI_RUNTIME
-                            .characterSelectionLocked =
-                            false;
-
-
-                        container.classList.remove(
-                            "selection-locked"
-                        );
-
-
-                        updateCharacterStartButton();
-
-                    },
-                    700
-                );
+                             updateCharacterStartButton();
 
             }
         );

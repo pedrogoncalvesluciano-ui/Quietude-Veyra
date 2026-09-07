@@ -69678,377 +69678,442 @@ function updateCharacterSelectionAtmosphere(accent = null) {
 }
 
 function renderCharacterCards() {
-    const container = DOM.misc.characterCards;
-    if (!container) return;
 
-    const characters = getCharactersList();
+    const container =
+        DOM.misc.characterCards;
 
-    const currentCharacter = characters.find(
-        character =>
-            character.id ===
-            UI_RUNTIME.selectedCharacter
-    ) || null;
+    if (
+        !container
+    ) {
+        return;
+    }
 
-    updateCharacterSelectionAtmosphere(
-        currentCharacter?.color || null
-    );
 
-    container.innerHTML = characters.map((character, index) => {
-        const selected =
-            character.id ===
-            UI_RUNTIME.selectedCharacter;
+    const characters =
+        getCharactersList();
 
-        const accent =
-            character.color ||
-            character.selectionGlow ||
-            "#b69a65";
 
-        const role =
-            character.role ||
-            character.className ||
-            getCharacterRole(character.id);
+    /*
+        Mantemos os IDs internos existentes.
 
-        const description =
-            character.description ||
-            getCharacterDescription(character.id);
+        theron  = Varyn
+        zephyr  = Vael
 
-        const symbol =
-            getCharacterSymbol(character.id);
+        Isso evita quebrar saves e outros
+        sistemas que já usam esses IDs.
+    */
 
-        const attackName =
-            character.basicAttack?.name ||
-            "Ataque básico";
+    const selectionAssets = {
 
-        const attackRange =
-            Math.round(
-                finite(
-                    character.basicAttack?.range,
-                    0
-                )
+        kaelion:
+            "./assets/ui/character-selection/kaelion-selection.png",
+
+        theron:
+            "./assets/ui/character-selection/varyn-selection.png",
+
+        grumgar:
+            "./assets/ui/character-selection/grumgar-selection.png",
+
+        lirael:
+            "./assets/ui/character-selection/lirael-selection.png",
+
+        zephyr:
+            "./assets/ui/character-selection/vael-selection.png"
+
+    };
+
+
+    const selectionNames = {
+
+        kaelion:
+            "KAELION",
+
+        theron:
+            "VARYN",
+
+        grumgar:
+            "GRUMGAR",
+
+        lirael:
+            "LIRAEL",
+
+        zephyr:
+            "VAEL"
+
+    };
+
+
+    const selectionRoles = {
+
+        kaelion:
+            "MAGO",
+
+        theron:
+            "ESPADACHIM LUPINO",
+
+        grumgar:
+            "TROLL",
+
+        lirael:
+            "FADA",
+
+        zephyr:
+            "INVOCADOR"
+
+    };
+
+
+    /*
+        Caso ainda não exista personagem selecionado,
+        Kaelion vira apenas a seleção visual inicial.
+
+        O ID interno continua sendo usado normalmente.
+    */
+
+    if (
+        !UI_RUNTIME.selectedCharacter &&
+        characters.length > 0
+    ) {
+
+        UI_RUNTIME.selectedCharacter =
+            characters[0].id;
+
+        state.selectedCharacter =
+            characters[0].id;
+
+    }
+
+
+    function updateSelectionCharacterArt(
+        characterId
+    ) {
+
+        const image =
+            document.getElementById(
+                "selectionCharacterImage"
             );
 
-        return `
-            <div
-                class="character-choice ${selected ? "selected" : ""}"
-                data-character-choice="${escapeHTML(character.id)}"
-                style="--char-color:${escapeHTML(accent)};--card-index:${index}"
-            >
-                <div
-                    class="character-symbol"
-                    aria-hidden="true"
-                >
-                    ${escapeHTML(symbol)}
-                </div>
 
-                <button
-                    type="button"
-                    class="character-card ${selected ? "selected" : ""}"
-                    data-character-id="${escapeHTML(character.id)}"
-                    aria-pressed="${selected ? "true" : "false"}"
-                >
+        const artContainer =
+            document.getElementById(
+                "selectionCharacterArt"
+            );
 
-                    <span
-                        class="character-border-laser"
-                        aria-hidden="true"
-                    >
-                        <span class="laser-edge laser-edge-top"></span>
-                        <span class="laser-edge laser-edge-right"></span>
-                        <span class="laser-edge laser-edge-bottom"></span>
-                        <span class="laser-edge laser-edge-left"></span>
-                    </span>
-                
-                    <span class="character-card-inner">
 
-                        <span class="character-card-face character-card-front">
+        if (
+            !image ||
+            !artContainer
+        ) {
+            return;
+        }
 
-                            <span class="character-identity">
-                                <h3>
-                                    ${escapeHTML(character.name)}
-                                </h3>
 
-                                <span class="role">
-                                    ${escapeHTML(role)}
-                                </span>
-                            </span>
+        const nextSource =
+            selectionAssets[
+                characterId
+            ];
 
-                            <span class="character-description">
-                                ${escapeHTML(description)}
-                            </span>
 
-                            <span class="character-card-meta">
+        if (
+            !nextSource
+        ) {
+            return;
+        }
 
-                                <span class="character-meta-item">
-                                    <small>
-                                        ATAQUE
-                                    </small>
 
-                                    <strong>
-                                        ${escapeHTML(attackName)}
-                                    </strong>
-                                </span>
+        /*
+            Começa a transição.
+        */
 
-                                <span class="character-meta-item">
-                                    <small>
-                                        ALCANCE
-                                    </small>
+        artContainer.classList.add(
+            "is-changing"
+        );
 
-                                    <strong>
-                                        ${attackRange}
-                                    </strong>
-                                </span>
 
-                            </span>
-
-                            <span class="character-card-stats">
-
-                                ${characterStatRow(
-                                    "VIDA",
-                                    character,
-                                    "hp"
-                                )}
-
-                                ${characterStatRow(
-                                    "FORÇA",
-                                    character,
-                                    "damage"
-                                )}
-
-                                ${characterStatRow(
-                                    "ENERGIA",
-                                    character,
-                                    "energy"
-                                )}
-
-                                ${characterStatRow(
-                                    "RESISTÊNCIA",
-                                    character,
-                                    "defense"
-                                )}
-
-                                ${characterStatRow(
-                                    "VELOCIDADE",
-                                    character,
-                                    "speed"
-                                )}
-
-                            </span>
-
-                        </span>
-
-                        <span
-                            class="character-card-face character-card-back"
-                            aria-hidden="true"
-                        >
-                            <span class="character-back-mark">
-                                ◇
-                            </span>
-
-                            <strong>
-                                VEYRA
-                            </strong>
-
-                            <span class="character-back-rule"></span>
-
-                            <small>
-                                A QUIETUDE
-                            </small>
-                        </span>
-
-                    </span>
-                </button>
-
-                <div
-                    class="character-selected-label"
-                    aria-hidden="${selected ? "false" : "true"}"
-                >
-                    SELECIONADO
-                </div>
-            </div>
-        `;
-    }).join("");
-
-    updateCharacterStartButton();
-
-    for (
-        const card of
-        container.querySelectorAll(
-            "[data-character-id]"
-        )
-    ) {
-        card.addEventListener(
-            "click",
+        window.setTimeout(
             () => {
-                if (
-                    UI_RUNTIME.characterSelectionLocked
-                ) {
-                    return;
-                }
 
-                const characterId =
-                    card.dataset.characterId;
-
-                if (
-                    !characterId ||
-                    characterId ===
-                        UI_RUNTIME.selectedCharacter
-                ) {
-                    return;
-                }
-
-                const choice =
-                    card.closest(
-                        ".character-choice"
-                    );
-
-                const previousChoice =
-                    container.querySelector(
-                        ".character-choice.selected"
-                    );
-
-                const nextAccent =
-                    choice
-                        ?.style
-                        .getPropertyValue(
-                            "--char-color"
-                        )
-                        .trim() ||
-                    null;
-
-                              /*
-                    Começa primeiro o giro 3D.
-
-                    O fundo possui gradientes,
-                    partículas, sombras e cores
-                    dependentes do personagem.
-
-                    Dar dois frames para a carta
-                    entrar na camada de composição
-                    evita a travada inicial sem
-                    remover nenhum efeito visual.
-                */
-                UI_RUNTIME.characterSelectionLocked =
-                    true;
-
-                container.classList.add(
-                    "selection-locked"
-                );
-
-                choice?.classList.add(
-                    "is-selecting"
-                );
-
-                card.classList.add(
-                    "is-flipping"
-                );
+                image.src =
+                    nextSource;
 
 
-                requestAnimationFrame(
+                image.alt =
+                    selectionNames[
+                        characterId
+                    ] ||
+                    "Personagem";
+
+
+                image.onload =
                     () => {
 
                         requestAnimationFrame(
                             () => {
 
-                                updateCharacterSelectionAtmosphere(
-                                    nextAccent
-                                );
+                                artContainer
+                                    .classList
+                                    .remove(
+                                        "is-changing"
+                                    );
 
                             }
                         );
 
-                    }
+                    };
+
+
+                /*
+                    Caso a imagem já esteja no cache.
+                */
+
+                if (
+                    image.complete
+                ) {
+
+                    requestAnimationFrame(
+                        () => {
+
+                            artContainer
+                                .classList
+                                .remove(
+                                    "is-changing"
+                                );
+
+                        }
+                    );
+
+                }
+
+            },
+            150
+        );
+
+    }
+
+
+    container.innerHTML =
+        characters
+            .map(
+                (
+                    character,
+                    index
+                ) => {
+
+                    const selected =
+                        character.id ===
+                        UI_RUNTIME
+                            .selectedCharacter;
+
+
+                    const name =
+                        selectionNames[
+                            character.id
+                        ] ||
+                        character.name;
+
+
+                    const role =
+                        selectionRoles[
+                            character.id
+                        ] ||
+                        character.className ||
+                        "";
+
+
+                    return `
+                        <button
+                            type="button"
+                            class="selection-character-btn ${selected ? "selected" : ""}"
+                            data-character-id="${escapeHTML(character.id)}"
+                            style="--selection-index:${index}"
+                            aria-pressed="${selected ? "true" : "false"}"
+                        >
+
+                            <span class="selection-character-sprite-slot">
+                            </span>
+
+                            <span class="selection-character-copy">
+
+                                <strong>
+                                    ${escapeHTML(name)}
+                                </strong>
+
+                                <small>
+                                    ${escapeHTML(role)}
+                                </small>
+
+                            </span>
+
+                        </button>
+                    `;
+
+                }
+            )
+            .join("");
+
+
+    updateSelectionCharacterArt(
+        UI_RUNTIME.selectedCharacter
+    );
+
+
+    updateCharacterSelectionAtmosphere(
+        characters.find(
+            character =>
+                character.id ===
+                UI_RUNTIME.selectedCharacter
+        )?.color ||
+        null
+    );
+
+
+    updateCharacterStartButton();
+
+
+    for (
+        const button of
+        container.querySelectorAll(
+            "[data-character-id]"
+        )
+    ) {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                if (
+                    UI_RUNTIME
+                        .characterSelectionLocked
+                ) {
+                    return;
+                }
+
+
+                const characterId =
+                    button.dataset
+                        .characterId;
+
+
+                if (
+                    !characterId ||
+                    characterId ===
+                        UI_RUNTIME
+                            .selectedCharacter
+                ) {
+                    return;
+                }
+
+
+                const character =
+                    characters.find(
+                        item =>
+                            item.id ===
+                            characterId
+                    );
+
+
+                if (
+                    !character
+                ) {
+                    return;
+                }
+
+
+                UI_RUNTIME
+                    .characterSelectionLocked =
+                    true;
+
+
+                container.classList.add(
+                    "selection-locked"
                 );
+
+
+                /*
+                    Remove seleção anterior.
+                */
+
+                for (
+                    const otherButton of
+                    container.querySelectorAll(
+                        "[data-character-id]"
+                    )
+                ) {
+
+                    const isSelected =
+                        otherButton ===
+                        button;
+
+
+                    otherButton
+                        .classList
+                        .toggle(
+                            "selected",
+                            isSelected
+                        );
+
+
+                    otherButton
+                        .setAttribute(
+                            "aria-pressed",
+                            String(
+                                isSelected
+                            )
+                        );
+
+                }
+
+
+                UI_RUNTIME.selectedCharacter =
+                    characterId;
+
+
+                state.selectedCharacter =
+                    characterId;
+
+
+                updateCharacterSelectionAtmosphere(
+                    character.color ||
+                    null
+                );
+
+
+                updateSelectionCharacterArt(
+                    characterId
+                );
+
+
+                /*
+                    Pequeno bloqueio evita clique duplo
+                    durante a troca da arte.
+                */
 
                 window.setTimeout(
                     () => {
-                        if (
-                            previousChoice &&
-                            previousChoice !== choice
-                        ) {
-                            previousChoice
-                                .classList
-                                .remove(
-                                    "selected"
-                                );
 
-                            const previousCard =
-                                previousChoice
-                                    .querySelector(
-                                        ".character-card"
-                                    );
-
-                            previousCard
-                                ?.classList
-                                .remove(
-                                    "selected"
-                                );
-
-                            previousCard
-                                ?.setAttribute(
-                                    "aria-pressed",
-                                    "false"
-                                );
-
-                            previousChoice
-                                .querySelector(
-                                    ".character-selected-label"
-                                )
-                                ?.setAttribute(
-                                    "aria-hidden",
-                                    "true"
-                                );
-                        }
-
-                        choice?.classList.add(
-                            "selected"
-                        );
-
-                        card.classList.remove(
-                            "is-flipping"
-                        );
-
-                        card.classList.add(
-                            "selected"
-                        );
-
-                        card.setAttribute(
-                            "aria-pressed",
-                            "true"
-                        );
-
-                        choice
-                            ?.querySelector(
-                                ".character-selected-label"
-                            )
-                            ?.setAttribute(
-                                "aria-hidden",
-                                "false"
-                            );
-
-                        UI_RUNTIME.selectedCharacter =
-                            characterId;
-
-                        state.selectedCharacter =
-                            characterId;
-
-                        UI_RUNTIME.characterSelectionLocked =
+                        UI_RUNTIME
+                            .characterSelectionLocked =
                             false;
+
 
                         container.classList.remove(
                             "selection-locked"
                         );
 
-                        choice?.classList.remove(
-                            "is-selecting"
-                        );
 
                         updateCharacterStartButton();
+
                     },
-                   1050
+                    380
                 );
+
             }
         );
+
     }
+
 }
+   
 function characterStatRow(
     label,
     character,

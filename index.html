@@ -647,109 +647,121 @@
     </section>
 
 
-    <!-- =========================================================
-         SELEÇÃO DE PERSONAGEM
-         ========================================================= -->
+  <!-- =========================================================
+     SELEÇÃO DE PERSONAGEM — NOVA ESTRUTURA
+     ========================================================= -->
 
-    <section
-        id="characterScreen"
-        class="screen character-screen"
-    >
+<section
+    id="characterScreen"
+    class="screen character-screen"
+>
+    <div class="veyra-selection-stage">
 
-        <div class="character-select-shell">
+        <!-- ===============================================
+             ARTE GRANDE DO PERSONAGEM
+             FICA ATRÁS DA MOLDURA
+             =============================================== -->
 
-
-            <header class="character-select-header">
-
-
-                <button
-                    id="backMenuBtn"
-                    class="back-text-btn"
-                    type="button"
-                >
-                    ← VOLTAR
-                </button>
-
-
-                <div>
-
-                    <span class="section-kicker">
-                        ESCOLHA QUEM CARREGARÁ ESTA MEMÓRIA
-                    </span>
-
-
-      <h1>
-    ESCOLHA SEU DESTINO
-</h1>
-
-
-     <p>
-    Cinco almas enfrentam o avanço da Quietude.
-    Cada uma possui uma história, um poder e uma forma única de sobreviver.
-    Escolha quem continuará existindo quando tudo desaparecer.
-</p>
-                </div>
-
-
-            </header>
-
-
-            <div
-                id="characterCards"
-                class="character-cards"
+        <div
+            id="selectionCharacterArt"
+            class="selection-character-art"
+            aria-hidden="true"
+        >
+            <img
+                id="selectionCharacterImage"
+                src=""
+                alt=""
+                draggable="false"
             >
-                <!-- JavaScript cria os cinco personagens -->
-            </div>
-
-
-            <div class="character-bottom-panel">
-
-
-                <label
-                    class="name-field"
-                    for="playerName"
-                >
-
-                    <span>
-                        NOME DO PERSONAGEM
-                    </span>
-
-
-                    <input
-                        id="playerName"
-                        type="text"
-                        maxlength="22"
-                        autocomplete="off"
-                        spellcheck="false"
-                        placeholder="Digite seu nome"
-                    >
-
-                </label>
-
-
-                <button
-                    id="startGameBtn"
-                    class="start-journey-btn"
-                    type="button"
-                >
-
-                    <span>
-                        INICIAR
-                    </span>
-
-                    <strong>
-                        COMEÇAR JORNADA
-                    </strong>
-
-                </button>
-
-
-            </div>
-
-
         </div>
 
-    </section>
+
+        <!-- ===============================================
+             MOLDURA PRINCIPAL
+             =============================================== -->
+
+        <img
+            class="selection-frame-image"
+            src="./assets/ui/character-selection/selection-frame.png"
+            alt=""
+            draggable="false"
+            aria-hidden="true"
+        >
+
+
+        <!-- ===============================================
+             ÁREA ESQUERDA — PERSONAGENS
+             =============================================== -->
+
+        <div
+            id="characterCards"
+            class="selection-character-list"
+        >
+            <!-- JavaScript cria os cinco botões -->
+        </div>
+
+
+        <!-- ===============================================
+             PAINEL DIREITO
+             Por enquanto fica vazio.
+             Depois colocaremos nome, classe, lore,
+             atributos e habilidades.
+             =============================================== -->
+
+        <div
+            id="selectionInfoPanel"
+            class="selection-info-panel"
+        ></div>
+
+
+        <!-- ===============================================
+             VOLTAR
+             =============================================== -->
+
+        <button
+            id="backMenuBtn"
+            class="selection-back-btn"
+            type="button"
+            aria-label="Voltar ao menu"
+        >
+            ×
+        </button>
+
+
+        <!-- ===============================================
+             INICIAR JORNADA
+             =============================================== -->
+
+        <button
+            id="startGameBtn"
+            class="selection-start-btn"
+            type="button"
+        >
+            INICIAR JORNADA
+        </button>
+
+
+        <!--
+            Mantido para preservar o sistema atual
+            que exige nome antes de iniciar.
+
+            Nesta primeira montagem ele fica invisível.
+            Depois decidimos onde o nome será colocado.
+        -->
+
+        <input
+            id="playerName"
+            class="selection-hidden-name"
+            type="text"
+            maxlength="22"
+            autocomplete="off"
+            spellcheck="false"
+            value="Viajante"
+            aria-label="Nome do personagem"
+        >
+
+    </div>
+</section>
 
 
     <!-- =========================================================

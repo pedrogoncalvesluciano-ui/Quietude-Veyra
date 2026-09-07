@@ -53948,7 +53948,9 @@ if (
             ) {
 
                 drawTheronLegacy(
-                    ctx,    function drawTheron(
+                    ctx, 
+
+                       function drawTheron(
         ctx,
         player,
         profile,
@@ -53959,11 +53961,13 @@ if (
             VARYN — PLACEHOLDER EM CANVAS.
 
             Mantemos o renderer interno
-            "theron" por compatibilidade.
+            "theron" para preservar:
+            - saves;
+            - seleção;
+            - progressão;
+            - referências antigas.
 
-            Mais tarde esta função poderá
-            voltar a utilizar spritesheet
-            sem alterar o restante do jogo.
+            Os sprites definitivos entram depois.
         */
 
         drawTheronLegacy(
@@ -53973,6 +53977,8 @@ if (
             walk
         );
     }
+
+
 
 
   /* ============================================================

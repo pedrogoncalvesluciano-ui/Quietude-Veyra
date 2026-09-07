@@ -53519,40 +53519,42 @@ if (
 
     }),
 
-         /*
+    /*
         ========================================================
-        THERON
+        VARYN
+        ID INTERNO: THERON
         ========================================================
     */
 
-   theronIdle:
-Object.freeze({
+    theronIdle:
+        Object.freeze({
 
-    file:
-        "slash.png",
+            file:
+                "combat.png",
 
-    frames:
-        1,
+            frames:
+                2,
 
-    fps:
-        1,
+            fps:
+                2.4,
 
-    rows:
-        4
+            rows:
+                4
 
-}),
+        }),
+
 
     theronWalk:
         Object.freeze({
 
             file:
-                "walk.png",
+                "combat.png",
 
             frames:
-                9,
+                2,
 
             fps:
-                9,
+                7,
 
             rows:
                 4
@@ -53564,13 +53566,13 @@ Object.freeze({
         Object.freeze({
 
             file:
-                "run.png",
+                "combat.png",
 
             frames:
-                8,
+                2,
 
             fps:
-                12,
+                10,
 
             rows:
                 4
@@ -53578,43 +53580,140 @@ Object.freeze({
         }),
 
 
-  theronSlashForward:
-    Object.freeze({
+    theronSlashForward:
+        Object.freeze({
 
-        file:
-            "slash.png",
+            file:
+                "slash.png",
 
-        frames:
-            6,
+            frames:
+                13,
 
-        fps:
-            22,
+            fps:
+                30,
 
-        rows:
-            4
+            rows:
+                4
 
-    }),
+        }),
 
 
-theronSlashReverse:
-    Object.freeze({
+    theronSlashReverse:
+        Object.freeze({
 
-        file:
-            "slash.png",
+            file:
+                "backslash.png",
 
-        frames:
-            6,
+            frames:
+                13,
 
-        fps:
-            22,
+            fps:
+                30,
 
-        rows:
-            4
+            rows:
+                4
 
-    }),
+        }),
 
 
     theronHurt:
+        Object.freeze({
+
+            file:
+                "hurt.png",
+
+            frames:
+                6,
+
+            fps:
+                18,
+
+            rows:
+                1
+
+        }),
+
+
+    /*
+        ========================================================
+        VAEL
+        ID INTERNO: ZEPHYR
+        ========================================================
+    */
+
+    zephyrIdle:
+        Object.freeze({
+
+            file:
+                "combat.png",
+
+            frames:
+                2,
+
+            fps:
+                2.2,
+
+            rows:
+                4
+
+        }),
+
+
+    zephyrWalk:
+        Object.freeze({
+
+            file:
+                "combat.png",
+
+            frames:
+                2,
+
+            fps:
+                7,
+
+            rows:
+                4
+
+        }),
+
+
+    zephyrRun:
+        Object.freeze({
+
+            file:
+                "combat.png",
+
+            frames:
+                2,
+
+            fps:
+                10,
+
+            rows:
+                4
+
+        }),
+
+
+    zephyrAttack:
+        Object.freeze({
+
+            file:
+                "slash.png",
+
+            frames:
+                13,
+
+            fps:
+                30,
+
+            rows:
+                4
+
+        }),
+
+
+    zephyrHurt:
         Object.freeze({
 
             file:
@@ -53903,9 +54002,15 @@ theronSlashReverse:
             entry
         );
 
-        image.src =
-            `${PLAYER_SPRITE_BASE_PATH}/${characterId}/${animation.file}`;
+      const spriteFolder =
+    characterId ===
+    "zephyr"
+        ? "vael"
+        : characterId;
 
+
+image.src =
+    `${PLAYER_SPRITE_BASE_PATH}/${spriteFolder}/${animation.file}`;
         return entry;
     }
 
@@ -55121,31 +55226,50 @@ if (
     }
 
 
-      function drawTheron(
+        function drawTheron(
         ctx,
         player,
         profile,
         walk
     ) {
+
+        const pose =
+            getTheronSpritePose(
+                player
+            );
+
+
+        const drawn =
+            drawPlayerSpriteFrame(
+                ctx,
+                "theron",
+                pose.animation,
+                player.facing,
+                pose.frame,
+                1.55
+            );
+
+
         /*
-            VARYN — PLACEHOLDER EM CANVAS.
+            FALLBACK.
 
-            O ID interno continua "theron"
-            para não quebrar:
-            - save;
-            - seleção;
-            - progresso;
-            - referências antigas.
+            Só utiliza o antigo Varyn
+            em Canvas se os PNGs não
+            forem encontrados.
         */
+        if (
+            !drawn
+        ) {
 
-        drawTheronLegacy(
-            ctx,
-            player,
-            profile,
-            walk
-        );
+            drawTheronLegacy(
+                ctx,
+                player,
+                profile,
+                walk
+            );
+
+        }
     }
-
 
   /* ============================================================
    GRUMGAR — SPRITE LPC
@@ -55991,8 +56115,241 @@ function drawGrumgarLegacy(
 
 
     /* ============================================================
-       ZEPHYR
+       VAEL / ZEPHYR — SPRITE LPC
        ============================================================ */
+
+    function getZephyrSpritePose(
+        player
+    ) {
+
+        /*
+            MORTE.
+        */
+        if (
+            player.deathAnimation
+        ) {
+
+            const progress =
+                clamp(
+                    player.deathAnimation
+                        .timer /
+                    player.deathAnimation
+                        .duration,
+                    0,
+                    1
+                );
+
+
+            return {
+
+                animation:
+                    "zephyrHurt",
+
+                frame:
+                    getOneShotSpriteFrame(
+                        progress,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .zephyrHurt
+                            .frames
+                    )
+
+            };
+        }
+
+
+        /*
+            TOMANDO DANO.
+        */
+        if (
+            finiteNumber(
+                player.hurtAnim,
+                0
+            ) >
+            0
+        ) {
+
+            const hurtDuration =
+                0.56;
+
+
+            const elapsed =
+                hurtDuration -
+                clamp(
+                    player.hurtAnim,
+                    0,
+                    hurtDuration
+                );
+
+
+            const normalized =
+                clamp(
+                    elapsed /
+                        hurtDuration,
+                    0,
+                    1
+                );
+
+
+            const fallAndRise =
+                normalized <=
+                0.5
+                    ? normalized * 2
+                    : (1 - normalized) * 2;
+
+
+            return {
+
+                animation:
+                    "zephyrHurt",
+
+                frame:
+                    getOneShotSpriteFrame(
+                        fallAndRise,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .zephyrHurt
+                            .frames
+                    )
+
+            };
+        }
+
+
+        /*
+            ATAQUE.
+
+            Click / Q / R / F podem usar
+            a animação do corpo enquanto
+            o efeito da habilidade continua
+            sendo feito pelo Canvas.
+        */
+        if (
+            finiteNumber(
+                player.visual
+                    ?.attackTime,
+                0
+            ) >
+            0
+        ) {
+
+            return {
+
+                animation:
+                    "zephyrAttack",
+
+                frame:
+                    getOneShotSpriteFrame(
+                        1 -
+                            clamp(
+                                player.visual
+                                    .attackTime /
+                                0.28,
+                                0,
+                                1
+                            ),
+                        PLAYER_SPRITE_ANIMATIONS
+                            .zephyrAttack
+                            .frames
+                    )
+
+            };
+        }
+
+
+        /*
+            DASH.
+        */
+        if (
+            player.dashRuntime
+                ?.active
+        ) {
+
+            return {
+
+                animation:
+                    "zephyrRun",
+
+                frame:
+                    getLoopingSpriteFrame(
+                        renderRuntime
+                            .ambientTime,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .zephyrRun
+                            .frames,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .zephyrRun
+                            .fps
+                    )
+
+            };
+        }
+
+
+        /*
+            ANDANDO.
+        */
+        const moving =
+            finiteNumber(
+                player.visual
+                    ?.walkTime,
+                0
+            ) >
+                0 &&
+            finiteNumber(
+                player.visual
+                    ?.idleTime,
+                0
+            ) <=
+                0.0001;
+
+
+        if (
+            moving
+        ) {
+
+            return {
+
+                animation:
+                    "zephyrWalk",
+
+                frame:
+                    getLoopingSpriteFrame(
+                        player.visual
+                            .walkTime,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .zephyrWalk
+                            .frames,
+                        PLAYER_SPRITE_ANIMATIONS
+                            .zephyrWalk
+                            .fps
+                    )
+
+            };
+        }
+
+
+        /*
+            PARADO.
+        */
+        return {
+
+            animation:
+                "zephyrIdle",
+
+            frame:
+                getLoopingSpriteFrame(
+                    player.visual
+                        ?.idleTime,
+                    PLAYER_SPRITE_ANIMATIONS
+                        .zephyrIdle
+                        .frames,
+                    PLAYER_SPRITE_ANIMATIONS
+                        .zephyrIdle
+                        .fps
+                )
+
+        };
+    }
+
 
     function drawZephyr(
         ctx,
@@ -56000,49 +56357,45 @@ function drawGrumgarLegacy(
         profile,
         walk
     ) {
-        ctx.save();
 
-        /*
-            Rastro instável.
-        */
-        ctx.globalAlpha =
-            0.2;
-
-        ctx.fillStyle =
-            "#74548c";
-
-        for (
-            let index = 1;
-            index <= 3;
-            index += 1
-        ) {
-            ctx.beginPath();
-
-            ctx.arc(
-                -index *
-                    7,
-                index *
-                    2,
-                11 -
-                    index *
-                        2,
-                0,
-                Math.PI *
-                    2
+        const pose =
+            getZephyrSpritePose(
+                player
             );
 
-            ctx.fill();
-        }
 
-        ctx.globalAlpha =
-            1;
+        const drawn =
+            drawPlayerSpriteFrame(
+                ctx,
+                "zephyr",
+                pose.animation,
+                player.facing,
+                pose.frame,
+                1.55
+            );
+
 
         /*
-            Corpo.
+            FALLBACK.
+
+            Se os PNGs não existirem no GitHub,
+            Vael continua aparecendo em Canvas
+            em vez de ficar invisível.
         */
+        if (
+            drawn
+        ) {
+            return;
+        }
+
+
+        ctx.save();
+
+
         ctx.fillStyle =
             profile.bodyColor ||
             "#665078";
+
 
         roundRectPath(
             ctx,
@@ -56053,42 +56406,16 @@ function drawGrumgarLegacy(
             9
         );
 
-        ctx.fill();
-
-        /*
-            Manto assimétrico.
-        */
-        ctx.fillStyle =
-            "#3e334b";
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            -12,
-            -3
-        );
-
-        ctx.lineTo(
-            -23,
-            19
-        );
-
-        ctx.lineTo(
-            4,
-            13
-        );
-
-        ctx.closePath();
 
         ctx.fill();
 
-        /*
-            Cabeça.
-        */
+
         ctx.fillStyle =
             "#b79d91";
 
+
         ctx.beginPath();
+
 
         ctx.arc(
             0,
@@ -56099,33 +56426,12 @@ function drawGrumgarLegacy(
                 2
         );
 
+
         ctx.fill();
 
-        /*
-            Olho de fenda.
-        */
-        ctx.fillStyle =
-            "#b592d2";
-
-        ctx.shadowColor =
-            "#9a71ba";
-
-        ctx.shadowBlur =
-            10;
-
-        ctx.fillRect(
-            2,
-            -21,
-            5,
-            2
-        );
-
-        ctx.shadowBlur =
-            0;
 
         ctx.restore();
     }
-
 
     /* ============================================================
        ARMADURA DO PLAYER

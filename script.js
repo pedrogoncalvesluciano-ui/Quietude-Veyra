@@ -32205,12 +32205,670 @@ y:
         return movedAny;
     }
 
+       /* ============================================================
+       VARYN / VAEL — RUNTIMES DE HABILIDADES
+       ============================================================ */
 
-    function executeClassSkill(
-        key,
+    function isBossCombatEntity(
+        enemy
+    ) {
+        return Boolean(
+            enemy &&
+            BOSS_REGISTRY[
+                enemy.id
+            ]
+        );
+    }
+
+
+    function startUltimateCharge(
+        player,
         skill,
         attackToken
     ) {
+        if (
+            !player ||
+            gameplayRuntime
+                .ultimateCharge
+        ) {
+            return false;
+        }
+
+
+        const aim =
+            getPlayerAimVector();
+
+
+        gameplayRuntime
+            .ultimateCharge = {
+
+                characterId:
+                    player.characterId,
+
+                skill,
+
+                attackToken,
+
+                duration:
+                    2.5,
+
+                timer:
+                    2.5,
+
+                aimX:
+                    aim.x,
+
+                aimY:
+                    aim.y
+            };
+
+
+        spawnTransientEffect(
+            "ultimateCharge",
+            player.x,
+            player.y,
+            {
+                duration:
+                    2.5,
+
+                characterId:
+                    player.characterId,
+
+                color:
+                    player.characterId ===
+                    "zephyr"
+                        ? "#9d72d1"
+                        : "#d7e0df"
+            }
+        );
+
+
+        return true;
+    }
+
+
+    function updateUltimateCharge(
+        dt
+    ) {
+        const runtime =
+            gameplayRuntime
+                .ultimateCharge;
+
+        const player =
+            state.player;
+
+
+        if (
+            !runtime ||
+            !player ||
+            player.dead
+        ) {
+            gameplayRuntime
+                .ultimateCharge =
+                null;
+
+            return;
+        }
+
+
+        runtime.timer -=
+            dt;
+
+
+        updatePlayerFacingFromVector({
+            x:
+                runtime.aimX,
+
+            y:
+                runtime.aimY
+        });
+
+
+        if (
+            runtime.timer >
+            0
+        ) {
+            return;
+        }
+
+
+        gameplayRuntime
+            .ultimateCharge =
+            null;
+
+
+        /*
+            SOLTA O F DEPOIS DOS 2,5 s.
+
+            forcedAim mantém a direção
+            escolhida no início do carregamento.
+        */
+        executeClassSkill(
+            "f",
+            runtime.skill,
+            runtime.attackToken,
+            {
+                x:
+                    runtime.aimX,
+
+                y:
+                    runtime.aimY
+            }
+        );
+    }
+
+
+    function updateVarynFlurry(
+        dt
+    ) {
+        const runtime =
+            gameplayRuntime
+                .varynFlurry;
+
+        const player =
+            state.player;
+
+
+        if (
+            !runtime ||
+            !player ||
+            player.dead
+        ) {
+            gameplayRuntime
+                .varynFlurry =
+                null;
+
+            return;
+        }
+
+
+        runtime.timer -=
+            dt;
+
+        runtime.tickTimer -=
+            dt;
+
+
+        while (
+            runtime.tickTimer <=
+                0 &&
+            runtime.hitsDone <
+                runtime.totalHits
+        ) {
+            runtime.tickTimer +=
+                0.14;
+
+            runtime.hitsDone +=
+                1;
+
+
+            /*
+                Alterna o ângulo dos cortes
+                para não parecer a mesma
+                meia-lua repetida.
+            */
+            const slashAngle =
+                Math.atan2(
+                    runtime.aimY,
+                    runtime.aimX
+                ) +
+                (
+                    runtime.hitsDone %
+                        2 ===
+                    0
+                        ? 0.62
+                        : -0.62
+                );
+
+
+            damageEnemiesInRadius(
+                player.x,
+                player.y,
+
+                126,
+
+                player.damage *
+                    0.42,
+
+                {
+                    attackToken:
+                        `${runtime.attackToken}_${runtime.hitsDone}`,
+
+                    skillKey:
+                        "f"
+                }
+            );
+
+
+            spawnTransientEffect(
+                "varynFlurrySlash",
+                player.x,
+                player.y,
+                {
+                    duration:
+                        0.28,
+
+                    aimX:
+                        Math.cos(
+                            slashAngle
+                        ),
+
+                    aimY:
+                        Math.sin(
+                            slashAngle
+                        ),
+
+                    radius:
+                        126
+                }
+            );
+        }
+
+
+        if (
+            runtime.timer <=
+                0 ||
+            runtime.hitsDone >=
+                runtime.totalHits
+        ) {
+            gameplayRuntime
+                .varynFlurry =
+                null;
+        }
+    }
+
+
+    function updateVaelShadowWave(
+        dt
+    ) {
+        const runtime =
+            gameplayRuntime
+                .vaelShadowWave;
+
+        const player =
+            state.player;
+
+
+        if (
+            !runtime ||
+            !player ||
+            player.dead
+        ) {
+            gameplayRuntime
+                .vaelShadowWave =
+                null;
+
+            return;
+        }
+
+
+        runtime.elapsed +=
+            dt;
+
+        runtime.tickTimer -=
+            dt;
+
+
+        /*
+            PRECISA SEGURAR R.
+        */
+        const stillHolding =
+            state.keys instanceof
+                Set &&
+            (
+                state.keys.has(
+                    "KeyR"
+                ) ||
+                state.keys.has(
+                    "r"
+                )
+            );
+
+
+        /*
+            SOLTOU R OU CHEGOU A 3,6 s.
+        */
+        if (
+            !stillHolding ||
+            runtime.elapsed >=
+                runtime.duration
+        ) {
+            gameplayRuntime
+                .vaelShadowWave =
+                null;
+
+            return;
+        }
+
+
+        /*
+            SOMBRA CRESCE AOS POUCOS.
+        */
+        const radius =
+            lerp(
+                72,
+                185,
+
+                clamp(
+                    runtime.elapsed /
+                        runtime.duration,
+                    0,
+                    1
+                )
+            );
+
+
+        /*
+            DANO EM TICKS.
+        */
+        if (
+            runtime.tickTimer <=
+            0
+        ) {
+            runtime.tickTimer =
+                0.34;
+
+
+            for (
+                const enemy of
+                getAllCombatEnemies()
+            ) {
+                if (
+                    enemy.dead ||
+                    distance(
+                        player.x,
+                        player.y,
+                        enemy.x,
+                        enemy.y
+                    ) >
+                        radius +
+                        enemy.radius
+                ) {
+                    continue;
+                }
+
+
+                applyDamageToEnemy(
+                    enemy,
+
+                    player.damage *
+                        0.32,
+
+                    {
+                        player,
+
+                        playerAttack:
+                            true,
+
+                        skillKey:
+                            "r",
+
+                        attackToken:
+                            `${runtime.attackToken}_${Math.floor(
+                                runtime.elapsed *
+                                    10
+                            )}`
+                    }
+                );
+
+
+                /*
+                    BOSS:
+                    dano SIM.
+                    paralisia NÃO.
+                */
+                if (
+                    !isBossCombatEntity(
+                        enemy
+                    )
+                ) {
+                    enemy
+                        .veilParalyzeTimer =
+                        Math.max(
+                            finiteNumber(
+                                enemy
+                                    .veilParalyzeTimer,
+                                0
+                            ),
+                            0.42
+                        );
+                }
+            }
+        }
+
+
+        /*
+            PULSO VISUAL CURTO.
+        */
+        spawnTransientEffect(
+            "shadowWavePulse",
+            player.x,
+            player.y,
+            {
+                duration:
+                    0.18,
+
+                radius
+            }
+        );
+    }
+
+
+    function updateVaelClones(
+        dt
+    ) {
+        const player =
+            state.player;
+
+
+        if (
+            !player ||
+            player.characterId !==
+                "zephyr"
+        ) {
+            gameplayRuntime
+                .vaelClones = [];
+
+            return;
+        }
+
+
+        const clones =
+            gameplayRuntime
+                .vaelClones;
+
+
+        for (
+            let index = 0;
+            index <
+                clones.length;
+            index += 1
+        ) {
+            const clone =
+                clones[
+                    index
+                ];
+
+
+            clone.life -=
+                dt;
+
+            clone.attackTimer -=
+                dt;
+
+
+            /*
+                ORBITA AO REDOR DO VAEL
+                temporariamente.
+            */
+            const angle =
+                state.time *
+                    0.8 +
+                (
+                    index /
+                    Math.max(
+                        1,
+                        clones.length
+                    )
+                ) *
+                    Math.PI *
+                    2;
+
+
+            clone.x =
+                player.x +
+                Math.cos(
+                    angle
+                ) *
+                    (
+                        48 +
+                        index %
+                            2 *
+                            12
+                    );
+
+
+            clone.y =
+                player.y +
+                Math.sin(
+                    angle
+                ) *
+                    (
+                        34 +
+                        index %
+                            2 *
+                            8
+                    );
+
+
+            if (
+                clone.attackTimer >
+                0
+            ) {
+                continue;
+            }
+
+
+            let target =
+                null;
+
+            let targetDistance =
+                260;
+
+
+            /*
+                PROCURA O ALVO MAIS PRÓXIMO.
+            */
+            for (
+                const enemy of
+                getAllCombatEnemies()
+            ) {
+                if (
+                    enemy.dead
+                ) {
+                    continue;
+                }
+
+
+                const currentDistance =
+                    distance(
+                        clone.x,
+                        clone.y,
+                        enemy.x,
+                        enemy.y
+                    );
+
+
+                if (
+                    currentDistance <
+                    targetDistance
+                ) {
+                    target =
+                        enemy;
+
+                    targetDistance =
+                        currentDistance;
+                }
+            }
+
+
+            clone.attackTimer =
+                0.85;
+
+
+            if (
+                !target
+            ) {
+                continue;
+            }
+
+
+            const direction =
+                normalize(
+                    target.x -
+                        clone.x,
+
+                    target.y -
+                        clone.y
+                );
+
+
+            createProjectile({
+
+                owner:
+                    "player",
+
+                source:
+                    player,
+
+                attackToken:
+                    `vael_clone_${clone.id}_${Date.now()}`,
+
+                skillKey:
+                    "q",
+
+                x:
+                    clone.x,
+
+                y:
+                    clone.y,
+
+                dx:
+                    direction.x,
+
+                dy:
+                    direction.y,
+
+                speed:
+                    480,
+
+                radius:
+                    5,
+
+                damage:
+                    player.damage *
+                        0.34,
+
+                color:
+                    "#8f63bd",
+
+                life:
+                    0.65
+
+            });
+        }
+
+
+        gameplayRuntime
+            .vaelClones =
+            clones.filter(
+                clone =>
+                    clone.life >
+                    0
+            );
+    }
+
+  
         const player =
             state.player;
 
@@ -32484,6 +33142,319 @@ y:
             }
         }
 
+               /* ============================================================
+           VARYN
+           ============================================================ */
+
+        if (
+            id ===
+            "theron"
+        ) {
+
+            /*
+                Q — CORTE PREDATÓRIO.
+
+                Mesmo princípio do Click,
+                porém:
+                - maior;
+                - mais aberto;
+                - mais forte.
+            */
+            if (
+                key ===
+                "q"
+            ) {
+                performMeleeArcAttack(
+                    player,
+                    aim,
+
+                    146,
+                    2.05,
+
+                    player.damage *
+                        1.8,
+
+                    source
+                );
+
+
+                spawnTransientEffect(
+                    "predatorSlash",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.46,
+
+                        aimX:
+                            aim.x,
+
+                        aimY:
+                            aim.y,
+
+                        radius:
+                            146
+                    }
+                );
+
+
+                return true;
+            }
+
+
+            /*
+                R — INVESTIDA CORTANTE.
+            */
+            if (
+                key ===
+                "r"
+            ) {
+                const startX =
+                    player.x;
+
+                const startY =
+                    player.y;
+
+
+                /*
+                    AVANÇA.
+                */
+                performForwardSkillMovement(
+                    player,
+                    aim,
+                    170
+                );
+
+
+                const endX =
+                    player.x;
+
+                const endY =
+                    player.y;
+
+
+                /*
+                    ACERTA QUEM ESTAVA
+                    NO TRAJETO.
+                */
+                for (
+                    const enemy of
+                    getAllCombatEnemies()
+                ) {
+                    if (
+                        enemy.dead ||
+                        pointToSegmentDistance(
+                            enemy.x,
+                            enemy.y,
+                            startX,
+                            startY,
+                            endX,
+                            endY
+                        ) >
+                            38 +
+                            enemy.radius
+                    ) {
+                        continue;
+                    }
+
+
+                    applyDamageToEnemy(
+                        enemy,
+                        player.damage *
+                            1.05,
+                        {
+                            player,
+
+                            playerAttack:
+                                true,
+
+                            ...source
+                        }
+                    );
+
+
+                    /*
+                        EMPURRÃO.
+
+                        Boss nunca recebe.
+                    */
+                    if (
+                        !isBossCombatEntity(
+                            enemy
+                        )
+                    ) {
+                        moveEntityIgnoringSoftCollision(
+                            enemy,
+
+                            aim.x *
+                                54,
+
+                            aim.y *
+                                54
+                        );
+                    }
+                }
+
+
+                /*
+                    CORTE FINAL EM MEIA-LUA.
+                */
+                performMeleeArcAttack(
+                    player,
+                    aim,
+
+                    118,
+                    1.85,
+
+                    player.damage *
+                        1.15,
+
+                    {
+                        ...source,
+
+                        attackToken:
+                            `${attackToken}_finish`
+                    }
+                );
+
+
+                /*
+                    RASTRO DA INVESTIDA.
+                */
+                spawnTransientEffect(
+                    "cuttingRush",
+                    startX,
+                    startY,
+                    {
+                        duration:
+                            0.52,
+
+                        targetX:
+                            endX,
+
+                        targetY:
+                            endY,
+
+                        aimX:
+                            aim.x,
+
+                        aimY:
+                            aim.y
+                    }
+                );
+
+
+                /*
+                    CORTE FINAL VISUAL.
+                */
+                spawnTransientEffect(
+                    "predatorSlash",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.38,
+
+                        aimX:
+                            aim.x,
+
+                        aimY:
+                            aim.y
+                    }
+                );
+
+
+                return true;
+            }
+
+
+            /*
+                F — INVESTIDA MÁXIMA.
+
+                Esta parte só é executada
+                DEPOIS dos 2,5 segundos.
+            */
+            if (
+                key ===
+                "f"
+            ) {
+
+                /*
+                    INVESTIDA.
+                */
+                performForwardSkillMovement(
+                    player,
+                    aim,
+                    195
+                );
+
+
+                /*
+                    INICIA 9 CORTES
+                    distribuídos por ~1,3 s.
+                */
+                gameplayRuntime
+                    .varynFlurry = {
+
+                        timer:
+                            1.3,
+
+                        tickTimer:
+                            0,
+
+                        hitsDone:
+                            0,
+
+                        totalHits:
+                            9,
+
+                        aimX:
+                            aim.x,
+
+                        aimY:
+                            aim.y,
+
+                        attackToken
+                    };
+
+
+                spawnTransientEffect(
+                    "maximumRush",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            1.3,
+
+                        radius:
+                            126,
+
+                        aimX:
+                            aim.x,
+
+                        aimY:
+                            aim.y
+                    }
+                );
+
+
+                state.screenShake =
+                    Math.max(
+                        state.screenShake,
+                        0.18
+                    );
+
+
+                state.screenShakePower =
+                    Math.max(
+                        state.screenShakePower,
+                        7
+                    );
+
+
+                return true;
+            }
+        }
 
         /* GRUMGAR */
 
@@ -32917,6 +33888,256 @@ y:
             }
         }
 
+        /* ============================================================
+           VAEL
+           ============================================================ */
+
+        if (
+            id ===
+            "zephyr"
+        ) {
+
+            /*
+                Q — INVOCAÇÃO DO VÉU.
+
+                Por enquanto os clones são
+                genéricos.
+
+                Quando você me lembrar os
+                três tipos oficiais, nós
+                separamos comportamento e visual.
+            */
+            if (
+                key ===
+                "q"
+            ) {
+                const clones =
+                    gameplayRuntime
+                        .vaelClones;
+
+
+                if (
+                    clones.length >=
+                    6
+                ) {
+                    pushNotification(
+                        "LIMITE DE INVOCAÇÕES",
+                        "Vael já mantém 6 ecos do Véu ativos.",
+                        "info",
+                        1.5
+                    );
+
+                    return false;
+                }
+
+
+                clones.push({
+
+                    id:
+                        `clone_${Date.now()}_${clones.length}`,
+
+                    x:
+                        player.x,
+
+                    y:
+                        player.y,
+
+                    /*
+                        Duração provisória.
+                        Ajustamos quando definirmos
+                        os três tipos.
+                    */
+                    life:
+                        10,
+
+                    attackTimer:
+                        0.15
+
+                });
+
+
+                spawnTransientEffect(
+                    "veilSummon",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.7,
+
+                        radius:
+                            70
+                    }
+                );
+
+
+                return true;
+            }
+
+
+            /*
+                R — ONDA DE SOMBRA.
+
+                A habilidade começa no KeyDown.
+
+                updateVaelShadowWave()
+                observa se R continua pressionado.
+
+                Soltou R = termina.
+                Máximo = 3,6 segundos.
+            */
+            if (
+                key ===
+                "r"
+            ) {
+                if (
+                    gameplayRuntime
+                        .vaelShadowWave
+                ) {
+                    return false;
+                }
+
+
+                gameplayRuntime
+                    .vaelShadowWave = {
+
+                        duration:
+                            3.6,
+
+                        elapsed:
+                            0,
+
+                        tickTimer:
+                            0,
+
+                        attackToken
+
+                    };
+
+
+                spawnTransientEffect(
+                    "shadowWaveStart",
+                    player.x,
+                    player.y,
+                    {
+                        duration:
+                            0.45,
+
+                        radius:
+                            80
+                    }
+                );
+
+
+                return true;
+            }
+
+
+            /*
+                F — TENTÁCULOS DA QUIETUDE.
+
+                Não existe limite de alvos.
+
+                Cada inimigo dentro do alcance
+                recebe seu próprio tentáculo.
+            */
+            if (
+                key ===
+                "f"
+            ) {
+                const targets =
+                    getAllCombatEnemies()
+                        .filter(
+                            enemy =>
+                                !enemy.dead &&
+                                distance(
+                                    player.x,
+                                    player.y,
+                                    enemy.x,
+                                    enemy.y
+                                ) <=
+                                    310 +
+                                    enemy.radius
+                        );
+
+
+                for (
+                    let index = 0;
+                    index <
+                        targets.length;
+                    index += 1
+                ) {
+                    const enemy =
+                        targets[
+                            index
+                        ];
+
+
+                    applyDamageToEnemy(
+                        enemy,
+                        player.damage *
+                            1.55,
+                        {
+                            player,
+
+                            playerAttack:
+                                true,
+
+                            skillKey:
+                                "f",
+
+                            attackToken:
+                                `${attackToken}_${index}`
+                        }
+                    );
+
+
+                    /*
+                        BOSS:
+                        recebe dano,
+                        NÃO recebe paralisia.
+                    */
+                    if (
+                        !isBossCombatEntity(
+                            enemy
+                        )
+                    ) {
+                        enemy
+                            .veilParalyzeTimer =
+                            Math.max(
+                                finiteNumber(
+                                    enemy
+                                        .veilParalyzeTimer,
+                                    0
+                                ),
+                                1.65
+                            );
+                    }
+
+
+                    spawnTransientEffect(
+                        "shadowTendril",
+                        player.x,
+                        player.y,
+                        {
+                            duration:
+                                0.8,
+
+                            targetX:
+                                enemy.x,
+
+                            targetY:
+                                enemy.y,
+
+                            index
+                        }
+                    );
+                }
+
+
+                return true;
+            }
+        }
+       
         return false;
     }
 
@@ -33022,10 +34243,62 @@ y:
             return false;
         }
 
-        const attackToken =
+               const attackToken =
             createAttackToken(
                 `skill_${normalizedKey}`
             );
+
+
+        /*
+            F DO VARYN E DO VAEL.
+
+            NÃO solta imediatamente.
+
+            Primeiro:
+            2,5 segundos de carregamento.
+
+            A Energia já é validada acima.
+        */
+        if (
+            normalizedKey ===
+                "f" &&
+            (
+                player.characterId ===
+                    "theron" ||
+                player.characterId ===
+                    "zephyr"
+            )
+        ) {
+            const started =
+                startUltimateCharge(
+                    player,
+                    skill,
+                    attackToken
+                );
+
+
+            if (
+                !started
+            ) {
+                return false;
+            }
+
+
+            paySkillCost(
+                skill,
+                player
+            );
+
+
+            player.skillCooldowns[
+                normalizedKey
+            ] =
+                skill.cooldown;
+
+
+            return true;
+        }
+
 
         const success =
             executeClassSkill(
@@ -33033,7 +34306,6 @@ y:
                 skill,
                 attackToken
             );
-
         if (
             !success
         ) {
@@ -33474,7 +34746,7 @@ y:
                     dt
                 );
 
-            enemy.stateTimer =
+                      enemy.stateTimer =
                 Math.max(
                     0,
                     finiteNumber(
@@ -33482,6 +34754,25 @@ y:
                     ) -
                     dt
                 );
+
+
+            /*
+                CONTROLE DE GRUPO DO VAEL.
+
+                Isso só roda em inimigos comuns,
+                porque bosses nunca recebem
+                veilParalyzeTimer.
+            */
+            enemy.veilParalyzeTimer =
+                Math.max(
+                    0,
+                    finiteNumber(
+                        enemy.veilParalyzeTimer,
+                        0
+                    ) -
+                    dt
+                );
+
 
             if (
                 enemy.telegraph
@@ -33495,6 +34786,18 @@ y:
                             dt
                     );
             }
+
+
+            if (
+                enemy.veilParalyzeTimer >
+                0
+            ) {
+                enemy.state =
+                    "veil_paralyzed";
+
+                continue;
+            }
+
 
             const dist =
                 distance(
@@ -44730,9 +46033,30 @@ updateRuntimeTransition(
             safeDt
         );
 
-        updatePotionBuffs(
+               updatePotionBuffs(
             safeDt
         );
+
+
+        /*
+            HABILIDADES COM DURAÇÃO REAL.
+        */
+        updateUltimateCharge(
+            safeDt
+        );
+
+        updateVarynFlurry(
+            safeDt
+        );
+
+        updateVaelShadowWave(
+            safeDt
+        );
+
+        updateVaelClones(
+            safeDt
+        );
+
 
         updateDoorAnimations(
             safeDt
@@ -53895,79 +55219,21 @@ if (
     }
 
 
-    function drawTheron(
+      function drawTheron(
         ctx,
         player,
         profile,
         walk
     ) {
-
-        const pose =
-            getTheronSpritePose(
-                player
-            );
-
-
-        const drawn =
-            drawPlayerSpriteFrame(
-                ctx,
-                "theron",
-                pose.animation,
-                player.facing,
-                pose.frame,
-                1.55
-            );
-
-
-        /*
-            Se a animação específica
-            ainda não carregou, tenta
-            manter o sprite novo parado.
-        */
-        if (
-            !drawn
-        ) {
-
-            const idleFallback =
-                drawPlayerSpriteFrame(
-                    ctx,
-                    "theron",
-                    "theronIdle",
-                    player.facing,
-                    0,
-                    1.55
-                );
-
-
-            /*
-                Último fallback:
-                desenho antigo.
-            */
-            if (
-                !idleFallback
-            ) {
-
-                drawTheronLegacy(
-                    ctx, 
-
-                       function drawTheron(
-        ctx,
-        player,
-        profile,
-        walk
-    ) {
-
         /*
             VARYN — PLACEHOLDER EM CANVAS.
 
-            Mantemos o renderer interno
-            "theron" para preservar:
-            - saves;
+            O ID interno continua "theron"
+            para não quebrar:
+            - save;
             - seleção;
-            - progressão;
+            - progresso;
             - referências antigas.
-
-            Os sprites definitivos entram depois.
         */
 
         drawTheronLegacy(
@@ -53977,8 +55243,6 @@ if (
             walk
         );
     }
-
-
 
 
   /* ============================================================
@@ -59831,11 +61095,72 @@ case "bossTrail":
         break;
 
 
-    /*
-        THERON / ZEPHYR.
+       /*
+        VARYN.
     */
-    case "guardianStrike":
-    case "guardianCharge":
+    case "predatorSlash":
+    case "varynFlurrySlash":
+        drawSkillSlashEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+
+    case "cuttingRush":
+    case "maximumRush":
+        drawVarynRushEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+
+    /*
+        VAEL.
+    */
+    case "veilSummon":
+    case "shadowWaveStart":
+    case "shadowWavePulse":
+        drawVaelShadowPulse(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+
+    case "shadowTendril":
+        drawVaelTendrilEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+
+    /*
+        CARREGAMENTO DOS Fs.
+    */
+    case "ultimateCharge":
+        drawUltimateChargeEffect(
+            ctx,
+            screen,
+            effect,
+            progress
+        );
+        break;
+
+
+    /*
+        COMPATIBILIDADE ANTIGA.
+    */
     case "adaptiveCut":
     case "riftStep":
         drawSkillSlashEffect(
@@ -59845,7 +61170,6 @@ case "bossTrail":
             progress
         );
         break;
-
 
     /*
         GRUMGAR.
@@ -60661,21 +61985,17 @@ function drawBasicAttackEffect(
     }
 
 
-    /*
-        TRANSMORFO.
+      /*
+        VAEL — CHICOTADA DE SOMBRA.
     */
     if (
         characterId ===
         "zephyr"
     ) {
-        drawSkillSlashEffect(
+        drawVaelWhipEffect(
             ctx,
             screen,
-            {
-                ...effect,
-                characterId:
-                    "zephyr"
-            },
+            effect,
             progress
         );
 
@@ -60768,6 +62088,599 @@ function drawBasicAttackEffect(
     }
 }
 
+               function drawVaelWhipEffect(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const angle =
+        getEffectFacingAngle(
+            effect
+        );
+
+    /*
+        O chicote primeiro AVANÇA
+        e depois VOLTA.
+
+        sin(0) = 0
+        sin(PI/2) = máximo
+        sin(PI) = 0
+    */
+    const reach =
+        30 +
+        Math.sin(
+            progress *
+            Math.PI
+        ) *
+        108;
+
+    const curve =
+        Math.sin(
+            progress *
+            Math.PI *
+            2
+        ) *
+        18;
+
+
+    ctx.save();
+
+    ctx.translate(
+        screen.x,
+        screen.y
+    );
+
+    ctx.rotate(
+        angle
+    );
+
+    ctx.lineCap =
+        "round";
+
+    ctx.shadowColor =
+        "#8e5fc0";
+
+    ctx.shadowBlur =
+        13;
+
+
+    /*
+        CAMADA LUMINOSA.
+    */
+    ctx.strokeStyle =
+        colorWithAlpha(
+            "#9f76d0",
+            0.92 *
+            (
+                1 -
+                progress *
+                    0.45
+            )
+        );
+
+    ctx.lineWidth =
+        5;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        10,
+        0
+    );
+
+    ctx.quadraticCurveTo(
+        reach *
+            0.55,
+        curve,
+        reach,
+        0
+    );
+
+    ctx.stroke();
+
+
+    /*
+        NÚCLEO ESCURO.
+    */
+    ctx.strokeStyle =
+        colorWithAlpha(
+            "#2b1d35",
+            0.8
+        );
+
+    ctx.lineWidth =
+        2;
+
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+
+function drawUltimateChargeEffect(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const color =
+        effect.color ||
+        "#dce3e3";
+
+    const pulse =
+        0.5 +
+        Math.sin(
+            progress *
+            Math.PI *
+            10
+        ) *
+            0.12;
+
+
+    ctx.save();
+
+    ctx.globalCompositeOperation =
+        "lighter";
+
+
+    /*
+        TRÊS ANÉIS CONVERGINDO.
+
+        Quanto mais perto de 2,5 segundos,
+        mais concentrado fica.
+    */
+    for (
+        let ring = 0;
+        ring < 3;
+        ring += 1
+    ) {
+        ctx.strokeStyle =
+            colorWithAlpha(
+                color,
+                (
+                    0.18 +
+                    ring *
+                        0.12
+                ) *
+                (
+                    0.5 +
+                    progress *
+                        0.5
+                )
+            );
+
+        ctx.lineWidth =
+            2 +
+            ring;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screen.x,
+            screen.y,
+            28 +
+                ring *
+                    15 -
+                progress *
+                    7,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.stroke();
+    }
+
+
+    /*
+        NÚCLEO DE ENERGIA.
+    */
+    ctx.fillStyle =
+        colorWithAlpha(
+            color,
+            0.18 +
+                progress *
+                    0.22
+        );
+
+    ctx.beginPath();
+
+    ctx.arc(
+        screen.x,
+        screen.y,
+        18 +
+            progress *
+                9 *
+                pulse,
+        0,
+        Math.PI *
+            2
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+}
+
+
+function drawVarynRushEffect(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const target =
+        Number.isFinite(
+            effect.targetX
+        )
+            ? worldToScreen(
+                effect.targetX,
+                effect.targetY
+            )
+            : null;
+
+
+    ctx.save();
+
+    ctx.lineCap =
+        "round";
+
+    ctx.strokeStyle =
+        colorWithAlpha(
+            "#dce3e2",
+            0.72 *
+            (
+                1 -
+                progress
+            )
+        );
+
+    ctx.lineWidth =
+        8 *
+        (
+            1 -
+            progress *
+                0.6
+        );
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        screen.x,
+        screen.y
+    );
+
+
+    if (
+        target
+    ) {
+        ctx.lineTo(
+            target.x,
+            target.y
+        );
+    } else {
+        const angle =
+            getEffectFacingAngle(
+                effect
+            );
+
+        ctx.lineTo(
+            screen.x +
+                Math.cos(
+                    angle
+                ) *
+                    120,
+
+            screen.y +
+                Math.sin(
+                    angle
+                ) *
+                    120
+        );
+    }
+
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+
+function drawVaelShadowPulse(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const radius =
+        finiteNumber(
+            effect.radius,
+            80
+        ) *
+        (
+            0.35 +
+            progress *
+                0.65
+        );
+
+
+    ctx.save();
+
+    ctx.globalCompositeOperation =
+        "lighter";
+
+
+    ctx.fillStyle =
+        colorWithAlpha(
+            "#4d2d63",
+            0.18 *
+            (
+                1 -
+                progress
+            )
+        );
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        screen.x,
+        screen.y,
+        radius,
+        radius *
+            0.52,
+        0,
+        0,
+        Math.PI *
+            2
+    );
+
+    ctx.fill();
+
+
+    ctx.strokeStyle =
+        colorWithAlpha(
+            "#a174cf",
+            0.72 *
+            (
+                1 -
+                progress
+            )
+        );
+
+    ctx.lineWidth =
+        3;
+
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+
+function drawVaelTendrilEffect(
+    ctx,
+    screen,
+    effect,
+    progress
+) {
+    const target =
+        worldToScreen(
+            finiteNumber(
+                effect.targetX,
+                effect.x
+            ),
+
+            finiteNumber(
+                effect.targetY,
+                effect.y
+            )
+        );
+
+
+    const controlX =
+        lerp(
+            screen.x,
+            target.x,
+            0.5
+        ) +
+        Math.sin(
+            (
+                effect.index ||
+                0
+            ) *
+                2.7 +
+            progress *
+                Math.PI *
+                2
+        ) *
+            28;
+
+
+    const controlY =
+        lerp(
+            screen.y,
+            target.y,
+            0.5
+        ) -
+        28;
+
+
+    ctx.save();
+
+    ctx.lineCap =
+        "round";
+
+    ctx.shadowColor =
+        "#7e50a5";
+
+    ctx.shadowBlur =
+        14;
+
+
+    /*
+        CORPO DO TENTÁCULO.
+    */
+    ctx.strokeStyle =
+        colorWithAlpha(
+            "#9566bd",
+            0.88 *
+            (
+                1 -
+                progress *
+                    0.45
+            )
+        );
+
+    ctx.lineWidth =
+        7;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        screen.x,
+        screen.y
+    );
+
+    ctx.quadraticCurveTo(
+        controlX,
+        controlY,
+        target.x,
+        target.y
+    );
+
+    ctx.stroke();
+
+
+    /*
+        VEIO ESCURO CENTRAL.
+    */
+    ctx.strokeStyle =
+        colorWithAlpha(
+            "#281b31",
+            0.85
+        );
+
+    ctx.lineWidth =
+        2.5;
+
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+
+function drawVaelRuntimeClones(
+    ctx
+) {
+    for (
+        let index = 0;
+        index <
+        gameplayRuntime
+            .vaelClones
+            .length;
+        index += 1
+    ) {
+        const clone =
+            gameplayRuntime
+                .vaelClones[
+                    index
+                ];
+
+        const screen =
+            worldToScreen(
+                clone.x,
+                clone.y
+            );
+
+        const bob =
+            Math.sin(
+                state.time *
+                    4 +
+                index
+            ) *
+            4;
+
+
+        ctx.save();
+
+        ctx.globalAlpha =
+            0.42;
+
+        ctx.fillStyle =
+            "#5b3a74";
+
+        ctx.shadowColor =
+            "#9368bd";
+
+        ctx.shadowBlur =
+            12;
+
+
+        /*
+            SOMBRA NO CHÃO.
+        */
+        ctx.beginPath();
+
+        ctx.ellipse(
+            screen.x,
+            screen.y +
+                8,
+            13,
+            7,
+            0,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+
+        /*
+            CORPO.
+        */
+        ctx.fillStyle =
+            "#79519b";
+
+        roundRectPath(
+            ctx,
+            screen.x -
+                8,
+            screen.y -
+                22 +
+                bob,
+            16,
+            28,
+            7
+        );
+
+        ctx.fill();
+
+
+        /*
+            CABEÇA.
+        */
+        ctx.fillStyle =
+            "#c9a6e6";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screen.x,
+            screen.y -
+                28 +
+                bob,
+            7,
+            0,
+            Math.PI *
+                2
+        );
+
+        ctx.fill();
+
+        ctx.restore();
+    }
+}
+               
 
 function drawSkillSlashEffect(
     ctx,
@@ -65219,7 +67132,18 @@ drawDoorwayOpenings(
             ctx
         );
 
-        drawTransientEffects(
+               drawTransientEffects(
+            ctx
+        );
+
+        /*
+            CLONES PROVISÓRIOS DO VAEL.
+
+            São Canvas por enquanto.
+            Depois podem ser substituídos
+            pelos sprites definitivos.
+        */
+        drawVaelRuntimeClones(
             ctx
         );
 

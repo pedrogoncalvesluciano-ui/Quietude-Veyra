@@ -15119,3 +15119,706 @@ word-break:
     }
 
 }
+
+/* ================================================================
+   VEYRA — SELEÇÃO DE PERSONAGEM
+   POLIMENTO 2 — SPRITES / GLOW / FLASH / CANVAS
+   ================================================================ */
+
+
+/* ================================================================
+   SPRITE FRONTAL NOS BOTÕES
+   ================================================================ */
+
+.selection-character-sprite-slot {
+    position: relative;
+
+    align-self: center;
+    justify-self: center;
+
+    width:
+        clamp(
+            28px,
+            3.4vw,
+            52px
+        );
+
+    aspect-ratio: 1;
+
+    overflow: hidden;
+
+    pointer-events: none;
+
+    filter:
+        drop-shadow(
+            0 4px 4px
+            rgba(0, 0, 0, .72)
+        );
+}
+
+
+.selection-character-sprite {
+    position: absolute;
+
+    /*
+        As folhas LPC possuem 13 colunas.
+
+        Aumentamos a folha para que exatamente
+        uma célula ocupe o quadrado.
+    */
+
+    left: 0;
+
+    /*
+        Linha 2 = personagem olhando para baixo,
+        ou seja, de frente para o jogador.
+    */
+
+    top: -200%;
+
+    width: 1300%;
+    height: auto;
+
+    max-width: none;
+
+    image-rendering: pixelated;
+
+    pointer-events: none;
+
+    user-select: none;
+
+    transform:
+        translateZ(0);
+}
+
+
+/* ================================================================
+   GLOW INDIVIDUAL DOS BOTÕES
+   ================================================================ */
+
+.selection-character-btn {
+    overflow: visible;
+
+    transition:
+        opacity .22s ease,
+        filter .22s ease,
+        transform .22s ease;
+}
+
+
+.selection-character-btn::after {
+    content: "";
+
+    position: absolute;
+
+    inset: 5% 2%;
+
+    z-index: -1;
+
+    border-radius: 8px;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    background:
+        var(
+            --character-glow,
+            #d0d0d0
+        );
+
+    filter:
+        blur(15px);
+
+    transform:
+        scale(.92);
+
+    transition:
+        opacity .22s ease,
+        transform .22s ease;
+}
+
+
+/*
+    HOVER:
+    brilho leve na cor DO PERSONAGEM.
+*/
+
+.selection-character-btn:hover::after {
+    opacity: .30;
+
+    transform:
+        scale(1.02);
+}
+
+
+.selection-character-btn:hover {
+    opacity: 1;
+
+    transform:
+        translateX(3px)
+        scale(1.015);
+
+    filter:
+        brightness(1.13)
+        drop-shadow(
+            0 0 7px
+            var(
+                --character-glow,
+                #d0d0d0
+            )
+        );
+}
+
+
+/*
+    SELECIONADO:
+    brilho permanece.
+*/
+
+.selection-character-btn.selected::after {
+    opacity: .47;
+
+    transform:
+        scale(1.045);
+
+    animation:
+        veyraSelectedCharacterGlow
+        2.8s
+        ease-in-out
+        infinite;
+}
+
+
+.selection-character-btn.selected {
+    filter:
+        brightness(1.12)
+        drop-shadow(
+            0 0 8px
+            var(
+                --character-glow,
+                #d0d0d0
+            )
+        );
+}
+
+
+@keyframes veyraSelectedCharacterGlow {
+
+    0%,
+    100% {
+        opacity: .38;
+
+        transform:
+            scale(1.01);
+    }
+
+    50% {
+        opacity: .58;
+
+        transform:
+            scale(1.055);
+    }
+
+}
+
+
+/* ================================================================
+   ARTE CENTRAL — GLOW NORMAL
+   ================================================================ */
+
+.selection-character-art {
+    /*
+        IMPORTANTE:
+
+        overflow precisa ficar visible para a explosão
+        conseguir sair para FORA do quadrado.
+    */
+
+    overflow: visible;
+
+    isolation: isolate;
+
+    --character-glow:
+        #d0d0d0;
+}
+
+
+.selection-character-art img {
+    position: relative;
+
+    z-index: 1;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    overflow: hidden;
+
+    transition:
+        filter .35s ease;
+
+    filter:
+        drop-shadow(
+            0 0 8px
+            color-mix(
+                in srgb,
+                var(--character-glow) 22%,
+                transparent
+            )
+        );
+}
+
+
+/* ================================================================
+   FLASH
+
+   ::before é a "cortina".
+
+   Ela TEM que chegar a 100% de opacidade antes
+   de o JavaScript trocar a imagem.
+   ================================================================ */
+
+.selection-character-art::before {
+    content: "";
+
+    position: absolute;
+
+    inset: -1%;
+
+    z-index: 20;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            circle at 50% 48%,
+
+            rgba(255, 255, 255, .96)
+            0%,
+
+            var(--character-glow)
+            24%,
+
+            var(--character-glow)
+            62%,
+
+            color-mix(
+                in srgb,
+                var(--character-glow) 82%,
+                #ffffff
+            )
+            100%
+        );
+
+    filter:
+        brightness(1.2);
+
+    transform:
+        scale(.18);
+}
+
+
+/* ================================================================
+   EXPLOSÃO EXTERNA
+
+   ::after cresce além do quadrado.
+   ================================================================ */
+
+.selection-character-art::after {
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    z-index: 19;
+
+    width: 112%;
+    aspect-ratio: 1;
+
+    border-radius: 50%;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            circle,
+
+            rgba(255, 255, 255, .76)
+            0%,
+
+            color-mix(
+                in srgb,
+                var(--character-glow) 86%,
+                white
+            )
+            12%,
+
+            color-mix(
+                in srgb,
+                var(--character-glow) 64%,
+                transparent
+            )
+            32%,
+
+            transparent
+            69%
+        );
+
+    filter:
+        blur(9px);
+
+    transform:
+        translate(-50%, -50%)
+        scale(.15);
+}
+
+
+/* ================================================================
+   INÍCIO DA TROCA
+   ================================================================ */
+
+.selection-character-art.is-transitioning::before {
+    animation:
+        veyraCharacterFlash
+        660ms
+        cubic-bezier(.2, .72, .18, 1)
+        both;
+}
+
+
+.selection-character-art.is-transitioning::after {
+    animation:
+        veyraCharacterExplosion
+        660ms
+        cubic-bezier(.12, .68, .18, 1)
+        both;
+}
+
+
+.selection-character-art.is-transitioning img {
+    animation:
+        veyraCharacterImageSwap
+        660ms
+        ease
+        both;
+}
+
+
+/*
+    CORTINA DO FLASH.
+
+    35%–47%:
+    quadro completamente coberto.
+
+    O JavaScript troca a imagem em 250ms,
+    exatamente dentro dessa região.
+*/
+
+@keyframes veyraCharacterFlash {
+
+    0% {
+        opacity: 0;
+
+        transform:
+            scale(.12);
+    }
+
+    18% {
+        opacity: .55;
+
+        transform:
+            scale(.64);
+    }
+
+    35% {
+        opacity: 1;
+
+        transform:
+            scale(1.035);
+
+        box-shadow:
+            0 0 22px
+            var(--character-glow),
+            0 0 55px
+            var(--character-glow);
+    }
+
+    47% {
+        opacity: 1;
+
+        transform:
+            scale(1.055);
+
+        box-shadow:
+            0 0 30px
+            var(--character-glow),
+            0 0 80px
+            var(--character-glow);
+    }
+
+    68% {
+        opacity: .48;
+
+        transform:
+            scale(1.12);
+    }
+
+    100% {
+        opacity: 0;
+
+        transform:
+            scale(1.18);
+    }
+
+}
+
+
+/*
+    A explosão passa para fora da moldura.
+*/
+
+@keyframes veyraCharacterExplosion {
+
+    0% {
+        opacity: 0;
+
+        transform:
+            translate(-50%, -50%)
+            scale(.14);
+    }
+
+    28% {
+        opacity: .15;
+
+        transform:
+            translate(-50%, -50%)
+            scale(.55);
+    }
+
+    42% {
+        opacity: .92;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1.02);
+
+        filter:
+            blur(7px);
+    }
+
+    66% {
+        opacity: .48;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1.36);
+
+        filter:
+            blur(15px);
+    }
+
+    100% {
+        opacity: 0;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1.72);
+
+        filter:
+            blur(24px);
+    }
+
+}
+
+
+/*
+    A imagem antiga desaparece ANTES da troca.
+
+    Entre 25% e 47% nenhuma das duas imagens
+    pode ser percebida pelo jogador.
+
+    É justamente aí que src é substituído.
+*/
+
+@keyframes veyraCharacterImageSwap {
+
+    0% {
+        opacity: 1;
+
+        transform:
+            scale(1);
+
+        filter:
+            blur(0);
+    }
+
+    22% {
+        opacity: .16;
+
+        transform:
+            scale(.985);
+
+        filter:
+            blur(2px);
+    }
+
+    30% {
+        opacity: 0;
+
+        transform:
+            scale(.975);
+
+        filter:
+            blur(5px);
+    }
+
+    47% {
+        opacity: 0;
+
+        transform:
+            scale(1.025);
+
+        filter:
+            blur(5px);
+    }
+
+    65% {
+        opacity: .56;
+
+        transform:
+            scale(1.012);
+
+        filter:
+            blur(1px);
+    }
+
+    100% {
+        opacity: 1;
+
+        transform:
+            scale(1);
+
+        filter:
+            blur(0);
+    }
+
+}
+
+
+/* ================================================================
+   CANVAS DE ATRIBUTOS
+   ================================================================ */
+
+.selection-info-panel {
+    pointer-events: none;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding:
+        8% 8%;
+}
+
+
+.selection-stats-canvas {
+    display: block;
+
+    width: 100%;
+    height: 58%;
+
+    opacity: .94;
+
+    pointer-events: none;
+}
+
+
+/* ================================================================
+   VOLTAR
+
+   Agora fica DEBAIXO dos personagens.
+   ================================================================ */
+
+.selection-back-btn {
+    left: 6.6%;
+
+    right: auto;
+
+    bottom: 6.3%;
+
+    width:
+        clamp(
+            31px,
+            3vw,
+            46px
+        );
+
+    z-index: 12;
+}
+
+
+/* ================================================================
+   INICIAR JORNADA
+
+   Fica embaixo da IMAGEM CENTRAL,
+   não no painel direito.
+   ================================================================ */
+
+.selection-start-btn {
+    left: 23.1%;
+    right: auto;
+
+    bottom: 6.2%;
+
+    width: 24%;
+
+    height: 6%;
+
+    z-index: 12;
+}
+
+
+.selection-start-btn:not(:disabled):hover {
+    transform:
+        translateY(-2px)
+        scale(1.015);
+}
+
+
+/* ================================================================
+   BLOQUEIO DURANTE A EXPLOSÃO
+   ================================================================ */
+
+.selection-character-list.selection-locked
+.selection-character-btn {
+    pointer-events: none;
+}
+
+
+/* ================================================================
+   ACESSIBILIDADE — REDUZIR MOVIMENTO
+   ================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .selection-character-art.is-transitioning::before,
+    .selection-character-art.is-transitioning::after,
+    .selection-character-art.is-transitioning img,
+    .selection-character-btn.selected::after {
+        animation-duration:
+            .01ms !important;
+
+        animation-iteration-count:
+            1 !important;
+    }
+
+}

@@ -53583,8 +53583,8 @@ if (
     theronSlashForward:
         Object.freeze({
 
-            file:
-                "slash.png",
+           file:
+    "1h_slash.png",
 
             frames:
                 13,
@@ -53602,7 +53602,7 @@ if (
         Object.freeze({
 
             file:
-                "backslash.png",
+    "1h_backslash.png",
 
             frames:
                 13,
@@ -53699,8 +53699,7 @@ if (
         Object.freeze({
 
             file:
-                "slash.png",
-
+    "1h_slash.png",
             frames:
                 13,
 
@@ -54002,15 +54001,30 @@ if (
             entry
         );
 
-      const spriteFolder =
-    characterId ===
-    "zephyr"
+   const spriteFolder =
+    characterId === "zephyr"
         ? "vael"
         : characterId;
 
 
+const spriteUrl =
+    new URL(
+        `assets/sprites/players/${spriteFolder}/${animation.file}`,
+        window.location.href
+    ).href;
+
+
+console.log(
+    "VEYRA SPRITE:",
+    characterId,
+    animationName,
+    spriteUrl
+);
+
+
 image.src =
-    `${PLAYER_SPRITE_BASE_PATH}/${spriteFolder}/${animation.file}`;
+    spriteUrl;
+       
         return entry;
     }
 

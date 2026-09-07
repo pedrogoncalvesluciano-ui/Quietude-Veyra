@@ -15211,31 +15211,59 @@ word-break:
 
     position: absolute;
 
-    inset: 5% 2%;
+    left: -7%;
+    right: -7%;
+
+    top: -24%;
+    bottom: -24%;
 
     z-index: -1;
-
-    border-radius: 8px;
 
     opacity: 0;
 
     pointer-events: none;
 
+    border-radius: 28%;
+
     background:
-        var(
-            --character-glow,
-            #d0d0d0
+        radial-gradient(
+            ellipse at center,
+
+            color-mix(
+                in srgb,
+                var(--character-glow) 48%,
+                white
+            )
+            0%,
+
+            color-mix(
+                in srgb,
+                var(--character-glow) 24%,
+                transparent
+            )
+            24%,
+
+            color-mix(
+                in srgb,
+                var(--character-glow) 10%,
+                transparent
+            )
+            46%,
+
+            transparent
+            72%
         );
 
     filter:
-        blur(15px);
+        blur(10px);
 
     transform:
-        scale(.92);
+        scale(.86);
 
     transition:
         opacity .22s ease,
-        transform .22s ease;
+        transform .26s ease,
+        filter .26s ease;
 }
 
 
@@ -15245,10 +15273,13 @@ word-break:
 */
 
 .selection-character-btn:hover::after {
-    opacity: .30;
+    opacity: .72;
 
     transform:
-        scale(1.02);
+        scale(1.06);
+
+    filter:
+        blur(11px);
 }
 
 
@@ -15277,14 +15308,17 @@ word-break:
 */
 
 .selection-character-btn.selected::after {
-    opacity: .47;
+    opacity: .86;
 
     transform:
-        scale(1.045);
+        scale(1.08);
+
+    filter:
+        blur(12px);
 
     animation:
         veyraSelectedCharacterGlow
-        2.8s
+        2.6s
         ease-in-out
         infinite;
 }
@@ -15304,6 +15338,29 @@ word-break:
 
 
 @keyframes veyraSelectedCharacterGlow {
+
+    0%,
+    100% {
+        opacity: .58;
+
+        transform:
+            scale(1.01);
+
+        filter:
+            blur(11px);
+    }
+
+    50% {
+        opacity: .92;
+
+        transform:
+            scale(1.10);
+
+        filter:
+            blur(14px);
+    }
+
+}
 
     0%,
     100% {
@@ -15821,4 +15878,384 @@ word-break:
             1 !important;
     }
 
+}
+/* ================================================================
+   VEYRA — SELEÇÃO
+   POLIMENTO 3 — INFO / LAYOUT / LUZ
+   ================================================================ */
+
+
+/* ================================================================
+   PAINEL DIREITO
+   ================================================================ */
+
+.selection-info-panel {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: stretch;
+    justify-content: flex-start;
+
+    padding:
+        10% 9%
+        8%;
+
+    pointer-events: none;
+
+    --character-glow:
+        #d0d0d0;
+}
+
+
+/* ================================================================
+   IDENTIDADE
+   ================================================================ */
+
+.selection-character-info {
+    position: relative;
+
+    width: 100%;
+
+    padding:
+        0
+        2%;
+
+    opacity: .98;
+}
+
+
+.selection-character-role {
+    display: block;
+
+    margin-bottom:
+        clamp(
+            4px,
+            .6vh,
+            8px
+        );
+
+    color:
+        color-mix(
+            in srgb,
+            var(--character-glow) 70%,
+            #a8a49b
+        );
+
+    font-family:
+        "Cinzel",
+        Georgia,
+        serif;
+
+    font-size:
+        clamp(
+            7px,
+            .55vw,
+            11px
+        );
+
+    font-weight: 600;
+
+    letter-spacing:
+        .24em;
+
+    text-transform:
+        uppercase;
+
+    text-shadow:
+        0 0 10px
+        color-mix(
+            in srgb,
+            var(--character-glow) 34%,
+            transparent
+        );
+}
+
+
+.selection-character-name {
+    margin: 0;
+
+    color:
+        #e5dfd3;
+
+    font-family:
+        "Cinzel",
+        Georgia,
+        serif;
+
+    font-size:
+        clamp(
+            22px,
+            2.4vw,
+            42px
+        );
+
+    font-weight: 600;
+
+    line-height: 1;
+
+    letter-spacing:
+        .08em;
+
+    text-shadow:
+        0 2px 10px
+        rgba(0, 0, 0, .75),
+
+        0 0 20px
+        color-mix(
+            in srgb,
+            var(--character-glow) 18%,
+            transparent
+        );
+}
+
+
+.selection-info-divider {
+    position: relative;
+
+    width: 64%;
+
+    height: 1px;
+
+    margin:
+        clamp(
+            10px,
+            1.4vh,
+            18px
+        )
+        0;
+
+    background:
+        linear-gradient(
+            90deg,
+
+            color-mix(
+                in srgb,
+                var(--character-glow) 65%,
+                transparent
+            ),
+
+            rgba(194, 166, 105, .24),
+
+            transparent
+        );
+
+    box-shadow:
+        0 0 8px
+        color-mix(
+            in srgb,
+            var(--character-glow) 18%,
+            transparent
+        );
+}
+
+
+.selection-character-description {
+    width: 82%;
+
+    margin: 0;
+
+    color:
+        rgba(182, 178, 168, .72);
+
+    font-family:
+        "Crimson Pro",
+        Georgia,
+        serif;
+
+    font-size:
+        clamp(
+            10px,
+            .85vw,
+            15px
+        );
+
+    line-height: 1.55;
+}
+
+
+/* ================================================================
+   ÁREA DOS ATRIBUTOS
+   ================================================================ */
+
+.selection-stats-area {
+    position: relative;
+
+    width: 78%;
+
+    margin-top: auto;
+    margin-left: auto;
+
+    padding-top:
+        clamp(
+            16px,
+            2.2vh,
+            28px
+        );
+}
+
+
+.selection-stats-title {
+    display: block;
+
+    margin-bottom:
+        clamp(
+            6px,
+            .8vh,
+            12px
+        );
+
+    color:
+        rgba(199, 194, 184, .72);
+
+    font-family:
+        "Cinzel",
+        Georgia,
+        serif;
+
+    font-size:
+        clamp(
+            8px,
+            .58vw,
+            11px
+        );
+
+    font-weight: 600;
+
+    letter-spacing:
+        .2em;
+}
+
+
+.selection-stats-canvas {
+    display: block;
+
+    width: 100%;
+    height:
+        clamp(
+            125px,
+            19vh,
+            220px
+        );
+
+    opacity: .96;
+}
+
+
+/* ================================================================
+   REMOVE O TÍTULO DESENHADO PELO CANVAS VISUALMENTE
+
+   O texto ATRIBUTOS agora fica em HTML acima dele.
+   ================================================================ */
+
+.selection-stats-area
+.selection-stats-canvas {
+    margin-top:
+        -18px;
+}
+/* ================================================================
+   ASSETS NOVOS DOS BOTÕES
+   ================================================================ */
+
+.selection-character-btn {
+    background:
+        url("./assets/ui/character-selection/player-button.png")
+        center /
+        100% 100%
+        no-repeat;
+}
+
+
+.selection-character-btn.selected,
+.selection-character-btn:hover {
+    background-image:
+        url("./assets/ui/character-selection/player-button.png");
+}
+
+
+/* FECHAR */
+
+.selection-back-btn {
+    width: 14.5%;
+    height: 7%;
+
+    left: 3.4%;
+    bottom: 5.2%;
+
+    aspect-ratio: auto;
+
+    color: transparent;
+
+    font-size: 0;
+
+    background:
+        url("./assets/ui/character-selection/close-button.png")
+        center /
+        contain
+        no-repeat;
+
+    opacity: .82;
+
+    transition:
+        opacity .2s ease,
+        transform .2s ease,
+        filter .2s ease;
+}
+
+
+.selection-back-btn:hover {
+    opacity: 1;
+
+    background-image:
+        url("./assets/ui/character-selection/close-button.png");
+
+    transform:
+        translateY(-2px)
+        scale(1.025);
+
+    filter:
+        brightness(1.12)
+        drop-shadow(
+            0 0 9px
+            rgba(208, 172, 96, .32)
+        );
+}
+
+
+/* INICIAR */
+
+.selection-start-btn {
+    left: 23%;
+    bottom: 4.8%;
+
+    width: 25%;
+    height: 7.5%;
+
+    color: transparent;
+
+    font-size: 0;
+
+    background:
+        url("./assets/ui/character-selection/start-button.png")
+        center /
+        contain
+        no-repeat;
+
+    opacity: .88;
+}
+
+
+.selection-start-btn.ready,
+.selection-start-btn:not(:disabled):hover {
+    background-image:
+        url("./assets/ui/character-selection/start-button.png");
+
+    opacity: 1;
+
+    filter:
+        brightness(1.11)
+        drop-shadow(
+            0 0 10px
+            rgba(211, 172, 89, .30)
+        );
 }

@@ -3046,8 +3046,6 @@ arc:
 
         icon:
             "☁",
- <!-- == CODIGO HTML  === -->
-
 
         category:
             "materials",
@@ -28679,7 +28677,6 @@ if (
         ) {
             return true;
         }
-
         return Boolean(
             state.paused ||
             state.activePanel ||
@@ -28689,6 +28686,17 @@ if (
             state.cutscene ||
             state.fragmentMinigame
                 ?.active ||
+
+            /*
+                Durante os 2,5 segundos do F,
+                o personagem está concentrando
+                a habilidade.
+
+                Não anda, ataca ou usa Dash.
+            */
+            gameplayRuntime
+                .ultimateCharge ||
+
             state.deathState
         );
     }
@@ -32043,6 +32051,105 @@ y:
 
                 break;
 
+                          /*
+                VAEL — CHICOTADA DE SOMBRA.
+
+                Procura o primeiro inimigo
+                tocado pela linha do chicote.
+            */
+            case "shadowWhip": {
+
+                const endX =
+                    player.x +
+                    aim.x *
+                        attack.range;
+
+                const endY =
+                    player.y +
+                    aim.y *
+                        attack.range;
+
+
+                let closest =
+                    null;
+
+                let closestDistance =
+                    Infinity;
+
+
+                for (
+                    const enemy of
+                    getAllCombatEnemies()
+                ) {
+                    if (
+                        enemy.dead
+                    ) {
+                        continue;
+                    }
+
+
+                    const lineDistance =
+                        pointToSegmentDistance(
+                            enemy.x,
+                            enemy.y,
+
+                            player.x,
+                            player.y,
+
+                            endX,
+                            endY
+                        );
+
+
+                    const fromPlayer =
+                        distance(
+                            player.x,
+                            player.y,
+                            enemy.x,
+                            enemy.y
+                        );
+
+
+                    if (
+                        lineDistance <=
+                            18 +
+                            enemy.radius &&
+                        fromPlayer <
+                            closestDistance
+                    ) {
+                        closest =
+                            enemy;
+
+                        closestDistance =
+                            fromPlayer;
+                    }
+                }
+
+
+                if (
+                    closest
+                ) {
+                    applyDamageToEnemy(
+                        closest,
+                        player.damage,
+                        {
+                            player,
+
+                            playerAttack:
+                                true,
+
+                            attackToken
+                        }
+                    );
+                }
+
+
+                player.attackCooldown =
+                    0.38;
+
+                break;
+            }
+
             case "riftArc":
                 performMeleeArcAttack(
                     player,
@@ -32883,6 +32990,12 @@ y:
     }
 
   
+           function executeClassSkill(
+        key,
+        skill,
+        attackToken,
+        forcedAim = null
+    ) {
         const player =
             state.player;
 
@@ -32893,6 +33006,7 @@ y:
         }
 
         const aim =
+            forcedAim ||
             getPlayerAimVector();
 
         const id =
@@ -33042,113 +33156,6 @@ y:
                             195,
                         color:
                             "#ffb16a"
-                    }
-                );
-
-                return true;
-            }
-        }
-
-
-        /* THERON */
-
-        if (
-            id ===
-            "theron"
-        ) {
-            if (
-                key ===
-                "q"
-            ) {
-                performMeleeArcAttack(
-                    player,
-                    aim,
-                    94,
-                    1.15,
-                    player.damage *
-                        1.7,
-                    source
-                );
-
-                spawnTransientEffect(
-                    "guardianStrike",
-                    player.x,
-                    player.y,
-                    {
-                        duration:
-                            0.4
-                    }
-                );
-
-                return true;
-            }
-
-            if (
-                key ===
-                "r"
-            ) {
-                damageEnemiesInRadius(
-                    player.x,
-                    player.y,
-                    92,
-                    player.damage *
-                        0.55,
-                    source
-                );
-
-                addClassBuff({
-                    type:
-                        "ironStance",
-
-                    timer:
-                        3.5,
-
-                    defenseBonus:
-                        18
-                });
-
-                spawnTransientEffect(
-                    "ironStance",
-                    player.x,
-                    player.y,
-                    {
-                        duration:
-                            0.7,
-                        radius:
-                            56
-                    }
-                );
-
-                return true;
-            }
-
-            if (
-                key ===
-                "f"
-            ) {
-                performForwardSkillMovement(
-                    player,
-                    aim,
-                    150
-                );
-
-                performMeleeArcAttack(
-                    player,
-                    aim,
-                    92,
-                    1.4,
-                    player.damage *
-                        1.85,
-                    source
-                );
-
-                spawnTransientEffect(
-                    "guardianCharge",
-                    player.x,
-                    player.y,
-                    {
-                        duration:
-                            0.55
                     }
                 );
 
@@ -33776,125 +33783,6 @@ y:
                             270,
                         color:
                             "#f2a7d8"
-                    }
-                );
-
-                return true;
-            }
-        }
-
-
-        /* ZEPHYR */
-
-        if (
-            id ===
-            "zephyr"
-        ) {
-            if (
-                key ===
-                "q"
-            ) {
-                performMeleeArcAttack(
-                    player,
-                    aim,
-                    112,
-                    1.05,
-                    player.damage *
-                        1.55,
-                    source
-                );
-
-                spawnTransientEffect(
-                    "adaptiveCut",
-                    player.x,
-                    player.y,
-                    {
-                        duration:
-                            0.42
-                    }
-                );
-
-                return true;
-            }
-
-            if (
-                key ===
-                "r"
-            ) {
-                damageEnemiesInRadius(
-                    player.x,
-                    player.y,
-                    90,
-                    player.damage *
-                        0.5,
-                    source
-                );
-
-                addClassBuff({
-                    type:
-                        "speed",
-                    timer:
-                        5,
-                    multiplier:
-                        1.12,
-                    source:
-                        "adaptiveForm"
-                });
-
-                addClassBuff({
-                    type:
-                        "damage",
-                    timer:
-                        5,
-                    multiplier:
-                        1.12,
-                    source:
-                        "adaptiveForm"
-                });
-
-                spawnTransientEffect(
-                    "adaptiveForm",
-                    player.x,
-                    player.y,
-                    {
-                        duration:
-                            0.8,
-                        radius:
-                            70,
-                        color:
-                            "#9b79bd"
-                    }
-                );
-
-                return true;
-            }
-
-            if (
-                key ===
-                "f"
-            ) {
-                performForwardSkillMovement(
-                    player,
-                    aim,
-                    125
-                );
-
-                damageEnemiesInRadius(
-                    player.x,
-                    player.y,
-                    75,
-                    player.damage *
-                        1.1,
-                    source
-                );
-
-                spawnTransientEffect(
-                    "riftStep",
-                    player.x,
-                    player.y,
-                    {
-                        duration:
-                            0.55
                     }
                 );
 

@@ -68043,6 +68043,8 @@ drawDoorwayOpenings(
         {
             renderRuntime,
 
+           preloadPlayerSprites,
+
             configureRenderer,
             resizeRenderer,
 
@@ -70294,22 +70296,17 @@ if (!characterId) {
 
 }
 
-       /*
+    /*
     Carrega os sprites do personagem
-    ANTES de entrar no Canvas do jogo.
-
-    Isso evita aparecer o boneco
-    provisório no primeiro movimento
-    ou primeiro ataque.
+    através da API global da Parte 4.
 */
-preloadPlayerSprites(
+safeCall(
+    "preloadPlayerSprites",
     characterId
 );
 
 
 beginFreshAdventureSession();
-
-        beginFreshAdventureSession();
 
 
         state.selectedCharacter =

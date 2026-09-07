@@ -1628,11 +1628,11 @@
                     id:
                         "theron",
 
-                    name:
-                        "Theron",
+                                      name:
+                        "Varyn",
 
                     className:
-                        "Cavaleiro",
+                        "Espadachim Lupino",
 
                     icon:
                         "🗡️",
@@ -1644,9 +1644,8 @@
                         "#d2d7d9",
 
 
-                    description:
-                        "Um combatente equilibrado e resistente, especializado no combate corpo a corpo.",
-
+                   description:
+                        "Um lupino exilado de sua própria tribo. Luta com uma única lâmina, combinando velocidade, precisão e ataques ferozes.",
 
                     hp:
                         128,
@@ -1695,37 +1694,37 @@ arc:
                                 "theron",
 
                             bodyType:
-                                "knight",
+                                "lupine",
 
                             silhouette:
-                                "armored",
+                                "wolfSwordsman",
 
                             bodyColor:
-                                "#6f7476",
+                                "#8f999d",
 
                             clothColor:
-                                "#34393c",
+                                "#263b3d",
 
                             accentColor:
-                                "#bbc2c5",
+                                "#5e9a96",
 
                             skinColor:
-                                "#c69a76",
+                                "#9aa4a7",
 
                             hairColor:
-                                "#4b372c",
+                                "#6f787c",
 
                             capeColor:
-                                "#4e5154",
+                                null,
 
                             robe:
                                 false,
 
                             armor:
-                                true,
+                                false,
 
                             shoulderArmor:
-                                true,
+                                false,
 
                             helmet:
                                 false,
@@ -1737,19 +1736,19 @@ arc:
                                 "longSword",
 
                             shieldVisual:
-                                "roundShield",
+                                null,
 
                             idleAnimation:
-                                "guardIdle",
+                                "predatorIdle",
 
                             walkAnimation:
-                                "armoredWalk",
+                                "lupineWalk",
 
                             attackAnimation:
-                                "swordSlash",
+                                "predatorSlash",
 
                             particleIdentity:
-                                "steelSpark"
+                                "silverSlash"
 
                         })
 
@@ -3730,40 +3729,39 @@ energy:
                 }),
 
 
-            theron:
+                   theron:
                 Object.freeze({
 
                     q:
                         makeSkill(
-                            "guardianStrike",
-                            "Golpe do Guardião",
+                            "predatorSlash",
+                            "Corte Predatório",
                             "q",
-                            10,
+                            12,
                             3
                         ),
 
 
                     r:
                         makeSkill(
-                            "ironStance",
-                            "Postura de Ferro",
+                            "cuttingRush",
+                            "Investida Cortante",
                             "r",
                             18,
-                            6
+                            5.5
                         ),
 
 
                     f:
                         makeSkill(
-                            "guardianCharge",
-                            "Investida do Guardião",
+                            "maximumRush",
+                            "Investida Máxima",
                             "f",
-                            25,
-                            8
+                            34,
+                            10
                         )
 
                 }),
-
 
             grumgar:
                 Object.freeze({
@@ -53300,26 +53298,68 @@ if (
     }
 
 
-    /* ============================================================
-       THERON
+       /* ============================================================
+       VARYN — ESPADACHIM LUPINO
+       PLACEHOLDER CANVAS
        ============================================================ */
 
-      function drawTheronLegacy(
+    function drawTheronLegacy(
         ctx,
         player,
         profile,
         walk
     ) {
+
         ctx.save();
 
+
+        const step =
+            Math.sin(
+                walk *
+                10
+            ) *
+            2.2;
+
+
         /*
-            Pernas.
+            CAUDA
         */
+
         ctx.strokeStyle =
-            "#6f7478";
+            "#737d81";
 
         ctx.lineWidth =
             7;
+
+        ctx.lineCap =
+            "round";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -10,
+            8
+        );
+
+        ctx.quadraticCurveTo(
+            -25,
+            5 + step,
+            -27,
+            -7
+        );
+
+        ctx.stroke();
+
+
+        /*
+            PERNAS
+        */
+
+        ctx.strokeStyle =
+            "#596267";
+
+        ctx.lineWidth =
+            6;
 
         ctx.beginPath();
 
@@ -53329,10 +53369,8 @@ if (
         );
 
         ctx.lineTo(
-            -7 +
-                walk *
-                    2,
-            22
+            -8 + step,
+            23
         );
 
         ctx.moveTo(
@@ -53341,135 +53379,267 @@ if (
         );
 
         ctx.lineTo(
-            7 -
-                walk *
-                    2,
-            22
+            8 - step,
+            23
         );
 
         ctx.stroke();
 
+
         /*
-            Armadura.
+            CORPO / ROUPA
         */
+
         ctx.fillStyle =
-            profile.armorColor ||
-            "#a9afb2";
+            profile.clothColor ||
+            "#263b3d";
 
         roundRectPath(
             ctx,
-            -14,
             -12,
-            28,
-            31,
+            -10,
+            24,
+            29,
+            8
+        );
+
+        ctx.fill();
+
+
+        /*
+            PEITO CINZA
+        */
+
+        ctx.fillStyle =
+            profile.bodyColor ||
+            "#8f999d";
+
+        roundRectPath(
+            ctx,
+            -10,
+            -8,
+            20,
+            18,
             7
         );
 
         ctx.fill();
 
-        ctx.strokeStyle =
-            "#4c545a";
-
-        ctx.lineWidth =
-            3;
-
-        ctx.stroke();
 
         /*
-            Capacete.
+            CABEÇA
         */
+
         ctx.fillStyle =
-            "#8e969b";
+            "#909a9e";
 
         ctx.beginPath();
 
         ctx.arc(
             0,
             -20,
-            12,
-            Math.PI,
-            Math.PI *
-                2
-        );
-
-        ctx.lineTo(
             11,
-            -12
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        /*
+            ORELHA ESQUERDA
+        */
+
+        ctx.fillStyle =
+            "#7b8589";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -8,
+            -27
         );
 
         ctx.lineTo(
-            -11,
-            -12
+            -5,
+            -40
+        );
+
+        ctx.lineTo(
+            0,
+            -29
         );
 
         ctx.closePath();
 
         ctx.fill();
 
-        /*
-            Espada.
-        */
-        ctx.strokeStyle =
-            "#d4d7d5";
 
-        ctx.lineWidth =
-            4;
+        /*
+            ORELHA DIREITA
+        */
 
         ctx.beginPath();
 
         ctx.moveTo(
-            14,
-            3
+            8,
+            -27
         );
 
         ctx.lineTo(
-            28,
-            -23
+            5,
+            -40
+        );
+
+        ctx.lineTo(
+            0,
+            -29
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+
+        /*
+            FOCINHO
+        */
+
+        ctx.fillStyle =
+            "#aeb5b7";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            5,
+            -17,
+            8,
+            5,
+            0,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        /*
+            NARIZ
+        */
+
+        ctx.fillStyle =
+            "#25292b";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            11,
+            -18,
+            2.2,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        /*
+            OLHO
+        */
+
+        ctx.fillStyle =
+            "#d8ece8";
+
+        ctx.shadowColor =
+            "#76b8ae";
+
+        ctx.shadowBlur =
+            7;
+
+        ctx.fillRect(
+            2,
+            -24,
+            3,
+            2
+        );
+
+        ctx.shadowBlur =
+            0;
+
+
+        /*
+            CACHECOL
+        */
+
+        ctx.strokeStyle =
+            profile.accentColor ||
+            "#5e9a96";
+
+        ctx.lineWidth =
+            5;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            -10,
+            11,
+            0.15,
+            Math.PI - 0.1
         );
 
         ctx.stroke();
 
+
         /*
-            Escudo.
+            ESPADA ÚNICA
         */
-        ctx.fillStyle =
-            "#66727a";
+
+        ctx.strokeStyle =
+            "#d8dedf";
+
+        ctx.lineWidth =
+            3.5;
 
         ctx.beginPath();
 
         ctx.moveTo(
-            -18,
-            -5
+            10,
+            5
         );
 
         ctx.lineTo(
-            -29,
-            0
+            27,
+            -19
+        );
+
+        ctx.stroke();
+
+
+        /*
+            GUARDA DA ESPADA
+        */
+
+        ctx.strokeStyle =
+            "#5d6b6f";
+
+        ctx.lineWidth =
+            3;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            7,
+            1
         );
 
         ctx.lineTo(
-            -26,
-            15
+            14,
+            7
         );
 
-        ctx.lineTo(
-            -18,
-            22
-        );
+        ctx.stroke();
 
-        ctx.lineTo(
-            -11,
-            15
-        );
-
-        ctx.lineTo(
-            -9,
-            0
-        );
-
-        ctx.closePath();
-
-        ctx.fill();
 
         ctx.restore();
     }
@@ -53778,16 +53948,30 @@ if (
             ) {
 
                 drawTheronLegacy(
-                    ctx,
-                    player,
-                    profile,
-                    walk
-                );
+                    ctx,    function drawTheron(
+        ctx,
+        player,
+        profile,
+        walk
+    ) {
 
-            }
+        /*
+            VARYN — PLACEHOLDER EM CANVAS.
 
-        }
+            Mantemos o renderer interno
+            "theron" por compatibilidade.
 
+            Mais tarde esta função poderá
+            voltar a utilizar spritesheet
+            sem alterar o restante do jogo.
+        */
+
+        drawTheronLegacy(
+            ctx,
+            player,
+            profile,
+            walk
+        );
     }
 
 
@@ -60416,20 +60600,35 @@ function drawBasicAttackEffect(
             ?.characterId;
 
 
-    /*
-        CAVALEIRO.
+      /*
+        VARYN — ESPADACHIM LUPINO.
+
+        Enquanto os sprites definitivos
+        não entram, o corte é desenhado
+        pelo Canvas.
     */
-      if (
+    if (
         characterId ===
         "theron"
     ) {
-        /*
-            O corte visual do Theron agora
-            vem inteiramente do spritesheet.
+        drawSkillSlashEffect(
+            ctx,
+            screen,
+            {
+                ...effect,
 
-            A hitbox e o dano continuam
-            no sistema de meleeArc.
-        */
+                characterId:
+                    "theron",
+
+                aimX:
+                    effect.aimX,
+
+                aimY:
+                    effect.aimY
+            },
+            progress
+        );
+
         return;
     }
 
@@ -67779,8 +67978,8 @@ function updateCharacterStartButton() {
             kaelion:
                 "MAGO DAS BRASAS",
 
-            theron:
-                "CAVALEIRO",
+                        theron:
+                "ESPADACHIM LUPINO",
 
             grumgar:
                 "TROLL GUERREIRO",
@@ -67808,8 +68007,8 @@ function updateCharacterStartButton() {
             kaelion:
                 "Ataca à distância e domina energia incendiária. Poderoso, porém mais frágil.",
 
-            theron:
-                "Combate de curta distância com espada, escudo e grande resistência.",
+                     theron:
+                "Lupino exilado que luta com uma única espada. É veloz, preciso e especializado em investidas e cortes sucessivos.",
 
             grumgar:
                 "Muito resistente e forte. Mais lento, porém capaz de suportar grandes impactos.",

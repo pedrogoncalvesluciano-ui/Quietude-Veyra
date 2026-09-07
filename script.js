@@ -2064,24 +2064,23 @@ arc:
                     basicAttack:
                         Object.freeze({
 
-                            id:
-                                "riftSlash",
+                                                       id:
+                                "shadowWhip",
 
                             name:
-                                "Corte da Fenda",
+                                "Chicotada de Sombra",
 
                             type:
-                                "riftArc",
+                                "shadowWhip",
 
                             range:
-                                98,
+                                138,
 
                             arc:
-                                0.9,
+                                0.32,
 
                             color:
-                                "#a17bd0"
-
+                                "#9a72c8"
                         }),
 
 
@@ -3833,40 +3832,39 @@ energy:
                 }),
 
 
-            zephyr:
+                      zephyr:
                 Object.freeze({
 
                     q:
                         makeSkill(
-                            "adaptiveCut",
-                            "Corte Adaptativo",
+                            "veilSummon",
+                            "Invocação do Véu",
                             "q",
-                            11,
-                            2.8
+                            14,
+                            3.2
                         ),
 
 
                     r:
                         makeSkill(
-                            "adaptiveForm",
-                            "Forma Adaptativa",
+                            "shadowWave",
+                            "Onda de Sombra",
                             "r",
-                            16,
+                            22,
                             8
                         ),
 
 
                     f:
                         makeSkill(
-                            "riftStep",
-                            "Passo da Fenda",
+                            "shadowTendrils",
+                            "Tentáculos da Quietude",
                             "f",
-                            22,
-                            6
+                            38,
+                            11
                         )
 
                 })
-
         });
 
 
@@ -27871,9 +27869,25 @@ addMazeWall(
         lastExhaustionWarningAt: -999,
         lastEnergyWarningAt: -999,
 
-        deathSafeSnapshot: null,
+              deathSafeSnapshot: null,
 
-       transientEffects: [],
+        transientEffects: [],
+
+
+        /*
+            HABILIDADES NOVAS.
+        */
+        ultimateCharge:
+            null,
+
+        varynFlurry:
+            null,
+
+        vaelShadowWave:
+            null,
+
+        vaelClones:
+            [],
 
 
 /*

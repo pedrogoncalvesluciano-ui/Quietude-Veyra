@@ -17144,3 +17144,598 @@ word-break:
     }
 
 }
+/* ================================================================
+   VEYRA — SELEÇÃO
+   POLIMENTO 5
+   ================================================================ */
+
+
+/* ================================================================
+   AUMENTA TODO O CONJUNTO
+   ================================================================ */
+
+.veyra-selection-stage {
+    width: 100vw !important;
+    height: 100vh !important;
+
+    transform:
+        scale(1.20);
+
+    transform-origin:
+        center center;
+}
+
+
+/* ================================================================
+   TÍTULO DA TELA
+   ================================================================ */
+
+.selection-screen-heading {
+    left: 10%;
+    top: 13%;
+}
+
+
+.selection-screen-brand {
+    right: 10%;
+    top: 13%;
+}
+
+
+/* ================================================================
+   NOME DO PERSONAGEM
+   ================================================================ */
+
+.selection-character-info {
+    width: 90%;
+
+    margin:
+        0 auto;
+
+    text-align:
+        center;
+}
+
+
+.selection-character-role {
+    text-align:
+        center;
+}
+
+
+.selection-character-name {
+    text-align:
+        center;
+
+    font-size:
+        clamp(
+            30px,
+            3.1vw,
+            52px
+        );
+}
+
+
+.selection-info-divider {
+    width: 58%;
+
+    margin-left:
+        auto;
+
+    margin-right:
+        auto;
+}
+
+
+.selection-character-description {
+    width: 78%;
+
+    margin:
+        0 auto;
+
+    text-align:
+        center;
+}
+
+
+/* ================================================================
+   PAINEL DIREITO
+   ================================================================ */
+
+.selection-info-panel {
+    top: 18%;
+
+    padding:
+        2.5% 6%
+        3%;
+}
+
+
+/* ================================================================
+   GRÁFICO
+   ================================================================ */
+
+.selection-stats-area {
+    width: 105%;
+
+    margin:
+        3% 0
+        0 -5%;
+}
+
+
+.selection-stats-canvas {
+    width: 100%;
+
+    height:
+        clamp(
+            155px,
+            22vh,
+            235px
+        );
+
+    margin: 0;
+}
+
+
+/* ================================================================
+   HABILIDADES
+   ================================================================ */
+
+.selection-skills-area {
+    width: 100%;
+
+    margin-top:
+        0;
+}
+
+
+.selection-skills-title {
+    margin-bottom:
+        8px;
+
+    text-align:
+        left;
+}
+
+
+.selection-skills-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(0, 1fr)
+        );
+
+    gap:
+        10px;
+}
+
+
+.selection-skill-card {
+    min-height: 0;
+
+    padding: 0;
+
+    border: 0;
+
+    background:
+        transparent;
+
+    overflow:
+        visible;
+}
+
+
+.selection-skill-visual {
+    position: relative;
+
+    width: 100%;
+
+    aspect-ratio:
+        1.35 / 1;
+
+    border:
+        1px solid
+        rgba(
+            198,
+            169,
+            105,
+            .34
+        );
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(
+                255,
+                255,
+                255,
+                .035
+            ),
+            rgba(
+                0,
+                0,
+                0,
+                .25
+            )
+        );
+
+    box-shadow:
+        inset
+        0 0 20px
+        rgba(
+            0,
+            0,
+            0,
+            .44
+        );
+
+    overflow:
+        hidden;
+}
+
+
+/*
+    Depois colocaremos uma imagem
+    de habilidade dentro desse espaço.
+*/
+
+.selection-skill-visual::after {
+    content:
+        "";
+
+    position:
+        absolute;
+
+    inset:
+        18%;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .055
+        );
+}
+
+
+.selection-skill-visual span {
+    position:
+        absolute;
+
+    left:
+        5px;
+
+    top:
+        5px;
+
+    z-index:
+        2;
+
+    width:
+        20px;
+
+    height:
+        20px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    border:
+        1px solid
+        rgba(
+            210,
+            181,
+            112,
+            .58
+        );
+
+    background:
+        rgba(
+            7,
+            8,
+            10,
+            .78
+        );
+
+    color:
+        #dcc99b;
+
+    font-family:
+        "Cinzel",
+        serif;
+
+    font-size:
+        9px;
+}
+
+
+.selection-skill-card strong {
+    display:
+        block;
+
+    margin-top:
+        6px;
+
+    min-height:
+        26px;
+
+    color:
+        #d0c8b8;
+
+    font-family:
+        "Cinzel",
+        Georgia,
+        serif;
+
+    font-size:
+        clamp(
+            7px,
+            .55vw,
+            10px
+        );
+
+    line-height:
+        1.25;
+
+    text-align:
+        center;
+}
+
+
+/* ================================================================
+   INICIAR JORNADA
+
+   FICA ABAIXO DA ARTE CENTRAL
+   ================================================================ */
+
+.selection-start-btn {
+    position:
+        absolute !important;
+
+    left:
+        24.5% !important;
+
+    right:
+        auto !important;
+
+    top:
+        auto !important;
+
+    bottom:
+        11.5% !important;
+
+    width:
+        22% !important;
+
+    height:
+        7.5% !important;
+
+    z-index:
+        200 !important;
+
+    pointer-events:
+        auto !important;
+
+    cursor:
+        pointer !important;
+
+    border:
+        1px solid
+        rgba(
+            204,
+            172,
+            101,
+            .55
+        ) !important;
+
+    color:
+        #e2d7bf !important;
+
+    font-family:
+        "Cinzel",
+        Georgia,
+        serif !important;
+
+    font-size:
+        clamp(
+            8px,
+            .75vw,
+            13px
+        ) !important;
+
+    font-weight:
+        600;
+
+    letter-spacing:
+        .15em;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(
+                42,
+                35,
+                25,
+                .96
+            ),
+            rgba(
+                10,
+                11,
+                13,
+                .97
+            )
+        ) !important;
+
+    opacity:
+        1 !important;
+
+    box-shadow:
+        inset 0 0 18px
+        rgba(
+            190,
+            148,
+            75,
+            .08
+        ),
+        0 5px 16px
+        rgba(
+            0,
+            0,
+            0,
+            .45
+        );
+}
+
+
+.selection-start-btn.ready {
+    opacity:
+        1 !important;
+
+    filter:
+        none !important;
+}
+
+
+.selection-start-btn:not(:disabled):hover {
+    transform:
+        translateY(-2px)
+        scale(1.02);
+
+    border-color:
+        rgba(
+            232,
+            195,
+            112,
+            .9
+        ) !important;
+
+    box-shadow:
+        inset 0 0 20px
+        rgba(
+            211,
+            170,
+            88,
+            .15
+        ),
+        0 0 15px
+        rgba(
+            211,
+            170,
+            88,
+            .18
+        );
+}
+
+
+/* ================================================================
+   VOLTAR
+
+   AGORA DO LADO DIREITO
+   ================================================================ */
+
+.selection-back-btn {
+    position:
+        absolute !important;
+
+    left:
+        auto !important;
+
+    right:
+        7% !important;
+
+    top:
+        auto !important;
+
+    bottom:
+        11.5% !important;
+
+    width:
+        12% !important;
+
+    height:
+        6.5% !important;
+
+    z-index:
+        200 !important;
+
+    display:
+        flex !important;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    pointer-events:
+        auto !important;
+
+    cursor:
+        pointer !important;
+
+    border:
+        1px solid
+        rgba(
+            178,
+            160,
+            124,
+            .28
+        ) !important;
+
+    color:
+        #a9a498 !important;
+
+    font-family:
+        "Cinzel",
+        Georgia,
+        serif !important;
+
+    font-size:
+        clamp(
+            7px,
+            .62vw,
+            11px
+        ) !important;
+
+    letter-spacing:
+        .16em;
+
+    background:
+        rgba(
+            9,
+            10,
+            12,
+            .76
+        ) !important;
+
+    opacity:
+        1 !important;
+}
+
+
+.selection-back-btn:hover {
+    color:
+        #ded4bf !important;
+
+    border-color:
+        rgba(
+            208,
+            177,
+            110,
+            .56
+        ) !important;
+
+    transform:
+        translateY(-2px);
+}

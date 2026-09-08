@@ -17897,7 +17897,7 @@ word-break:
 @media (max-width: 1366px), (max-height: 768px) {
     .veyra-selection-stage {
         width: min(94vw, calc(88vh * 1.78)) !important;
-        max-height: 88vh !important;
+        max-height: 94vh !important;
     }
 
     .selection-screen-heading strong {

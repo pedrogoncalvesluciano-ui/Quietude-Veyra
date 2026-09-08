@@ -48000,7 +48000,7 @@ const worldY =
 
     drawHeight +
 
-    25;
+   30;
 
 
         const screen =

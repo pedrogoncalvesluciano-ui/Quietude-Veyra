@@ -18209,16 +18209,15 @@ word-break:
     .veyra-selection-stage {
         width:
             min(
-                92vw,
-                calc(84vh * 16 / 9)
+                97vw,
+                calc(94vh * 16 / 9)
             ) !important;
 
-        max-width: 92vw !important;
-        max-height: 84vh !important;
+        max-width: 97vw !important;
+        max-height: 94vh !important;
     }
 
 }
-
 
 /* ================================================================
    MONITORES GRANDES

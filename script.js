@@ -69771,6 +69771,40 @@ function renderCharacterCards() {
 
     };
 
+       const selectionSkills = {
+
+        kaelion: {
+            q: "RAIO DE MEMÓRIA",
+            r: "CÍRCULO ARCANO",
+            f: "EXPLOSÃO DE MEMÓRIA"
+        },
+
+        theron: {
+            q: "CORTE PREDATÓRIO",
+            r: "INVESTIDA CORTANTE",
+            f: "INVESTIDA MÁXIMA"
+        },
+
+        grumgar: {
+            q: "ESMAGAMENTO",
+            r: "RUGIDO DE PEDRA",
+            f: "RUPTURA DO SOLO"
+        },
+
+        lirael: {
+            q: "LUZ VITAL",
+            r: "RAJADA FEÉRICA",
+            f: "CHUVA DE LUZ"
+        },
+
+        zephyr: {
+            q: "INVOCAÇÃO DO VÉU",
+            r: "ONDA DE SOMBRA",
+            f: "TENTÁCULOS DA QUIETUDE"
+        }
+
+    };
+
 
     /*
         Cores da seleção.
@@ -69791,7 +69825,7 @@ function renderCharacterCards() {
 
     }
 
-       function updateSelectionCharacterInfo(
+         function updateSelectionCharacterInfo(
         character
     ) {
 
@@ -69818,6 +69852,24 @@ function renderCharacterCards() {
             );
 
 
+        const skillQ =
+            document.getElementById(
+                "selectionSkillQ"
+            );
+
+
+        const skillR =
+            document.getElementById(
+                "selectionSkillR"
+            );
+
+
+        const skillF =
+            document.getElementById(
+                "selectionSkillF"
+            );
+
+
         const panel =
             document.getElementById(
                 "selectionInfoPanel"
@@ -69838,6 +69890,13 @@ function renderCharacterCards() {
             ] ||
             character.className ||
             "";
+
+
+        const skills =
+            selectionSkills[
+                character.id
+            ] ||
+            {};
 
 
         if (nameElement) {
@@ -69865,6 +69924,33 @@ function renderCharacterCards() {
         }
 
 
+        if (skillQ) {
+
+            skillQ.textContent =
+                skills.q ||
+                "HABILIDADE Q";
+
+        }
+
+
+        if (skillR) {
+
+            skillR.textContent =
+                skills.r ||
+                "HABILIDADE R";
+
+        }
+
+
+        if (skillF) {
+
+            skillF.textContent =
+                skills.f ||
+                "HABILIDADE F";
+
+        }
+
+
         if (panel) {
 
             panel.style.setProperty(
@@ -69877,7 +69963,6 @@ function renderCharacterCards() {
         }
 
     }
-
     /*
         ========================================================
         SELEÇÃO INICIAL
@@ -70653,7 +70738,7 @@ function renderCharacterCards() {
         em que a imagem é substituída.
     */
 
-      function updateSelectionCharacterArt(
+         function updateSelectionCharacterArt(
         characterId,
         instant = false
     ) {
@@ -70698,21 +70783,19 @@ function renderCharacterCards() {
         }
 
 
-        const glow =
-            getSelectionColor(
-                character
-            );
-
-
         artContainer.style.setProperty(
             "--character-glow",
-            glow
+            getSelectionColor(
+                character
+            )
         );
 
 
         /*
-            PRIMEIRA ABERTURA:
-            mostra imediatamente.
+            PRIMEIRA ABERTURA DA TELA.
+
+            Não explode.
+            Apenas mostra o personagem inicial.
         */
 
         if (
@@ -70729,58 +70812,86 @@ function renderCharacterCards() {
                 ] ||
                 "Personagem";
 
-            artContainer.classList.remove(
-                "is-transitioning"
-            );
-
             return;
         }
 
 
         /*
-            TROCA RÁPIDA.
-
-            Ao clicar:
-            1. explosão começa AGORA;
-            2. imagem troca AGORA;
-            3. explosão desaparece rapidamente.
-
-            Não existe mais espera de 250ms.
+            Pré-carrega a próxima arte.
         */
 
-        artContainer.classList.remove(
-            "is-transitioning"
-        );
+        const preload =
+            new Image();
 
 
-        void artContainer.offsetWidth;
-
-
-        image.src =
-            nextSource;
-
-        image.alt =
-            selectionNames[
-                characterId
-            ] ||
-            "Personagem";
-
-
-        artContainer.classList.add(
-            "is-transitioning"
-        );
-
-
-        window.setTimeout(
+        preload.onload =
             () => {
 
                 artContainer.classList.remove(
                     "is-transitioning"
                 );
 
-            },
-            260
-        );
+
+                void artContainer.offsetWidth;
+
+
+                /*
+                    Explosão começa.
+                */
+
+                artContainer.classList.add(
+                    "is-transitioning"
+                );
+
+
+                /*
+                    O FLASH já cobriu o quadro.
+
+                    A troca acontece escondida.
+                */
+
+                window.setTimeout(
+                    () => {
+
+                        image.src =
+                            nextSource;
+
+                        image.alt =
+                            selectionNames[
+                                characterId
+                            ] ||
+                            "Personagem";
+
+                    },
+                    150
+                );
+
+
+                window.setTimeout(
+                    () => {
+
+                        artContainer.classList.remove(
+                            "is-transitioning"
+                        );
+
+                    },
+                    430
+                );
+
+            };
+
+
+        preload.onerror =
+            () => {
+
+                image.src =
+                    nextSource;
+
+            };
+
+
+        preload.src =
+            nextSource;
 
     }
 

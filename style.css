@@ -17754,8 +17754,8 @@ word-break:
     width: min(96vw, calc(92vh * 1.78)) !important;
     aspect-ratio: 16 / 9 !important;
     height: auto !important;
-    max-width: 96vw !important;
-    max-height: 92vh !important;
+    max-width: 98vw !important;
+    max-height: 96vh !important;
 
     transform: none !important;
     transform-origin: center center !important;
@@ -18209,12 +18209,12 @@ word-break:
     .veyra-selection-stage {
         width:
             min(
-                97vw,
-                calc(94vh * 16 / 9)
+                98vw,
+                calc(96vh * 16 / 9)
             ) !important;
 
-        max-width: 97vw !important;
-        max-height: 94vh !important;
+        max-width: 98vw !important;
+        max-height: 96vh !important;
     }
 
 }

@@ -47245,7 +47245,7 @@ const height =
             348 / 987,
 
            doorWidthRatio:
-    0.20,
+    0.24,
 
         /*
             Buraco transparente onde fica

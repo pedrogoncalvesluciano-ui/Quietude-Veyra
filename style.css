@@ -17739,3 +17739,176 @@ word-break:
     transform:
         translateY(-2px);
 }
+/* ================================================================
+   VEYRA — AJUSTE FINAL DE ESCALA / RESPONSIVIDADE
+   ================================================================ */
+
+/*
+    Deixa a tela menor que antes,
+    mas ainda ocupando bem o monitor.
+
+    Também mantém proporcional
+    em notebook e PC.
+*/
+.veyra-selection-stage {
+    width: min(96vw, calc(92vh * 1.78)) !important;
+    aspect-ratio: 16 / 9 !important;
+    height: auto !important;
+    max-width: 96vw !important;
+    max-height: 92vh !important;
+
+    transform: none !important;
+    transform-origin: center center !important;
+
+    position: absolute !important;
+    inset: 0 !important;
+    margin: auto !important;
+
+    overflow: visible !important;
+}
+
+
+/*
+    Faz a moldura encaixar inteira
+    dentro da área sem ficar estourando.
+*/
+.selection-frame-image {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: fill !important;
+}
+
+
+/*
+    Pequeno ajuste geral do cabeçalho
+*/
+.selection-screen-heading {
+    left: 4.5% !important;
+    top: 5.2% !important;
+}
+
+.selection-screen-brand {
+    right: 4.8% !important;
+    top: 5.2% !important;
+}
+
+
+/*
+    Botão INICIAR JORNADA
+    usando a imagem,
+    com brilho leve no mouse
+*/
+.selection-start-btn {
+    position: absolute !important;
+
+    left: 24.1% !important;
+    bottom: 4.2% !important;
+
+    width: 22% !important;
+    height: 7.4% !important;
+
+    padding: 0 !important;
+    border: 0 !important;
+
+    color: transparent !important;
+    font-size: 0 !important;
+
+    background:
+        url("./assets/ui/character-selection/start-button.png")
+        center / 100% 100%
+        no-repeat !important;
+
+    opacity: 1 !important;
+
+    transition:
+        transform .18s ease,
+        filter .18s ease,
+        opacity .18s ease !important;
+
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+
+/*
+    Hover simples, sem exagero
+*/
+.selection-start-btn:not(:disabled):hover {
+    transform: translateY(-1px) !important;
+
+    filter:
+        brightness(1.08)
+        drop-shadow(
+            0 0 8px
+            rgba(211, 172, 89, .22)
+        ) !important;
+}
+
+
+/*
+    Quando estiver pronto/ativo,
+    mantém aparência normal
+*/
+.selection-start-btn.ready {
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+
+/*
+    Botão VOLTAR
+    mantido na parte de baixo da direita
+*/
+.selection-back-btn {
+    right: 2.8% !important;
+    left: auto !important;
+    bottom: 4.2% !important;
+
+    width: 12.5% !important;
+    height: 6.8% !important;
+
+    background:
+        url("./assets/ui/character-selection/close-button.png")
+        center / 100% 100%
+        no-repeat !important;
+
+    transition:
+        transform .18s ease,
+        filter .18s ease,
+        opacity .18s ease !important;
+}
+
+.selection-back-btn:hover {
+    transform: translateY(-1px) !important;
+
+    filter:
+        brightness(1.06)
+        drop-shadow(
+            0 0 7px
+            rgba(210, 175, 100, .18)
+        ) !important;
+}
+
+
+/*
+    Se a tela for menor,
+    reduz um pouco mais automaticamente
+*/
+@media (max-width: 1366px), (max-height: 768px) {
+    .veyra-selection-stage {
+        width: min(94vw, calc(88vh * 1.78)) !important;
+        max-height: 88vh !important;
+    }
+
+    .selection-screen-heading strong {
+        font-size: clamp(14px, 1.45vw, 24px) !important;
+    }
+
+    .selection-screen-brand strong {
+        font-size: clamp(15px, 1.35vw, 24px) !important;
+    }
+
+    .selection-character-name {
+        font-size: clamp(24px, 2.5vw, 42px) !important;
+    }
+}

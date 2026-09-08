@@ -16314,3 +16314,833 @@ word-break:
     cursor: pointer;
     pointer-events: auto;
 }
+/* ================================================================
+   VEYRA — SELEÇÃO DE PERSONAGEM
+   POLIMENTO 4 — FULLSCREEN / REFERÊNCIA / CONTROLES
+   ================================================================ */
+
+
+/* ================================================================
+   FRAME AGORA OCUPA A TELA
+   ================================================================ */
+
+.veyra-selection-stage {
+    width: 100vw !important;
+    height: 100vh !important;
+
+    max-width: none !important;
+    max-height: none !important;
+
+    aspect-ratio: auto !important;
+
+    overflow: hidden;
+}
+
+
+.selection-frame-image {
+    width: 100%;
+    height: 100%;
+
+    object-fit: fill;
+}
+
+
+/* ================================================================
+   TÍTULO SUPERIOR
+   ================================================================ */
+
+.selection-screen-heading {
+    position: absolute;
+
+    left: 4.8%;
+    top: 4.5%;
+
+    z-index: 12;
+
+    pointer-events: none;
+}
+
+
+.selection-screen-heading strong {
+    display: block;
+
+    color:
+        #d9c7a8;
+
+    font-family:
+        "Cinzel",
+        Georgia,
+        serif;
+
+    font-size:
+        clamp(
+            17px,
+            1.65vw,
+            30px
+        );
+
+    font-weight: 600;
+
+    letter-spacing:
+        .16em;
+
+    text-shadow:
+        0 2px 10px
+        rgba(0, 0, 0, .82);
+}
+
+
+.selection-screen-heading small {
+    display: block;
+
+    margin-top: 4px;
+
+    color:
+        rgba(170, 155, 125, .55);
+
+    font-family:
+        "Cinzel",
+        Georgia,
+        serif;
+
+    font-size:
+        clamp(
+            6px,
+            .5vw,
+            10px
+        );
+
+    letter-spacing:
+        .32em;
+}
+
+
+/* ================================================================
+   LOGO SUPERIOR DIREITO
+   ================================================================ */
+
+.selection-screen-brand {
+    position: absolute;
+
+    right: 6%;
+    top: 4.3%;
+
+    z-index: 12;
+
+    text-align: center;
+
+    pointer-events: none;
+}
+
+
+.selection-screen-brand strong {
+    display: block;
+
+    color:
+        #d7c49c;
+
+    font-family:
+        "Cinzel",
+        Georgia,
+        serif;
+
+    font-size:
+        clamp(
+            18px,
+            1.6vw,
+            30px
+        );
+
+    font-weight: 500;
+
+    letter-spacing:
+        .34em;
+}
+
+
+.selection-screen-brand small {
+    display: block;
+
+    margin-top: 1px;
+
+    color:
+        rgba(178, 159, 120, .55);
+
+    font-family:
+        "Cinzel",
+        Georgia,
+        serif;
+
+    font-size:
+        clamp(
+            5px,
+            .4vw,
+            8px
+        );
+
+    letter-spacing:
+        .38em;
+}
+
+
+/* ================================================================
+   COLUNA ESQUERDA
+   ================================================================ */
+
+.selection-character-list {
+    left: 3.2%;
+
+    top: 16.5%;
+
+    width: 16.5%;
+
+    height: 68%;
+
+    gap:
+        clamp(
+            8px,
+            1vh,
+            14px
+        );
+}
+
+
+.selection-character-btn {
+    grid-template-columns:
+        34% 66%;
+
+    min-height:
+        72px;
+
+    flex: 1;
+
+    background:
+        url("./assets/ui/character-selection/player-button.png")
+        center /
+        100% 100%
+        no-repeat;
+
+    overflow: visible;
+}
+
+
+/* ================================================================
+   QUADRADO DO SPRITE
+   ================================================================ */
+
+.selection-character-sprite-slot {
+    position: relative;
+
+    width: 76%;
+
+    aspect-ratio: 1;
+
+    justify-self: center;
+    align-self: center;
+
+    overflow: hidden;
+
+    filter:
+        drop-shadow(
+            0 5px 6px
+            rgba(0, 0, 0, .75)
+        );
+}
+
+
+.selection-character-sprite {
+    position: static;
+
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    max-width: none;
+
+    image-rendering:
+        pixelated;
+
+    transform: none;
+}
+
+
+/* ================================================================
+   TEXTO DOS PERSONAGENS
+   ================================================================ */
+
+.selection-character-copy {
+    padding:
+        0 5%;
+}
+
+
+.selection-character-copy strong {
+    font-size:
+        clamp(
+            10px,
+            .9vw,
+            17px
+        );
+
+    letter-spacing:
+        .08em;
+}
+
+
+.selection-character-copy small {
+    font-size:
+        clamp(
+            5px,
+            .43vw,
+            8px
+        );
+}
+
+
+/* ================================================================
+   ARTE CENTRAL
+   ================================================================ */
+
+.selection-character-art {
+    left: 20.3%;
+    top: 15.7%;
+
+    width: 29.7%;
+    height: 72.8%;
+
+    overflow: visible;
+}
+
+
+/* ================================================================
+   PAINEL DIREITO
+   ================================================================ */
+
+.selection-info-panel {
+    left: 51%;
+
+    top: 16.7%;
+
+    width: 44.5%;
+    height: 67.5%;
+
+    padding:
+        5% 7%
+        3%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: stretch;
+
+    justify-content:
+        flex-start;
+}
+
+
+/* ================================================================
+   IDENTIDADE
+   ================================================================ */
+
+.selection-character-info {
+    width: 90%;
+
+    padding: 0;
+}
+
+
+.selection-character-role {
+    margin-bottom:
+        5px;
+
+    font-size:
+        clamp(
+            8px,
+            .7vw,
+            12px
+        );
+}
+
+
+.selection-character-name {
+    font-size:
+        clamp(
+            28px,
+            3vw,
+            52px
+        );
+
+    letter-spacing:
+        .06em;
+}
+
+
+.selection-character-description {
+    width: 90%;
+
+    max-width:
+        520px;
+
+    font-size:
+        clamp(
+            11px,
+            .9vw,
+            16px
+        );
+
+    line-height:
+        1.42;
+}
+
+
+/* ================================================================
+   ATRIBUTOS
+   ================================================================ */
+
+.selection-stats-area {
+    width: 88%;
+
+    margin:
+        4%
+        0
+        0;
+
+    padding: 0;
+}
+
+
+.selection-stats-title {
+    display: none;
+}
+
+
+.selection-stats-canvas {
+    width: 100%;
+
+    height:
+        clamp(
+            125px,
+            18vh,
+            210px
+        );
+
+    margin-top: 0;
+}
+
+
+/* ================================================================
+   HABILIDADES
+   ================================================================ */
+
+.selection-skills-area {
+    width: 100%;
+
+    margin-top:
+        clamp(
+            8px,
+            1.5vh,
+            16px
+        );
+}
+
+
+.selection-skills-title {
+    display: block;
+
+    margin-bottom:
+        8px;
+
+    color:
+        rgba(210, 203, 190, .78);
+
+    font-family:
+        "Cinzel",
+        Georgia,
+        serif;
+
+    font-size:
+        clamp(
+            8px,
+            .62vw,
+            11px
+        );
+
+    font-weight: 600;
+
+    letter-spacing:
+        .20em;
+}
+
+
+.selection-skills-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap:
+        clamp(
+            6px,
+            .7vw,
+            12px
+        );
+}
+
+
+.selection-skill-card {
+    position: relative;
+
+    min-height:
+        clamp(
+            55px,
+            7vh,
+            90px
+        );
+
+    padding:
+        12px
+        10px
+        8px;
+
+    border:
+        1px solid
+        rgba(190, 164, 108, .22);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.025),
+            rgba(0,0,0,.16)
+        );
+
+    overflow: hidden;
+}
+
+
+.selection-skill-card > span {
+    position: absolute;
+
+    left: 5px;
+    top: 5px;
+
+    width: 18px;
+    height: 18px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border:
+        1px solid
+        rgba(210, 181, 112, .45);
+
+    color:
+        #d8c599;
+
+    font-family:
+        "Cinzel",
+        serif;
+
+    font-size:
+        9px;
+}
+
+
+.selection-skill-card strong {
+    display: block;
+
+    margin-top:
+        20px;
+
+    color:
+        #cfc8b9;
+
+    font-family:
+        "Cinzel",
+        Georgia,
+        serif;
+
+    font-size:
+        clamp(
+            7px,
+            .54vw,
+            10px
+        );
+
+    line-height: 1.25;
+}
+
+
+/* ================================================================
+   BOTÃO FECHAR
+   ================================================================ */
+
+.selection-back-btn {
+    position: absolute;
+
+    left: 3.2% !important;
+    right: auto !important;
+
+    top: auto !important;
+    bottom: 4.4% !important;
+
+    width: 16.5% !important;
+    height: 7.4% !important;
+
+    z-index: 100;
+
+    padding: 0;
+
+    border: 0;
+
+    color: transparent;
+
+    font-size: 0;
+
+    background:
+        url("./assets/ui/character-selection/close-button.png")
+        center /
+        contain
+        no-repeat !important;
+
+    opacity: .92;
+
+    pointer-events: auto;
+
+    cursor: pointer;
+}
+
+
+.selection-back-btn:hover {
+    opacity: 1;
+
+    background-image:
+        url("./assets/ui/character-selection/close-button.png") !important;
+
+    transform:
+        translateY(-2px)
+        scale(1.02);
+
+    filter:
+        brightness(1.12)
+        drop-shadow(
+            0 0 9px
+            rgba(210, 175, 100, .28)
+        );
+}
+
+
+/* ================================================================
+   INICIAR JORNADA
+   ================================================================ */
+
+.selection-start-btn {
+    position: absolute;
+
+    left: 24% !important;
+    right: auto !important;
+
+    top: auto !important;
+    bottom: 3.9% !important;
+
+    width: 22.5% !important;
+    height: 8% !important;
+
+    z-index: 100;
+
+    padding: 0;
+
+    border: 0;
+
+    color: transparent;
+
+    font-size: 0;
+
+    background:
+        url("./assets/ui/character-selection/start-button.png")
+        center /
+        contain
+        no-repeat !important;
+
+    opacity: .92;
+
+    pointer-events: auto;
+}
+
+
+.selection-start-btn.ready,
+.selection-start-btn:not(:disabled):hover {
+    opacity: 1;
+
+    background-image:
+        url("./assets/ui/character-selection/start-button.png") !important;
+
+    transform:
+        translateY(-2px)
+        scale(1.02);
+
+    filter:
+        brightness(1.12)
+        drop-shadow(
+            0 0 10px
+            rgba(211, 172, 89, .28)
+        );
+}
+
+
+/* ================================================================
+   NOVA TRANSIÇÃO
+   ================================================================ */
+
+.selection-character-art.is-transitioning::before {
+    animation:
+        veyraSelectionCover
+        420ms
+        cubic-bezier(.16,.78,.2,1)
+        both;
+}
+
+
+.selection-character-art.is-transitioning::after {
+    animation:
+        veyraSelectionBurst
+        430ms
+        cubic-bezier(.12,.8,.2,1)
+        both;
+}
+
+
+.selection-character-art.is-transitioning img {
+    animation:
+        veyraSelectionReveal
+        430ms
+        ease-out
+        both;
+}
+
+
+@keyframes veyraSelectionCover {
+
+    0% {
+        opacity: 0;
+
+        transform:
+            scale(.25);
+    }
+
+    25% {
+        opacity: .65;
+
+        transform:
+            scale(.75);
+    }
+
+    35% {
+        opacity: 1;
+
+        transform:
+            scale(1.03);
+    }
+
+    48% {
+        opacity: 1;
+
+        transform:
+            scale(1.06);
+    }
+
+    70% {
+        opacity: .38;
+
+        transform:
+            scale(1.15);
+    }
+
+    100% {
+        opacity: 0;
+
+        transform:
+            scale(1.24);
+    }
+
+}
+
+
+@keyframes veyraSelectionBurst {
+
+    0% {
+        opacity: 0;
+
+        transform:
+            translate(-50%, -50%)
+            scale(.2);
+    }
+
+    35% {
+        opacity: .95;
+
+        transform:
+            translate(-50%, -50%)
+            scale(.95);
+    }
+
+    62% {
+        opacity: .56;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1.42);
+
+        filter:
+            blur(15px);
+    }
+
+    100% {
+        opacity: 0;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1.8);
+
+        filter:
+            blur(25px);
+    }
+
+}
+
+
+@keyframes veyraSelectionReveal {
+
+    0%,
+    33% {
+        opacity: 1;
+
+        filter:
+            brightness(1);
+    }
+
+    34% {
+        opacity: .72;
+
+        filter:
+            brightness(1.45);
+    }
+
+    58% {
+        opacity: 1;
+
+        filter:
+            brightness(1.18);
+    }
+
+    100% {
+        opacity: 1;
+
+        filter:
+            brightness(1);
+    }
+
+}

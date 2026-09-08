@@ -17754,8 +17754,8 @@ word-break:
     width: min(96vw, calc(92vh * 1.78)) !important;
     aspect-ratio: 16 / 9 !important;
     height: auto !important;
-    max-width: 124vw !important;
-    max-height: 122vh !important;
+    max-width: 134vw !important;
+    max-height: 132vh !important;
 
     transform: none !important;
     transform-origin: center center !important;
@@ -18213,8 +18213,8 @@ word-break:
                 calc(96vh * 16 / 9)
             ) !important;
 
-        max-width: 124vw !important;
-        max-height: 122vh !important;
+        max-width: 134vw !important;
+        max-height: 132vh !important;
     }
 
 }

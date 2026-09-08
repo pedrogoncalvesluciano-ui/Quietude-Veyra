@@ -13475,17 +13475,43 @@ const depth =
         }
 
 
+           /*
+            Casa do player:
+            a porta fica aproximadamente em 35,3%
+            da largura da casa.
+
+            Outras casas continuam em 50%.
+        */
+        const bottomCenterRatio =
+
+            building.id ===
+                "home"
+
+                ? (
+                    348 /
+                    987
+                )
+
+                : 0.5;
+
+
+        const bottomCenterX =
+
+            building.x +
+
+            building.w *
+                bottomCenterRatio;
+
+
         return {
 
             side:
                 "bottom",
 
             x:
-                building.x +
-                building.w /
-                2 -
+                bottomCenterX -
                 doorWidth /
-                2,
+                    2,
 
             y:
                 building.y +
@@ -13500,19 +13526,16 @@ const depth =
                 depth,
 
             centerX:
-                building.x +
-                building.w /
-                2,
+                bottomCenterX,
 
             centerY:
                 building.y +
                 building.h -
                 depth /
-                2 +
+                    2 +
                 3
 
         };
-
     }
 
 
@@ -47161,6 +47184,863 @@ const height =
        PNGs DO AMBIENTE — CHÃO + ÁRVORES
        ============================================================ */
 
+       /* ============================================================
+       CASA DO PLAYER — PNG + PORTA ANIMADA
+       ============================================================ */
+
+    const PLAYER_HOME_ASSETS = Object.freeze({
+
+        house:
+            "./assets/sprites/environment/houses/player-house/player-house.png?v=20260908-home1",
+
+        doorClosed:
+            "./assets/sprites/environment/houses/player-house/player-door-closed.png?v=20260908-home1",
+
+        doorSheet:
+            "./assets/sprites/environment/houses/player-house/player-door-opening.png?v=20260908-home1",
+
+        doorFrames:
+            6,
+
+        /*
+            O player-house.png atual ainda possui
+            a porta separada no lado direito.
+
+            Esse recorte pega SOMENTE a casa.
+        */
+        houseCrop:
+            Object.freeze({
+                x: 37,
+                y: 142,
+                w: 987,
+                h: 955
+            }),
+
+        /*
+            Tamanho visual da casa.
+
+            Se depois quiser aumentar:
+            1.08 -> 1.15
+
+            Se quiser diminuir:
+            1.08 -> 1.00
+        */
+        visualScale:
+            1.08,
+
+        /*
+            Parte do PNG que será redesenhada
+            por cima do player.
+        */
+        roofRatio:
+            0.47,
+
+        /*
+            A porta dessa casa NÃO fica no centro.
+
+            Essa posição corresponde ao vão
+            verdadeiro da imagem.
+        */
+        doorCenterRatio:
+            348 / 987,
+
+        doorWidthRatio:
+            0.145,
+
+        /*
+            Buraco transparente onde fica
+            o fundo preto da entrada.
+        */
+        doorway:
+            Object.freeze({
+
+                x:
+                    283 / 987,
+
+                y:
+                    758 / 955,
+
+                w:
+                    130 / 987,
+
+                h:
+                    197 / 955
+
+            })
+
+    });
+
+
+    const playerHomeImageCache =
+        new Map();
+
+
+    function getPlayerHomeImage(
+        src
+    ) {
+
+        if (
+            !src
+        ) {
+            return null;
+        }
+
+
+        if (
+            playerHomeImageCache.has(
+                src
+            )
+        ) {
+
+            return playerHomeImageCache.get(
+                src
+            );
+
+        }
+
+
+        const image =
+            new Image();
+
+
+        const entry = {
+
+            image,
+
+            loaded:
+                false,
+
+            failed:
+                false
+
+        };
+
+
+        image.onload =
+            () => {
+
+                entry.loaded =
+                    true;
+
+                entry.failed =
+                    false;
+
+            };
+
+
+        image.onerror =
+            () => {
+
+                entry.failed =
+                    true;
+
+
+                console.warn(
+                    `VEYRA — asset da casa do player não carregou: ${src}`
+                );
+
+            };
+
+
+        image.src =
+            src;
+
+
+        playerHomeImageCache.set(
+            src,
+            entry
+        );
+
+
+        return entry;
+
+    }
+
+
+    function getPlayerHomeHouseSourceRect(
+        image
+    ) {
+
+        if (
+            !image
+        ) {
+            return null;
+        }
+
+
+        /*
+            Detecta o PNG grande original
+            que contém a casa + porta separada.
+
+            Nesse caso recortamos somente a casa.
+        */
+        if (
+            image.width >=
+                1200 &&
+            image.height >=
+                1200
+        ) {
+
+            return {
+                ...PLAYER_HOME_ASSETS
+                    .houseCrop
+            };
+
+        }
+
+
+        /*
+            Se você futuramente recortar manualmente
+            player-house.png e deixar somente a casa,
+            o código passa a usar a imagem inteira.
+        */
+        return {
+
+            x:
+                0,
+
+            y:
+                0,
+
+            w:
+                image.width,
+
+            h:
+                image.height
+
+        };
+
+    }
+
+
+    function getPlayerHomeVisualRect(
+        building
+    ) {
+
+        const crop =
+            PLAYER_HOME_ASSETS
+                .houseCrop;
+
+
+        const width =
+            building.w *
+            PLAYER_HOME_ASSETS
+                .visualScale;
+
+
+        const height =
+            width *
+            (
+                crop.h /
+                crop.w
+            );
+
+
+        /*
+            Mantém a BASE da casa no mesmo lugar.
+
+            A parte extra cresce para cima,
+            então não bagunça o mapa.
+        */
+        return {
+
+            x:
+                building.x +
+                (
+                    building.w -
+                    width
+                ) /
+                2,
+
+            y:
+                building.y +
+                building.h -
+                height,
+
+            w:
+                width,
+
+            h:
+                height
+
+        };
+
+    }
+
+
+    function drawPlayerHomeBuildingSprite(
+        ctx,
+        building
+    ) {
+
+        if (
+            !ctx ||
+            !building ||
+            building.id !==
+                "home"
+        ) {
+            return false;
+        }
+
+
+        const entry =
+            getPlayerHomeImage(
+                PLAYER_HOME_ASSETS
+                    .house
+            );
+
+
+        if (
+            !entry ||
+            !entry.loaded ||
+            entry.failed
+        ) {
+            return false;
+        }
+
+
+        const source =
+            getPlayerHomeHouseSourceRect(
+                entry.image
+            );
+
+
+        if (
+            !source
+        ) {
+            return false;
+        }
+
+
+        const rect =
+            getPlayerHomeVisualRect(
+                building
+            );
+
+
+        const screen =
+            worldToScreen(
+                rect.x,
+                rect.y
+            );
+
+
+        const doorway =
+            PLAYER_HOME_ASSETS
+                .doorway;
+
+
+        ctx.save();
+
+
+        /*
+            Pixel art:
+            evita borrado.
+        */
+        ctx.imageSmoothingEnabled =
+            false;
+
+
+        /*
+            SOMBRA DA CASA.
+        */
+        ctx.fillStyle =
+            "rgba(0,0,0,0.24)";
+
+
+        ctx.beginPath();
+
+
+        ctx.ellipse(
+
+            screen.x +
+                rect.w /
+                    2,
+
+            screen.y +
+                rect.h -
+                8,
+
+            rect.w *
+                0.43,
+
+            Math.max(
+                12,
+                rect.h *
+                    0.055
+            ),
+
+            0,
+
+            0,
+
+            Math.PI *
+                2
+
+        );
+
+
+        ctx.fill();
+
+
+        /*
+            BLOCO PRETO DA ENTRADA.
+
+            Fica atrás da parte transparente
+            do PNG.
+        */
+        ctx.fillStyle =
+            "#080706";
+
+
+        ctx.fillRect(
+
+            screen.x +
+                rect.w *
+                    doorway.x,
+
+            screen.y +
+                rect.h *
+                    doorway.y,
+
+            rect.w *
+                doorway.w,
+
+            rect.h *
+                doorway.h
+
+        );
+
+
+        /*
+            CASA.
+
+            O source.x/source.y/source.w/source.h
+            recorta a porta solta da direita.
+        */
+        ctx.drawImage(
+
+            entry.image,
+
+            source.x,
+            source.y,
+            source.w,
+            source.h,
+
+            screen.x,
+            screen.y,
+            rect.w,
+            rect.h
+
+        );
+
+
+        ctx.restore();
+
+
+        return true;
+
+    }
+
+
+    function drawPlayerHomeRoofSprite(
+        ctx,
+        building
+    ) {
+
+        if (
+            !ctx ||
+            !building ||
+            building.id !==
+                "home"
+        ) {
+            return false;
+        }
+
+
+        const entry =
+            getPlayerHomeImage(
+                PLAYER_HOME_ASSETS
+                    .house
+            );
+
+
+        if (
+            !entry ||
+            !entry.loaded ||
+            entry.failed
+        ) {
+            return false;
+        }
+
+
+        const source =
+            getPlayerHomeHouseSourceRect(
+                entry.image
+            );
+
+
+        if (
+            !source
+        ) {
+            return false;
+        }
+
+
+        const rect =
+            getPlayerHomeVisualRect(
+                building
+            );
+
+
+        const screen =
+            worldToScreen(
+                rect.x,
+                rect.y
+            );
+
+
+        const ratio =
+            PLAYER_HOME_ASSETS
+                .roofRatio;
+
+
+        const sourceHeight =
+            Math.max(
+
+                1,
+
+                Math.floor(
+                    source.h *
+                    ratio
+                )
+
+            );
+
+
+        const drawHeight =
+            rect.h *
+            ratio;
+
+
+        ctx.save();
+
+
+        ctx.imageSmoothingEnabled =
+            false;
+
+
+        /*
+            Desenha SOMENTE a parte alta
+            da casa outra vez.
+
+            Assim o personagem passa
+            visualmente por baixo do telhado.
+        */
+        ctx.drawImage(
+
+            entry.image,
+
+            source.x,
+            source.y,
+            source.w,
+            sourceHeight,
+
+            screen.x,
+            screen.y,
+            rect.w,
+            drawHeight
+
+        );
+
+
+        ctx.restore();
+
+
+        return true;
+
+    }
+
+
+    function drawPlayerHomeDoorSprite(
+        ctx,
+        door
+    ) {
+
+        if (
+            !ctx ||
+            !door ||
+            door.buildingId !==
+                "home" ||
+            state.world
+                ?.interior
+        ) {
+            return false;
+        }
+
+
+        const building =
+            safeArray(
+                state.world
+                    ?.buildings
+            )
+                .find(
+                    item =>
+                        item.id ===
+                        "home"
+                );
+
+
+        if (
+            !building
+        ) {
+            return false;
+        }
+
+
+        const sheetEntry =
+            getPlayerHomeImage(
+                PLAYER_HOME_ASSETS
+                    .doorSheet
+            );
+
+
+        const closedEntry =
+            getPlayerHomeImage(
+                PLAYER_HOME_ASSETS
+                    .doorClosed
+            );
+
+
+        const sheetReady =
+            Boolean(
+
+                sheetEntry &&
+                sheetEntry.loaded &&
+                !sheetEntry.failed
+
+            );
+
+
+        const closedReady =
+            Boolean(
+
+                closedEntry &&
+                closedEntry.loaded &&
+                !closedEntry.failed
+
+            );
+
+
+        if (
+            !sheetReady &&
+            !closedReady
+        ) {
+            return false;
+        }
+
+
+        const houseRect =
+            getPlayerHomeVisualRect(
+                building
+            );
+
+
+        /*
+            Centro exato da porta dentro
+            do sprite da casa.
+        */
+        const centerX =
+
+            houseRect.x +
+
+            houseRect.w *
+
+            PLAYER_HOME_ASSETS
+                .doorCenterRatio;
+
+
+        const drawWidth =
+
+            houseRect.w *
+
+            PLAYER_HOME_ASSETS
+                .doorWidthRatio;
+
+
+        /*
+            Enquanto a spritesheet carrega,
+            player-door-closed.png funciona
+            como fallback.
+        */
+        let image =
+
+            closedReady
+
+                ? closedEntry.image
+
+                : sheetEntry.image;
+
+
+        let sourceX =
+            0;
+
+        let sourceY =
+            0;
+
+        let sourceWidth =
+            image.width;
+
+        let sourceHeight =
+            image.height;
+
+
+        /*
+            SPRITESHEET DE 6 FRAMES.
+
+            openAmount = 0:
+            frame fechado.
+
+            openAmount = 1:
+            frame totalmente aberto.
+
+            Quando openAmount diminui,
+            automaticamente roda ao contrário.
+        */
+        if (
+            sheetReady
+        ) {
+
+            image =
+                sheetEntry.image;
+
+
+            const frameCount =
+
+                PLAYER_HOME_ASSETS
+                    .doorFrames;
+
+
+            const frameWidth =
+
+                image.width /
+                frameCount;
+
+
+            const frameIndex =
+
+                Math.round(
+
+                    clamp(
+
+                        finiteNumber(
+                            door.openAmount,
+                            0
+                        ),
+
+                        0,
+                        1
+
+                    ) *
+
+                    (
+                        frameCount -
+                        1
+                    )
+
+                );
+
+
+            sourceX =
+
+                frameWidth *
+                frameIndex;
+
+
+            sourceWidth =
+                frameWidth;
+
+
+            sourceHeight =
+                image.height;
+
+        }
+
+
+        /*
+            Mantém a proporção original
+            de cada frame.
+        */
+        const drawHeight =
+
+            drawWidth *
+
+            (
+                sourceHeight /
+
+                Math.max(
+                    1,
+                    sourceWidth
+                )
+            );
+
+
+        const worldX =
+
+            centerX -
+
+            drawWidth /
+                2;
+
+
+        const worldY =
+
+            houseRect.y +
+
+            houseRect.h -
+
+            drawHeight;
+
+
+        const screen =
+
+            worldToScreen(
+                worldX,
+                worldY
+            );
+
+
+        ctx.save();
+
+
+        ctx.imageSmoothingEnabled =
+            false;
+
+
+        ctx.drawImage(
+
+            image,
+
+            sourceX,
+            sourceY,
+            sourceWidth,
+            sourceHeight,
+
+            screen.x,
+            screen.y,
+            drawWidth,
+            drawHeight
+
+        );
+
+
+        ctx.restore();
+
+
+        return true;
+
+    }
+
        const REGION_GROUND_TEXTURES = Object.freeze({
         village: "./assets/sprites/textures/ground/vila_ground.png?v=20260906-env2",
         road: "./assets/sprites/textures/ground/estrada_ground.png?v=20260906-env2",
@@ -49486,6 +50366,18 @@ ctx.fillStyle =
                 building.y
             );
 
+               if (
+            building.id ===
+                "home" &&
+            !state.world?.interior &&
+            drawPlayerHomeBuildingSprite(
+                ctx,
+                building
+            )
+        ) {
+            return;
+        }
+
         const style =
             building.style ||
             {};
@@ -49712,15 +50604,16 @@ function drawBuildingRoofsOverlay(
             world.buildings
         )
     ) {
-        if (
-            !isRectVisible(
-                building,
-                180
+              if (
+            building.id ===
+                "home" &&
+            drawPlayerHomeRoofSprite(
+                ctx,
+                building
             )
         ) {
             continue;
         }
-
 
         const screen =
             worldToScreen(
@@ -49872,11 +50765,15 @@ function drawDoorwayOpenings(
             world.doors
         )
     ) {
-        /*
-            Só portas ligadas a prédios.
+       
+              /*
+            A casa do player possui seu próprio
+            vão preto alinhado ao sprite novo.
         */
         if (
-            !door.buildingId
+            !door.buildingId ||
+            door.buildingId ===
+                "home"
         ) {
             continue;
         }
@@ -51051,6 +51948,18 @@ ctx.shadowOffsetY =
     ctx,
     door
 ) {
+
+          if (
+        door?.buildingId ===
+            "home" &&
+        drawPlayerHomeDoorSprite(
+            ctx,
+            door
+        )
+    ) {
+        return;
+    }
+       
     const width =
         finiteNumber(
             door.w,

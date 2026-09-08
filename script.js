@@ -70343,7 +70343,7 @@ function renderCharacterCards() {
                 "middle";
 
             ctx.fillText(
-                "ATRIBUTOS",
+               "ATRIBUTOS INICIAIS",
                 0,
                 12
             );
@@ -71023,7 +71023,6 @@ function renderCharacterCards() {
                     64
                 );
 
-
                 /*
                     Frame frontal.
 
@@ -71034,6 +71033,16 @@ function renderCharacterCards() {
                     y = 128.
                 */
 
+                const sourceX =
+                    Math.min(
+                        64,
+                        Math.max(
+                            0,
+                            spriteImage.width -
+                            64
+                        )
+                    );
+               
                 const sourceY =
                     Math.min(
                         128,
@@ -71045,24 +71054,19 @@ function renderCharacterCards() {
                     );
 
 
-                context.imageSmoothingEnabled =
-                    false;
+             context.drawImage(
+    spriteImage,
 
+    sourceX,
+    sourceY,
+    64,
+    64,
 
-                context.drawImage(
-                    spriteImage,
-
-                    0,
-                    sourceY,
-                    64,
-                    64,
-
-                    0,
-                    0,
-                    64,
-                    64
-                );
-
+    0,
+    0,
+    64,
+    64
+);
             };
 
 
@@ -71309,56 +71313,69 @@ function characterStatRow(
 
 
 function updateCharacterStartButton() {
+
     const button =
         DOM.buttons
             .startGame;
 
-    if (
-        !button
-    ) {
+
+    if (!button) {
         return false;
     }
 
-    const hasCharacter =
-        Boolean(
-            UI_RUNTIME
-                .selectedCharacter
-        );
 
-    const hasName =
-        Boolean(
-            String(
-                DOM.inputs
-                    .playerName
-                    ?.value ||
-                ""
-            )
-                .trim()
-        );
+    /*
+        O campo de nome está escondido.
+
+        Então garantimos um nome padrão
+        automaticamente.
+    */
+
+    if (
+        DOM.inputs.playerName &&
+        !String(
+            DOM.inputs.playerName.value ||
+            ""
+        ).trim()
+    ) {
+
+        DOM.inputs.playerName.value =
+            "Viajante";
+
+    }
+
+
+    /*
+        O botão só precisa de um
+        personagem selecionado.
+    */
 
     const ready =
-        hasCharacter &&
-        hasName;
+        Boolean(
+            UI_RUNTIME.selectedCharacter ||
+            state.selectedCharacter
+        );
+
 
     button.disabled =
         !ready;
 
-    button.classList
-        .toggle(
-            "ready",
-            ready
-        );
+
+    button.classList.toggle(
+        "ready",
+        ready
+    );
+
 
     button.setAttribute(
         "aria-disabled",
-        String(
-            !ready
-        )
+        String(!ready)
     );
 
-    return ready;
-}
 
+    return ready;
+
+}
 
   function getCharacterSymbol(
     id
@@ -71451,32 +71468,28 @@ zephyr:
        ============================================================ */
 
     function startNewGameFromSelection() {
-        const name =
+              const name =
             String(
                 DOM.inputs
                     .playerName
                     ?.value ||
-                ""
+                "Viajante"
             )
                 .trim()
                 .slice(
                     0,
                     22
-                );
+                ) ||
+            "Viajante";
 
 
         if (
-            !name
+            DOM.inputs.playerName
         ) {
-            DOM.inputs
-                .playerName
-                ?.focus();
 
-            showSmallMessage(
-                "Escolha um nome antes de iniciar."
-            );
+            DOM.inputs.playerName.value =
+                name;
 
-            return false;
         }
 
 
@@ -79909,8 +79922,8 @@ updateTransition(
             if (
                 DOM.inputs.playerName
             ) {
-                DOM.inputs.playerName.value =
-                    "";
+            DOM.inputs.playerName.value =
+    "Viajante";
             }
 
             renderCharacterCards();

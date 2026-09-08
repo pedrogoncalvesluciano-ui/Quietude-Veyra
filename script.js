@@ -47992,14 +47992,15 @@ const height =
             drawWidth /
                 2;
 
+const worldY =
 
-        const worldY =
+    houseRect.y +
 
-            houseRect.y +
+    houseRect.h -
 
-            houseRect.h -
+    drawHeight +
 
-            drawHeight;
+    25;
 
 
         const screen =

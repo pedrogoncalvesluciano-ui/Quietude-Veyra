@@ -70955,14 +70955,15 @@ function renderCharacterCards() {
                             aria-pressed="${selected ? "true" : "false"}"
                         >
 
-                            <span class="selection-character-sprite-slot">
+                  <span class="selection-character-sprite-slot">
 
-                                <img
+                                <canvas
                                     class="selection-character-sprite"
-                                    src="${escapeHTML(sprite)}"
-                                    alt=""
-                                    draggable="false"
-                                >
+                                    width="64"
+                                    height="64"
+                                    data-sprite-src="${escapeHTML(sprite)}"
+                                    aria-hidden="true"
+                                ></canvas>
 
                             </span>
 
@@ -70984,6 +70985,91 @@ function renderCharacterCards() {
                 }
             )
             .join("");
+
+       for (
+        const spriteCanvas of
+        container.querySelectorAll(
+            ".selection-character-sprite"
+        )
+    ) {
+
+        const source =
+            spriteCanvas.dataset
+                .spriteSrc;
+
+
+        if (!source) {
+            continue;
+        }
+
+
+        const context =
+            spriteCanvas.getContext(
+                "2d"
+            );
+
+
+        const spriteImage =
+            new Image();
+
+
+        spriteImage.onload =
+            () => {
+
+                context.clearRect(
+                    0,
+                    0,
+                    64,
+                    64
+                );
+
+
+                /*
+                    Frame frontal.
+
+                    LPC:
+                    64x64 por frame.
+
+                    Linha DOWN = terceira linha:
+                    y = 128.
+                */
+
+                const sourceY =
+                    Math.min(
+                        128,
+                        Math.max(
+                            0,
+                            spriteImage.height -
+                            64
+                        )
+                    );
+
+
+                context.imageSmoothingEnabled =
+                    false;
+
+
+                context.drawImage(
+                    spriteImage,
+
+                    0,
+                    sourceY,
+                    64,
+                    64,
+
+                    0,
+                    0,
+                    64,
+                    64
+                );
+
+            };
+
+
+        spriteImage.src =
+            source;
+
+    }
 
 
     /*

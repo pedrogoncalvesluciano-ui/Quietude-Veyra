@@ -597,25 +597,25 @@
        pelo interior real.
        ============================================================ */
 
-    const PLAYER_HOME_INTERIOR_SPAWN =
-        Object.freeze({
+   const PLAYER_HOME_INTERIOR_SPAWN =
+    Object.freeze({
 
-            area:
-                "village",
+        area:
+            "village",
 
-            houseId:
-                "home",
+        houseId:
+            "home",
 
-            x:
-                640,
+        x:
+            520,
 
-            y:
-                560,
+        y:
+            510,
 
-            facing:
-                "down"
+        facing:
+            "up"
 
-        });
+    });
 
 
     /* ============================================================
@@ -11422,35 +11422,33 @@ delete playerCopy
                         Perto da cama.
                         Não em cima dela.
                     */
-                    playerSpawn:
+                  playerSpawn:
     Object.freeze({
 
         x:
-            330,
+            520,
 
         y:
-            585,
+            510,
 
         facing:
             "up"
 
     }),
 
+                 respawnSpawn:
+    Object.freeze({
 
-                    respawnSpawn:
-                        Object.freeze({
+        x:
+            520,
 
-                            x:
-                                365,
+        y:
+            395,
 
-                            y:
-                                365,
+        facing:
+            "down"
 
-                            facing:
-                                "left"
-
-                        }),
-
+    }),
 
                    door:
     Object.freeze({
@@ -16757,6 +16755,174 @@ const depth =
    function getDecorationCollisionObstacle(
     decoration
 ) {
+
+    if (
+        !decoration ||
+        decoration.solid ===
+            false
+    ) {
+        return null;
+    }
+
+
+    const sizes = {
+
+        chest:
+            [76, 56],
+
+        smallTable:
+            [100, 62],
+
+        table:
+            [100, 62],
+
+        archiveTable:
+            [120, 65],
+
+        herbTable:
+            [120, 65],
+
+        chair:
+            [42, 42],
+
+        bookshelf:
+            [78, 108],
+
+        shelves:
+            [82, 108],
+
+        plantShelf:
+            [82, 105],
+
+        counter:
+            [145, 66],
+
+        crates:
+            [95, 68],
+
+        forgeFire:
+            [100, 72],
+
+        anvil:
+            [74, 52],
+
+        weaponRack:
+            [100, 55],
+
+        coalPile:
+            [92, 62],
+
+        workbench:
+            [135, 72],
+
+        woodStack:
+            [105, 64],
+
+        bowRack:
+            [95, 52],
+
+        plantPot:
+            [45, 45],
+
+
+        /*
+            NOVOS OBJETOS DA CASA.
+        */
+        homeTableSet:
+            [185, 135],
+
+        homeStairs:
+            [86, 150]
+
+    };
+
+
+    const size =
+        sizes[
+            decoration.type
+        ];
+
+
+    if (
+        !size
+    ) {
+        return null;
+    }
+
+
+    /*
+        Permite deixar a imagem grande,
+        mas a hitbox menor.
+    */
+    const w =
+        finiteNumber(
+            decoration.collisionW,
+            decoration.w ||
+                size[0]
+        );
+
+
+    const h =
+        finiteNumber(
+            decoration.collisionH,
+            decoration.h ||
+                size[1]
+        );
+
+
+    const offsetX =
+        finiteNumber(
+            decoration.collisionOffsetX,
+            0
+        );
+
+
+    const offsetY =
+        finiteNumber(
+            decoration.collisionOffsetY,
+            0
+        );
+
+
+    return createSolidObstacle({
+
+        id:
+            `${decoration.id || decoration.type}_hitbox`,
+
+        type:
+            decoration.type,
+
+        x:
+            decoration.x -
+            w / 2 +
+            offsetX,
+
+        y:
+            decoration.y -
+            h / 2 +
+            offsetY,
+
+        w,
+
+        h,
+
+        solid:
+            true,
+
+        blocksLight:
+            false,
+
+        depthY:
+            decoration.y +
+            h / 2
+
+    });
+
+}
+
+   function getDecorationCollisionObstacle(
+    decoration
+) {
     if (
         !decoration ||
         decoration.solid ===
@@ -17179,6 +17345,31 @@ for (
         world.decorations
     )
 ) {
+
+/*
+    Só cria hitbox dos móveis
+    do andar atualmente visível.
+*/
+if (
+    world.interiorId ===
+        "home" &&
+    decoration.homeFloor &&
+    Math.round(
+        finiteNumber(
+            decoration.homeFloor,
+            1
+        )
+    ) !==
+    Math.round(
+        finiteNumber(
+            world.homeFloor,
+            1
+        )
+    )
+) {
+    continue;
+}
+   
     const obstacle =
         getDecorationCollisionObstacle(
             decoration
@@ -17988,184 +18179,237 @@ return false;
             config.door;
 
 
-        const thickness =
-            28;
+  /*
+    A casa nova possui a moldura
+    mais para dentro que a antiga.
+
+    Só alteramos a HOME.
+*/
+const isPlayerHome =
+    houseId ===
+    "home";
 
 
-        /*
-            Parede superior.
-        */
-        world.walls.push({
-
-            id:
-                `${houseId}_wall_top`,
-
-            x:
-                room.x,
-
-            y:
-                room.y,
-
-            w:
-                room.w,
-
-            h:
-                thickness,
-
-            blocksLight:
-                true
-
-        });
+const thickness =
+    isPlayerHome
+        ? 24
+        : 28;
 
 
-        /*
-            Parede esquerda.
-        */
-        world.walls.push({
-
-            id:
-                `${houseId}_wall_left`,
-
-            x:
-                room.x,
-
-            y:
-                room.y,
-
-            w:
-                thickness,
-
-            h:
-                room.h,
-
-            blocksLight:
-                true
-
-        });
+const leftInset =
+    isPlayerHome
+        ? 42
+        : 0;
 
 
-        /*
-            Parede direita.
-        */
-        world.walls.push({
-
-            id:
-                `${houseId}_wall_right`,
-
-            x:
-                room.x +
-                room.w -
-                thickness,
-
-            y:
-                room.y,
-
-            w:
-                thickness,
-
-            h:
-                room.h,
-
-            blocksLight:
-                true
-
-        });
+const rightInset =
+    isPlayerHome
+        ? 42
+        : 0;
 
 
-        /*
-            Parede inferior dividida
-            corretamente pela porta.
-        */
-        const bottomY =
-            room.y +
-            room.h -
-            thickness;
+const topInset =
+    isPlayerHome
+        ? 92
+        : 0;
 
 
-        const leftWidth =
-            Math.max(
-                0,
-                door.x -
-                room.x
-            );
+const bottomInset =
+    isPlayerHome
+        ? 40
+        : 0;
 
 
-        const rightStart =
-            door.x +
-            door.w;
+const innerLeft =
+    room.x +
+    leftInset;
 
 
-        const rightWidth =
-            Math.max(
-
-                0,
-
-                room.x +
-                    room.w -
-                    rightStart
-
-            );
+const innerRight =
+    room.x +
+    room.w -
+    rightInset;
 
 
-        if (
-            leftWidth >
-            0
-        ) {
-
-            world.walls.push({
-
-                id:
-                    `${houseId}_wall_bottom_left`,
-
-                x:
-                    room.x,
-
-                y:
-                    bottomY,
-
-                w:
-                    leftWidth,
-
-                h:
-                    thickness,
-
-                blocksLight:
-                    true
-
-            });
-
-        }
+const topY =
+    room.y +
+    topInset;
 
 
-        if (
-            rightWidth >
-            0
-        ) {
+const bottomY =
+    room.y +
+    room.h -
+    bottomInset -
+    thickness;
 
-            world.walls.push({
 
-                id:
-                    `${houseId}_wall_bottom_right`,
+/*
+    TOPO
+*/
+world.walls.push({
 
-                x:
-                    rightStart,
+    id:
+        `${houseId}_wall_top`,
 
-                y:
-                    bottomY,
+    x:
+        innerLeft,
 
-                w:
-                    rightWidth,
+    y:
+        topY,
 
-                h:
-                    thickness,
+    w:
+        innerRight -
+        innerLeft,
 
-                blocksLight:
-                    true
+    h:
+        thickness,
 
-            });
+    blocksLight:
+        true
 
-        }
+});
 
+
+/*
+    ESQUERDA
+*/
+world.walls.push({
+
+    id:
+        `${houseId}_wall_left`,
+
+    x:
+        innerLeft,
+
+    y:
+        topY,
+
+    w:
+        thickness,
+
+    h:
+        bottomY +
+        thickness -
+        topY,
+
+    blocksLight:
+        true
+
+});
+
+
+/*
+    DIREITA
+*/
+world.walls.push({
+
+    id:
+        `${houseId}_wall_right`,
+
+    x:
+        innerRight -
+        thickness,
+
+    y:
+        topY,
+
+    w:
+        thickness,
+
+    h:
+        bottomY +
+        thickness -
+        topY,
+
+    blocksLight:
+        true
+
+});
+
+
+/*
+    PARTE DE BAIXO,
+    deixando o buraco da porta livre.
+*/
+const leftWidth =
+    Math.max(
+        0,
+        door.x -
+        innerLeft
+    );
+
+
+const rightStart =
+    door.x +
+    door.w;
+
+
+const rightWidth =
+    Math.max(
+        0,
+        innerRight -
+        rightStart
+    );
+
+
+if (
+    leftWidth >
+    0
+) {
+
+    world.walls.push({
+
+        id:
+            `${houseId}_wall_bottom_left`,
+
+        x:
+            innerLeft,
+
+        y:
+            bottomY,
+
+        w:
+            leftWidth,
+
+        h:
+            thickness,
+
+        blocksLight:
+            true
+
+    });
+
+}
+
+
+if (
+    rightWidth >
+    0
+) {
+
+    world.walls.push({
+
+        id:
+            `${houseId}_wall_bottom_right`,
+
+        x:
+            rightStart,
+
+        y:
+            bottomY,
+
+        w:
+            rightWidth,
+
+        h:
+            thickness,
+
+        blocksLight:
+            true
+
+    });
+
+}
 
         /*
             Porta física interna.
@@ -18274,370 +18518,431 @@ return false;
         houseId
     ) {
 
-              if (
-            houseId ===
-            "home"
-        ) {
+             if (
+    houseId ===
+    "home"
+) {
 
-            /* ========================================================
-               TÉRREO
-               ======================================================== */
+    /* ========================================================
+       TÉRREO
+       ======================================================== */
 
-            world.decorations.push(
+    world.decorations.push(
 
-                {
-                    id:
-                        "home_bed",
+        {
+            id:
+                "home_bed",
 
-                    type:
-                        "bed",
+            type:
+                "bed",
 
-                    x:
-                        235,
+            x:
+                235,
 
-                    y:
-                        220,
+            y:
+                220,
 
-                    w:
-                        110,
+            w:
+                110,
 
-                    h:
-                        160,
+            h:
+                160,
 
-                    depthY:
-                        300,
+            depthY:
+                300,
 
-                    depthSorted:
-                        true,
+            depthSorted:
+                true,
 
-                    homeFloor:
-                        1
-                },
+            homeFloor:
+                1
+        },
 
 
-                {
-                    id:
-                        "home_rug_png",
+        /*
+            TAPETE MAIOR.
+        */
+        {
+            id:
+                "home_rug_png",
 
-                    type:
-                        "homeRug",
+            type:
+                "homeRug",
 
-                    x:
-                        530,
+            x:
+                535,
 
-                    y:
-                        470,
+            y:
+                475,
 
-                    w:
-                        255,
+            w:
+                330,
 
-                    h:
-                        145,
+            h:
+                185,
 
-                    solid:
-                        false,
+            solid:
+                false,
 
-                    homeFloor:
-                        1
-                },
+            homeFloor:
+                1
+        },
 
 
-                {
-                    id:
-                        "home_table_set_png",
+        /*
+            MESA + CADEIRAS
+            agora possuem hitbox.
+        */
+        {
+            id:
+                "home_table_set_png",
 
-                    type:
-                        "homeTableSet",
+            type:
+                "homeTableSet",
 
-                    x:
-                        720,
+            x:
+                720,
 
-                    y:
-                        365,
+            y:
+                365,
 
-                    w:
-                        225,
+            w:
+                225,
 
-                    h:
-                        205,
+            h:
+                205,
 
-                    depthY:
-                        455,
+            collisionW:
+                185,
 
-                    depthSorted:
-                        true,
+            collisionH:
+                135,
 
-                    solid:
-                        false,
+            collisionOffsetY:
+                10,
 
-                    homeFloor:
-                        1
-                },
+            depthY:
+                455,
 
+            depthSorted:
+                true,
 
-                {
-                    id:
-                        "home_window_floor1",
+            solid:
+                true,
 
-                    type:
-                        "homeWindow",
+            homeFloor:
+                1
+        },
 
-                    x:
-                        590,
 
-                    y:
-                        165,
+        /*
+            DUAS JANELAS MENORES.
+        */
+        {
+            id:
+                "home_window_floor1_left",
 
-                    w:
-                        115,
+            type:
+                "homeWindow",
 
-                    h:
-                        130,
+            x:
+                520,
 
-                    solid:
-                        false,
+            y:
+                165,
 
-                    homeFloor:
-                        1
-                },
+            w:
+                76,
 
+            h:
+                86,
 
-                {
-                    id:
-                        "home_stairs_floor1",
+            solid:
+                false,
 
-                    type:
-                        "homeStairs",
+            homeFloor:
+                1
+        },
 
-                    x:
-                        335,
 
-                    y:
-                        445,
+        {
+            id:
+                "home_window_floor1_right",
 
-                    w:
-                        120,
+            type:
+                "homeWindow",
 
-                    h:
-                        215,
+            x:
+                705,
 
-                    depthY:
-                        525,
+            y:
+                165,
 
-                    depthSorted:
-                        true,
+            w:
+                76,
 
-                    solid:
-                        false,
+            h:
+                86,
 
-                    homeFloor:
-                        1
-                }
+            solid:
+                false,
 
-            );
+            homeFloor:
+                1
+        },
 
 
-            /*
-                Descanso continua existindo.
-            */
-            world.interactables.push({
+        /*
+            ESCADA.
 
-                id:
-                    "home_bed_rest",
+            A parte alta tem colisão.
+            O pé fica livre para o player
+            chegar e apertar E.
+        */
+        {
+            id:
+                "home_stairs_floor1",
 
-                type:
-                    "bedRest",
+            type:
+                "homeStairs",
 
-                x:
-                    235,
+            x:
+                335,
 
-                y:
-                    275,
+            y:
+                445,
 
-                radius:
-                    92,
+            w:
+                120,
 
-                key:
-                    "E",
+            h:
+                215,
 
-                label:
-                    "DESCANSAR",
+            collisionW:
+                86,
 
-                homeFloor:
-                    1
+            collisionH:
+                150,
 
-            });
+            collisionOffsetY:
+                -25,
 
+            depthY:
+                525,
 
-            /*
-                SUBIR.
-            */
-            world.interactables.push({
+            depthSorted:
+                true,
 
-                id:
-                    "home_stairs_up",
+            solid:
+                true,
 
-                type:
-                    "homeStairs",
-
-                x:
-                    335,
-
-                y:
-                    470,
-
-                radius:
-                    90,
-
-                key:
-                    "E",
-
-                label:
-                    "SUBIR ESCADAS",
-
-                targetFloor:
-                    2,
-
-                homeFloor:
-                    1
-
-            });
-
-
-            /* ========================================================
-               SEGUNDO ANDAR
-
-               SOMENTE 3 JANELAS.
-               ======================================================== */
-
-            world.decorations.push(
-
-                {
-                    id:
-                        "home_window_floor2_left",
-
-                    type:
-                        "homeWindow",
-
-                    x:
-                        335,
-
-                    y:
-                        180,
-
-                    w:
-                        112,
-
-                    h:
-                        126,
-
-                    solid:
-                        false,
-
-                    homeFloor:
-                        2
-                },
-
-
-                {
-                    id:
-                        "home_window_floor2_center",
-
-                    type:
-                        "homeWindow",
-
-                    x:
-                        540,
-
-                    y:
-                        180,
-
-                    w:
-                        112,
-
-                    h:
-                        126,
-
-                    solid:
-                        false,
-
-                    homeFloor:
-                        2
-                },
-
-
-                {
-                    id:
-                        "home_window_floor2_right",
-
-                    type:
-                        "homeWindow",
-
-                    x:
-                        745,
-
-                    y:
-                        180,
-
-                    w:
-                        112,
-
-                    h:
-                        126,
-
-                    solid:
-                        false,
-
-                    homeFloor:
-                        2
-                }
-
-            );
-
-
-            /*
-                Não desenha outra escada em cima.
-                O piso 2 já possui o vão.
-
-                Esta interação invisível serve
-                somente para voltar.
-            */
-            world.interactables.push({
-
-                id:
-                    "home_stairs_down",
-
-                type:
-                    "homeStairs",
-
-                x:
-                    335,
-
-                y:
-                    585,
-
-                radius:
-                    95,
-
-                key:
-                    "E",
-
-                label:
-                    "DESCER ESCADAS",
-
-                targetFloor:
-                    1,
-
-                homeFloor:
-                    2
-
-            });
-
-
-            return;
-
+            homeFloor:
+                1
         }
 
+    );
+
+
+    world.interactables.push({
+
+        id:
+            "home_bed_rest",
+
+        type:
+            "bedRest",
+
+        x:
+            235,
+
+        y:
+            275,
+
+        radius:
+            92,
+
+        key:
+            "E",
+
+        label:
+            "DESCANSAR",
+
+        homeFloor:
+            1
+
+    });
+
+
+    /*
+        BOTÃO PARA SUBIR.
+
+        Fica no pé da escada,
+        fora da hitbox.
+    */
+    world.interactables.push({
+
+        id:
+            "home_stairs_up",
+
+        type:
+            "homeStairs",
+
+        x:
+            335,
+
+        y:
+            540,
+
+        radius:
+            70,
+
+        key:
+            "E",
+
+        label:
+            "SUBIR ESCADAS",
+
+        targetFloor:
+            2,
+
+        homeFloor:
+            1
+
+    });
+
+
+    /* ========================================================
+       SEGUNDO ANDAR
+
+       Continua SOMENTE com 3 janelas.
+       Agora menores.
+       ======================================================== */
+
+    world.decorations.push(
+
+        {
+            id:
+                "home_window_floor2_left",
+
+            type:
+                "homeWindow",
+
+            x:
+                355,
+
+            y:
+                165,
+
+            w:
+                76,
+
+            h:
+                86,
+
+            solid:
+                false,
+
+            homeFloor:
+                2
+        },
+
+
+        {
+            id:
+                "home_window_floor2_center",
+
+            type:
+                "homeWindow",
+
+            x:
+                540,
+
+            y:
+                165,
+
+            w:
+                76,
+
+            h:
+                86,
+
+            solid:
+                false,
+
+            homeFloor:
+                2
+        },
+
+
+        {
+            id:
+                "home_window_floor2_right",
+
+            type:
+                "homeWindow",
+
+            x:
+                725,
+
+            y:
+                165,
+
+            w:
+                76,
+
+            h:
+                86,
+
+            solid:
+                false,
+
+            homeFloor:
+                2
+        }
+
+    );
+
+
+    /*
+        Área para descer.
+
+        O spawn do 2º andar fica longe,
+        portanto não ativa imediatamente.
+    */
+    world.interactables.push({
+
+        id:
+            "home_stairs_down",
+
+        type:
+            "homeStairs",
+
+        x:
+            335,
+
+        y:
+            560,
+
+        radius:
+            70,
+
+        key:
+            "E",
+
+        label:
+            "DESCER ESCADAS",
+
+        targetFloor:
+            1,
+
+        homeFloor:
+            2
+
+    });
+
+
+    return;
+
+}
 
         if (
             houseId ===
@@ -43470,152 +43775,158 @@ if (
        ESCADAS — CASA DO PLAYER
        ============================================================ */
 
-    function usePlayerHomeStairs(
-        stairs
+  function usePlayerHomeStairs(
+    stairs
+) {
+
+    const player =
+        state.player;
+
+    const world =
+        state.world;
+
+
+    if (
+        !player ||
+        !world ||
+        !world.interior ||
+        world.interiorId !==
+            "home" ||
+        state.transition
     ) {
-
-        const player =
-            state.player;
-
-        const world =
-            state.world;
-
-
-        if (
-            !player ||
-            !world ||
-            !world.interior ||
-            world.interiorId !==
-                "home" ||
-            state.transition
-        ) {
-            return false;
-        }
-
-
-        const currentFloor =
-            Math.round(
-                finiteNumber(
-                    world.homeFloor,
-                    1
-                )
-            );
-
-
-        const targetFloor =
-            Math.round(
-                finiteNumber(
-                    stairs?.targetFloor,
-
-                    currentFloor === 1
-                        ? 2
-                        : 1
-                )
-            );
-
-
-        if (
-            targetFloor ===
-                currentFloor ||
-            (
-                targetFloor !== 1 &&
-                targetFloor !== 2
-            )
-        ) {
-            return false;
-        }
-
-
-        /*
-            Fade curto.
-
-            Usa a mesma transição visual
-            que já existe no jogo.
-        */
-        state.transition = {
-
-            type:
-                "area",
-
-            timer:
-                0,
-
-            duration:
-                0.72,
-
-            title:
-                targetFloor === 2
-                    ? "2º ANDAR"
-                    : "TÉRREO",
-
-            midpointDone:
-                false,
-
-
-            onMidpoint:
-                () => {
-
-                    world.homeFloor =
-                        targetFloor;
-
-
-                    world.name =
-                        targetFloor === 2
-
-                            ? "SUA CASA — 2º ANDAR"
-
-                            : "SUA CASA";
-
-
-                    if (
-                        targetFloor === 2
-                    ) {
-
-                        player.x =
-                            345;
-
-                        player.y =
-                            555;
-
-                        player.facing =
-                            "up";
-
-                    } else {
-
-                        player.x =
-                            390;
-
-                        player.y =
-                            485;
-
-                        player.facing =
-                            "down";
-
-                    }
-
-
-                    gameplayRuntime
-                        .interactionTarget =
-                        null;
-
-
-                    gameplayRuntime
-                        .interactionPrompt =
-                        null;
-
-                },
-
-
-            onComplete:
-                () => {}
-
-        };
-
-
-        return true;
-
+        return false;
     }
 
+
+    const currentFloor =
+        Math.round(
+            finiteNumber(
+                world.homeFloor,
+                1
+            )
+        );
+
+
+    const targetFloor =
+        Math.round(
+            finiteNumber(
+                stairs?.targetFloor,
+
+                currentFloor === 1
+                    ? 2
+                    : 1
+            )
+        );
+
+
+    if (
+        targetFloor ===
+            currentFloor ||
+        (
+            targetFloor !== 1 &&
+            targetFloor !== 2
+        )
+    ) {
+        return false;
+    }
+
+
+    state.transition = {
+
+        type:
+            "area",
+
+        timer:
+            0,
+
+        duration:
+            0.78,
+
+        title:
+            targetFloor === 2
+                ? "2º ANDAR"
+                : "TÉRREO",
+
+        midpointDone:
+            false,
+
+
+        onMidpoint:
+            () => {
+
+                world.homeFloor =
+                    targetFloor;
+
+
+                world.name =
+                    targetFloor === 2
+
+                        ? "SUA CASA — 2º ANDAR"
+
+                        : "SUA CASA";
+
+
+                /*
+                    Remove as colisões invisíveis
+                    do outro andar.
+                */
+                rebuildDynamicWorldObstacles(
+                    world
+                );
+
+
+                /*
+                    Spawn longe do trigger
+                    da escada.
+                */
+                if (
+                    targetFloor === 2
+                ) {
+
+                    player.x =
+                        500;
+
+                    player.y =
+                        500;
+
+                    player.facing =
+                        "up";
+
+                } else {
+
+                    player.x =
+                        500;
+
+                    player.y =
+                        515;
+
+                    player.facing =
+                        "down";
+
+                }
+
+
+                gameplayRuntime
+                    .interactionTarget =
+                    null;
+
+
+                gameplayRuntime
+                    .interactionPrompt =
+                    null;
+
+            },
+
+
+        onComplete:
+            () => {}
+
+    };
+
+
+    return true;
+
+}
 
     /* ============================================================
        INTERAÇÕES
@@ -43729,66 +44040,75 @@ if (
                 continue;
             }
 
-            if (
-                interactable.type ===
-                "bedRest"
-            ) {
+           if (
+    interactable.type ===
+    "homeStairs"
+) {
 
-            if (
-                interactable.type ===
-                "homeStairs"
-            ) {
+    gameplayRuntime.interactionTarget = {
 
-                gameplayRuntime.interactionTarget = {
+        type:
+            "homeStairs",
 
-                    type:
-                        "homeStairs",
+        entity:
+            interactable
 
-                    entity:
-                        interactable
-
-                };
+    };
 
 
-                gameplayRuntime.interactionPrompt = {
+    gameplayRuntime.interactionPrompt = {
 
-                    key:
-                        "E",
+        key:
+            "E",
 
-                    text:
-                        interactable.label ||
-                        (
-                            interactable.targetFloor ===
-                                2
+        text:
+            interactable.label ||
+            (
+                interactable.targetFloor ===
+                    2
 
-                                ? "SUBIR ESCADAS"
-                                : "DESCER ESCADAS"
-                        )
+                    ? "SUBIR ESCADAS"
+                    : "DESCER ESCADAS"
+            )
 
-                };
+    };
 
 
-                return;
+    return;
 
-            }
-               
-                gameplayRuntime.interactionTarget = {
-                    type:
-                        "bed",
-                    entity:
-                        interactable
-                };
+}
 
-                gameplayRuntime.interactionPrompt = {
-                    key:
-                        "E",
-                    text:
-                        "DESCANSAR"
-                };
 
-                return;
-            }
+if (
+    interactable.type ===
+    "bedRest"
+) {
 
+    gameplayRuntime.interactionTarget = {
+
+        type:
+            "bed",
+
+        entity:
+            interactable
+
+    };
+
+
+    gameplayRuntime.interactionPrompt = {
+
+        key:
+            "E",
+
+        text:
+            "DESCANSAR"
+
+    };
+
+
+    return;
+
+}
             if (
                 interactable.type ===
                 "monarchAltar"
@@ -60333,24 +60653,27 @@ ctx.scale(
                 );
                 break;
 
-            case "bed":
+           case "bed":
 
-                        case "homeRug":
-            case "homeTableSet":
-            case "homeWindow":
-            case "homeStairs":
+    drawBed(
+        ctx,
+        decoration
+    );
 
-                drawPlayerHomeInteriorDecoration(
-                    ctx,
-                    decoration
-                );
+    break;
 
-                break;
-                drawBed(
-                    ctx,
-                    decoration
-                );
-                break;
+
+case "homeRug":
+case "homeTableSet":
+case "homeWindow":
+case "homeStairs":
+
+    drawPlayerHomeInteriorDecoration(
+        ctx,
+        decoration
+    );
+
+    break;
 
          case "table":
 case "archiveTable":

@@ -11402,41 +11402,39 @@ delete playerCopy
                         730,
 
 
-                    room:
-                        Object.freeze({
+                   room:
+    Object.freeze({
 
-                            x:
-                                130,
+        x:
+            130,
 
-                            y:
-                                90,
+        y:
+            70,
 
-                            w:
-                                820,
+        w:
+            820,
 
-                            h:
-                                525
+        h:
+            615
 
-                        }),
-
-
+    }),
                     /*
                         Perto da cama.
                         Não em cima dela.
                     */
                     playerSpawn:
-                        Object.freeze({
+    Object.freeze({
 
-                            x:
-                                365,
+        x:
+            330,
 
-                            y:
-                                365,
+        y:
+            585,
 
-                            facing:
-                                "left"
+        facing:
+            "up"
 
-                        }),
+    }),
 
 
                     respawnSpawn:
@@ -11454,25 +11452,25 @@ delete playerCopy
                         }),
 
 
-                    door:
-                        Object.freeze({
+                   door:
+    Object.freeze({
 
-                            x:
-                                495,
+        x:
+            275,
 
-                            y:
-                                560,
+        y:
+            630,
 
-                            w:
-                                90,
+        w:
+            110,
 
-                            h:
-                                55,
+        h:
+            55,
 
-                            side:
-                                "bottom"
+        side:
+            "bottom"
 
-                        }),
+    }),
 
 
                     theme:
@@ -17897,6 +17895,19 @@ return false;
         world.interiorId =
             houseId;
 
+               /*
+            Piso atual.
+
+            Só a casa do player
+            possui dois andares.
+        */
+        world.homeFloor =
+            houseId ===
+                "home"
+
+                ? 1
+                : null;
+
 
         world.theme =
             config.theme;
@@ -18263,75 +18274,172 @@ return false;
         houseId
     ) {
 
-        if (
+              if (
             houseId ===
             "home"
         ) {
 
+            /* ========================================================
+               TÉRREO
+               ======================================================== */
+
+            world.decorations.push(
+
+                {
+                    id:
+                        "home_bed",
+
+                    type:
+                        "bed",
+
+                    x:
+                        235,
+
+                    y:
+                        220,
+
+                    w:
+                        110,
+
+                    h:
+                        160,
+
+                    depthY:
+                        300,
+
+                    depthSorted:
+                        true,
+
+                    homeFloor:
+                        1
+                },
+
+
+                {
+                    id:
+                        "home_rug_png",
+
+                    type:
+                        "homeRug",
+
+                    x:
+                        530,
+
+                    y:
+                        470,
+
+                    w:
+                        255,
+
+                    h:
+                        145,
+
+                    solid:
+                        false,
+
+                    homeFloor:
+                        1
+                },
+
+
+                {
+                    id:
+                        "home_table_set_png",
+
+                    type:
+                        "homeTableSet",
+
+                    x:
+                        720,
+
+                    y:
+                        365,
+
+                    w:
+                        225,
+
+                    h:
+                        205,
+
+                    depthY:
+                        455,
+
+                    depthSorted:
+                        true,
+
+                    solid:
+                        false,
+
+                    homeFloor:
+                        1
+                },
+
+
+                {
+                    id:
+                        "home_window_floor1",
+
+                    type:
+                        "homeWindow",
+
+                    x:
+                        590,
+
+                    y:
+                        165,
+
+                    w:
+                        115,
+
+                    h:
+                        130,
+
+                    solid:
+                        false,
+
+                    homeFloor:
+                        1
+                },
+
+
+                {
+                    id:
+                        "home_stairs_floor1",
+
+                    type:
+                        "homeStairs",
+
+                    x:
+                        335,
+
+                    y:
+                        445,
+
+                    w:
+                        120,
+
+                    h:
+                        215,
+
+                    depthY:
+                        525,
+
+                    depthSorted:
+                        true,
+
+                    solid:
+                        false,
+
+                    homeFloor:
+                        1
+                }
+
+            );
+
+
             /*
-                CAMA.
+                Descanso continua existindo.
             */
-            world.decorations.push({
-
-                id:
-                    "home_bed",
-
-                type:
-                    "bed",
-
-                x:
-                    255,
-
-                y:
-                    225,
-
-                w:
-                    120,
-
-                h:
-                    175,
-
-                depthY:
-                    310
-
-            });
-
-           /*
-    HITBOX FÍSICA DA CAMA.
-*/
-world.staticObstacles.push(
-    createSolidObstacle({
-
-        id:
-            "home_bed_hitbox",
-
-        type:
-            "bed",
-
-        x:
-            195,
-
-        y:
-            137.5,
-
-        w:
-            120,
-
-        h:
-            175,
-
-        blocksLight:
-            false,
-
-        solid:
-            true,
-
-        depthY:
-            312
-
-    })
-);
-
             world.interactables.push({
 
                 id:
@@ -18341,115 +18449,189 @@ world.staticObstacles.push(
                     "bedRest",
 
                 x:
-                    325,
+                    235,
 
                 y:
-                    315,
+                    275,
 
                 radius:
-                    105,
+                    92,
 
                 key:
                     "E",
 
                 label:
-                    "DESCANSAR"
+                    "DESCANSAR",
+
+                homeFloor:
+                    1
 
             });
 
 
+            /*
+                SUBIR.
+            */
+            world.interactables.push({
+
+                id:
+                    "home_stairs_up",
+
+                type:
+                    "homeStairs",
+
+                x:
+                    335,
+
+                y:
+                    470,
+
+                radius:
+                    90,
+
+                key:
+                    "E",
+
+                label:
+                    "SUBIR ESCADAS",
+
+                targetFloor:
+                    2,
+
+                homeFloor:
+                    1
+
+            });
+
+
+            /* ========================================================
+               SEGUNDO ANDAR
+
+               SOMENTE 3 JANELAS.
+               ======================================================== */
+
             world.decorations.push(
 
                 {
+                    id:
+                        "home_window_floor2_left",
 
                     type:
-                        "chest",
+                        "homeWindow",
 
                     x:
-                        820,
+                        335,
 
                     y:
-                        210
-
-                },
-
-
-                {
-
-                    type:
-                        "rug",
-
-                    x:
-                        545,
-
-                    y:
-                        365,
+                        180,
 
                     w:
-                        245,
+                        112,
 
                     h:
-                        135
+                        126,
 
+                    solid:
+                        false,
+
+                    homeFloor:
+                        2
                 },
 
 
                 {
+                    id:
+                        "home_window_floor2_center",
 
                     type:
-                        "smallTable",
+                        "homeWindow",
 
                     x:
-                        725,
+                        540,
 
                     y:
-                        405
+                        180,
 
+                    w:
+                        112,
+
+                    h:
+                        126,
+
+                    solid:
+                        false,
+
+                    homeFloor:
+                        2
                 },
 
 
                 {
+                    id:
+                        "home_window_floor2_right",
 
                     type:
-                        "chair",
+                        "homeWindow",
 
                     x:
-                        675,
+                        745,
 
                     y:
-                        430
+                        180,
 
-                },
+                    w:
+                        112,
 
+                    h:
+                        126,
 
-                {
+                    solid:
+                        false,
 
-                    type:
-                        "window",
-
-                    x:
-                        535,
-
-                    y:
-                        115
-
-                },
-
-
-                {
-
-                    type:
-                        "candle",
-
-                    x:
-                        710,
-
-                    y:
-                        380
-
+                    homeFloor:
+                        2
                 }
 
             );
+
+
+            /*
+                Não desenha outra escada em cima.
+                O piso 2 já possui o vão.
+
+                Esta interação invisível serve
+                somente para voltar.
+            */
+            world.interactables.push({
+
+                id:
+                    "home_stairs_down",
+
+                type:
+                    "homeStairs",
+
+                x:
+                    335,
+
+                y:
+                    585,
+
+                radius:
+                    95,
+
+                key:
+                    "E",
+
+                label:
+                    "DESCER ESCADAS",
+
+                targetFloor:
+                    1,
+
+                homeFloor:
+                    2
+
+            });
 
 
             return;
@@ -43047,6 +43229,25 @@ if (
             return false;
         }
 
+               /*
+            No segundo andar,
+            Z não pode mandar o jogador
+            diretamente para fora da casa.
+        */
+        if (
+            world.interiorId ===
+                "home" &&
+            Math.round(
+                finiteNumber(
+                    world.homeFloor,
+                    1
+                )
+            ) ===
+                2
+        ) {
+            return false;
+        }
+
         let nearest =
             null;
 
@@ -43265,6 +43466,156 @@ if (
         }
     }
 
+       /* ============================================================
+       ESCADAS — CASA DO PLAYER
+       ============================================================ */
+
+    function usePlayerHomeStairs(
+        stairs
+    ) {
+
+        const player =
+            state.player;
+
+        const world =
+            state.world;
+
+
+        if (
+            !player ||
+            !world ||
+            !world.interior ||
+            world.interiorId !==
+                "home" ||
+            state.transition
+        ) {
+            return false;
+        }
+
+
+        const currentFloor =
+            Math.round(
+                finiteNumber(
+                    world.homeFloor,
+                    1
+                )
+            );
+
+
+        const targetFloor =
+            Math.round(
+                finiteNumber(
+                    stairs?.targetFloor,
+
+                    currentFloor === 1
+                        ? 2
+                        : 1
+                )
+            );
+
+
+        if (
+            targetFloor ===
+                currentFloor ||
+            (
+                targetFloor !== 1 &&
+                targetFloor !== 2
+            )
+        ) {
+            return false;
+        }
+
+
+        /*
+            Fade curto.
+
+            Usa a mesma transição visual
+            que já existe no jogo.
+        */
+        state.transition = {
+
+            type:
+                "area",
+
+            timer:
+                0,
+
+            duration:
+                0.72,
+
+            title:
+                targetFloor === 2
+                    ? "2º ANDAR"
+                    : "TÉRREO",
+
+            midpointDone:
+                false,
+
+
+            onMidpoint:
+                () => {
+
+                    world.homeFloor =
+                        targetFloor;
+
+
+                    world.name =
+                        targetFloor === 2
+
+                            ? "SUA CASA — 2º ANDAR"
+
+                            : "SUA CASA";
+
+
+                    if (
+                        targetFloor === 2
+                    ) {
+
+                        player.x =
+                            345;
+
+                        player.y =
+                            555;
+
+                        player.facing =
+                            "up";
+
+                    } else {
+
+                        player.x =
+                            390;
+
+                        player.y =
+                            485;
+
+                        player.facing =
+                            "down";
+
+                    }
+
+
+                    gameplayRuntime
+                        .interactionTarget =
+                        null;
+
+
+                    gameplayRuntime
+                        .interactionPrompt =
+                        null;
+
+                },
+
+
+            onComplete:
+                () => {}
+
+        };
+
+
+        return true;
+
+    }
+
 
     /* ============================================================
        INTERAÇÕES
@@ -43338,6 +43689,30 @@ if (
                 continue;
             }
 
+                       /*
+                Interações específicas
+                de cada andar.
+            */
+            if (
+                world.interiorId ===
+                    "home" &&
+                interactable.homeFloor &&
+                Math.round(
+                    finiteNumber(
+                        interactable.homeFloor,
+                        1
+                    )
+                ) !==
+                Math.round(
+                    finiteNumber(
+                        world.homeFloor,
+                        1
+                    )
+                )
+            ) {
+                continue;
+            }
+
             if (
                 distance(
                     player.x,
@@ -43358,6 +43733,45 @@ if (
                 interactable.type ===
                 "bedRest"
             ) {
+
+            if (
+                interactable.type ===
+                "homeStairs"
+            ) {
+
+                gameplayRuntime.interactionTarget = {
+
+                    type:
+                        "homeStairs",
+
+                    entity:
+                        interactable
+
+                };
+
+
+                gameplayRuntime.interactionPrompt = {
+
+                    key:
+                        "E",
+
+                    text:
+                        interactable.label ||
+                        (
+                            interactable.targetFloor ===
+                                2
+
+                                ? "SUBIR ESCADAS"
+                                : "DESCER ESCADAS"
+                        )
+
+                };
+
+
+                return;
+
+            }
+               
                 gameplayRuntime.interactionTarget = {
                     type:
                         "bed",
@@ -43647,6 +44061,25 @@ if (
                 world.exits
             )
         ) {
+
+            /*
+                No segundo andar não existe
+                saída direta para a rua.
+            */
+            if (
+                world.interiorId ===
+                    "home" &&
+                Math.round(
+                    finiteNumber(
+                        world.homeFloor,
+                        1
+                    )
+                ) ===
+                    2
+            ) {
+                continue;
+            }
+           
             if (
                 circleRectCollision(
                     player.x,
@@ -43702,6 +44135,21 @@ if (
                 world.doors
             )
         ) {
+
+            if (
+                world.interiorId ===
+                    "home" &&
+                Math.round(
+                    finiteNumber(
+                        world.homeFloor,
+                        1
+                    )
+                ) ===
+                    2
+            ) {
+                continue;
+            }
+           
             const x =
                 finiteNumber(
                     door.centerX,
@@ -44278,6 +44726,12 @@ if (
 
             case "monarchAltar":
                 return requestMonarchAltarInteraction();
+
+                          case "homeStairs":
+
+                return usePlayerHomeStairs(
+                    target.entity
+                );
 
             case "bed":
                 return beginBedRest();
@@ -47199,6 +47653,28 @@ const height =
         doorSheet:
             "./assets/sprites/environment/houses/player-house/player-door-opening.png?v=20260908-home1",
 
+               /*
+            INTERIOR — CASA DO PLAYER
+        */
+
+        interiorFloor1:
+            "./assets/sprites/environment/houses/player-house/player-house-interior-floor1.png?v=20260909-interior1",
+
+        interiorFloor2:
+            "./assets/sprites/environment/houses/player-house/player-house-interior-floor2.png?v=20260909-interior1",
+
+        rug:
+            "./assets/sprites/environment/houses/player-house/player-house-rug.png?v=20260909-interior1",
+
+        tableSet:
+            "./assets/sprites/environment/houses/player-house/player-house-table-set.png?v=20260909-interior1",
+
+        window:
+            "./assets/sprites/environment/houses/player-house/player-house-window.png?v=20260909-interior1",
+
+        stairs:
+            "./assets/sprites/environment/houses/player-house/player-house-stairs.png?v=20260909-interior1",
+
         doorFrames:
             6,
 
@@ -47353,6 +47829,211 @@ const height =
 
 
         return entry;
+
+    }
+
+       function drawPlayerHomeInteriorBackground(
+        ctx,
+        world
+    ) {
+
+        if (
+            !ctx ||
+            !world ||
+            world.interiorId !==
+                "home" ||
+            !world.room
+        ) {
+            return false;
+        }
+
+
+        const floor =
+            Math.round(
+                finiteNumber(
+                    world.homeFloor,
+                    1
+                )
+            );
+
+
+        const src =
+            floor === 2
+
+                ? PLAYER_HOME_ASSETS
+                    .interiorFloor2
+
+                : PLAYER_HOME_ASSETS
+                    .interiorFloor1;
+
+
+        const entry =
+            getPlayerHomeImage(
+                src
+            );
+
+
+        if (
+            !entry ||
+            !entry.loaded ||
+            entry.failed
+        ) {
+            return false;
+        }
+
+
+        const room =
+            world.room;
+
+
+        const screen =
+            worldToScreen(
+                room.x,
+                room.y
+            );
+
+
+        ctx.save();
+
+        ctx.imageSmoothingEnabled =
+            false;
+
+
+        ctx.drawImage(
+            entry.image,
+
+            screen.x,
+            screen.y,
+
+            room.w,
+            room.h
+        );
+
+
+        ctx.restore();
+
+
+        return true;
+
+    }
+
+
+    function drawPlayerHomeInteriorDecoration(
+        ctx,
+        decoration
+    ) {
+
+        if (
+            !ctx ||
+            !decoration
+        ) {
+            return false;
+        }
+
+
+        const assetMap = {
+
+            homeRug:
+                PLAYER_HOME_ASSETS.rug,
+
+            homeTableSet:
+                PLAYER_HOME_ASSETS.tableSet,
+
+            homeWindow:
+                PLAYER_HOME_ASSETS.window,
+
+            homeStairs:
+                PLAYER_HOME_ASSETS.stairs
+
+        };
+
+
+        const src =
+            assetMap[
+                decoration.type
+            ];
+
+
+        if (!src) {
+            return false;
+        }
+
+
+        const entry =
+            getPlayerHomeImage(
+                src
+            );
+
+
+        if (
+            !entry ||
+            !entry.loaded ||
+            entry.failed
+        ) {
+            return false;
+        }
+
+
+        const screen =
+            worldToScreen(
+                decoration.x,
+                decoration.y
+            );
+
+
+        const width =
+            Math.max(
+                1,
+                finiteNumber(
+                    decoration.w,
+                    100
+                )
+            );
+
+
+        const naturalRatio =
+            entry.image.height /
+            Math.max(
+                1,
+                entry.image.width
+            );
+
+
+        const height =
+            Math.max(
+                1,
+                finiteNumber(
+                    decoration.h,
+                    width *
+                    naturalRatio
+                )
+            );
+
+
+        ctx.save();
+
+        ctx.imageSmoothingEnabled =
+            false;
+
+
+        ctx.drawImage(
+            entry.image,
+
+            screen.x -
+                width / 2,
+
+            screen.y -
+                height / 2,
+
+            width,
+            height
+        );
+
+
+        ctx.restore();
+
+
+        return true;
 
     }
 
@@ -48965,6 +49646,21 @@ function drawWorldBackground(
             renderRuntime.height
         );
 
+               /*
+            Interior personalizado
+            da casa do player.
+        */
+        if (
+            world.interiorId ===
+                "home" &&
+            drawPlayerHomeInteriorBackground(
+                ctx,
+                world
+            )
+        ) {
+            return;
+        }
+
 
         const room =
             world.room;
@@ -50236,6 +50932,21 @@ ctx.fillStyle =
             state.world;
 
         if (!world) {
+            return;
+        }
+
+               /*
+            O PNG do interior já possui
+            paredes e moldura próprias.
+
+            A colisão continua existindo,
+            apenas não desenhamos as paredes
+            antigas por cima da imagem.
+        */
+        if (
+            world.interiorId ===
+                "home"
+        ) {
             return;
         }
 
@@ -51949,6 +52660,21 @@ ctx.shadowOffsetY =
     ctx,
     door
 ) {
+
+          /*
+        Dentro da casa do player,
+        o PNG do piso já possui
+        o vão da porta.
+    */
+    if (
+        state.world?.interiorId ===
+            "home" &&
+        door?.houseId ===
+            "home" &&
+        !door?.buildingId
+    ) {
+        return;
+    }
 
           if (
         door?.buildingId ===
@@ -59558,6 +60284,30 @@ ctx.scale(
             return;
         }
 
+        /*
+            CASA DO PLAYER:
+            só desenha o objeto no piso correto.
+        */
+        if (
+            state.world?.interiorId ===
+                "home" &&
+            decoration.homeFloor &&
+            Math.round(
+                finiteNumber(
+                    decoration.homeFloor,
+                    1
+                )
+            ) !==
+            Math.round(
+                finiteNumber(
+                    state.world.homeFloor,
+                    1
+                )
+            )
+        ) {
+            return;
+        }
+       
         switch (
             decoration.type
         ) {
@@ -59584,6 +60334,18 @@ ctx.scale(
                 break;
 
             case "bed":
+
+                        case "homeRug":
+            case "homeTableSet":
+            case "homeWindow":
+            case "homeStairs":
+
+                drawPlayerHomeInteriorDecoration(
+                    ctx,
+                    decoration
+                );
+
+                break;
                 drawBed(
                     ctx,
                     decoration

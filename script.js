@@ -60760,7 +60760,7 @@ ctx.scale(
                 );
                 break;
 
-           case "bed":
+       case "bed":
 
     drawBed(
         ctx,

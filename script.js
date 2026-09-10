@@ -69336,142 +69336,214 @@ function drawNightFog(
         renderRuntime.ambientTime;
 
 
+    /*
+        NEBLINA MAIS VISÍVEL.
+
+        Antes ela ficava fraca demais
+        principalmente na Vila.
+    */
+    const fogStrength =
+        clamp(
+            profile.fog *
+                2.6,
+            0.24,
+            0.46
+        );
+
+
+    const layers = [
+
+        {
+            y: 0.27,
+            speed: 8,
+            direction: 1,
+            spacing: 320,
+            radiusX: 290,
+            radiusY: 58,
+            alpha: 0.60,
+            wave: 18
+        },
+
+        {
+            y: 0.52,
+            speed: 5.4,
+            direction: -1,
+            spacing: 380,
+            radiusX: 350,
+            radiusY: 78,
+            alpha: 0.48,
+            wave: 26
+        },
+
+        {
+            y: 0.77,
+            speed: 10.5,
+            direction: 1,
+            spacing: 430,
+            radiusX: 410,
+            radiusY: 96,
+            alpha: 0.38,
+            wave: 34
+        }
+
+    ];
+
+
     ctx.save();
 
 
     /*
-        3 CAMADAS DE NEBLINA.
-
-        Cada uma anda em velocidade
-        diferente para dar profundidade.
+        Faz a névoa clarear levemente
+        o cenário escuro, sem virar
+        uma tela cinza.
     */
+    ctx.globalCompositeOperation =
+        "screen";
+
+
     for (
-        let layer = 0;
-        layer < 3;
-        layer += 1
+        let layerIndex = 0;
+        layerIndex < layers.length;
+        layerIndex += 1
     ) {
 
-        const speed =
-            8 +
-            layer *
-                4;
+        const layer =
+            layers[
+                layerIndex
+            ];
 
 
-        const layerAlpha =
-            profile.fog *
-            (
-                layer === 0
-                    ? 0.72
-
-                    : layer === 1
-                        ? 0.52
-
-                        : 0.36
-            );
-
-
-        const travelWidth =
+        const travel =
             width +
-            760;
+            layer.spacing *
+                2;
 
 
         const drift =
             (
                 time *
-                    speed +
+                    layer.speed *
+                    layer.direction +
 
-                layer *
-                    240
-            ) %
-            travelWidth;
-
-
-        const baseY =
-            height *
-            (
-                0.32 +
-                layer *
-                    0.23
+                layerIndex *
+                    181
             );
 
 
-        /*
-            Vários bancos de névoa
-            atravessando a tela.
-        */
+        const count =
+            Math.ceil(
+                width /
+                    layer.spacing
+            ) +
+            4;
+
+
         for (
-            let cloud = -1;
-            cloud < 4;
-            cloud += 1
+            let cloudIndex = -2;
+            cloudIndex < count;
+            cloudIndex += 1
         ) {
 
-            const x =
-                cloud *
-                    430 +
+            let x =
+                cloudIndex *
+                    layer.spacing +
+                drift;
 
-                drift -
-                470;
+
+            x =
+                (
+                    (
+                        x %
+                        travel
+                    ) +
+                    travel
+                ) %
+                travel -
+                layer.spacing;
 
 
             const y =
-                baseY +
+                height *
+                    layer.y +
 
                 Math.sin(
-
                     time *
-                        0.18 +
+                        0.22 +
 
-                    cloud *
-                        1.8 +
+                    cloudIndex *
+                        1.31 +
 
-                    layer *
-                        0.9
-
+                    layerIndex *
+                        0.8
                 ) *
-                    24;
+                    layer.wave;
 
 
-            const radius =
-                300 +
-                layer *
-                    55;
+            const pulse =
+                0.90 +
+
+                Math.sin(
+                    time *
+                        0.16 +
+
+                    cloudIndex *
+                        0.73
+                ) *
+                    0.10;
+
+
+            const radiusX =
+                layer.radiusX *
+                pulse;
+
+
+            const radiusY =
+                layer.radiusY *
+                pulse;
+
+
+            const alpha =
+                fogStrength *
+                layer.alpha *
+                (
+                    0.82 +
+
+                    Math.sin(
+                        time *
+                            0.11 +
+
+                        cloudIndex
+                    ) *
+                        0.18
+                );
 
 
             const fog =
                 ctx.createRadialGradient(
-
                     x,
                     y,
                     0,
-
                     x,
                     y,
-                    radius
-
+                    radiusX
                 );
 
 
             fog.addColorStop(
                 0,
-
-                `rgba(
-                    170,
-                    184,
-                    190,
-                    ${layerAlpha}
-                )`
+                `rgba(176,190,198,${alpha})`
             );
 
 
             fog.addColorStop(
-                0.45,
+                0.38,
+                `rgba(145,162,172,${alpha * 0.58})`
+            );
 
-                `rgba(
-                    127,
-                    143,
-                    153,
-                    ${layerAlpha * 0.42}
-                )`
+
+            fog.addColorStop(
+                0.74,
+                `rgba(111,129,140,${alpha * 0.20})`
             );
 
 
@@ -69485,67 +69557,78 @@ function drawNightFog(
                 fog;
 
 
-            ctx.save();
+            ctx.beginPath();
 
 
-            /*
-                Achata o círculo,
-                transformando em uma
-                faixa de neblina.
-            */
-            ctx.translate(
+            ctx.ellipse(
                 x,
-                y
-            );
-
-
-            ctx.scale(
-
-                1.65 +
-                    layer *
-                        0.18,
-
-                0.42 +
-                    layer *
-                        0.05
-
-            );
-
-
-            ctx.translate(
-                -x,
-                -y
-            );
-
-
-            ctx.fillRect(
-
-                x -
-                    radius,
-
-                y -
-                    radius,
-
-                radius *
-                    2,
-
-                radius *
+                y,
+                radiusX,
+                radiusY,
+                0,
+                0,
+                Math.PI *
                     2
-
             );
 
 
-            ctx.restore();
+            ctx.fill();
 
         }
 
     }
 
 
+    /*
+        Névoa ambiente bem leve
+        entre os bancos principais.
+    */
+    ctx.globalCompositeOperation =
+        "source-over";
+
+
+    const haze =
+        ctx.createLinearGradient(
+            0,
+            0,
+            0,
+            height
+        );
+
+
+    haze.addColorStop(
+        0,
+        "rgba(126,145,158,0.015)"
+    );
+
+
+    haze.addColorStop(
+        0.42,
+        `rgba(139,156,166,${fogStrength * 0.11})`
+    );
+
+
+    haze.addColorStop(
+        1,
+        `rgba(111,126,137,${fogStrength * 0.06})`
+    );
+
+
+    ctx.fillStyle =
+        haze;
+
+
+    ctx.fillRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+
     ctx.restore();
 
 }
-
     /* ============================================================
        VOID / SKY ATMOSPHERE
        ============================================================ */

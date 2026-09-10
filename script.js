@@ -597,7 +597,7 @@
        pelo interior real.
        ============================================================ */
 
-   const PLAYER_HOME_INTERIOR_SPAWN =
+ const PLAYER_HOME_INTERIOR_SPAWN =
     Object.freeze({
 
         area:
@@ -610,7 +610,7 @@
             520,
 
         y:
-            510,
+            500,
 
         facing:
             "up"
@@ -11418,38 +11418,59 @@ delete playerCopy
             615
 
     }),
+
+walkBounds:
+    Object.freeze({
+
+        left:
+            72,
+
+        right:
+            72,
+
+        top:
+            112,
+
+        bottom:
+            86,
+
+        doorBottom:
+            12
+
+    }),
+                   
                     /*
                         Perto da cama.
                         Não em cima dela.
                     */
-                  playerSpawn:
+              playerSpawn:
     Object.freeze({
 
         x:
             520,
 
         y:
-            510,
+            500,
 
         facing:
             "up"
 
     }),
 
-                 respawnSpawn:
+              respawnSpawn:
     Object.freeze({
 
         x:
             520,
 
         y:
-            395,
+            410,
 
         facing:
             "down"
 
     }),
-
+                   
                    door:
     Object.freeze({
 
@@ -16752,7 +16773,7 @@ const depth =
 
     }
 
-   function getDecorationCollisionObstacle(
+function getDecorationCollisionObstacle(
     decoration
 ) {
 
@@ -16826,13 +16847,13 @@ const depth =
 
 
         /*
-            NOVOS OBJETOS DA CASA.
+            CASA DO PLAYER
         */
         homeTableSet:
-            [185, 135],
+            [190, 145],
 
         homeStairs:
-            [86, 150]
+            [105, 180]
 
     };
 
@@ -16850,10 +16871,6 @@ const depth =
     }
 
 
-    /*
-        Permite deixar a imagem grande,
-        mas a hitbox menor.
-    */
     const w =
         finiteNumber(
             decoration.collisionW,
@@ -16914,156 +16931,11 @@ const depth =
 
         depthY:
             decoration.y +
-            h / 2
+            h / 2 +
+            offsetY
 
     });
 
-}
-
-   function getDecorationCollisionObstacle(
-    decoration
-) {
-    if (
-        !decoration ||
-        decoration.solid ===
-            false
-    ) {
-        return null;
-    }
-
-
-    /*
-        Hitbox aproximada de cada
-        móvel/objeto interno.
-
-        NÃO colocamos cama aqui,
-        porque a cama já possui
-        hitbox própria.
-    */
-    const sizes = {
-
-        chest:
-            [76, 56],
-
-        smallTable:
-            [100, 62],
-
-        table:
-            [100, 62],
-
-        archiveTable:
-            [120, 65],
-
-        herbTable:
-            [120, 65],
-
-        chair:
-            [42, 42],
-
-        bookshelf:
-            [78, 108],
-
-        shelves:
-            [82, 108],
-
-        plantShelf:
-            [82, 105],
-
-        counter:
-            [145, 66],
-
-        crates:
-            [95, 68],
-
-        forgeFire:
-            [100, 72],
-
-        anvil:
-            [74, 52],
-
-        weaponRack:
-            [100, 55],
-
-        coalPile:
-            [92, 62],
-
-        workbench:
-            [135, 72],
-
-        woodStack:
-            [105, 64],
-
-        bowRack:
-            [95, 52],
-
-        plantPot:
-            [45, 45]
-
-    };
-
-
-    const size =
-        sizes[
-            decoration.type
-        ];
-
-
-    /*
-        Decoração sem tamanho definido
-        continua sendo apenas visual.
-    */
-    if (
-        !size
-    ) {
-        return null;
-    }
-
-
-    const w =
-        decoration.w ||
-        size[0];
-
-
-    const h =
-        decoration.h ||
-        size[1];
-
-
-    return createSolidObstacle({
-
-        id:
-            `${decoration.id || decoration.type}_hitbox`,
-
-        type:
-            decoration.type,
-
-        /*
-            A maior parte das decorations
-            usa x/y como CENTRO.
-        */
-        x:
-            decoration.x -
-            w / 2,
-
-        y:
-            decoration.y -
-            h / 2,
-
-        w,
-
-        h,
-
-        solid:
-            true,
-
-        blocksLight:
-            false,
-
-        depthY:
-            decoration.y +
-            h / 2
-
-    });
 }
 
    function getGateCollisionObstacles(
@@ -17345,6 +17217,26 @@ for (
         world.decorations
     )
 ) {
+
+       if (
+        world.interiorId ===
+            "home" &&
+        decoration.homeFloor &&
+        Math.round(
+            finiteNumber(
+                decoration.homeFloor,
+                1
+            )
+        ) !==
+        Math.round(
+            finiteNumber(
+                world.homeFloor,
+                1
+            )
+        )
+    ) {
+        continue;
+    }
 
 /*
     Só cria hitbox dos móveis
@@ -17694,34 +17586,129 @@ if (
     world.interior &&
     world.room
 ) {
+
     const room =
         world.room;
 
-    const inset =
-        8;
 
+    /*
+        CASA DO PLAYER.
 
+        O PNG possui bordas transparentes,
+        então a colisão precisa começar
+        DENTRO da imagem.
+    */
     if (
-        x - radius <
-            room.x +
-                inset ||
-
-        x + radius >
-            room.x +
-                room.w -
-                inset ||
-
-        y - radius <
-            room.y +
-                inset ||
-
-        y + radius >
-            room.y +
-                room.h -
-                inset
+        world.interiorId ===
+            "home"
     ) {
-        return true;
+
+        const config =
+            HOUSE_INTERIORS.home;
+
+
+        const bounds =
+            config.walkBounds;
+
+
+        const left =
+            room.x +
+            bounds.left;
+
+
+        const right =
+            room.x +
+            room.w -
+            bounds.right;
+
+
+        const top =
+            room.y +
+            bounds.top;
+
+
+        const normalBottom =
+            room.y +
+            room.h -
+            bounds.bottom;
+
+
+        const door =
+            config.door;
+
+
+        /*
+            Somente em frente ao buraco
+            da porta pode chegar mais embaixo.
+        */
+        const insideDoorPassage =
+
+            x + radius >
+                door.x + 8 &&
+
+            x - radius <
+                door.x +
+                door.w -
+                8;
+
+
+        const allowedBottom =
+
+            insideDoorPassage
+
+                ? room.y +
+                    room.h -
+                    bounds.doorBottom
+
+                : normalBottom;
+
+
+        if (
+            x - radius <
+                left ||
+
+            x + radius >
+                right ||
+
+            y - radius <
+                top ||
+
+            y + radius >
+                allowedBottom
+        ) {
+            return true;
+        }
+
+    } else {
+
+        const inset =
+            8;
+
+
+        if (
+            x - radius <
+                room.x +
+                    inset ||
+
+            x + radius >
+                room.x +
+                    room.w -
+                    inset ||
+
+            y - radius <
+                room.y +
+                    inset ||
+
+            y + radius >
+                room.y +
+                    room.h -
+                    inset
+        ) {
+            return true;
+        }
+
     }
+
 }
 
 
@@ -18518,7 +18505,7 @@ if (
         houseId
     ) {
 
-             if (
+           if (
     houseId ===
     "home"
 ) {
@@ -18529,38 +18516,8 @@ if (
 
     world.decorations.push(
 
-        {
-            id:
-                "home_bed",
-
-            type:
-                "bed",
-
-            x:
-                235,
-
-            y:
-                220,
-
-            w:
-                110,
-
-            h:
-                160,
-
-            depthY:
-                300,
-
-            depthSorted:
-                true,
-
-            homeFloor:
-                1
-        },
-
-
         /*
-            TAPETE MAIOR.
+            TAPETE — maior.
         */
         {
             id:
@@ -18570,16 +18527,16 @@ if (
                 "homeRug",
 
             x:
-                535,
+                545,
 
             y:
-                475,
+                485,
 
             w:
-                330,
+                360,
 
             h:
-                185,
+                200,
 
             solid:
                 false,
@@ -18590,8 +18547,7 @@ if (
 
 
         /*
-            MESA + CADEIRAS
-            agora possuem hitbox.
+            MESA + CADEIRAS.
         */
         {
             id:
@@ -18604,25 +18560,25 @@ if (
                 720,
 
             y:
-                365,
+                375,
 
             w:
-                225,
+                230,
 
             h:
-                205,
+                210,
 
             collisionW:
-                185,
+                190,
 
             collisionH:
-                135,
+                145,
 
             collisionOffsetY:
-                10,
+                12,
 
             depthY:
-                455,
+                470,
 
             depthSorted:
                 true,
@@ -18636,7 +18592,8 @@ if (
 
 
         /*
-            DUAS JANELAS MENORES.
+            DUAS JANELAS MENORES
+            JUNTAS NO MEIO.
         */
         {
             id:
@@ -18646,16 +18603,16 @@ if (
                 "homeWindow",
 
             x:
-                520,
+                510,
 
             y:
                 165,
 
             w:
-                76,
+                68,
 
             h:
-                86,
+                76,
 
             solid:
                 false,
@@ -18673,16 +18630,16 @@ if (
                 "homeWindow",
 
             x:
-                705,
+                600,
 
             y:
                 165,
 
             w:
-                76,
+                68,
 
             h:
-                86,
+                76,
 
             solid:
                 false,
@@ -18693,11 +18650,10 @@ if (
 
 
         /*
-            ESCADA.
+            ESCADA MAIOR.
 
-            A parte alta tem colisão.
-            O pé fica livre para o player
-            chegar e apertar E.
+            Colocada aproximadamente
+            onde estava a cama antiga.
         */
         {
             id:
@@ -18707,28 +18663,28 @@ if (
                 "homeStairs",
 
             x:
-                335,
+                240,
 
             y:
-                445,
+                300,
 
             w:
-                120,
+                155,
 
             h:
-                215,
+                270,
 
             collisionW:
-                86,
+                105,
 
             collisionH:
-                150,
+                180,
 
             collisionOffsetY:
-                -25,
+                -22,
 
             depthY:
-                525,
+                415,
 
             depthSorted:
                 true,
@@ -18743,40 +18699,11 @@ if (
     );
 
 
-    world.interactables.push({
-
-        id:
-            "home_bed_rest",
-
-        type:
-            "bedRest",
-
-        x:
-            235,
-
-        y:
-            275,
-
-        radius:
-            92,
-
-        key:
-            "E",
-
-        label:
-            "DESCANSAR",
-
-        homeFloor:
-            1
-
-    });
-
-
     /*
-        BOTÃO PARA SUBIR.
+        ÁREA PARA SUBIR.
 
         Fica no pé da escada,
-        fora da hitbox.
+        onde o player consegue chegar.
     */
     world.interactables.push({
 
@@ -18787,13 +18714,13 @@ if (
             "homeStairs",
 
         x:
-            335,
+            240,
 
         y:
-            540,
+            440,
 
         radius:
-            70,
+            72,
 
         key:
             "E",
@@ -18812,9 +18739,7 @@ if (
 
     /* ========================================================
        SEGUNDO ANDAR
-
-       Continua SOMENTE com 3 janelas.
-       Agora menores.
+       SOMENTE AS 3 JANELAS.
        ======================================================== */
 
     world.decorations.push(
@@ -18827,16 +18752,16 @@ if (
                 "homeWindow",
 
             x:
-                355,
+                430,
 
             y:
                 165,
 
             w:
-                76,
+                68,
 
             h:
-                86,
+                76,
 
             solid:
                 false,
@@ -18860,10 +18785,10 @@ if (
                 165,
 
             w:
-                76,
+                68,
 
             h:
-                86,
+                76,
 
             solid:
                 false,
@@ -18881,16 +18806,16 @@ if (
                 "homeWindow",
 
             x:
-                725,
+                650,
 
             y:
                 165,
 
             w:
-                76,
+                68,
 
             h:
-                86,
+                76,
 
             solid:
                 false,
@@ -18902,12 +18827,6 @@ if (
     );
 
 
-    /*
-        Área para descer.
-
-        O spawn do 2º andar fica longe,
-        portanto não ativa imediatamente.
-    */
     world.interactables.push({
 
         id:
@@ -18917,13 +18836,13 @@ if (
             "homeStairs",
 
         x:
-            335,
+            240,
 
         y:
-            560,
+            440,
 
         radius:
-            70,
+            72,
 
         key:
             "E",
@@ -43865,6 +43784,10 @@ if (
 
                         : "SUA CASA";
 
+               rebuildDynamicWorldObstacles(
+    world
+);
+
 
                 /*
                     Remove as colisões invisíveis
@@ -43879,31 +43802,16 @@ if (
                     Spawn longe do trigger
                     da escada.
                 */
-                if (
-                    targetFloor === 2
-                ) {
+            player.x =
+    520;
 
-                    player.x =
-                        500;
+player.y =
+    500;
 
-                    player.y =
-                        500;
-
-                    player.facing =
-                        "up";
-
-                } else {
-
-                    player.x =
-                        500;
-
-                    player.y =
-                        515;
-
-                    player.facing =
-                        "down";
-
-                }
+player.facing =
+    targetFloor === 2
+        ? "up"
+        : "down";
 
 
                 gameplayRuntime
@@ -44081,6 +43989,45 @@ if (
 
 if (
     interactable.type ===
+    "homeStairs"
+) {
+
+    gameplayRuntime.interactionTarget = {
+
+        type:
+            "homeStairs",
+
+        entity:
+            interactable
+
+    };
+
+
+    gameplayRuntime.interactionPrompt = {
+
+        key:
+            "E",
+
+        text:
+            interactable.label ||
+            (
+                interactable.targetFloor ===
+                    2
+
+                    ? "SUBIR ESCADAS"
+                    : "DESCER ESCADAS"
+            )
+
+    };
+
+
+    return;
+
+}
+
+
+if (
+    interactable.type ===
     "bedRest"
 ) {
 
@@ -44109,6 +44056,7 @@ if (
     return;
 
 }
+           
             if (
                 interactable.type ===
                 "monarchAltar"
@@ -47995,6 +47943,18 @@ const height =
         stairs:
             "./assets/sprites/environment/houses/player-house/player-house-stairs.png?v=20260909-interior1",
 
+       interiorDoorSheet:
+    "./assets/sprites/environment/houses/player-house/player-house-inside-door-opening.png?v=20260909-interior-door1",
+
+interiorDoorFrames:
+    4,
+
+interiorDoorVisualWidth:
+    160,
+
+interiorDoorOffsetY:
+    2,
+
         doorFrames:
             6,
 
@@ -48357,6 +48317,147 @@ const height =
 
     }
 
+   function drawPlayerHomeInteriorDoorSprite(
+    ctx,
+    door
+) {
+
+    if (
+        !ctx ||
+        !door ||
+        state.world?.interiorId !==
+            "home" ||
+        door.houseId !==
+            "home" ||
+        door.buildingId
+    ) {
+        return false;
+    }
+
+
+    const entry =
+        getPlayerHomeImage(
+            PLAYER_HOME_ASSETS
+                .interiorDoorSheet
+        );
+
+
+    if (
+        !entry ||
+        !entry.loaded ||
+        entry.failed
+    ) {
+        return false;
+    }
+
+
+    const frameCount =
+        PLAYER_HOME_ASSETS
+            .interiorDoorFrames;
+
+
+    const frameWidth =
+        entry.image.width /
+        frameCount;
+
+
+    const frameHeight =
+        entry.image.height;
+
+
+    const frameIndex =
+        Math.round(
+
+            clamp(
+                finiteNumber(
+                    door.openAmount,
+                    0
+                ),
+                0,
+                1
+            ) *
+
+            (
+                frameCount -
+                1
+            )
+
+        );
+
+
+    const drawWidth =
+        PLAYER_HOME_ASSETS
+            .interiorDoorVisualWidth;
+
+
+    const drawHeight =
+        drawWidth *
+        (
+            frameHeight /
+            frameWidth
+        );
+
+
+    const centerX =
+        door.x +
+        door.w / 2;
+
+
+    const bottomY =
+        door.y +
+        door.h +
+        PLAYER_HOME_ASSETS
+            .interiorDoorOffsetY;
+
+
+    const screen =
+        worldToScreen(
+
+            centerX -
+                drawWidth / 2,
+
+            bottomY -
+                drawHeight
+
+        );
+
+
+    ctx.save();
+
+    ctx.imageSmoothingEnabled =
+        false;
+
+
+    ctx.drawImage(
+
+        entry.image,
+
+        frameWidth *
+            frameIndex,
+
+        0,
+
+        frameWidth,
+
+        frameHeight,
+
+        screen.x,
+
+        screen.y,
+
+        drawWidth,
+
+        drawHeight
+
+    );
+
+
+    ctx.restore();
+
+
+    return true;
+
+}
 
     function getPlayerHomeHouseSourceRect(
         image
@@ -52986,15 +53087,21 @@ ctx.shadowOffsetY =
         o PNG do piso já possui
         o vão da porta.
     */
-    if (
-        state.world?.interiorId ===
-            "home" &&
-        door?.houseId ===
-            "home" &&
-        !door?.buildingId
-    ) {
-        return;
-    }
+   if (
+    state.world?.interiorId ===
+        "home" &&
+    door?.houseId ===
+        "home" &&
+    !door?.buildingId
+) {
+
+    drawPlayerHomeInteriorDoorSprite(
+        ctx,
+        door
+    );
+
+    return;
+}
 
           if (
         door?.buildingId ===

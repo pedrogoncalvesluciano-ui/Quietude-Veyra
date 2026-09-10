@@ -18246,271 +18246,85 @@ and
 
 .game-fog-layer {
 
-    position:
-        absolute;
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    overflow: hidden;
 
-    inset:
-        -14%;
+    opacity: 0;
+    transition: opacity .8s ease;
 
-    z-index:
-        10;
+    /* base leve de névoa geral */
+    background: rgba(210, 220, 230, 0.045);
 
-    overflow:
-        hidden;
-
-    pointer-events:
-        none;
-
-    opacity:
-        0;
-
-    transition:
-        opacity 1.4s ease;
-
-    mix-blend-mode:
-        screen;
-
-    will-change:
-        opacity;
-
+    /* isso ajuda a suavizar o mapa por trás */
+    backdrop-filter: blur(1.6px);
+    -webkit-backdrop-filter: blur(1.6px);
 }
-
 
 .game-fog-layer.active {
-
-    opacity:
-        .38;
-
+    opacity: 1;
 }
 
 
-/* ================================================================
-   CAMADA DISTANTE
-
-   Muito espalhada e lenta.
-   ================================================================ */
-
+/* camada 1 */
 .game-fog-layer::before {
-
-    content:
-        "";
-
-    position:
-        absolute;
-
-    inset:
-        -22%;
+    content: "";
+    position: absolute;
+    inset: -20%;
 
     background:
+        radial-gradient(ellipse 32% 16% at 15% 25%, rgba(220,230,235,.22) 0%, rgba(220,230,235,.12) 35%, transparent 70%),
+        radial-gradient(ellipse 38% 18% at 50% 42%, rgba(215,225,230,.20) 0%, rgba(215,225,230,.10) 38%, transparent 72%),
+        radial-gradient(ellipse 34% 15% at 85% 30%, rgba(220,230,235,.18) 0%, rgba(220,230,235,.08) 40%, transparent 74%),
+        radial-gradient(ellipse 40% 18% at 70% 78%, rgba(210,220,228,.16) 0%, rgba(210,220,228,.07) 42%, transparent 74%);
 
-        radial-gradient(
-            ellipse 34% 13% at 8% 32%,
-            rgba(174, 187, 193, .34) 0%,
-            rgba(140, 157, 166, .18) 35%,
-            rgba(106, 121, 131, .06) 65%,
-            transparent 78%
-        ),
+    filter: blur(40px);
+    opacity: .95;
 
-        radial-gradient(
-            ellipse 42% 15% at 44% 55%,
-            rgba(186, 196, 200, .30) 0%,
-            rgba(139, 154, 163, .15) 40%,
-            transparent 76%
-        ),
-
-        radial-gradient(
-            ellipse 38% 14% at 82% 38%,
-            rgba(162, 177, 185, .28) 0%,
-            rgba(121, 137, 146, .12) 42%,
-            transparent 78%
-        ),
-
-        radial-gradient(
-            ellipse 46% 17% at 66% 82%,
-            rgba(174, 187, 193, .24) 0%,
-            rgba(125, 140, 149, .09) 46%,
-            transparent 80%
-        );
-
-
-    filter:
-        blur(46px);
-
-    opacity:
-        .72;
-
-    transform:
-        translate3d(
-            -4%,
-            0,
-            0
-        );
-
-    animation:
-        veyraFogDriftFar
-        34s
-        ease-in-out
-        infinite
-        alternate;
-
-    will-change:
-        transform;
-
+    animation: veyraFogDriftA 26s ease-in-out infinite alternate;
 }
 
 
-/* ================================================================
-   CAMADA PRÓXIMA
-
-   Mais fina e ligeiramente mais rápida.
-   ================================================================ */
-
+/* camada 2 */
 .game-fog-layer::after {
-
-    content:
-        "";
-
-    position:
-        absolute;
-
-    inset:
-        -25%;
+    content: "";
+    position: absolute;
+    inset: -25%;
 
     background:
+        radial-gradient(ellipse 28% 12% at 20% 70%, rgba(235,240,245,.16) 0%, rgba(235,240,245,.07) 36%, transparent 70%),
+        radial-gradient(ellipse 36% 14% at 58% 20%, rgba(225,232,238,.18) 0%, rgba(225,232,238,.08) 38%, transparent 72%),
+        radial-gradient(ellipse 34% 13% at 92% 62%, rgba(230,236,242,.16) 0%, rgba(230,236,242,.06) 40%, transparent 72%),
+        radial-gradient(ellipse 28% 12% at 42% 82%, rgba(220,228,235,.14) 0%, rgba(220,228,235,.06) 42%, transparent 72%);
 
-        radial-gradient(
-            ellipse 30% 10% at 15% 68%,
-            rgba(206, 212, 213, .25) 0%,
-            rgba(150, 163, 169, .12) 40%,
-            transparent 76%
-        ),
+    filter: blur(58px);
+    opacity: .85;
 
-        radial-gradient(
-            ellipse 36% 11% at 52% 28%,
-            rgba(186, 197, 201, .22) 0%,
-            rgba(132, 148, 156, .10) 46%,
-            transparent 78%
-        ),
-
-        radial-gradient(
-            ellipse 40% 12% at 91% 62%,
-            rgba(194, 203, 205, .24) 0%,
-            rgba(139, 153, 160, .10) 42%,
-            transparent 76%
-        );
-
-
-    filter:
-        blur(58px);
-
-    opacity:
-        .58;
-
-    transform:
-        translate3d(
-            3%,
-            1%,
-            0
-        );
-
-    animation:
-        veyraFogDriftNear
-        24s
-        ease-in-out
-        infinite
-        alternate;
-
-    will-change:
-        transform;
-
+    animation: veyraFogDriftB 20s ease-in-out infinite alternate;
 }
 
-
-/* ================================================================
-   MOVIMENTO
-   ================================================================ */
-
-@keyframes veyraFogDriftFar {
-
+@keyframes veyraFogDriftA {
     0% {
-
-        transform:
-            translate3d(
-                -7%,
-                -1%,
-                0
-            )
-            scale(1.04);
-
+        transform: translate3d(-6%, 0%, 0) scale(1.04);
     }
-
-
-    45% {
-
-        transform:
-            translate3d(
-                1%,
-                2%,
-                0
-            )
-            scale(1.09);
-
-    }
-
-
-    100% {
-
-        transform:
-            translate3d(
-                8%,
-                -2%,
-                0
-            )
-            scale(1.05);
-
-    }
-
-}
-
-
-@keyframes veyraFogDriftNear {
-
-    0% {
-
-        transform:
-            translate3d(
-                8%,
-                1%,
-                0
-            )
-            scale(1.07);
-
-    }
-
-
     50% {
-
-        transform:
-            translate3d(
-                -1%,
-                -2%,
-                0
-            )
-            scale(1.12);
-
+        transform: translate3d(2%, 2%, 0) scale(1.08);
     }
-
-
     100% {
-
-        transform:
-            translate3d(
-                -9%,
-                2%,
-                0
-            )
-            scale(1.06);
-
+        transform: translate3d(8%, -2%, 0) scale(1.05);
     }
+}
 
+@keyframes veyraFogDriftB {
+    0% {
+        transform: translate3d(7%, 1%, 0) scale(1.08);
+    }
+    50% {
+        transform: translate3d(-2%, -1%, 0) scale(1.12);
+    }
+    100% {
+        transform: translate3d(-9%, 2%, 0) scale(1.06);
+    }
 }

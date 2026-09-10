@@ -18239,3 +18239,278 @@ and
     }
 
 }
+
+/* ================================================================
+   NEBLINA NOTURNA — GAMEPLAY
+   ================================================================ */
+
+.game-fog-layer {
+
+    position:
+        absolute;
+
+    inset:
+        -14%;
+
+    z-index:
+        10;
+
+    overflow:
+        hidden;
+
+    pointer-events:
+        none;
+
+    opacity:
+        0;
+
+    transition:
+        opacity 1.4s ease;
+
+    mix-blend-mode:
+        screen;
+
+    will-change:
+        opacity;
+
+}
+
+
+.game-fog-layer.active {
+
+    opacity:
+        .38;
+
+}
+
+
+/* ================================================================
+   CAMADA DISTANTE
+
+   Muito espalhada e lenta.
+   ================================================================ */
+
+.game-fog-layer::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    inset:
+        -22%;
+
+    background:
+
+        radial-gradient(
+            ellipse 34% 13% at 8% 32%,
+            rgba(174, 187, 193, .34) 0%,
+            rgba(140, 157, 166, .18) 35%,
+            rgba(106, 121, 131, .06) 65%,
+            transparent 78%
+        ),
+
+        radial-gradient(
+            ellipse 42% 15% at 44% 55%,
+            rgba(186, 196, 200, .30) 0%,
+            rgba(139, 154, 163, .15) 40%,
+            transparent 76%
+        ),
+
+        radial-gradient(
+            ellipse 38% 14% at 82% 38%,
+            rgba(162, 177, 185, .28) 0%,
+            rgba(121, 137, 146, .12) 42%,
+            transparent 78%
+        ),
+
+        radial-gradient(
+            ellipse 46% 17% at 66% 82%,
+            rgba(174, 187, 193, .24) 0%,
+            rgba(125, 140, 149, .09) 46%,
+            transparent 80%
+        );
+
+
+    filter:
+        blur(46px);
+
+    opacity:
+        .72;
+
+    transform:
+        translate3d(
+            -4%,
+            0,
+            0
+        );
+
+    animation:
+        veyraFogDriftFar
+        34s
+        ease-in-out
+        infinite
+        alternate;
+
+    will-change:
+        transform;
+
+}
+
+
+/* ================================================================
+   CAMADA PRÓXIMA
+
+   Mais fina e ligeiramente mais rápida.
+   ================================================================ */
+
+.game-fog-layer::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    inset:
+        -25%;
+
+    background:
+
+        radial-gradient(
+            ellipse 30% 10% at 15% 68%,
+            rgba(206, 212, 213, .25) 0%,
+            rgba(150, 163, 169, .12) 40%,
+            transparent 76%
+        ),
+
+        radial-gradient(
+            ellipse 36% 11% at 52% 28%,
+            rgba(186, 197, 201, .22) 0%,
+            rgba(132, 148, 156, .10) 46%,
+            transparent 78%
+        ),
+
+        radial-gradient(
+            ellipse 40% 12% at 91% 62%,
+            rgba(194, 203, 205, .24) 0%,
+            rgba(139, 153, 160, .10) 42%,
+            transparent 76%
+        );
+
+
+    filter:
+        blur(58px);
+
+    opacity:
+        .58;
+
+    transform:
+        translate3d(
+            3%,
+            1%,
+            0
+        );
+
+    animation:
+        veyraFogDriftNear
+        24s
+        ease-in-out
+        infinite
+        alternate;
+
+    will-change:
+        transform;
+
+}
+
+
+/* ================================================================
+   MOVIMENTO
+   ================================================================ */
+
+@keyframes veyraFogDriftFar {
+
+    0% {
+
+        transform:
+            translate3d(
+                -7%,
+                -1%,
+                0
+            )
+            scale(1.04);
+
+    }
+
+
+    45% {
+
+        transform:
+            translate3d(
+                1%,
+                2%,
+                0
+            )
+            scale(1.09);
+
+    }
+
+
+    100% {
+
+        transform:
+            translate3d(
+                8%,
+                -2%,
+                0
+            )
+            scale(1.05);
+
+    }
+
+}
+
+
+@keyframes veyraFogDriftNear {
+
+    0% {
+
+        transform:
+            translate3d(
+                8%,
+                1%,
+                0
+            )
+            scale(1.07);
+
+    }
+
+
+    50% {
+
+        transform:
+            translate3d(
+                -1%,
+                -2%,
+                0
+            )
+            scale(1.12);
+
+    }
+
+
+    100% {
+
+        transform:
+            translate3d(
+                -9%,
+                2%,
+                0
+            )
+            scale(1.06);
+
+    }
+
+}

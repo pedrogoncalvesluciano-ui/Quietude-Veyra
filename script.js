@@ -69009,6 +69009,542 @@ function drawHoldHUD(
         ctx.restore();
     }
 
+   /* ============================================================
+   NOITE + NEBLINA — EXTERIORES
+   ============================================================ */
+
+function getNightFogProfile(
+    world
+) {
+
+    const profiles = {
+
+        village: {
+            night: 0.30,
+            fog: 0.10
+        },
+
+        road: {
+            night: 0.32,
+            fog: 0.13
+        },
+
+        forest: {
+            night: 0.36,
+            fog: 0.17
+        },
+
+        grove: {
+            night: 0.38,
+            fog: 0.19
+        },
+
+        mountains: {
+            night: 0.31,
+            fog: 0.14
+        },
+
+        iron: {
+            night: 0.34,
+            fog: 0.12
+        },
+
+        ruby: {
+            night: 0.29,
+            fog: 0.10
+        },
+
+        gnome: {
+            night: 0.30,
+            fog: 0.12
+        },
+
+        fairy: {
+            night: 0.25,
+            fog: 0.10
+        },
+
+        frontier: {
+            night: 0.30,
+            fog: 0.12
+        }
+
+    };
+
+
+    return (
+        profiles[
+            world?.biome
+        ] ||
+        {
+            night: 0.32,
+            fog: 0.12
+        }
+    );
+
+}
+
+
+function canDrawNightFog(
+    world
+) {
+
+    /*
+        Sem neblina dentro das casas.
+    */
+    if (
+        !world ||
+        world.interior
+    ) {
+        return false;
+    }
+
+
+    /*
+        Esses lugares já possuem
+        atmosfera/iluminação própria.
+    */
+    if (
+        world.id ===
+            "monarchMaze" ||
+
+        world.id ===
+            "voidDungeon" ||
+
+        world.biome ===
+            "sky" ||
+
+        world.id ===
+            "celestialStair"
+    ) {
+        return false;
+    }
+
+
+    return true;
+
+}
+
+
+function drawNightTint(
+    ctx
+) {
+
+    const world =
+        state.world;
+
+
+    if (
+        !ctx ||
+        !canDrawNightFog(
+            world
+        )
+    ) {
+        return;
+    }
+
+
+    const profile =
+        getNightFogProfile(
+            world
+        );
+
+
+    const width =
+        renderRuntime.width;
+
+
+    const height =
+        renderRuntime.height;
+
+
+    ctx.save();
+
+
+    /*
+        COR BASE DA NOITE.
+
+        Azul/preto suave em vez
+        de simplesmente colocar
+        preto por cima.
+    */
+    ctx.fillStyle =
+        `rgba(7,13,23,${profile.night})`;
+
+
+    ctx.fillRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    /*
+        LUZ FRIA DA LUA.
+
+        Vem mais do canto superior
+        esquerdo.
+    */
+    const moonGlow =
+        ctx.createRadialGradient(
+
+            width *
+                0.18,
+
+            height *
+                0.08,
+
+            0,
+
+            width *
+                0.18,
+
+            height *
+                0.08,
+
+            Math.max(
+                width,
+                height
+            ) *
+                0.72
+
+        );
+
+
+    moonGlow.addColorStop(
+        0,
+        "rgba(145,171,198,0.11)"
+    );
+
+
+    moonGlow.addColorStop(
+        0.40,
+        "rgba(78,102,128,0.045)"
+    );
+
+
+    moonGlow.addColorStop(
+        1,
+        "rgba(0,0,0,0)"
+    );
+
+
+    ctx.fillStyle =
+        moonGlow;
+
+
+    ctx.fillRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    /*
+        VINHETA NOTURNA.
+
+        Centro continua fácil de enxergar.
+    */
+    const vignette =
+        ctx.createRadialGradient(
+
+            width / 2,
+            height / 2,
+
+            Math.min(
+                width,
+                height
+            ) *
+                0.18,
+
+            width / 2,
+            height / 2,
+
+            Math.max(
+                width,
+                height
+            ) *
+                0.70
+
+        );
+
+
+    vignette.addColorStop(
+        0,
+        "rgba(0,0,0,0)"
+    );
+
+
+    vignette.addColorStop(
+        1,
+        "rgba(0,3,8,0.30)"
+    );
+
+
+    ctx.fillStyle =
+        vignette;
+
+
+    ctx.fillRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    ctx.restore();
+
+}
+
+
+function drawNightFog(
+    ctx
+) {
+
+    const world =
+        state.world;
+
+
+    if (
+        !ctx ||
+        !canDrawNightFog(
+            world
+        )
+    ) {
+        return;
+    }
+
+
+    const profile =
+        getNightFogProfile(
+            world
+        );
+
+
+    const width =
+        renderRuntime.width;
+
+
+    const height =
+        renderRuntime.height;
+
+
+    const time =
+        renderRuntime.ambientTime;
+
+
+    ctx.save();
+
+
+    /*
+        3 CAMADAS DE NEBLINA.
+
+        Cada uma anda em velocidade
+        diferente para dar profundidade.
+    */
+    for (
+        let layer = 0;
+        layer < 3;
+        layer += 1
+    ) {
+
+        const speed =
+            8 +
+            layer *
+                4;
+
+
+        const layerAlpha =
+            profile.fog *
+            (
+                layer === 0
+                    ? 0.72
+
+                    : layer === 1
+                        ? 0.52
+
+                        : 0.36
+            );
+
+
+        const travelWidth =
+            width +
+            760;
+
+
+        const drift =
+            (
+                time *
+                    speed +
+
+                layer *
+                    240
+            ) %
+            travelWidth;
+
+
+        const baseY =
+            height *
+            (
+                0.32 +
+                layer *
+                    0.23
+            );
+
+
+        /*
+            Vários bancos de névoa
+            atravessando a tela.
+        */
+        for (
+            let cloud = -1;
+            cloud < 4;
+            cloud += 1
+        ) {
+
+            const x =
+                cloud *
+                    430 +
+
+                drift -
+                470;
+
+
+            const y =
+                baseY +
+
+                Math.sin(
+
+                    time *
+                        0.18 +
+
+                    cloud *
+                        1.8 +
+
+                    layer *
+                        0.9
+
+                ) *
+                    24;
+
+
+            const radius =
+                300 +
+                layer *
+                    55;
+
+
+            const fog =
+                ctx.createRadialGradient(
+
+                    x,
+                    y,
+                    0,
+
+                    x,
+                    y,
+                    radius
+
+                );
+
+
+            fog.addColorStop(
+                0,
+
+                `rgba(
+                    170,
+                    184,
+                    190,
+                    ${layerAlpha}
+                )`
+            );
+
+
+            fog.addColorStop(
+                0.45,
+
+                `rgba(
+                    127,
+                    143,
+                    153,
+                    ${layerAlpha * 0.42}
+                )`
+            );
+
+
+            fog.addColorStop(
+                1,
+                "rgba(90,105,116,0)"
+            );
+
+
+            ctx.fillStyle =
+                fog;
+
+
+            ctx.save();
+
+
+            /*
+                Achata o círculo,
+                transformando em uma
+                faixa de neblina.
+            */
+            ctx.translate(
+                x,
+                y
+            );
+
+
+            ctx.scale(
+
+                1.65 +
+                    layer *
+                        0.18,
+
+                0.42 +
+                    layer *
+                        0.05
+
+            );
+
+
+            ctx.translate(
+                -x,
+                -y
+            );
+
+
+            ctx.fillRect(
+
+                x -
+                    radius,
+
+                y -
+                    radius,
+
+                radius *
+                    2,
+
+                radius *
+                    2
+
+            );
+
+
+            ctx.restore();
+
+        }
+
+    }
+
+
+    ctx.restore();
+
+}
 
     /* ============================================================
        VOID / SKY ATMOSPHERE
@@ -69404,6 +69940,16 @@ drawDoorwayOpenings(
     ctx
 );
 
+       /*
+    NOITE SOBRE O CENÁRIO E PERSONAGENS.
+
+    Ataques e efeitos são desenhados depois,
+    então continuam brilhando no escuro.
+*/
+drawNightTint(
+    ctx
+);
+
 drawWalls(
     ctx
 );
@@ -69538,6 +70084,13 @@ drawDoorwayOpenings(
         drawBiomeAtmosphere(
             ctx
         );
+
+       /*
+    NEBLINA POR CIMA DO MUNDO.
+*/
+drawNightFog(
+    ctx
+);
 
         /*
             ESCURIDÃO POR ÚLTIMO NO MUNDO,

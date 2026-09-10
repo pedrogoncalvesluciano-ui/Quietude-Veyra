@@ -18245,7 +18245,6 @@ and
    ================================================================ */
 
 .game-fog-layer {
-
     position: absolute;
     inset: 0;
     z-index: 10;
@@ -18253,78 +18252,72 @@ and
     overflow: hidden;
 
     opacity: 0;
-    transition: opacity .8s ease;
+    transition: opacity .45s ease;
 
-    /* base leve de névoa geral */
-    background: rgba(210, 220, 230, 0.045);
-
-    /* isso ajuda a suavizar o mapa por trás */
-    backdrop-filter: blur(1.6px);
-    -webkit-backdrop-filter: blur(1.6px);
+    background: transparent;
 }
 
 .game-fog-layer.active {
     opacity: 1;
 }
 
-
-/* camada 1 */
 .game-fog-layer::before {
     content: "";
     position: absolute;
-    inset: -20%;
+    inset: 0;
 
     background:
-        radial-gradient(ellipse 32% 16% at 15% 25%, rgba(220,230,235,.22) 0%, rgba(220,230,235,.12) 35%, transparent 70%),
-        radial-gradient(ellipse 38% 18% at 50% 42%, rgba(215,225,230,.20) 0%, rgba(215,225,230,.10) 38%, transparent 72%),
-        radial-gradient(ellipse 34% 15% at 85% 30%, rgba(220,230,235,.18) 0%, rgba(220,230,235,.08) 40%, transparent 74%),
-        radial-gradient(ellipse 40% 18% at 70% 78%, rgba(210,220,228,.16) 0%, rgba(210,220,228,.07) 42%, transparent 74%);
+        linear-gradient(to bottom,
+            rgba(210,220,230,.16) 0%,
+            rgba(210,220,230,.08) 10%,
+            transparent 24%
+        ),
+        linear-gradient(to top,
+            rgba(210,220,230,.16) 0%,
+            rgba(210,220,230,.08) 10%,
+            transparent 24%
+        ),
+        linear-gradient(to right,
+            rgba(210,220,230,.14) 0%,
+            rgba(210,220,230,.07) 8%,
+            transparent 18%
+        ),
+        linear-gradient(to left,
+            rgba(210,220,230,.14) 0%,
+            rgba(210,220,230,.07) 8%,
+            transparent 18%
+        ),
+        radial-gradient(circle at top left,
+            rgba(220,230,235,.10) 0%,
+            transparent 22%
+        ),
+        radial-gradient(circle at top right,
+            rgba(220,230,235,.10) 0%,
+            transparent 22%
+        ),
+        radial-gradient(circle at bottom left,
+            rgba(220,230,235,.10) 0%,
+            transparent 22%
+        ),
+        radial-gradient(circle at bottom right,
+            rgba(220,230,235,.10) 0%,
+            transparent 22%
+        );
 
-    filter: blur(40px);
-    opacity: .95;
-
-    animation: veyraFogDriftA 26s ease-in-out infinite alternate;
+    opacity: .75;
+    animation: veyraFogEdgePulse 7s ease-in-out infinite alternate;
 }
 
-
-/* camada 2 */
 .game-fog-layer::after {
-    content: "";
-    position: absolute;
-    inset: -25%;
-
-    background:
-        radial-gradient(ellipse 28% 12% at 20% 70%, rgba(235,240,245,.16) 0%, rgba(235,240,245,.07) 36%, transparent 70%),
-        radial-gradient(ellipse 36% 14% at 58% 20%, rgba(225,232,238,.18) 0%, rgba(225,232,238,.08) 38%, transparent 72%),
-        radial-gradient(ellipse 34% 13% at 92% 62%, rgba(230,236,242,.16) 0%, rgba(230,236,242,.06) 40%, transparent 72%),
-        radial-gradient(ellipse 28% 12% at 42% 82%, rgba(220,228,235,.14) 0%, rgba(220,228,235,.06) 42%, transparent 72%);
-
-    filter: blur(58px);
-    opacity: .85;
-
-    animation: veyraFogDriftB 20s ease-in-out infinite alternate;
+    content: none;
+    display: none;
 }
 
-@keyframes veyraFogDriftA {
+@keyframes veyraFogEdgePulse {
     0% {
-        transform: translate3d(-6%, 0%, 0) scale(1.04);
-    }
-    50% {
-        transform: translate3d(2%, 2%, 0) scale(1.08);
+        opacity: .62;
     }
     100% {
-        transform: translate3d(8%, -2%, 0) scale(1.05);
-    }
-}
-
-@keyframes veyraFogDriftB {
-    0% {
-        transform: translate3d(7%, 1%, 0) scale(1.08);
-    }
-    50% {
-        transform: translate3d(-2%, -1%, 0) scale(1.12);
-    }
-    100% {
-        transform: translate3d(-9%, 2%, 0) scale(1.06);
+        opacity: .82;
     }
 }

@@ -69943,6 +69943,28 @@ function drawNightFog(
             return;
         }
 
+       const gameFogLayer =
+    document.getElementById(
+        "gameFogLayer"
+    );
+
+
+if (
+    gameFogLayer
+) {
+
+    gameFogLayer.classList.toggle(
+
+        "active",
+
+        canDrawNightFog(
+            world
+        )
+
+    );
+
+}
+
         renderRuntime
             .frameStats
             .drawnEntities =
@@ -70167,13 +70189,6 @@ drawDoorwayOpenings(
         drawBiomeAtmosphere(
             ctx
         );
-
-       /*
-    NEBLINA POR CIMA DO MUNDO.
-*/
-drawNightFog(
-    ctx
-);
 
         /*
             ESCURIDÃO POR ÚLTIMO NO MUNDO,

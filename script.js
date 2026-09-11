@@ -74483,12 +74483,13 @@ for (
                 "selection-loading"
             );
 
-        }
+              }
     );
 
-                        }
-  
-   
+    }
+
+}
+
 function characterStatRow(
     label,
     character,

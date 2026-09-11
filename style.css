@@ -18813,3 +18813,268 @@ and
         center;
 
 }
+
+/* ================================================================
+   VEYRA — SELEÇÃO
+   AJUSTE FINAL DE TAMANHO + TÍTULO
+   ================================================================ */
+
+
+/* ================================================================
+   FRAME MAIOR
+   ================================================================ */
+
+.veyra-selection-stage {
+
+    width:
+        min(
+            99vw,
+            calc(98vh * 16 / 9)
+        ) !important;
+
+    height:
+        auto !important;
+
+    aspect-ratio:
+        16 / 9 !important;
+
+    max-width:
+        99vw !important;
+
+    max-height:
+        98vh !important;
+
+    transform:
+        none !important;
+
+    position:
+        relative !important;
+
+    inset:
+        auto !important;
+
+    margin:
+        0 auto !important;
+
+}
+
+
+/* ================================================================
+   TÍTULO SUPERIOR
+
+   Antes a linha da moldura estava
+   atravessando o texto.
+   ================================================================ */
+
+.selection-screen-heading {
+
+    left:
+        4.5% !important;
+
+    top:
+        7.1% !important;
+
+}
+
+
+.selection-screen-heading strong {
+
+    font-size:
+        clamp(
+            20px,
+            1.9vw,
+            34px
+        ) !important;
+
+    line-height:
+        1 !important;
+
+    letter-spacing:
+        .13em !important;
+
+    white-space:
+        nowrap;
+
+}
+
+
+.selection-screen-heading small {
+
+    margin-top:
+        6px !important;
+
+    font-size:
+        clamp(
+            6px,
+            .48vw,
+            9px
+        ) !important;
+
+    letter-spacing:
+        .28em !important;
+
+}
+
+
+/* ================================================================
+   LOGO VEYRA
+   ================================================================ */
+
+.selection-screen-brand {
+
+    right:
+        5% !important;
+
+    top:
+        7.1% !important;
+
+}
+
+
+/* ================================================================
+   ÁREA DOS PERSONAGENS
+   ================================================================ */
+
+.selection-character-list {
+
+    left:
+        3.2% !important;
+
+    top:
+        18.3% !important;
+
+    width:
+        16.6% !important;
+
+    height:
+        67.5% !important;
+
+}
+
+
+/* ================================================================
+   ARTE GRANDE
+   ================================================================ */
+
+.selection-character-art {
+
+    left:
+        20.4% !important;
+
+    top:
+        17.4% !important;
+
+    width:
+        29.5% !important;
+
+    height:
+        69% !important;
+
+}
+
+
+/* ================================================================
+   PAINEL DIREITO
+   ================================================================ */
+
+.selection-info-panel {
+
+    left:
+        51% !important;
+
+    top:
+        18% !important;
+
+    width:
+        44% !important;
+
+    height:
+        67% !important;
+
+    padding:
+        3.2% 5.2%
+        2.5% !important;
+
+}
+
+
+/* ================================================================
+   NOME / TEXTO
+   ================================================================ */
+
+.selection-character-info {
+
+    width:
+        88% !important;
+
+    margin:
+        0 auto !important;
+
+    text-align:
+        center;
+
+}
+
+
+.selection-character-role {
+
+    margin-bottom:
+        4px !important;
+
+    font-size:
+        clamp(
+            8px,
+            .62vw,
+            11px
+        ) !important;
+
+}
+
+
+.selection-character-name {
+
+    margin:
+        0 !important;
+
+    font-size:
+        clamp(
+            30px,
+            3vw,
+            52px
+        ) !important;
+
+    line-height:
+        1.05 !important;
+
+}
+
+
+.selection-info-divider {
+
+    margin:
+        10px auto
+        0 !important;
+
+}
+
+
+.selection-character-description {
+
+    width:
+        82% !important;
+
+    margin:
+        10px auto
+        0 !important;
+
+    font-size:
+        clamp(
+            10px,
+            .82vw,
+            15px
+        ) !important;
+
+    line-height:
+        1.45 !important;
+
+}

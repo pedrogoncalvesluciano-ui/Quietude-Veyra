@@ -72558,6 +72558,174 @@ function renderCharacterCards() {
 
     };
 
+  const selectionVisualIds = {
+
+    kaelion: "kaelion",
+    theron: "varyn",
+    grumgar: "grumgar",
+    lirael: "lirael",
+    zephyr: "vael"
+
+};
+
+
+const selectionSymbols = {
+
+    kaelion: "✦",
+    theron: "◈",
+    grumgar: "⬟",
+    lirael: "✧",
+    zephyr: "◇"
+
+};
+
+
+const selectionTraits = {
+
+    kaelion:
+        "FOGO • CONTROLE • ALCANCE",
+
+    theron:
+        "PRECISÃO • MOBILIDADE • CORTE",
+
+    grumgar:
+        "FORÇA • DEFESA • IMPACTO",
+
+    lirael:
+        "VELOCIDADE • LUZ • SUPORTE",
+
+    zephyr:
+        "SOMBRA • INVOCAÇÃO • CONTROLE"
+
+};
+
+
+/*
+    CACHE DAS IMAGENS DA SELEÇÃO.
+*/
+const selectionAssetCache =
+    new Map();
+
+
+let selectionArtToken =
+    0;
+
+
+function getSelectionSkillSource(
+    characterId,
+    key
+) {
+
+    const visualId =
+        selectionVisualIds[
+            characterId
+        ];
+
+
+    if (!visualId) {
+        return "";
+    }
+
+
+    return (
+        `./assets/ui/character-selection/skills/${visualId}-${key}.png`
+    );
+
+}
+
+
+function preloadSelectionAsset(
+    source
+) {
+
+    if (!source) {
+        return Promise.resolve(
+            null
+        );
+    }
+
+
+    /*
+        Se já foi carregada uma vez,
+        não cria outro download.
+    */
+    if (
+        selectionAssetCache.has(
+            source
+        )
+    ) {
+
+        return selectionAssetCache.get(
+            source
+        );
+
+    }
+
+
+    const promise =
+        new Promise(
+            resolve => {
+
+                const preload =
+                    new Image();
+
+
+                preload.decoding =
+                    "async";
+
+
+                preload.onload =
+                    () =>
+                        resolve(
+                            preload
+                        );
+
+
+                preload.onerror =
+                    () =>
+                        resolve(
+                            null
+                        );
+
+
+                preload.src =
+                    source;
+
+            }
+        );
+
+
+    selectionAssetCache.set(
+        source,
+        promise
+    );
+
+
+    return promise;
+
+}
+
+
+/*
+    PRÉ-CARREGA AS CINCO ARTES GRANDES.
+
+    Quando o jogador clicar,
+    normalmente a próxima já estará
+    pronta na memória.
+*/
+for (
+    const source of
+    Object.values(
+        selectionAssets
+    )
+) {
+
+    preloadSelectionAsset(
+        source
+    );
+
+}
+
 
     /*
         Cores da seleção.
@@ -72579,143 +72747,330 @@ function renderCharacterCards() {
     }
 
          function updateSelectionCharacterInfo(
-        character
+    character
+) {
+
+    if (!character) {
+        return;
+    }
+
+
+    const nameElement =
+        document.getElementById(
+            "selectionCharacterName"
+        );
+
+
+    const roleElement =
+        document.getElementById(
+            "selectionCharacterRole"
+        );
+
+
+    const descriptionElement =
+        document.getElementById(
+            "selectionCharacterDescription"
+        );
+
+
+    const skillQ =
+        document.getElementById(
+            "selectionSkillQ"
+        );
+
+
+    const skillR =
+        document.getElementById(
+            "selectionSkillR"
+        );
+
+
+    const skillF =
+        document.getElementById(
+            "selectionSkillF"
+        );
+
+
+    const panel =
+        document.getElementById(
+            "selectionInfoPanel"
+        );
+
+
+    const name =
+        selectionNames[
+            character.id
+        ] ||
+        character.name ||
+        "PERSONAGEM";
+
+
+    const role =
+        selectionRoles[
+            character.id
+        ] ||
+        character.className ||
+        "";
+
+
+    const skills =
+        selectionSkills[
+            character.id
+        ] ||
+        {};
+
+
+    if (nameElement) {
+        nameElement.textContent =
+            name;
+    }
+
+
+    if (roleElement) {
+        roleElement.textContent =
+            role;
+    }
+
+
+    if (descriptionElement) {
+        descriptionElement.textContent =
+            character.description ||
+            "";
+    }
+
+
+    const skillElements = [
+
+        {
+            key: "q",
+            label: skillQ
+        },
+
+        {
+            key: "r",
+            label: skillR
+        },
+
+        {
+            key: "f",
+            label: skillF
+        }
+
+    ];
+
+
+    for (
+        const skill of
+        skillElements
     ) {
 
-        if (!character) {
-            return;
-        }
+        if (skill.label) {
 
-
-        const nameElement =
-            document.getElementById(
-                "selectionCharacterName"
-            );
-
-
-        const roleElement =
-            document.getElementById(
-                "selectionCharacterRole"
-            );
-
-
-        const descriptionElement =
-            document.getElementById(
-                "selectionCharacterDescription"
-            );
-
-
-        const skillQ =
-            document.getElementById(
-                "selectionSkillQ"
-            );
-
-
-        const skillR =
-            document.getElementById(
-                "selectionSkillR"
-            );
-
-
-        const skillF =
-            document.getElementById(
-                "selectionSkillF"
-            );
-
-
-        const panel =
-            document.getElementById(
-                "selectionInfoPanel"
-            );
-
-
-        const name =
-            selectionNames[
-                character.id
-            ] ||
-            character.name ||
-            "PERSONAGEM";
-
-
-        const role =
-            selectionRoles[
-                character.id
-            ] ||
-            character.className ||
-            "";
-
-
-        const skills =
-            selectionSkills[
-                character.id
-            ] ||
-            {};
-
-
-        if (nameElement) {
-
-            nameElement.textContent =
-                name;
+            skill.label.textContent =
+                skills[skill.key] ||
+                `HABILIDADE ${skill.key.toUpperCase()}`;
 
         }
 
 
-        if (roleElement) {
+        const visual =
+            skill.label
+                ?.closest(
+                    ".selection-skill-card"
+                )
+                ?.querySelector(
+                    ".selection-skill-visual"
+                );
 
-            roleElement.textContent =
-                role;
 
+        if (!visual) {
+            continue;
         }
 
 
-        if (descriptionElement) {
+        /*
+            Cria a imagem automaticamente.
 
-            descriptionElement.textContent =
-                character.description ||
+            Não precisa alterar HTML.
+        */
+        let icon =
+            visual.querySelector(
+                ".selection-skill-image"
+            );
+
+
+        if (!icon) {
+
+            icon =
+                document.createElement(
+                    "img"
+                );
+
+
+            icon.className =
+                "selection-skill-image";
+
+
+            icon.alt =
                 "";
 
-        }
+
+            icon.draggable =
+                false;
 
 
-        if (skillQ) {
-
-            skillQ.textContent =
-                skills.q ||
-                "HABILIDADE Q";
-
-        }
-
-
-        if (skillR) {
-
-            skillR.textContent =
-                skills.r ||
-                "HABILIDADE R";
-
-        }
-
-
-        if (skillF) {
-
-            skillF.textContent =
-                skills.f ||
-                "HABILIDADE F";
-
-        }
-
-
-        if (panel) {
-
-            panel.style.setProperty(
-                "--character-glow",
-                getSelectionColor(
-                    character
-                )
+            visual.prepend(
+                icon
             );
 
         }
 
+
+        const source =
+            getSelectionSkillSource(
+                character.id,
+                skill.key
+            );
+
+
+        icon.classList.remove(
+            "is-loaded"
+        );
+
+
+        icon.removeAttribute(
+            "src"
+        );
+
+
+        if (!source) {
+            continue;
+        }
+
+
+        /*
+            Se a imagem não existir,
+            NÃO aparece ícone quebrado.
+        */
+        preloadSelectionAsset(
+            source
+        ).then(
+            loaded => {
+
+                if (
+                    !loaded ||
+                    UI_RUNTIME.selectedCharacter !==
+                        character.id
+                ) {
+                    return;
+                }
+
+
+                icon.src =
+                    source;
+
+
+                icon.classList.add(
+                    "is-loaded"
+                );
+
+            }
+        );
+
     }
+
+
+    if (panel) {
+
+        panel.style.setProperty(
+            "--character-glow",
+            getSelectionColor(
+                character
+            )
+        );
+
+
+        /*
+            SÍMBOLO FIXO NO CANTO.
+        */
+        let symbol =
+            panel.querySelector(
+                ".selection-character-symbol"
+            );
+
+
+        if (!symbol) {
+
+            symbol =
+                document.createElement(
+                    "span"
+                );
+
+
+            symbol.className =
+                "selection-character-symbol";
+
+
+            symbol.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+
+            panel.appendChild(
+                symbol
+            );
+
+        }
+
+
+        symbol.textContent =
+            selectionSymbols[
+                character.id
+            ] ||
+            "◇";
+
+
+        /*
+            Texto curto de identidade.
+        */
+        let traits =
+            panel.querySelector(
+                ".selection-character-traits"
+            );
+
+
+        if (!traits) {
+
+            traits =
+                document.createElement(
+                    "div"
+                );
+
+
+            traits.className =
+                "selection-character-traits";
+
+
+            descriptionElement
+                ?.insertAdjacentElement(
+                    "afterend",
+                    traits
+                );
+
+        }
+
+
+        traits.textContent =
+            selectionTraits[
+                character.id
+            ] ||
+            "";
+
+    }
+
+         }
+  
     /*
         ========================================================
         SELEÇÃO INICIAL
@@ -73491,162 +73846,226 @@ function renderCharacterCards() {
         em que a imagem é substituída.
     */
 
-         function updateSelectionCharacterArt(
-        characterId,
-        instant = false
-    ) {
+         async function updateSelectionCharacterArt(
+    characterId,
+    instant = false
+) {
 
-        const image =
-            document.getElementById(
-                "selectionCharacterImage"
-            );
-
-
-        const artContainer =
-            document.getElementById(
-                "selectionCharacterArt"
-            );
-
-
-        const character =
-            characters.find(
-                item =>
-                    item.id ===
-                    characterId
-            );
-
-
-        if (
-            !image ||
-            !artContainer ||
-            !character
-        ) {
-            return;
-        }
-
-
-        const nextSource =
-            selectionAssets[
-                characterId
-            ];
-
-
-        if (!nextSource) {
-            return;
-        }
-
-
-        artContainer.style.setProperty(
-            "--character-glow",
-            getSelectionColor(
-                character
-            )
+    const image =
+        document.getElementById(
+            "selectionCharacterImage"
         );
 
 
-        /*
-            PRIMEIRA ABERTURA DA TELA.
-
-            Não explode.
-            Apenas mostra o personagem inicial.
-        */
-
-        if (
-            instant ||
-            !image.getAttribute("src")
-        ) {
-
-            image.src =
-                nextSource;
-
-            image.alt =
-                selectionNames[
-                    characterId
-                ] ||
-                "Personagem";
-
-            return;
-        }
+    const artContainer =
+        document.getElementById(
+            "selectionCharacterArt"
+        );
 
 
-        /*
-            Pré-carrega a próxima arte.
-        */
-
-        const preload =
-            new Image();
-
-
-        preload.onload =
-            () => {
-
-                artContainer.classList.remove(
-                    "is-transitioning"
-                );
+    const character =
+        characters.find(
+            item =>
+                item.id ===
+                characterId
+        );
 
 
-                void artContainer.offsetWidth;
+    if (
+        !image ||
+        !artContainer ||
+        !character
+    ) {
+        return false;
+    }
 
 
-                /*
-                    Explosão começa.
-                */
-
-                artContainer.classList.add(
-                    "is-transitioning"
-                );
+    const nextSource =
+        selectionAssets[
+            characterId
+        ];
 
 
-                /*
-                    O FLASH já cobriu o quadro.
-
-                    A troca acontece escondida.
-                */
-
-                window.setTimeout(
-                    () => {
-
-                        image.src =
-                            nextSource;
-
-                        image.alt =
-                            selectionNames[
-                                characterId
-                            ] ||
-                            "Personagem";
-
-                    },
-                    150
-                );
+    if (!nextSource) {
+        return false;
+    }
 
 
-                window.setTimeout(
-                    () => {
-
-                        artContainer.classList.remove(
-                            "is-transitioning"
-                        );
-
-                    },
-                    430
-                );
-
-            };
+    /*
+        Token impede clique antigo
+        de terminar depois de um novo.
+    */
+    const requestToken =
+        ++selectionArtToken;
 
 
-        preload.onerror =
-            () => {
-
-                image.src =
-                    nextSource;
-
-            };
+    artContainer.classList.add(
+        "is-loading"
+    );
 
 
-        preload.src =
-            nextSource;
+    /*
+        ESPERA A IMAGEM.
+
+        Nenhum flash acontece antes daqui.
+    */
+    const loadedImage =
+        await preloadSelectionAsset(
+            nextSource
+        );
+
+
+    if (
+        requestToken !==
+            selectionArtToken ||
+        !loadedImage
+    ) {
+
+        artContainer.classList.remove(
+            "is-loading"
+        );
+
+        return false;
 
     }
+
+
+    artContainer.style.setProperty(
+        "--character-glow",
+        getSelectionColor(
+            character
+        )
+    );
+
+
+    image.alt =
+        selectionNames[
+            characterId
+        ] ||
+        "Personagem";
+
+
+    /*
+        Primeira abertura.
+
+        Sem explosão.
+    */
+    if (
+        instant ||
+        !image.getAttribute(
+            "src"
+        )
+    ) {
+
+        image.src =
+            nextSource;
+
+
+        artContainer.classList.remove(
+            "is-loading"
+        );
+
+
+        artContainer.classList.add(
+            "is-ready"
+        );
+
+
+        return true;
+
+    }
+
+
+    /*
+        A partir daqui temos certeza
+        que a próxima imagem existe
+        e terminou de carregar.
+    */
+    artContainer.classList.remove(
+        "is-transitioning"
+    );
+
+
+    void artContainer.offsetWidth;
+
+
+    artContainer.classList.add(
+        "is-transitioning"
+    );
+
+
+    return new Promise(
+        resolve => {
+
+            /*
+                FLASH já cobre a arte.
+                Só então ocorre a troca.
+            */
+            window.setTimeout(
+                () => {
+
+                    if (
+                        requestToken !==
+                            selectionArtToken
+                    ) {
+
+                        resolve(
+                            false
+                        );
+
+                        return;
+
+                    }
+
+
+                    image.src =
+                        nextSource;
+
+                },
+                150
+            );
+
+
+            window.setTimeout(
+                () => {
+
+                    if (
+                        requestToken !==
+                            selectionArtToken
+                    ) {
+
+                        resolve(
+                            false
+                        );
+
+                        return;
+
+                    }
+
+
+                    artContainer.classList.remove(
+                        "is-transitioning",
+                        "is-loading"
+                    );
+
+
+                    artContainer.classList.add(
+                        "is-ready"
+                    );
+
+
+                    resolve(
+                        true
+                    );
+
+                },
+                430
+            );
+
+        }
+    );
+
+         }
 
     /*
         ========================================================
@@ -73740,94 +74159,120 @@ function renderCharacterCards() {
             .join("");
 
        for (
-        const spriteCanvas of
-        container.querySelectorAll(
-            ".selection-character-sprite"
-        )
-    ) {
+    const spriteCanvas of
+    container.querySelectorAll(
+        ".selection-character-sprite"
+    )
+) {
 
-        const source =
-            spriteCanvas.dataset
-                .spriteSrc;
-
-
-        if (!source) {
-            continue;
-        }
+    const source =
+        spriteCanvas.dataset
+            .spriteSrc;
 
 
-        const context =
-            spriteCanvas.getContext(
-                "2d"
+    if (!source) {
+        continue;
+    }
+
+
+    const context =
+        spriteCanvas.getContext(
+            "2d"
+        );
+
+
+    const spriteImage =
+        new Image();
+
+
+    spriteImage.decoding =
+        "async";
+
+
+    spriteImage.onload =
+        () => {
+
+            context.clearRect(
+                0,
+                0,
+                64,
+                64
             );
 
 
-        const spriteImage =
-            new Image();
+            context.imageSmoothingEnabled =
+                false;
 
 
-        spriteImage.onload =
-            () => {
+            /*
+                Frame frontal.
 
-                context.clearRect(
-                    0,
-                    0,
+                Mantemos o frame 64x64
+                NORMAL, sem esmagar.
+            */
+            const sourceX =
+                Math.min(
                     64,
-                    64
+                    Math.max(
+                        0,
+                        spriteImage.width -
+                        64
+                    )
                 );
 
-                /*
-                    Frame frontal.
 
-                    LPC:
-                    64x64 por frame.
-
-                    Linha DOWN = terceira linha:
-                    y = 128.
-                */
-
-                const sourceX =
-                    Math.min(
-                        64,
-                        Math.max(
-                            0,
-                            spriteImage.width -
-                            64
-                        )
-                    );
-               
-                const sourceY =
-                    Math.min(
-                        128,
-                        Math.max(
-                            0,
-                            spriteImage.height -
-                            64
-                        )
-                    );
+            const sourceY =
+                Math.min(
+                    128,
+                    Math.max(
+                        0,
+                        spriteImage.height -
+                        64
+                    )
+                );
 
 
-             context.drawImage(
-    spriteImage,
+            /*
+                O segredo:
 
-    sourceX,
-    sourceY,
-    64,
-    64,
+                desenhamos o frame MAIOR
+                que o canvas.
 
-    0,
-    0,
-    64,
-    64
-);
-            };
+                O canvas recorta pés/pernas,
+                mostrando principalmente:
+
+                cabeça
+                tronco
+                parte superior do personagem
+
+                SEM alterar a proporção.
+            */
+            const drawSize =
+                92;
 
 
-        spriteImage.src =
-            source;
+            context.drawImage(
+                spriteImage,
 
-    }
+                sourceX,
+                sourceY,
+                64,
+                64,
 
+                (64 - drawSize) / 2,
+                -8,
+
+                drawSize,
+                drawSize
+            );
+
+        };
+
+
+    spriteImage.src =
+        source;
+
+       }
 
     /*
         Primeira arte + primeiro gráfico.
@@ -73877,133 +74322,172 @@ function renderCharacterCards() {
         ========================================================
     */
 
-    for (
-        const button of
-        container.querySelectorAll(
-            "[data-character-id]"
-        )
-    ) {
+                        for (
+    const button of
+    container.querySelectorAll(
+        "[data-character-id]"
+    )
+) {
 
-        button.addEventListener(
-            "click",
-            () => {
+    button.addEventListener(
+        "click",
+        async () => {
 
-                if (
+            if (
+                UI_RUNTIME
+                    .characterSelectionLocked ||
+                container.classList.contains(
+                    "selection-loading"
+                )
+            ) {
+                return;
+            }
+
+
+            const characterId =
+                button.dataset
+                    .characterId;
+
+
+            if (
+                !characterId ||
+                characterId ===
                     UI_RUNTIME
-                        .characterSelectionLocked
-                ) {
-                    return;
-                }
+                        .selectedCharacter
+            ) {
+                return;
+            }
 
 
-                const characterId =
-                    button.dataset
-                        .characterId;
-
-
-                if (
-                    !characterId ||
-                    characterId ===
-                        UI_RUNTIME
-                            .selectedCharacter
-                ) {
-                    return;
-                }
-
-
-                const character =
-                    characters.find(
-                        item =>
-                            item.id ===
-                            characterId
-                    );
-
-
-                if (!character) {
-                    return;
-                }
-
-
-                /*
-                    Atualiza a seleção dos botões.
-                */
-
-                for (
-                    const otherButton of
-                    container.querySelectorAll(
-                        "[data-character-id]"
-                    )
-                ) {
-
-                    const isSelected =
-                        otherButton ===
-                        button;
-
-
-                    otherButton
-                        .classList
-                        .toggle(
-                            "selected",
-                            isSelected
-                        );
-
-
-                    otherButton
-                        .setAttribute(
-                            "aria-pressed",
-                            String(
-                                isSelected
-                            )
-                        );
-
-                }
-
-
-                UI_RUNTIME.selectedCharacter =
-                    characterId;
-
-
-                state.selectedCharacter =
-                    characterId;
-
-
-                /*
-                    Tudo começa praticamente junto:
-
-                    - botão muda;
-                    - atmosfera muda;
-                    - gráfico começa a se mover;
-                    - flash começa;
-                    - imagem troca escondida.
-                */
-
-                updateCharacterSelectionAtmosphere(
-                    character.color ||
-                    null
-                );
-
-       updateSelectionCharacterInfo(
-                    character
-                );
-
-                updateSelectionGraph(
-                    character
+            const character =
+                characters.find(
+                    item =>
+                        item.id ===
+                        characterId
                 );
 
 
-                updateSelectionCharacterArt(
+            if (!character) {
+                return;
+            }
+
+
+            const source =
+                selectionAssets[
                     characterId
+                ];
+
+
+            /*
+                TRAVA A SELEÇÃO ENQUANTO
+                A IMAGEM NÃO CARREGOU.
+            */
+            container.classList.add(
+                "selection-loading"
+            );
+
+
+            const loaded =
+                await preloadSelectionAsset(
+                    source
                 );
 
 
-                             updateCharacterStartButton();
+            /*
+                Se a imagem falhou:
+                NÃO troca personagem,
+                NÃO faz flash,
+                NÃO quebra a seleção.
+            */
+            if (!loaded) {
+
+                container.classList.remove(
+                    "selection-loading"
+                );
+
+                return;
+            }
+
+
+            /*
+                Só agora a seleção muda.
+            */
+            for (
+                const otherButton of
+                container.querySelectorAll(
+                    "[data-character-id]"
+                )
+            ) {
+
+                const isSelected =
+                    otherButton ===
+                    button;
+
+
+                otherButton.classList.toggle(
+                    "selected",
+                    isSelected
+                );
+
+
+                otherButton.setAttribute(
+                    "aria-pressed",
+                    String(
+                        isSelected
+                    )
+                );
 
             }
-        );
 
-    }
 
-}
+            UI_RUNTIME.selectedCharacter =
+                characterId;
+
+
+            state.selectedCharacter =
+                characterId;
+
+
+            updateCharacterSelectionAtmosphere(
+                character.color ||
+                null
+            );
+
+
+            updateSelectionCharacterInfo(
+                character
+            );
+
+
+            updateSelectionGraph(
+                character
+            );
+
+
+            /*
+                Aqui a imagem já está
+                100% carregada.
+
+                Portanto o flash nunca
+                começa antes da hora.
+            */
+            await updateSelectionCharacterArt(
+                characterId
+            );
+
+
+            updateCharacterStartButton();
+
+
+            container.classList.remove(
+                "selection-loading"
+            );
+
+        }
+    );
+
+                        }
+  
    
 function characterStatRow(
     label,
